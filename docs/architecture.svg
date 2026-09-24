@@ -3,13 +3,13 @@
 <title>Solstice Hotel Group - future state architecture</title>
 <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9 z" fill="#3B3630"/></marker></defs>
 <rect width="2500" height="1670" fill="#FFFFFF"/>
-<text x="40" y="50" font-size="34" font-weight="700" fill="#141210" text-anchor="start">Solstice Hotel Group — future state, production-hardened</text>
+<text x="40" y="50" font-size="34" font-weight="700" fill="#141210" text-anchor="start">Solstice Hotel Group: future state, production-hardened</text>
 <text x="40" y="78" font-size="15" font-weight="400" fill="#3B3630" text-anchor="start">One agent definition, two runtimes, one tool layer. 140 properties on one cluster. Guest and reservation data comes from the systems of record at the right.</text>
 <rect x="1520" y="16" width="940" height="76" rx="5" fill="#FFFFFF" stroke="#6B625A" stroke-width="2"/>
 <rect x="1534" y="30" width="26" height="18" rx="3" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
-<text x="1568" y="44" font-size="13" font-weight="600" fill="#141210" text-anchor="start">TODAY — runs in the build demoed on the call</text>
+<text x="1568" y="44" font-size="13" font-weight="600" fill="#141210" text-anchor="start">TODAY: runs in the build demoed on the call</text>
 <rect x="1534" y="56" width="26" height="18" rx="3" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="6 4"/>
-<text x="1568" y="70" font-size="13" font-weight="600" fill="#141210" text-anchor="start">FUTURE — production hardening, designed but not built</text>
+<text x="1568" y="70" font-size="13" font-weight="600" fill="#141210" text-anchor="start">FUTURE: production hardening, designed but not built</text>
 <path d="M2040 40 h44" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)"/>
 <text x="2094" y="44" font-size="13" font-weight="600" fill="#141210" text-anchor="start">request path</text>
 <path d="M2040 66 h44" stroke="#3B3630" stroke-width="2" stroke-dasharray="8 5" marker-end="url(#ah)"/>
@@ -281,38 +281,38 @@
 <text x="1258" y="775" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">SOL-PVD base_rate_suite is -395. Flagged and</text>
 <text x="1258" y="791" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">excluded, never priced from, in every</text>
 <text x="1258" y="807" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">environment.</text>
-<rect x="1220" y="978" width="380" height="498" rx="5" fill="#FBF8F3" stroke="#6B625A" stroke-width="2.5"/>
-<path d="M1221 979 h378 v54 h-378 z" fill="#EDE5D8"/>
-<line x1="1220" y1="1034" x2="1600" y2="1034" stroke="#6B625A" stroke-width="2.5"/>
-<text x="1236" y="1004" font-size="19" font-weight="700" fill="#141210" text-anchor="start">Delivery</text>
-<text x="1236" y="1022" font-size="12" font-weight="400" fill="#5A534B" text-anchor="start">One adapter, swappable providers</text>
+<rect x="1220" y="868" width="380" height="498" rx="5" fill="#FBF8F3" stroke="#6B625A" stroke-width="2.5"/>
+<path d="M1221 869 h378 v54 h-378 z" fill="#EDE5D8"/>
+<line x1="1220" y1="924" x2="1600" y2="924" stroke="#6B625A" stroke-width="2.5"/>
+<text x="1236" y="894" font-size="19" font-weight="700" fill="#141210" text-anchor="start">Delivery</text>
+<text x="1236" y="912" font-size="12" font-weight="400" fill="#5A534B" text-anchor="start">One adapter, swappable providers</text>
+<rect x="1240" y="924" width="340" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
+<rect x="1242" y="926" width="7" height="92" fill="#1F5C3D"/>
+<text x="1258" y="943" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="1258" y="964" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Channel adapter</text>
+<text x="1258" y="983" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Email if there is an address, SMS if there is</text>
+<text x="1258" y="999" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">only a number, flagged for a human if neither.</text>
 <rect x="1240" y="1034" width="340" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="1242" y="1036" width="7" height="92" fill="#1F5C3D"/>
 <text x="1258" y="1053" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
-<text x="1258" y="1074" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Channel adapter</text>
-<text x="1258" y="1093" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Email if there is an address, SMS if there is</text>
-<text x="1258" y="1109" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">only a number, flagged for a human if neither.</text>
+<text x="1258" y="1074" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Telnyx Email API</text>
+<text x="1258" y="1093" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Branded HTML with the PDF attached. One provider</text>
+<text x="1258" y="1109" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">across voice, SMS and email.</text>
 <rect x="1240" y="1144" width="340" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="1242" y="1146" width="7" height="92" fill="#1F5C3D"/>
 <text x="1258" y="1163" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
-<text x="1258" y="1184" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Telnyx Email API</text>
-<text x="1258" y="1203" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Branded HTML with the PDF attached. One provider</text>
-<text x="1258" y="1219" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">across voice, SMS and email.</text>
-<rect x="1240" y="1254" width="340" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
-<rect x="1242" y="1256" width="7" height="92" fill="#1F5C3D"/>
-<text x="1258" y="1273" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
-<text x="1258" y="1294" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Telnyx SMS (10DLC)</text>
-<text x="1258" y="1313" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Short message plus a signed link to the PDF.</text>
-<text x="1258" y="1329" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Blocked on carrier registration, not on code.</text>
-<rect x="1240" y="1364" width="340" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
-<rect x="1242" y="1366" width="7" height="92" fill="#2E2A26"/>
-<text x="1258" y="1383" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
-<text x="1258" y="1404" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Backup sender</text>
-<text x="1258" y="1423" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Amazon SES behind the same adapter. If every</text>
-<text x="1258" y="1439" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">sender fails the proposal stays queued and reads</text>
-<text x="1258" y="1455" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">as not sent.</text>
-<circle cx="1561" cy="1383" r="12" fill="#FFFFFF" stroke="#141210" stroke-width="2.2"/>
-<text x="1561" y="1388" font-size="14" font-weight="700" fill="#141210" text-anchor="middle">4</text>
+<text x="1258" y="1184" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Telnyx SMS (10DLC)</text>
+<text x="1258" y="1203" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Short message plus a signed link to the PDF.</text>
+<text x="1258" y="1219" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Blocked on carrier registration, not on code.</text>
+<rect x="1240" y="1254" width="340" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
+<rect x="1242" y="1256" width="7" height="92" fill="#2E2A26"/>
+<text x="1258" y="1273" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="1258" y="1294" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Backup sender</text>
+<text x="1258" y="1313" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Amazon SES behind the same adapter. If every</text>
+<text x="1258" y="1329" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">sender fails the proposal stays queued and reads</text>
+<text x="1258" y="1345" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">as not sent.</text>
+<circle cx="1561" cy="1273" r="12" fill="#FFFFFF" stroke="#141210" stroke-width="2.2"/>
+<text x="1561" y="1278" font-size="14" font-weight="700" fill="#141210" text-anchor="middle">4</text>
 <rect x="1640" y="110" width="340" height="608" rx="5" fill="#FBF8F3" stroke="#6B625A" stroke-width="2.5"/>
 <path d="M1641 111 h338 v54 h-338 z" fill="#EDE5D8"/>
 <line x1="1640" y1="166" x2="1980" y2="166" stroke="#6B625A" stroke-width="2.5"/>
@@ -420,9 +420,9 @@
 <rect x="1422" y="1504" width="7" height="92" fill="#2E2A26"/>
 <text x="1438" y="1521" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="1438" y="1542" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Dashboards and SLOs</text>
-<text x="1438" y="1561" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">p95 per tool and per channel, containment</text>
-<text x="1438" y="1577" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">rate, escalation rate, delivery success,</text>
-<text x="1438" y="1593" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">cache staleness.</text>
+<text x="1438" y="1561" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Against docs/latency-target.md: chat first</text>
+<text x="1438" y="1577" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">signal p50 1.5s, voice tool webhooks p95</text>
+<text x="1438" y="1593" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">300ms, plus containment and escalation rates.</text>
 <rect x="1760" y="1502" width="320" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="1762" y="1504" width="7" height="92" fill="#2E2A26"/>
 <text x="1778" y="1521" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
@@ -524,7 +524,7 @@
 <path d="M1410 276 L1410 262" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
 <path d="M1410 482 L1410 496" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
 <path d="M990 1020 L990 1034" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
-<path d="M1160 1082 L1212 1082 L1212 972 L1240 1082" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M1160 1082 L1212 1082 L1212 972 L1240 972" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
 <rect x="1166.7" y="1008" width="90.6" height="17" rx="3" fill="#FFFFFF" fill-opacity="0.94"/>
 <text x="1212" y="1020" font-size="12" font-weight="600" fill="#141210" text-anchor="middle">send_proposal</text>
 <path d="M1580 214 L1628 214 L1628 544" fill="none" stroke="#3B3630" stroke-width="2" stroke-linejoin="round"/>
@@ -532,37 +532,32 @@
 <path d="M1628 324 L1660 324" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
 <path d="M1628 434 L1660 434" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
 <path d="M1628 544 L1660 544" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
-<rect x="1440" y="176" width="176" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.94"/>
-<text x="1604" y="190" font-size="12" font-weight="600" fill="#141210" text-anchor="end">per-vendor adapters</text>
+<g transform="translate(1622 380) rotate(-90)"><rect x="-63.9" y="-9" width="127.8" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.96"/><text x="0" y="4" font-size="12" font-weight="600" fill="#141210" text-anchor="middle">per-vendor adapters</text></g>
 <path d="M1660 654 L1600 654 L1600 434 L1580 434" fill="none" stroke="#3B3630" stroke-width="2" stroke-dasharray="8 5" marker-end="url(#ah)" stroke-linejoin="round"/>
-<rect x="1539.2" y="688" width="121.6" height="17" rx="3" fill="#FFFFFF" fill-opacity="0.94"/>
-<text x="1600" y="700" font-size="12" font-weight="600" fill="#141210" text-anchor="middle">seeded once, today</text>
+<g transform="translate(1595 548) rotate(-90)"><rect x="-60.8" y="-9" width="121.6" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.96"/><text x="0" y="4" font-size="12" font-weight="600" fill="#141210" text-anchor="middle">seeded once, today</text></g>
 <path d="M1580 544 L1612 544 L1612 738 L1810 738 L1810 758" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
 <rect x="1669.8" y="719" width="84.4" height="17" rx="3" fill="#FFFFFF" fill-opacity="0.94"/>
 <text x="1712" y="731" font-size="12" font-weight="600" fill="#141210" text-anchor="middle">live updates</text>
 <path d="M1240 654 L1204 654 L1204 1192 L1240 1192" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
-<rect x="1164.9" y="888" width="78.2" height="17" rx="3" fill="#FFFFFF" fill-opacity="0.94"/>
-<text x="1204" y="900" font-size="12" font-weight="600" fill="#141210" text-anchor="middle">signed link</text>
+<g transform="translate(1199 880) rotate(-90)"><rect x="-39.1" y="-9" width="78.2" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.96"/><text x="0" y="4" font-size="12" font-weight="600" fill="#141210" text-anchor="middle">signed link</text></g>
 <path d="M1240 972 L1232 972 L1232 1302" fill="none" stroke="#3B3630" stroke-width="2" stroke-linejoin="round"/>
 <path d="M1232 1082 L1240 1082" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
 <path d="M1232 1192 L1240 1192" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
 <path d="M1232 1302 L1240 1302" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
 <path d="M740 979 L766 979 L766 759 L740 759" fill="none" stroke="#3B3630" stroke-width="2" stroke-dasharray="8 5" marker-end="url(#ah)" stroke-linejoin="round"/>
-<rect x="778" y="852" width="126" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.94"/>
-<text x="782" y="866" font-size="12" font-weight="600" fill="#141210" text-anchor="start">supervises the call</text>
+<g transform="translate(779 870) rotate(-90)"><rect x="-63.9" y="-9" width="127.8" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.96"/><text x="0" y="4" font-size="12" font-weight="600" fill="#141210" text-anchor="middle">supervises the call</text></g>
 <path d="M440 642 L426 642 L426 1082 L440 1082" fill="none" stroke="#3B3630" stroke-width="2" stroke-dasharray="8 5" marker-end="url(#ah)" stroke-linejoin="round"/>
-<rect x="300" y="1112" width="104" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.94"/>
-<text x="304" y="1126" font-size="12" font-weight="600" fill="#141210" text-anchor="start">on outage</text>
+<g transform="translate(409 880) rotate(-90)"><rect x="-32.9" y="-9" width="65.8" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.96"/><text x="0" y="4" font-size="12" font-weight="600" fill="#141210" text-anchor="middle">on outage</text></g>
 <path d="M360 862 L398 862 L398 518 L800 518" fill="none" stroke="#3B3630" stroke-width="2" stroke-dasharray="8 5" marker-end="url(#ah)" stroke-linejoin="round"/>
 <rect x="470" y="492" width="270" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.94"/>
 <text x="474" y="506" font-size="12" font-weight="600" fill="#141210" text-anchor="start">secrets at boot, never in the bundle</text>
 <path d="M1810 1256 L1810 1406 L810 1406 L810 972 L820 972" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
 <path d="M810 1406 L400 1406 L400 972 L440 972" fill="none" stroke="#3B3630" stroke-width="2" marker-end="url(#ah)" stroke-linejoin="round"/>
-<rect x="1060" y="1382" width="470" height="20" rx="3" fill="#FFFFFF" fill-opacity="0.96"/>
-<text x="1064" y="1398" font-size="13" font-weight="600" fill="#141210" text-anchor="start">staff actions: take over the call · accept and send</text>
+<rect x="616" y="1382" width="474" height="20" rx="3" fill="#FFFFFF" fill-opacity="0.96"/>
+<text x="620" y="1398" font-size="13" font-weight="600" fill="#141210" text-anchor="start">staff actions: take over the call · accept and send</text>
 <path d="M590 1146 L590 1446" fill="none" stroke="#3B3630" stroke-width="2" stroke-dasharray="8 5" marker-end="url(#ah)" stroke-linejoin="round"/>
 <path d="M990 1256 L990 1446" fill="none" stroke="#3B3630" stroke-width="2" stroke-dasharray="8 5" marker-end="url(#ah)" stroke-linejoin="round"/>
 <path d="M1410 1366 L1410 1446" fill="none" stroke="#3B3630" stroke-width="2" stroke-dasharray="8 5" marker-end="url(#ah)" stroke-linejoin="round"/>
-<rect x="1012" y="1300" width="332" height="20" rx="3" fill="#FFFFFF" fill-opacity="0.96"/>
-<text x="1016" y="1316" font-size="13" font-weight="600" fill="#141210" text-anchor="start">spans · structured logs · metrics · audit</text>
+<rect x="848" y="1300" width="336" height="20" rx="3" fill="#FFFFFF" fill-opacity="0.96"/>
+<text x="852" y="1316" font-size="13" font-weight="600" fill="#141210" text-anchor="start">spans · structured logs · metrics · audit</text>
 </svg>
