@@ -21,7 +21,7 @@ staff console behind three scoped logins. Same agent on both channels, same tool
 | Latency target and its justification | [`docs/latency-target.md`](docs/latency-target.md) |
 | How this was built, and what the agents caught in each other's work | [`docs/how-this-was-built.md`](docs/how-this-was-built.md) |
 | At least one net-new tool | `availability_service` — see Assumptions below |
-| Native platform export | Telnyx assistant provisioned from source by [`scripts/telnyx/provision.mjs`](scripts/telnyx/provision.mjs) |
+| Native platform export | [`exports/telnyx-assistant.json`](exports/telnyx-assistant.json) — the live assistant, 25 tools, secret redacted. Provisioned from source by [`scripts/telnyx/provision.mjs`](scripts/telnyx/provision.mjs) |
 
 ## Try it
 
@@ -84,12 +84,16 @@ Worth being precise about, because a demo that overstates itself is worse than a
 
 **Real:** the deployed site and API; Postgres with row-level security enforcing role scoping;
 Sol answering on chat and on a real phone number; live transcripts streaming to the supervisor
-console; the rules engine and all ten inquiry verdicts; proposal generation with PDFs; 241 passing
+console; the rules engine and all ten inquiry verdicts; proposal generation with PDFs, and a proposal email that has actually been delivered; 308 passing
 tests.
 
 **Not yet exercised on a live call:** the supervisor ladder. The mechanism is built from documented
 Telnyx primitives, but whether a supervisor leg attaches to an `ai_assistant_start` leg is not
 documented either way, and a conference-based fallback is written down for if it does not.
+
+**Email:** proven end to end. Telnyx's shared sending domain is a sandbox that only delivers to the
+account's own verified address, so every send is routed there; verifying a real domain removes that
+limit and is a DNS change, not a code change.
 
 **Not live:** SMS delivery. US carrier registration (10DLC) takes days and was started late; the
 delivery layer is complete and falls back to email, with the channel chosen by config rather than
@@ -106,5 +110,5 @@ npm run seed:users
 npm run dev
 ```
 
-`npm run typecheck` · `npx vitest run` (241 tests) · `npm run data:check` verifies the generated
+`npm run typecheck` · `npx vitest run` (308 tests) · `npm run data:check` verifies the generated
 data still matches its sources.

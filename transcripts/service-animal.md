@@ -13,8 +13,8 @@ Every tool call and timing below is real.
 
 - `get_policy` — Policy 8, 4, 5 — Pets and service animals _(cites: Policy 8 — Pets and service animals; Policy 4 — No-show policy; Policy 5 — Service recovery window)_
 
-**Sol:** We don't allow pets, but service animals are always welcome, free of charge, at every property. We may ask what task the animal is trained to do, but we won't ask for certification or documentation. Anything else I can help set up for your stay?
+**Sol:** Yes — pets aren't allowed at any Solstice property, but service animals are always welcome and stay free of charge, no exceptions. Front desk staff may ask what task the animal is trained to perform, but they won't ask for certification or documentation. Anything else I can help set up for your stay?
 
-<sub>first token 3181ms · turn 3939ms</sub>
+<sub>first token 2890ms · turn 4000ms</sub>
 
 ---

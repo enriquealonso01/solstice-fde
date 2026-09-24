@@ -590,8 +590,11 @@ function buildToolList(toolNames, urls, transferTarget, headers) {
         skipped.push(`${name} (DEMO_PHONE not set)`)
         continue
       }
+      // 25s, not 5s: a human needs time to pick up. At 5 seconds the caller hears "I'm having
+      // trouble connecting you" before the phone has finished its first ring.
       tools.push({
         type: 'transfer',
+        timeout_ms: 25000,
         transfer: {
           targets: [{ to: transferTarget, name: 'Solstice front desk' }],
           custom_headers: [],
@@ -839,7 +842,12 @@ async function stepAssistant(env, baseUrl, sol) {
   }
 
   const headers = authHeaders(secret, integrationSecretId)
-  const { tools, skipped } = buildToolList(toolNames, urls, env.DEMO_PHONE || null, headers)
+  // TRANSFER_TARGET, not DEMO_PHONE. Enrique demos by calling from DEMO_PHONE, so using it as the
+  // transfer destination tries to connect him to himself and fails while he is on the line.
+  // Point it at a second number, or at the browser supervisor's SIP URI so the handoff visibly
+  // lands in the staff console on screen.
+  const transferTarget = env.TRANSFER_TARGET || env.TELNYX_SIP_URI || env.DEMO_PHONE || null
+  const { tools, skipped } = buildToolList(toolNames, urls, transferTarget, headers)
   record('tools compiled', 'REUSED', `${tools.length} tools`)
   console.log(`      concierge + routing -> ${urls.tools}/<name>   (flat body)`)
   console.log(`      group               -> ${urls.groupTool}   ({ tool, args })`)

@@ -13,8 +13,8 @@ Every tool call and timing below is real.
 
 - `get_property_info` — SOL-CHI: no chain-wide parking rate _(cites: Solstice Chicago Riverwalk (SOL-CHI) property record; Policy 12 — Parking and valet)_
 
-**Sol:** I don't have a set parking rate to quote for that property — pricing varies by hotel and isn't in our system chain-wide. The front desk team at the Chicago Riverwalk can give you the current nightly rate directly.
+**Sol:** I can't quote a parking rate — we don't have a chain-wide price and it varies by property. The Chicago Riverwalk front desk can confirm the current rate for you.
 
-<sub>first token 2381ms · turn 3134ms</sub>
+<sub>first token 2637ms · turn 3197ms</sub>
 
 ---

@@ -38,7 +38,7 @@ Legend: **DONE** verified working · **PARTIAL** exists, not finished or not ver
 | C3 | Short integration recommendation, PMS / CRS / loyalty | **DONE** | `docs/integration-recommendation.md` |
 | C4 | The "is the AI coming for our jobs" answer | **DONE** | Same file, grounded in Policy 6 admitting its own limit |
 | C5 | Source code and agent configuration `.md` | **DONE** | `agent/sol.md`, 19-row guardrail table |
-| C6 | A few sample transcripts | **PARTIAL** | 4 captured, all CHAT. No voice transcript exported, and they predate the latest prompt changes |
+| C6 | A few sample transcripts | **DONE** | 4 chat transcripts recaptured against the current prompt, plus `transcripts/voice-call.md`: a real 5m44s phone call exported from the database with its tool trace |
 | C7 | Native export from the platform of choice (.zip, .json) | **DONE** | `exports/telnyx-assistant.json`, 25 tools, secret redacted, regenerate with `npm run telnyx:export` |
 | C8 | Be ready to open the hood and change something live | **PARTIAL** | The path exists (`thresholds.ts`, one line, re-runs) but has never been rehearsed |
 
@@ -70,11 +70,17 @@ Legend: **DONE** verified working · **PARTIAL** exists, not finished or not ver
 
 ## F. What to do, in priority order
 
-**P0, required for the submission itself**
-1. Export the Telnyx assistant to a committed JSON file (C7)
-2. Prove one proposal email actually arrives (E)
-3. Recapture transcripts against the current prompt, and export one VOICE transcript (C6)
-4. Write the "how this was built with agents" section (D4)
+**P0 — ALL DONE 2026-09-24**
+1. ~~Export the Telnyx assistant~~ `exports/telnyx-assistant.json`
+2. ~~Prove a proposal email arrives~~ PRP-2006 sent; four bugs fixed on the way
+3. ~~Recapture transcripts, export a voice one~~ 5 transcripts, one from a real call
+4. ~~"How this was built with agents"~~ `docs/how-this-was-built.md`
+
+Found while exporting the voice transcript, both now fixed:
+- The transfer target was Enrique's own number, so Sol tried to transfer him to himself mid-call
+  and the caller heard "I'm having trouble connecting you". Now points at the browser supervisor
+  SIP URI, so a handoff visibly lands in the staff console.
+- The transfer timeout was 5s, shorter than one ring. Now 25s.
 
 **P1, wins the panel**
 5. Verify the supervisor ladder on a real call (E, D5)
