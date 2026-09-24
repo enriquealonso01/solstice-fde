@@ -17,6 +17,10 @@ Deadline: submit ~2026-09-27.
 | D8 | Email | Telnyx Email API (GA 2026-08-05); Resend documented as fallback |
 | D9 | PDF | @react-pdf/renderer server-side, stored in Supabase Storage, signed URL |
 | D10 | System map | React Flow, tabs per subsystem + zoom-out; .drawio exported for deliverable |
+| D12 | Browser voice | Mic inside the chat bubble, WebRTC to Sol, same assistant as the phone |
+| D13 | Supervisor | Full ladder: listen, whisper, barge, take over |
+| D14 | SMS | Registering fresh 2026-09-24; email default at submission, SMS if it clears by panel |
+| D15 | Email | Telnyx Email API confirmed, Resend dropped |
 
 ## D11 — NEEDS ENRIQUE'S CONFIRMATION: one agent definition, two runtimes
 
