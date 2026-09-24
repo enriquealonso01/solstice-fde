@@ -69,10 +69,9 @@ node scripts/telnyx/provision.mjs --buy --area-code=305
 
 ### 3. Two things only Enrique can do
 
-1. **Telnyx portal -> SIP Connections -> `Solstice FDE - Supervisor WebRTC` -> confirm
-   "Receive SIP URI calls" is ENABLED.** The script sets `sip_uri_calling_preference:
-   "unrestricted"` via the API, which is the same switch, but confirm it visually. Without it the
-   supervisor leg cannot reach the browser and listen / whisper / barge all fail with a dial error.
+1. ~~**Confirm "Receive SIP URI calls" is enabled.**~~ **Done and verified via the API on
+   2026-09-24**: the connection reports `sip_uri_calling_preference: unrestricted`. Re-check only
+   if the connection is ever recreated.
 2. **Telnyx portal -> API Keys -> copy the Public Key into `TELNYX_PUBLIC_KEY` in `.env`.**
    Until it is set, `/api/telnyx` accepts unverified webhooks and logs
    `WEBHOOK SIGNATURE NOT VERIFIED` on every event. That is acceptable locally and unacceptable
@@ -231,27 +230,47 @@ const r = await fetch('/api/voice/credentials', {
 A `group_sales` token must get **403**. That is the audio-path mirror of the RLS rule in
 `supabase/schema.sql` that keeps Group Sales out of guest conversations.
 
-### V5 — THE ONE THAT MUST BE TESTED FIRST: supervision of an assistant leg
+### V5 — the supervisor ladder
 
-**This is the riskiest assumption in the whole voice path.** Telnyx documents
-`supervise_call_control_id` for ordinary Call Control legs, and documents `ai_assistant_start`.
-It does not document whether supervision works against a leg that is currently running an AI
-assistant. Mechanically it is an ordinary leg, so it should. Nothing confirms it either way.
+**Status 2026-09-24: `supervise_call_control_id` against an `ai_assistant_start` leg WORKS.** The
+leg was created successfully on the first live test. What failed was our own webhook, which
+answered the supervisor leg and hung it up. Fixed; see "The supervisor-leg outage" below.
 
-Test it on the very first funded call, before building any demo choreography on top:
+Retest in this order. The ordering matters: **the browser must be registered before anything is
+dialled**, because the supervisor leg rings the browser, and if nothing is registered at that SIP
+address there is nobody to answer.
 
-1. Call the number, let Sol answer.
-2. With the browser registered (V4), `POST /api/voice/supervisor { session_id, action: "listen" }`.
-3. The browser should ring. Answer it. You should hear both sides; neither side hears you.
-4. `action: "whisper"` -> only Sol's side hears you. `action: "barge"` -> both do.
-5. `action: "takeover"` -> Sol goes silent, the guest is still connected, you are audible.
-   `sessions.status` becomes `taken_over` and a `supervisor` message row is written.
+1. **Deploy first.** The fix is code, not configuration. Nothing below is meaningful until the
+   `telnyx` and `voice` functions are redeployed.
+2. **Open the supervisor dashboard and confirm the browser registered.** It should call
+   `POST /api/voice/credentials`, get a `login_token`, and register with `@telnyx/webrtc`. In the
+   browser console the `TelnyxRTC` client must reach `registered` / `ready` before step 4.
+   If it does not register, stop: the ladder cannot work and the fault is in the browser client,
+   not the webhook.
+3. **Call `+1 305 786 6217`** from a phone. Sol should answer and the session should appear live.
+4. **Click Listen.** The browser should ring within a second or two. Answer it. You hear both
+   sides; neither side hears you.
+5. **Whisper**, then **Barge**, then **Take over**.
 
-**If step 3 fails** with a "cannot supervise" / "invalid call state" error, switch to the
-conference fallback. It is documented in full at the top of
-`netlify/functions/voice/supervisor.ts` — assistant runs inside a conference, supervisor joins the
-conference with `supervisor_role`. Conference + assistant is explicitly documented by Telnyx as a
-real combination. The change is three call sites; the persisted state is identical.
+After step 4, check the session row:
+
+```sql
+select status, supervisor_call_control_id, supervisor_role from sessions where id = '<session>';
+```
+
+`supervisor_call_control_id` and `supervisor_role` are now written on every successful rung, so
+the dashboard can show which rung is live. Before this fix they were null on every session.
+
+**Reading a failure correctly.** In `tool_invocations` for that session:
+
+| What you see | What it means |
+|---|---|
+| `supervisor.leg_opened` then `supervisor.leg_ended` ~2s later, with `voice.answer FAILED: 90018` in between | The old outage. Our webhook answered the supervisor leg. Should be impossible now. |
+| `supervisor.leg_opened`, then `leg_ended` with NO `voice.answer` rows | The dial worked and our webhook stayed out of it. The browser did not answer: it was not registered, or "Receive SIP URI calls" is off. |
+| `supervisor.leg_opened` and no `leg_ended` | The leg is up. If you hear nothing, it is an audio/registration issue, not a control-plane one. |
+
+**If the leg itself is rejected** with "cannot supervise" / "invalid call state", fall back to the
+conference shape documented in full at the top of `netlify/functions/voice/supervisor.ts`.
 
 ### V6 — the archive closes cleanly
 
@@ -283,6 +302,51 @@ config can move a function off its default `/.netlify/functions/` URL, which wou
 existing redirect in `netlify.toml`, and `netlify.toml` is not ours to edit.
 
 ---
+
+## The supervisor-leg outage (2026-09-24)
+
+Worth reading before touching the webhook, because the failure looked exactly like a Telnyx
+limitation and was not one.
+
+Dialling the supervisor leg produces call events **on our own webhook**, twice: once for the
+outbound leg on the call control application, and once for the inbound leg terminating on the
+browser's Credential SIP Connection, whose `webhook_event_url` is also `/api/telnyx`.
+
+The original guard checked `client_state.kind === 'supervisor'` and `direction === 'outgoing'`.
+Neither survives on the leg that arrives at the credential connection: it has no `client_state`
+of ours and its `direction` is `incoming`. So the webhook treated the supervisor's browser as a
+brand new guest call, ran caller-ID identification against the SIP user, answered the leg, and
+started Sol on it. Our own handler tore the supervisor down inside two seconds, which read as
+"supervision does not work against an assistant leg".
+
+The fix is in `netlify/functions/telnyx/_lib/legs.ts`: four independent signals, any one of which
+proves a leg is not a guest (our `client_state` marker, the SIP connection id, a `to` addressed at
+the supervisor SIP URI or username, and outbound direction), plus a **positive allowlist** for
+guest calls: an inbound call addressed to the number we own, and nothing else, may create a
+session. A denylist failed because it did not know about a leg shape it had never seen; an
+allowlist fails closed on the next unfamiliar one.
+
+`netlify/functions/telnyx/_lib/legs.test.ts` pins all of it, including the exact payload that
+broke us, so this never needs a paid call to verify again.
+
+## Verified configuration (2026-09-24)
+
+Checked directly against the API, no phone call required:
+
+- Credential SIP Connection `Solstice FDE - Supervisor WebRTC` (`3056182478436828555`) is active
+  with `sip_uri_calling_preference: unrestricted`. **That is the "Receive SIP URI calls" toggle,
+  and it is already on** — the manual portal step listed earlier is satisfied.
+- Telephony credential `solstice-supervisor-webrtc` is attached to that connection
+  (`resource_id: connection:3056182478436828555`; note Telnyx exposes it as `resource_id`, not
+  `connection_id`), is not expired, and its `sip_username` matches `.env`.
+- `POST /v2/telephony_credentials/{id}/token` returns HTTP 201 and a valid three-part JWT.
+  **Lifetime is ~24 hours**, not the minutes that "short-lived" implies. The endpoint now reads
+  `exp` off the token and returns the real `expires_at` / `expires_in_seconds` rather than a
+  guess. The honest mitigation is that the token is scoped to one credential, carries no SIP
+  password, and is revoked by deleting the credential.
+
+What remains genuinely unverified is whether the browser client registers and answers, which
+needs step 2 above.
 
 ## Known gaps
 

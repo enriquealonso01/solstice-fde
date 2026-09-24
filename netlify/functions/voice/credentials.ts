@@ -33,9 +33,31 @@ export interface VoiceCredentialResponse {
   /** Where this browser will be reachable once registered. supervisor.ts dials exactly this. */
   sip_uri?: string
   sip_username?: string
-  /** Advisory only; the JWT carries its own expiry. */
+  /** Read from the JWT's own `exp` claim, not guessed. Telnyx currently issues ~24h tokens. */
   expires_in_seconds?: number
+  expires_at?: string
   error?: string
+}
+
+/**
+ * Read the `exp` claim so the browser can refresh before the token dies, and so we report the
+ * real lifetime rather than an assumed one. Telnyx issues roughly 24h tokens today; that is not
+ * as short as the name "short-lived" suggests, and the honest mitigation is that the token is
+ * scoped to one credential, carries no SIP password, and is revoked by deleting the credential.
+ */
+function tokenExpiry(jwt: string): { expires_in_seconds?: number; expires_at?: string } {
+  const parts = jwt.split('.')
+  if (parts.length !== 3) return {}
+  try {
+    const claims = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8')) as { exp?: number }
+    if (typeof claims.exp !== 'number') return {}
+    return {
+      expires_in_seconds: Math.max(0, claims.exp - Math.floor(Date.now() / 1000)),
+      expires_at: new Date(claims.exp * 1000).toISOString(),
+    }
+  } catch {
+    return {}
+  }
 }
 
 const ALLOWED_ROLES = new Set(['concierge', 'admin'])
@@ -83,7 +105,7 @@ export async function handleCredentials(req: Request): Promise<Response> {
       login_token: token,
       sip_uri: sipUri,
       sip_username: envOrNull('TELNYX_SIP_USERNAME') ?? undefined,
-      expires_in_seconds: Number(envOrNull('TELNYX_WEBRTC_TOKEN_TTL') ?? '3600'),
+      ...tokenExpiry(token),
     },
     200,
     // Belt and braces: never let a CDN or browser cache a credential.

@@ -165,7 +165,7 @@ const TOOLS: {
       properties: { note: { type: 'string' } },
     },
     run: async (inquiry_id, input) => {
-      const proposal = findProposalByInquiry(inquiry_id)
+      const proposal = await findProposalByInquiry(inquiry_id)
       if (!proposal) {
         return { ok: false, grounded: false, error: 'There is no proposal on this enquiry yet.' }
       }
@@ -182,7 +182,7 @@ const TOOLS: {
       'Send the current proposal to the customer. Refuses if it carries a flag and has not been approved.',
     input_schema: { type: 'object', properties: {} },
     run: async (inquiry_id) => {
-      const proposal = findProposalByInquiry(inquiry_id)
+      const proposal = await findProposalByInquiry(inquiry_id)
       if (!proposal) {
         return { ok: false, grounded: false, error: 'There is no proposal on this enquiry yet.' }
       }
@@ -349,7 +349,7 @@ export async function runAssistant(args: {
 /** Deterministic follow-ups, keyed off where this enquiry actually is. No model call. */
 export async function buildSuggestions(inquiryId: string): Promise<string[]> {
   const evaluation = await evaluate_group_rules({ inquiry_id: inquiryId })
-  const proposal = findProposalByInquiry(inquiryId)
+  const proposal = await findProposalByInquiry(inquiryId)
   const out: string[] = []
 
   if (evaluation.ok && evaluation.data) {

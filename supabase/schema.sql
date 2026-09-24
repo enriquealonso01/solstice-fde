@@ -32,6 +32,9 @@ create table sessions (
   intent         text,
   call_control_id text,
   telnyx_conversation_id text,
+  supervisor_call_control_id text,
+  supervisor_role text check (supervisor_role in ('monitor','whisper','barge')),
+  insights jsonb,
   started_at     timestamptz not null default now(),
   ended_at       timestamptz
 );

@@ -13,13 +13,19 @@ import {
 } from '../../../../netlify/functions/group/proposal'
 import {
   canSend,
+  durabilityNote,
+  findProposalByInquiry,
   getProposal,
+  listProposals,
+  markSent,
+  proposalCodeFor,
   resetProposalStore,
 } from '../../../../netlify/functions/group/store'
 import {
   approve,
   create_inquiry,
   generate_proposal,
+  materialiseProposal,
   override_proposal,
   parse_inquiry,
   price_block,
@@ -40,8 +46,8 @@ describe('the proposal artifacts', () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
     expect(generated.ok).toBe(true)
 
-    const stored = getProposal(generated.data!.proposal_id)!
-    const bytes = stored.pdf_bytes!
+    const stored = (await getProposal(generated.data!.proposal_id))!
+    const bytes = (await materialiseProposal(stored))!.pdfBytes!
     expect(bytes.length).toBeGreaterThan(1000)
 
     // PDF magic number, and a trailer, which an HTML file would not have.
@@ -53,9 +59,10 @@ describe('the proposal artifacts', () => {
 
   it('names the PDF after the customer, not after a uuid', async () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
-    const stored = getProposal(generated.data!.proposal_id)!
-    expect(pdfFilename(stored.document)).toContain('Harlow')
-    expect(pdfFilename(stored.document)).toMatch(/\.pdf$/)
+    const stored = (await getProposal(generated.data!.proposal_id))!
+    const { document } = (await materialiseProposal(stored))!
+    expect(pdfFilename(document)).toContain('Harlow')
+    expect(pdfFilename(document)).toMatch(/\.pdf$/)
   })
 
   it('renders branded HTML carrying the same number as the PDF', async () => {
@@ -71,7 +78,7 @@ describe('the proposal artifacts', () => {
 
   it('keeps money as integer cents on the pricing payload', async () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
-    const pricing = getProposal(generated.data!.proposal_id)!.pricing
+    const pricing = (await getProposal(generated.data!.proposal_id))!.pricing
     expect(Number.isInteger(pricing.subtotal_cents)).toBe(true)
     expect(Number.isInteger(pricing.total_cents)).toBe(true)
     expect(Number.isInteger(pricing.discount_cents)).toBe(true)
@@ -149,10 +156,97 @@ describe('the proposal artifacts', () => {
   })
 })
 
+describe('generation is idempotent per enquiry', () => {
+  it('a rep clicking generate twice gets one proposal, not two', async () => {
+    const first = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    const second = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    const third = await generate_proposal({ inquiry_id: 'INQ-2001' })
+
+    expect(second.data!.proposal_id).toBe(first.data!.proposal_id)
+    expect(third.data!.proposal_id).toBe(first.data!.proposal_id)
+    expect(second.data!.replaced_existing).toBe(true)
+
+    const all = await listProposals()
+    expect(all.filter((p) => p.inquiry_id === 'INQ-2001')).toHaveLength(1)
+  })
+
+  it('derives the reference from the enquiry rather than a counter', async () => {
+    const generated = await generate_proposal({ inquiry_id: 'INQ-2009' })
+    // A counter gives PRP-0001 on one instance and PRP-0007 on another for the same enquiry.
+    expect(generated.data!.proposal_id).toBe('PRP-2009')
+    expect(proposalCodeFor('INQ-2009')).toBe('PRP-2009')
+  })
+
+  it('says so when it replaced an earlier draft', async () => {
+    await generate_proposal({ inquiry_id: 'INQ-2001' })
+    const again = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    expect(again.data!.human_summary).toContain('replaces the earlier draft')
+  })
+
+  it('re-prices the existing draft rather than leaving a stale one behind', async () => {
+    await generate_proposal({ inquiry_id: 'INQ-2009' })
+    const revised = await generate_proposal({ inquiry_id: 'INQ-2009', discount_pct: 16 })
+    const stored = (await getProposal(revised.data!.proposal_id))!
+    expect(stored.pricing.discount_pct).toBe(16)
+
+    const all = await listProposals()
+    expect(all.filter((p) => p.inquiry_id === 'INQ-2009')).toHaveLength(1)
+  })
+
+  it('opens a new revision rather than rewriting one the customer already has', async () => {
+    const first = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    const proposal = (await getProposal(first.data!.proposal_id))!
+    await markSent(proposal, 'email', 'a sales rep', 'b***@harlowvance.com')
+
+    const second = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    expect(second.data!.proposal_id).not.toBe(first.data!.proposal_id)
+    expect(second.data!.proposal_id).toBe('PRP-2001-2')
+    expect(second.data!.replaced_existing).toBe(false)
+
+    // The sent one is untouched history.
+    const sent = (await getProposal(first.data!.proposal_id))!
+    expect(sent.status).toBe('sent')
+  })
+})
+
+describe('durability is never quietly assumed', () => {
+  it('reports persisted:false and says so in words when there is no database', async () => {
+    // These tests run with no SUPABASE_URL, which is exactly the in-memory case that used to
+    // masquerade as persistence: generate_proposal returned an id and the next request had
+    // never heard of it.
+    const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    expect(generated.data!.persisted).toBe(false)
+    expect(generated.data!.human_summary).toContain('only held in memory')
+
+    const stored = (await getProposal(generated.data!.proposal_id))!
+    expect(stored.persisted).toBe(false)
+    expect(durabilityNote(stored)).toContain('disappear')
+  })
+
+  it('still finds a proposal it generated, so the send path works in the fallback too', async () => {
+    const generated = await generate_proposal({ inquiry_id: 'INQ-2002' })
+    const found = await getProposal(generated.data!.proposal_id)
+    expect(found?.proposal_id).toBe(generated.data!.proposal_id)
+    expect((await findProposalByInquiry('INQ-2002'))?.proposal_id).toBe(generated.data!.proposal_id)
+  })
+
+  it('rebuilds the letter from stored pricing, so a send can happen on another instance', async () => {
+    const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    const stored = (await getProposal(generated.data!.proposal_id))!
+
+    const materialised = await materialiseProposal(stored)
+    expect(materialised).not.toBeNull()
+    expect(materialised!.document.company_name).toBe('Harlow & Vance Consulting')
+    expect(materialised!.document.total_cents).toBe(stored.pricing.total_cents)
+    expect(materialised!.document.rooms).toBe(18)
+    expect(materialised!.pdfBytes).not.toBeNull()
+  })
+})
+
 describe('the approval gate', () => {
   it('lets a clean proposal through without an approval', async () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
-    const proposal = getProposal(generated.data!.proposal_id)!
+    const proposal = (await getProposal(generated.data!.proposal_id))!
     expect(proposal.status).toBe('draft')
     expect(canSend(proposal).allowed).toBe(true)
   })
@@ -163,7 +257,7 @@ describe('the approval gate', () => {
     expect(generated.data!.status).toBe('awaiting_approval')
 
     const proposalId = generated.data!.proposal_id
-    const gate = canSend(getProposal(proposalId)!)
+    const gate = canSend((await getProposal(proposalId))!)
     expect(gate.allowed).toBe(false)
     expect(gate.blocking.map((v) => v.rule_id).sort()).toEqual([
       'GRP-DISCOUNT-CEILING',
@@ -173,8 +267,8 @@ describe('the approval gate', () => {
     const sent = await send_proposal({ proposal_id: proposalId, actor: 'a sales rep' })
     expect(sent.ok).toBe(false)
     expect(sent.error).toContain('cannot go out yet')
-    expect(getProposal(proposalId)!.status).toBe('awaiting_approval')
-    expect(getProposal(proposalId)!.sent_at).toBeNull()
+    expect((await getProposal(proposalId))!.status).toBe('awaiting_approval')
+    expect((await getProposal(proposalId))!.sent_at).toBeNull()
   })
 
   it('records the refusal so the panel can see the guard fire', async () => {
@@ -200,7 +294,7 @@ describe('the approval gate', () => {
     })
     expect(approved.ok).toBe(true)
 
-    const proposal = getProposal(proposalId)!
+    const proposal = (await getProposal(proposalId))!
     expect(proposal.status).toBe('approved')
     expect(proposal.approved_by).toBe('Andrea Lin')
     expect(canSend(proposal).allowed).toBe(true)
@@ -226,7 +320,7 @@ describe('the approval gate', () => {
       rejected_by: 'Andrea Lin',
       reason: 'Too much discount for October.',
     })
-    const gate = canSend(getProposal(generated.data!.proposal_id)!)
+    const gate = canSend((await getProposal(generated.data!.proposal_id))!)
     expect(gate.allowed).toBe(false)
     expect(gate.human_reason).toContain('turned down')
   })
@@ -236,7 +330,7 @@ describe('the judgment moment, acted on', () => {
   it('prices at the compliant ceiling by default rather than at the number they asked for', async () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2009' })
     expect(generated.data!.discount_pct).toBe(15)
-    const pricing = getProposal(generated.data!.proposal_id)!.pricing
+    const pricing = (await getProposal(generated.data!.proposal_id))!.pricing
     expect(pricing.requested_discount_pct).toBe(17)
   })
 
@@ -252,7 +346,7 @@ describe('the judgment moment, acted on', () => {
     expect(overridden.ok).toBe(true)
     expect(overridden.data!.discount_pct).toBe(17)
 
-    const fresh = getProposal(overridden.data!.proposal_id)!
+    const fresh = (await getProposal(overridden.data!.proposal_id))!
     expect(fresh.pricing.discount_pct).toBe(17)
     expect(fresh.status).toBe('awaiting_approval')
     expect(canSend(fresh).allowed).toBe(false)

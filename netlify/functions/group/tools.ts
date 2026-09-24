@@ -23,6 +23,7 @@ import {
   validatePropertyData,
   nightsBetween,
   formatUsd,
+  rateFieldForRoomType,
   type DecisionOption,
   type EvaluationResult,
   type PricedBlock,
@@ -47,6 +48,7 @@ import {
 import {
   buildProposalDocument,
   pdfFilename,
+  type ProposalDocument,
   renderProposalHtml,
   renderProposalPdf,
   renderProposalText,
@@ -54,17 +56,19 @@ import {
 } from './proposal'
 import {
   approveProposal,
+  cachePdf,
+  cachedPdf,
   canSend,
+  durabilityNote,
   findProposalByInquiry,
   getProposal,
   hostPdf,
   markAwaitingApproval,
   markSent,
-  newAccessToken,
-  nextProposalId,
-  putProposal,
   rejectProposal,
   requiresApproval,
+  reserveProposalSlot,
+  saveProposal,
   type StoredProposal,
 } from './store'
 
@@ -565,6 +569,11 @@ export interface GenerateProposalPayload {
   proposal_id: string
   status: StoredProposal['status']
   requires_approval: boolean
+  /** False means this proposal exists only in one server's memory and the next request will
+   *  not find it. Surfaced rather than assumed: that failure once looked exactly like success. */
+  persisted: boolean
+  /** True when this updated the draft already on the enquiry instead of adding a second one. */
+  replaced_existing: boolean
   verdicts: RuleVerdict[]
   discount_pct: number
   total: number
@@ -651,7 +660,12 @@ export async function generate_proposal(
   }
   for (const referral of evaluation.referrals) customerNotes.push(referral)
 
-  const proposalId = nextProposalId()
+  // Reserve the slot BEFORE rendering, because the code is baked into the PDF, its filename
+  // and its link. Reserving also decides whether this replaces an existing draft, which is what
+  // makes a rep clicking generate twice produce one proposal rather than two.
+  const slot = await reserveProposalSlot(inquiry.inquiry_id)
+  const proposalId = slot.code
+
   const document = buildProposalDocument({
     proposal_id: proposalId,
     inquiry,
@@ -663,12 +677,12 @@ export async function generate_proposal(
     prepared_on: args.prepared_on ? new Date(args.prepared_on) : undefined,
   })
 
-  const accessToken = newAccessToken()
   let pdfBytes: Uint8Array | null = null
   let pdfUrl: string | null = null
   try {
     pdfBytes = await renderProposalPdf(document)
-    const hosted = await hostPdf(proposalId, pdfBytes, pdfFilename(document), accessToken)
+    cachePdf(proposalId, pdfBytes)
+    const hosted = await hostPdf(proposalId, pdfBytes, pdfFilename(document))
     pdfUrl = hosted.url
   } catch (err) {
     // A PDF that will not render must not take the proposal down with it: the email still
@@ -683,16 +697,11 @@ export async function generate_proposal(
   const text = renderProposalText(document, pdfUrl)
   const needsApproval = requiresApproval(evaluation.verdicts)
 
-  const stored: StoredProposal = {
-    proposal_id: proposalId,
-    inquiry_id: inquiry.inquiry_id,
+  const stored = await saveProposal({
+    slot,
     status: needsApproval ? 'awaiting_approval' : 'draft',
     verdicts: evaluation.verdicts,
-    line_items: block.line_items,
-    subtotal: block.subtotal,
-    discount_pct: block.discount_pct,
-    total: block.total,
-    // Integer cents. The dollar fields above exist only to satisfy shared/types.ts.
+    // Integer cents. The dollar fields on `Proposal` exist only to satisfy shared/types.ts.
     pricing: {
       line_items: block.line_items,
       subtotal_cents: block.subtotal_cents,
@@ -706,36 +715,18 @@ export async function generate_proposal(
           : undefined,
     },
     pdf_path: pdfUrl,
-    sent_via: null,
-    sent_to: null,
-    access_token: accessToken,
-    sent_at: null,
-    document,
-    pdf_bytes: pdfBytes,
-    pdf_url: pdfUrl,
-    approved_by: null,
-    approved_at: null,
-    approval_note: null,
-    rejected_reason: null,
-    history: [
-      {
-        at: new Date().toISOString(),
-        event: 'generated',
-        by: null,
-        detail: args.chosen_option ? `option: ${args.chosen_option}` : undefined,
-      },
-    ],
-  }
-  putProposal(stored)
+  })
 
   await auditLog('proposal.generated', `proposal:${proposalId}`, {
     inquiry_id: inquiry.inquiry_id,
     property_code: property.property_code,
     discount_pct: discount,
-    total: block.total,
+    total_cents: block.total_cents,
     requires_approval: needsApproval,
     chosen_option: args.chosen_option ?? null,
     pdf_hosted: Boolean(pdfUrl),
+    replaced_existing: slot.replaces_existing,
+    persisted: stored.persisted,
   })
 
   return ok(
@@ -743,6 +734,8 @@ export async function generate_proposal(
       proposal_id: proposalId,
       status: stored.status,
       requires_approval: needsApproval,
+      persisted: stored.persisted,
+      replaced_existing: slot.replaces_existing,
       verdicts: evaluation.verdicts,
       discount_pct: discount,
       total: block.total,
@@ -751,9 +744,14 @@ export async function generate_proposal(
       pdf_bytes_length: pdfBytes?.length ?? 0,
       html,
       text,
-      human_summary: needsApproval
-        ? `Proposal ${proposalId} is drafted at ${formatUsd(block.total_cents)}, and it is waiting on an approval before it can go anywhere. ${canSend(stored).human_reason}`
-        : `Proposal ${proposalId} is ready at ${formatUsd(block.total_cents)}. Every rule check passed, so it can go straight out.`,
+      human_summary:
+        (needsApproval
+          ? `Proposal ${proposalId} is drafted at ${formatUsd(block.total_cents)}, and it is waiting on an approval before it can go anywhere. ${canSend(stored).human_reason}`
+          : `Proposal ${proposalId} is ready at ${formatUsd(block.total_cents)}. Every rule check passed, so it can go straight out.`) +
+        (slot.replaces_existing
+          ? ` This replaces the earlier draft on the same enquiry rather than adding a second one.`
+          : '') +
+        durabilityNote(stored),
     },
     {
       citations: [
@@ -764,6 +762,87 @@ export async function generate_proposal(
   )
 }
 
+// ---------------------------------------------------------------- rehydration
+
+/**
+ * Rebuilds the customer-facing letter from a stored proposal.
+ *
+ * The `proposals` table holds numbers, not prose, which is deliberate: the letter is derived
+ * from the pricing that was approved plus the enquiry and the property, so the words a customer
+ * reads cannot drift away from the figures a manager signed off. It also means a proposal
+ * generated on one function instance can be sent from another, which is the bug this replaced.
+ *
+ * The PDF bytes come from this instance's cache when they are there, and are re-rendered when
+ * they are not. Re-rendering is deterministic, so the attachment is byte-for-byte the document
+ * whose link the customer already has.
+ */
+export async function materialiseProposal(
+  proposal: StoredProposal,
+): Promise<{ document: ProposalDocument; pdfBytes: Uint8Array | null } | null> {
+  const inquiry = await loadInquiry(proposal.inquiry_id)
+  if (!inquiry) return null
+  const property = await loadProperty(inquiry.preferred_property_code)
+  if (!property) return null
+
+  const context = await loadInquiryContext(inquiry.inquiry_id)
+  const evaluation = evaluateGroupRules({
+    inquiry,
+    property,
+    received_date: context?.date_received ?? null,
+    raw_values: { rooms_requested: context?.raw_rooms },
+    contact_present: await contactPresent(inquiry.inquiry_id),
+  })
+
+  const line = proposal.pricing.line_items[0]
+  const rate = sanctionedRate(property.property_code, line?.room_type ?? inquiry.room_type_preference)
+  const block: PricedBlock = {
+    ok: true,
+    property_code: property.property_code,
+    room_type: line?.room_type ?? inquiry.room_type_preference ?? 'Standard King',
+    rooms: line?.rooms ?? inquiry.rooms_requested ?? 0,
+    nights: line?.nights ?? 0,
+    rate_field: rateFieldForRoomType(line?.room_type ?? inquiry.room_type_preference),
+    nightly_rack_cents: rate.ok ? rate.cents : 0,
+    nightly_net_cents: Math.round((line?.nightly_rate ?? 0) * 100),
+    discount_pct: proposal.pricing.discount_pct,
+    subtotal_cents: proposal.pricing.subtotal_cents,
+    discount_cents: proposal.pricing.discount_cents,
+    total_cents: proposal.pricing.total_cents,
+    line_items: proposal.pricing.line_items,
+    subtotal: proposal.pricing.subtotal_cents / 100,
+    total: proposal.pricing.total_cents / 100,
+  }
+
+  const customerNotes: string[] = []
+  if (inquiry.special_requests) {
+    customerNotes.push(`We have noted your request: ${inquiry.special_requests}.`)
+  }
+  for (const referral of evaluation.referrals) customerNotes.push(referral)
+
+  const document = buildProposalDocument({
+    proposal_id: proposal.proposal_id,
+    inquiry,
+    property,
+    block,
+    verdicts: proposal.verdicts,
+    required_follow_ups: evaluation.required_follow_ups,
+    customer_notes: customerNotes,
+    prepared_on: new Date(proposal.created_at),
+  })
+
+  let pdfBytes = cachedPdf(proposal.proposal_id)
+  if (!pdfBytes) {
+    try {
+      pdfBytes = await renderProposalPdf(document)
+      cachePdf(proposal.proposal_id, pdfBytes)
+    } catch {
+      pdfBytes = null
+    }
+  }
+
+  return { document, pdfBytes }
+}
+
 // ---------------------------------------------------------------- 9. submit_for_approval
 
 export async function submit_for_approval(args: {
@@ -771,7 +850,7 @@ export async function submit_for_approval(args: {
   submitted_by?: string | null
   note?: string
 }): Promise<ToolResult<{ proposal_id: string; status: string; blocking: RuleVerdict[]; human_summary: string }>> {
-  const proposal = getProposal(args.proposal_id)
+  const proposal = await getProposal(args.proposal_id)
   if (!proposal) return fail(`We have no record of a proposal with the reference ${args.proposal_id}.`)
 
   const gate = canSend(proposal)
@@ -789,7 +868,7 @@ export async function submit_for_approval(args: {
     proposal_id: proposal.proposal_id,
     status: proposal.status,
     blocking: gate.blocking,
-    human_summary: `Proposal ${proposal.proposal_id} is now with an approver. ${gate.blocking.map((v) => v.human_reason).join(' ')}`,
+    human_summary: `Proposal ${proposal.proposal_id} is now with an approver. ${gate.blocking.map((v) => v.human_reason).join(' ')}${durabilityNote(proposal)}`,
   })
 }
 
@@ -810,7 +889,7 @@ export async function send_proposal(args: {
   proposal_id: string
   actor?: string | null
 }): Promise<ToolResult<SendProposalPayload>> {
-  const proposal = getProposal(args.proposal_id)
+  const proposal = await getProposal(args.proposal_id)
   if (!proposal) return fail(`We have no record of a proposal with the reference ${args.proposal_id}.`)
 
   const gate = canSend(proposal)
@@ -828,24 +907,35 @@ export async function send_proposal(args: {
     })
   }
 
+  // The proposal row carries pricing, not prose: the letter is re-rendered from the stored
+  // numbers plus the enquiry and the property, so what the customer receives cannot drift away
+  // from what the database says was approved.
+  const materialised = await materialiseProposal(proposal)
+  if (!materialised) {
+    return fail(
+      `Proposal ${proposal.proposal_id} is on file but we cannot rebuild the letter for it, because enquiry ${proposal.inquiry_id} or its hotel is no longer in the directory. Nothing was sent.`,
+    )
+  }
+  const { document, pdfBytes } = materialised
+
   // The only place the real address is read. Everything else works from the masked pair.
   const contact = await loadInquiryContact(proposal.inquiry_id)
   const outcome = await deliver({
     proposal_id: proposal.proposal_id,
     inquiry_id: proposal.inquiry_id,
     contact: {
-      name: proposal.document.contact_name,
+      name: document.contact_name,
       email: contact?.email ?? null,
       phone: contact?.phone ?? null,
     },
-    subject: `Your group proposal for ${proposal.document.company_name} at ${proposal.document.property_name}`,
-    html: renderProposalHtml(proposal.document, proposal.pdf_url),
-    text: renderProposalText(proposal.document, proposal.pdf_url),
+    subject: `Your group proposal for ${document.company_name} at ${document.property_name}`,
+    html: renderProposalHtml(document, proposal.pdf_url),
+    text: renderProposalText(document, proposal.pdf_url),
     pdf_url: proposal.pdf_url,
-    attachment: proposal.pdf_bytes
+    attachment: pdfBytes
       ? {
-          filename: pdfFilename(proposal.document),
-          content_base64: toBase64(proposal.pdf_bytes),
+          filename: pdfFilename(document),
+          content_base64: toBase64(pdfBytes),
           content_type: 'application/pdf',
         }
       : null,
@@ -863,7 +953,7 @@ export async function send_proposal(args: {
     route: outcome.route,
     delivery: outcome,
     human_summary: outcome.ok
-      ? `Proposal ${proposal.proposal_id} went out by ${outcome.channel} to ${outcome.displayed_to}${outcome.demo_mode ? ', routed to the demo inbox for this run' : ''}.`
+      ? `Proposal ${proposal.proposal_id} went out by ${outcome.channel} to ${outcome.displayed_to}${outcome.demo_mode ? ', routed to the demo inbox for this run' : ''}.${durabilityNote(proposal)}`
       : (outcome.human_reason ?? 'The proposal was not sent.'),
   }
 
@@ -1008,7 +1098,7 @@ export async function buildInquiryRow(inquiry: GroupInquiry): Promise<InquiryRow
   const departure = parseDate(inquiry.departure_date)
   const nights = arrival && departure ? nightsBetween(arrival, departure) : (context?.nights ?? null)
 
-  const proposal = findProposalByInquiry(inquiry.inquiry_id)
+  const proposal = await findProposalByInquiry(inquiry.inquiry_id)
   const evaluation = evaluateGroupRules({
     inquiry,
     property,
@@ -1071,7 +1161,7 @@ export async function override_proposal(args: {
   justification: string
   discount_pct?: number
 }): Promise<ToolResult<{ proposal_id: string; status: string; discount_pct: number; human_summary: string }>> {
-  const existing = getProposal(args.proposal_id)
+  const existing = await getProposal(args.proposal_id)
   if (!existing) return fail(`We have no record of a proposal with the reference ${args.proposal_id}.`)
   if (!args.actor?.trim()) {
     return fail('An override has to be attributed to a person. We do not record anonymous overrides.')
@@ -1095,15 +1185,7 @@ export async function override_proposal(args: {
     return fail(regenerated.error ?? 'We were not able to re-price this block.')
   }
 
-  const fresh = getProposal(regenerated.data.proposal_id)
-  if (fresh) {
-    fresh.history.push({
-      at: new Date().toISOString(),
-      event: 'override',
-      by: args.actor,
-      detail: args.justification,
-    })
-  }
+  const fresh = await getProposal(regenerated.data.proposal_id)
 
   await auditLog('proposal.override', `proposal:${regenerated.data.proposal_id}`, {
     inquiry_id: existing.inquiry_id,
@@ -1113,6 +1195,7 @@ export async function override_proposal(args: {
     ceiling_pct: existing.discount_pct,
     override_discount_pct: requested,
     still_requires_approval: regenerated.data.requires_approval,
+    persisted: fresh?.persisted ?? false,
   })
 
   return ok({
@@ -1134,7 +1217,7 @@ export async function approve(args: {
   approved_by: string
   note?: string
 }): Promise<ToolResult<{ proposal_id: string; status: string; human_summary: string }>> {
-  const proposal = getProposal(args.proposal_id)
+  const proposal = await getProposal(args.proposal_id)
   if (!proposal) return fail(`We have no record of a proposal with the reference ${args.proposal_id}.`)
   if (!args.approved_by?.trim()) {
     return fail('An approval has to be attributed to a person. We do not record anonymous approvals.')
@@ -1152,7 +1235,7 @@ export async function reject(args: {
   rejected_by: string
   reason: string
 }): Promise<ToolResult<{ proposal_id: string; status: string; human_summary: string }>> {
-  const proposal = getProposal(args.proposal_id)
+  const proposal = await getProposal(args.proposal_id)
   if (!proposal) return fail(`We have no record of a proposal with the reference ${args.proposal_id}.`)
   await rejectProposal(proposal, args.rejected_by, args.reason)
   return ok({
@@ -1162,5 +1245,5 @@ export async function reject(args: {
   })
 }
 
-export { findProposalByInquiry, getProposal, listProposals } from './store'
+export { findProposalByInquiry, getProposal, listProposals, canSend } from './store'
 export { speakDate }

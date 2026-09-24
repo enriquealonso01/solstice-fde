@@ -13,6 +13,7 @@ import {
   GROUP_ROLES,
 } from '../../../../netlify/functions/group/auth'
 import {
+  accessTokenFor,
   getProposal,
   resetProposalStore,
 } from '../../../../netlify/functions/group/store'
@@ -162,11 +163,12 @@ describe('the health probe stays open and says nothing it should not', () => {
 describe('the customer PDF link', () => {
   it('opens with the token that was put in their email or text', async () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
-    const proposal = getProposal(generated.data!.proposal_id)!
-    expect(proposal.access_token.length).toBeGreaterThan(20)
+    const proposal = (await getProposal(generated.data!.proposal_id))!
+    const token = accessTokenFor(proposal.proposal_id)
+    expect(token.length).toBeGreaterThan(20)
 
     const response = await handler(
-      get(`/api/group/pdf/${proposal.proposal_id}.pdf?t=${proposal.access_token}`),
+      get(`/api/group/pdf/${proposal.proposal_id}.pdf?t=${token}`),
       CTX,
     )
     expect(response.status).toBe(200)
@@ -188,14 +190,22 @@ describe('the customer PDF link', () => {
     expect(await noToken.text()).toBe(await missing.text())
   })
 
-  it('puts the token in the link, and only in the link', async () => {
+  it('puts the token in the link, and nowhere the admin screen or the database can leak it', async () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
-    const proposal = getProposal(generated.data!.proposal_id)!
+    const proposal = (await getProposal(generated.data!.proposal_id))!
+    const token = accessTokenFor(proposal.proposal_id)
 
     // The generated URL carries it...
-    expect(proposal.pdf_url).toContain(proposal.access_token)
-    // ...and the payload the admin screen renders does not.
-    expect(JSON.stringify(generated.data!.verdicts)).not.toContain(proposal.access_token)
-    expect(JSON.stringify(proposal.history)).not.toContain(proposal.access_token)
+    expect(proposal.pdf_url).toContain(token)
+    // ...and nothing stored alongside the proposal does. The token is derived, never a column,
+    // so reading the `proposals` table does not hand somebody every customer's link.
+    expect(JSON.stringify(proposal.pricing)).not.toContain(token)
+    expect(JSON.stringify(proposal.verdicts)).not.toContain(token)
+  })
+
+  it('derives the same token on any function instance', () => {
+    // This is what makes a link minted by one request openable through another.
+    expect(accessTokenFor('PRP-2001')).toBe(accessTokenFor('PRP-2001'))
+    expect(accessTokenFor('PRP-2001')).not.toBe(accessTokenFor('PRP-2002'))
   })
 })

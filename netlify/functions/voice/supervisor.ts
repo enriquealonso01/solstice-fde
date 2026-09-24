@@ -57,6 +57,7 @@ import {
   findLiveSupervisorLeg,
   getSessionById,
   insertMessage,
+  setSupervisorLeg,
   updateSession,
   writeAudit,
 } from '../telnyx/_lib/sessions'
@@ -226,6 +227,8 @@ export async function handleSupervisor(req: Request): Promise<Response> {
         supervisor_call_control_id: existing.supervisor_call_control_id,
         role: targetRole,
       }, `Supervisor role switched to ${targetRole}`, true)
+      // The dashboard reads the active rung off the session row, not off the trace.
+      await setSupervisorLeg(sb, session.id, existing.supervisor_call_control_id, targetRole)
       await writeAudit(sb, {
         actor: actorId ?? null,
         action: `voice.${action}`,
@@ -313,6 +316,7 @@ async function ensureLeg(
         supervisor_call_control_id: existing.supervisor_call_control_id,
         role: args.role,
       }, `Supervisor role switched to ${args.role}`, true)
+      await setSupervisorLeg(sb, args.sessionId, existing.supervisor_call_control_id, args.role)
       return { callControlId: existing.supervisor_call_control_id }
     }
     return { callControlId: existing.supervisor_call_control_id, error: switched.error }
@@ -349,6 +353,7 @@ async function ensureLeg(
     true,
     Date.now() - started,
   )
+  if (ccid) await setSupervisorLeg(sb, args.sessionId, ccid, args.role)
   return { callControlId: ccid }
 }
 

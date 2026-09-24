@@ -50,6 +50,10 @@ export interface SessionRow {
   intent: string | null
   call_control_id: string | null
   telnyx_conversation_id: string | null
+  /** The supervisor's own leg, when one is live. Drives the active rung in the supervisor UI. */
+  supervisor_call_control_id: string | null
+  /** monitor | whisper | barge, or null when no supervisor is attached. */
+  supervisor_role: string | null
   started_at: string
   ended_at: string | null
 }
@@ -100,6 +104,59 @@ export async function insertSession(
 export async function updateSession(db: SupabaseClient, id: string, patch: Partial<SessionRow>): Promise<void> {
   const { error } = await db.from('sessions').update(patch).eq('id', id)
   if (error) throw new Error(describeDbError(error, 'updateSession'))
+}
+
+/** Find the session a supervisor leg belongs to, for events that carry no client_state. */
+export async function findSessionBySupervisorLeg(
+  db: SupabaseClient,
+  supervisorCallControlId: string,
+): Promise<SessionRow | null> {
+  const { data, error } = await db
+    .from('sessions')
+    .select('*')
+    .eq('supervisor_call_control_id', supervisorCallControlId)
+    .limit(1)
+  if (error) {
+    if (isMissingSupervisorColumn(error)) return null
+    throw new Error(describeDbError(error, 'findSessionBySupervisorLeg'))
+  }
+  return (data?.[0] as SessionRow | undefined) ?? null
+}
+
+/**
+ * `sessions.supervisor_call_control_id` / `supervisor_role` exist in the deployed database but are
+ * NOT in supabase/schema.sql yet, so a project built from that file alone will not have them.
+ * Isolated from the main session patch and never fatal: losing the UI's rung indicator is a bad
+ * day, dropping the supervisor's audio is a worse one.
+ */
+function isMissingSupervisorColumn(error: { code?: string | null; message?: string | null } | null): boolean {
+  if (!error) return false
+  if (error.code === 'PGRST204' || error.code === '42703') return true
+  return /supervisor_(call_control_id|role)/i.test(error.message ?? '') && /column|schema cache/i.test(error.message ?? '')
+}
+
+const SUPERVISOR_COLUMN_HINT =
+  'sessions.supervisor_call_control_id / supervisor_role are missing. Add them to supabase/schema.sql: ' +
+  'alter table sessions add column supervisor_call_control_id text, add column supervisor_role text;'
+
+/** Record which leg is supervising this call and at which rung. Returns false if the columns are absent. */
+export async function setSupervisorLeg(
+  db: SupabaseClient,
+  sessionId: string,
+  supervisorCallControlId: string | null,
+  role: string | null,
+): Promise<boolean> {
+  const { error } = await db
+    .from('sessions')
+    .update({ supervisor_call_control_id: supervisorCallControlId, supervisor_role: role })
+    .eq('id', sessionId)
+  if (!error) return true
+  if (isMissingSupervisorColumn(error)) {
+    console.warn(`[solstice] ${SUPERVISOR_COLUMN_HINT}`)
+    return false
+  }
+  console.warn(describeDbError(error, 'setSupervisorLeg'))
+  return false
 }
 
 // ---------------------------------------------------------------- messages

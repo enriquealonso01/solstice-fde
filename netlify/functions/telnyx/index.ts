@@ -28,14 +28,17 @@ import {
   encodeClientState,
 } from './_lib/telnyxClient'
 import { maskArgs, maskPhone, safeLog } from '../_lib/mask'
+import { classifyLeg, isGuestCall, legConfigFromEnv } from './_lib/legs'
 import { missingDbEnv, recordToolInvocation, tryGetDb } from '../_lib/db'
 import {
   SUPERVISOR_LEG_ENDED_TOOL,
   findSessionByCallControlId,
   findSessionByConversationId,
+  findSessionBySupervisorLeg,
   getSessionById,
   identifyCallerByPhone,
   insertSession,
+  setSupervisorLeg,
   updateSession,
   upsertTranscriptTurns,
   type SessionRow,
@@ -118,6 +121,14 @@ export default async function handler(req: Request, _context: Context): Promise<
 
 async function route(sb: SupabaseClient, event: TelnyxEvent): Promise<Response> {
   const payload = event.payload ?? {}
+  const cfg = legConfigFromEnv()
+
+  // Classify the leg BEFORE any handler runs, so no event type can do guest work on a supervisor
+  // leg. See _lib/legs.ts for why this is four independent signals rather than one.
+  if (classifyLeg(payload, cfg) === 'supervisor') {
+    return onSupervisorLegEvent(sb, event.event_type, payload)
+  }
+
   switch (event.event_type) {
     case 'call.initiated':
       return onCallInitiated(sb, payload)
@@ -137,6 +148,53 @@ async function route(sb: SupabaseClient, event: TelnyxEvent): Promise<Response> 
   }
 }
 
+// ---------------------------------------------------------------- supervisor legs
+
+/**
+ * Everything that happens on a supervisor leg. The one rule: never answer it, never identify it,
+ * never start Sol on it, never create a session for it. Telnyx bridges it to the guest leg itself
+ * via supervise_call_control_id; our only job is to stay out of the way and keep the session
+ * row's rung indicator honest.
+ */
+async function onSupervisorLegEvent(
+  sb: SupabaseClient,
+  eventType: string,
+  payload: Record<string, unknown>,
+): Promise<Response> {
+  const callControlId = str(payload.call_control_id)
+  const clientState = decodeClientState<CallClientState>(str(payload.client_state))
+
+  safeLog('[solstice] supervisor leg event', {
+    event_type: eventType,
+    to: str(payload.to),
+    direction: str(payload.direction),
+    session_id: clientState?.session_id ?? null,
+  })
+
+  if (eventType !== 'call.hangup' || !callControlId) {
+    return ack('supervisor_leg_event', { event_type: eventType })
+  }
+
+  // Resolve the session by client_state first, then by the leg id stored at dial time.
+  let sessionId = clientState?.session_id ?? null
+  if (!sessionId) {
+    const found = await findSessionBySupervisorLeg(sb, callControlId)
+    sessionId = found?.id ?? null
+  }
+  if (!sessionId) return ack('supervisor_leg_hangup_unmatched')
+
+  // Retire the leg so the next Listen click dials a fresh one instead of switching a dead one.
+  await trace({
+    session_id: sessionId,
+    tool: SUPERVISOR_LEG_ENDED_TOOL,
+    args: { supervisor_call_control_id: callControlId },
+    summary: 'supervisor leg hung up',
+    grounded: true,
+  })
+  await setSupervisorLeg(sb, sessionId, null, null)
+  return ack('supervisor_leg_closed', { session_id: sessionId })
+}
+
 // ---------------------------------------------------------------- call.initiated
 
 async function onCallInitiated(sb: SupabaseClient, payload: Record<string, unknown>): Promise<Response> {
@@ -147,11 +205,15 @@ async function onCallInitiated(sb: SupabaseClient, payload: Record<string, unkno
 
   if (!callControlId) return ack('no_call_control_id')
 
-  // The supervisor leg is an OUTGOING call we placed ourselves. It must never create a guest
-  // session, and Sol must never be started on it.
-  if (clientState?.kind === 'supervisor' || direction === 'outgoing') {
-    safeLog('[solstice] ignoring non-guest leg on call.initiated', { direction, kind: clientState?.kind })
-    return ack('supervisor_or_outgoing_leg')
+  // Session creation is the only destructive path here, so it gets the strictest gate.
+  if (!isGuestCall(payload, legConfigFromEnv())) {
+    safeLog('[solstice] call.initiated ignored, not a guest call', {
+      direction,
+      to: str(payload.to),
+      connection_id: str(payload.connection_id),
+      kind: clientState?.kind ?? null,
+    })
+    return ack('not_a_guest_call')
   }
 
   const session = await ensureGuestSession(sb, callControlId, from)
@@ -328,17 +390,8 @@ async function onHangup(sb: SupabaseClient, payload: Record<string, unknown>): P
   const clientState = decodeClientState<CallClientState>(str(payload.client_state))
   if (!callControlId) return ack('no_call_control_id')
 
-  if (clientState?.kind === 'supervisor' && clientState.session_id) {
-    // Retire the leg so the next Listen click dials a fresh one instead of switching a dead leg.
-    await trace({
-      session_id: clientState.session_id,
-      tool: SUPERVISOR_LEG_ENDED_TOOL,
-      args: { supervisor_call_control_id: callControlId },
-      summary: 'supervisor leg hung up',
-      grounded: true,
-    })
-    return ack('supervisor_leg_closed')
-  }
+  // Supervisor legs never reach here; route() intercepts them via classifyLeg().
+  void clientState
 
   const session = await findSessionByCallControlId(sb, callControlId)
   if (!session) return ack('no_session_for_leg')
