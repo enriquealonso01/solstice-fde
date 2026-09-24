@@ -8,6 +8,7 @@
 // and labels every reply it produced as simulated. It never pretends to have acted.
 
 import { useState, type FormEvent } from 'react'
+import Markdown from './Markdown'
 import { isMissingBackend, postJson, useStickToBottom } from './useAdminData'
 import type { InquiryRow, ProposalRow } from './mockData'
 import { money, verdictSeverity } from './mockData'
@@ -113,7 +114,11 @@ export default function InquiryAssistant({
                     : 'border border-solstice-sand bg-solstice-cream text-solstice-ink'
               }`}
             >
-              <p className="whitespace-pre-wrap">{t.text}</p>
+              {t.role === 'rep' ? (
+                <p className="whitespace-pre-wrap">{t.text}</p>
+              ) : (
+                <Markdown text={t.text} />
+              )}
               {t.simulated ? (
                 <p className="mt-1.5 text-[11px] text-solstice-stone">
                   Simulated locally. <code>/api/group/assistant</code> is not deployed yet.
