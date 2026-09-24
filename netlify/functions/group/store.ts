@@ -13,6 +13,7 @@
 // degrades to "works, just not durable" rather than "crashes".
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { randomBytes, timingSafeEqual } from 'node:crypto'
 import type { Proposal, ProposalLine, RuleVerdict } from '../../../shared/types'
 import { auditLog, describeError } from '../_delivery/audit'
 import type { ProposalDocument } from './proposal'
@@ -39,6 +40,12 @@ export interface StoredProposal extends Proposal {
   pdf_url: string | null
   /** Masked recipient, mirrored to `proposals.sent_to`. */
   sent_to: string | null
+  /**
+   * Random per-proposal capability token. It appears only in the link we put in the customer's
+   * email or text, which is how a customer with no login opens their own PDF and nobody opens
+   * anybody else's. It is never rendered in the admin UI and never written to the audit trail.
+   */
+  access_token: string
   /** Populated when someone approves or rejects. */
   approved_by: string | null
   approved_at: string | null
@@ -77,6 +84,15 @@ export function listProposals(): StoredProposal[] {
 
 export function findProposalByInquiry(inquiryId: string): StoredProposal | null {
   return [...proposals.values()].reverse().find((p) => p.inquiry_id === inquiryId) ?? null
+}
+
+/** Constant-time check of the capability token on a customer's PDF link. */
+export function tokenMatches(proposal: StoredProposal, supplied: string | null): boolean {
+  if (!supplied || !proposal.access_token) return false
+  const a = Buffer.from(supplied, 'utf8')
+  const b = Buffer.from(proposal.access_token, 'utf8')
+  if (a.length !== b.length) return false
+  return timingSafeEqual(a, b)
 }
 
 // ---------------------------------------------------------------- the gate
@@ -270,21 +286,36 @@ export const PDF_BUCKET = 'proposals'
 
 export interface HostedPdf {
   url: string
-  /** 'storage' = a real object URL. 'function' = served back out of this function's memory,
-   *  which is enough for a demo but is not durable and should be said out loud as such. */
+  /** 'storage' = a real object URL in the public `proposals` bucket, which is what the
+   *  customer's link points at and what survives a cold function instance. 'function' = served
+   *  back out of this instance's memory behind a capability token, which is a fallback only. */
   host: 'storage' | 'function'
   path: string
 }
 
-/** Puts the PDF somewhere a phone can open over https. Supabase Storage when it is configured,
- *  otherwise a link back into this function. The SMS path needs a LINK, never an attachment,
- *  so this is on the critical path for the phone-only demo. */
+/** 32 bytes of randomness, url-safe. Long enough that the fallback link is not enumerable. */
+export function newAccessToken(): string {
+  return randomBytes(24).toString('base64url')
+}
+
+/**
+ * Puts the PDF somewhere a phone can open over https.
+ *
+ * PREFERRED: the public Supabase Storage bucket. The object path carries the proposal id and
+ * the per-proposal access token, so the URL is unguessable, it needs no login, and it keeps
+ * working after this function instance is recycled.
+ *
+ * FALLBACK, when Storage is not configured: a link back into this function carrying the same
+ * token as a query parameter. Same unguessability, but it dies with the instance, which is why
+ * it is the fallback and not the plan.
+ */
 export async function hostPdf(
   proposalId: string,
   bytes: Uint8Array,
   filename: string,
+  accessToken: string,
 ): Promise<HostedPdf> {
-  const path = `${proposalId}/${filename}`
+  const path = `${proposalId}/${accessToken}/${filename}`
   const client = getClient()
   if (client) {
     try {
@@ -300,5 +331,9 @@ export async function hostPdf(
     }
   }
   const base = (process.env.PUBLIC_BASE_URL ?? process.env.URL ?? '').replace(/\/+$/, '')
-  return { url: `${base}/api/group/pdf/${proposalId}.pdf`, host: 'function', path }
+  return {
+    url: `${base}/api/group/pdf/${proposalId}.pdf?t=${accessToken}`,
+    host: 'function',
+    path,
+  }
 }

@@ -60,6 +60,7 @@ import {
   hostPdf,
   markAwaitingApproval,
   markSent,
+  newAccessToken,
   nextProposalId,
   putProposal,
   rejectProposal,
@@ -662,11 +663,12 @@ export async function generate_proposal(
     prepared_on: args.prepared_on ? new Date(args.prepared_on) : undefined,
   })
 
+  const accessToken = newAccessToken()
   let pdfBytes: Uint8Array | null = null
   let pdfUrl: string | null = null
   try {
     pdfBytes = await renderProposalPdf(document)
-    const hosted = await hostPdf(proposalId, pdfBytes, pdfFilename(document))
+    const hosted = await hostPdf(proposalId, pdfBytes, pdfFilename(document), accessToken)
     pdfUrl = hosted.url
   } catch (err) {
     // A PDF that will not render must not take the proposal down with it: the email still
@@ -706,6 +708,7 @@ export async function generate_proposal(
     pdf_path: pdfUrl,
     sent_via: null,
     sent_to: null,
+    access_token: accessToken,
     sent_at: null,
     document,
     pdf_bytes: pdfBytes,

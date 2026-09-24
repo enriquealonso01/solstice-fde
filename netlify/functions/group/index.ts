@@ -4,15 +4,22 @@
 // index.ts; the siblings are bundled helpers, not endpoints of their own. netlify.toml already
 // maps /api/* -> /.netlify/functions/:splat and passes trailing segments through, so:
 //
-//   POST /api/group/tool          -> any GROUP_TOOL by name, { tool, args }
-//   POST /api/group/assistant     -> the per-inquiry side chat, { inquiry_id, message }
-//   POST /api/group/approve       -> a named human approves an over-authority proposal
-//   POST /api/group/reject        -> ...or turns it down
-//   POST /api/group/send          -> shorthand for the send_proposal tool
-//   GET  /api/group/inquiries     -> the inbox
-//   GET  /api/group/proposals     -> everything generated this session
-//   GET  /api/group/pdf/<id>.pdf  -> the hosted PDF, which is what the SMS link points at
-//   GET  /api/group               -> health probe for the Backend Map
+//   POST /api/group/tool            secret   any GROUP_TOOL by name, { tool, args }
+//   POST /api/group/assistant       staff    the per-inquiry side chat, { inquiry_id, message }
+//   POST /api/group/proposal-action staff    send | submit_for_approval | approve | override | reject
+//   POST /api/group/approve         staff    a named human approves an over-authority proposal
+//   POST /api/group/reject          staff    ...or turns it down
+//   POST /api/group/send            staff    shorthand for the send_proposal tool
+//   GET  /api/group/inquiries       staff    the inbox
+//   GET  /api/group/proposals       staff    everything generated this session
+//   GET  /api/group/audit           staff    recent audit rows
+//   GET  /api/group/pdf/<id>.pdf    token    fallback PDF host; the real link is Storage
+//   GET  /api/group                 open     health probe for the Backend Map
+//
+// "secret" is TOOL_WEBHOOK_SECRET, the same header the concierge tool layer takes, because the
+// Telnyx assistant is provisioned once and calls both. "staff" is a Supabase session whose
+// profile role is group_sales or admin, which is the same rule RLS enforces on these tables.
+// See auth.ts.
 //
 // Like voice/index.ts we do NOT set `export const config = { path }`: a v2 path config would
 // move the function off /.netlify/functions/ and fight the redirect in netlify.toml, which is
@@ -29,9 +36,10 @@ import { recordToolInvocation, tryGetDb } from '../_lib/db'
 import { findSessionByCallControlId } from '../telnyx/_lib/sessions'
 import { maskArgs } from '../_lib/mask'
 import { auditLog, recentAudit } from '../_delivery/audit'
+import { authorizeStaff, authorizeToolCaller, type AuthOk } from './auth'
 import { currentSourceName, loadInquiries, loadProperties } from './_deps'
 import { runAssistant, buildSuggestions, ASSISTANT_MODEL, type AssistantTurn } from './assistant'
-import { findProposalByInquiry, getProposal, listProposals } from './store'
+import { findProposalByInquiry, getProposal, listProposals, tokenMatches } from './store'
 import { pdfFilename } from './proposal'
 import {
   approve,
@@ -53,6 +61,14 @@ import {
 } from './tools'
 
 type AnyArgs = Record<string, unknown>
+
+/** Who a decision is recorded against. A caller may supply a display name for the UI, but the
+ *  verified profile id is always what ends up in the audit row, so "who approved this" cannot
+ *  be set by whoever sends the request. */
+function attribution(supplied: string | undefined, staff: AuthOk): string {
+  const label = supplied?.trim()
+  return label ? `${label} (${staff.role}, ${staff.actor})` : `${staff.role} ${staff.actor}`
+}
 
 // Local copies rather than an import from another function's private `_lib`. Four lines is a
 // cheaper price than a cross-function coupling that breaks whenever that directory is moved.
@@ -93,40 +109,60 @@ const TOOL_TABLE: Record<GroupTool, (args: AnyArgs) => Promise<ToolResult<unknow
   create_inquiry: (a) => create_inquiry(a as never),
 }
 
+/**
+ * ACCESS CONTROL, in one place so it cannot be forgotten on a new route.
+ *
+ *   /api/group/tool          shared secret  (the Telnyx assistant, a machine with no user)
+ *   everything else          Supabase session + group_sales|admin  (a signed-in member of staff)
+ *   /api/group/pdf/...       the proposal's own capability token, or a staff session
+ *   GET /api/group           open: a health probe that reports booleans and no customer data
+ *
+ * See auth.ts for why the two callers prove themselves differently.
+ */
 export default async function handler(req: Request, _context: Context): Promise<Response> {
   const url = new URL(req.url)
   const segments = url.pathname.split('/').filter(Boolean)
   const route = segments[segments.length - 1] ?? ''
   const parent = segments[segments.length - 2] ?? ''
 
-  // /api/group/pdf/<proposal_id>.pdf
+  // /api/group/pdf/<proposal_id>.pdf?t=<token>
   if (parent === 'pdf' || route === 'pdf') {
-    return servePdf(route === 'pdf' ? (url.searchParams.get('proposal_id') ?? '') : route)
+    const id = route === 'pdf' ? (url.searchParams.get('proposal_id') ?? '') : route
+    return servePdf(req, id, url.searchParams.get('t'))
   }
 
+  // Route 1: the assistant-facing tool endpoint.
+  if (route === 'tool') {
+    const auth = authorizeToolCaller(req)
+    if (!auth.ok) return json({ ok: false, grounded: false, error: auth.error }, auth.status)
+    return handleTool(req)
+  }
+
+  // Health stays open. It reports which services are configured, as booleans, and nothing else.
+  if (route === 'group' || route === '') return health()
+
+  // Route 2: everything else is staff-only, checked before the route is even dispatched.
+  const staff = await authorizeStaff(req)
+  if (!staff.ok) return json({ ok: false, error: staff.error }, staff.status)
+
   switch (route) {
-    case 'tool':
-      return handleTool(req)
     case 'assistant':
       return handleAssistant(req)
     case 'approve':
-      return handleApproval(req, 'approve')
+      return handleApproval(req, 'approve', staff)
     case 'reject':
-      return handleApproval(req, 'reject')
+      return handleApproval(req, 'reject', staff)
     case 'send':
-      return handleSend(req)
+      return handleSend(req, staff)
     case 'proposal-action':
     case 'proposal_action':
-      return handleProposalAction(req)
+      return handleProposalAction(req, staff)
     case 'inquiries':
       return handleInquiries()
     case 'proposals':
       return handleProposals()
     case 'audit':
       return json({ ok: true, entries: recentAudit(50) })
-    case 'group':
-    case '':
-      return health()
     default:
       return json(
         {
@@ -162,6 +198,14 @@ function health(): Response {
       telnyx: Boolean(process.env.TELNYX_API_KEY?.trim()),
       supabase: Boolean(process.env.SUPABASE_URL?.trim() && process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()),
       demo_mode: (process.env.DEMO_MODE ?? 'true').toLowerCase() !== 'false',
+    },
+    // What each route requires, so a misconfigured deploy is visible rather than silently open.
+    secured: {
+      'POST /api/group/tool': process.env.TOOL_WEBHOOK_SECRET?.trim()
+        ? 'x-solstice-tool-key'
+        : 'OPEN — TOOL_WEBHOOK_SECRET is not set on this deploy',
+      'staff routes': 'Supabase bearer token, role group_sales or admin',
+      'GET /api/group/pdf/<id>.pdf': 'per-proposal access token, or a staff session',
     },
   })
 }
@@ -315,7 +359,11 @@ async function handleAssistant(req: Request): Promise<Response> {
 
 // ---------------------------------------------------------------- approvals and sends
 
-async function handleApproval(req: Request, action: 'approve' | 'reject'): Promise<Response> {
+async function handleApproval(
+  req: Request,
+  action: 'approve' | 'reject',
+  staff: AuthOk,
+): Promise<Response> {
   if (req.method !== 'POST') return json({ ok: false, error: 'POST only' }, 405)
   const body = await readJsonBody<{
     proposal_id?: string
@@ -325,14 +373,12 @@ async function handleApproval(req: Request, action: 'approve' | 'reject'): Promi
   }>(req)
   if (!body.ok) return json({ ok: false, error: body.error }, 400)
 
-  const { proposal_id, actor, note, reason } = body.value
+  const { proposal_id, note, reason } = body.value
   if (!proposal_id) return json({ ok: false, error: 'proposal_id is required' }, 400)
-  if (!actor?.trim()) {
-    return json(
-      { ok: false, error: 'An approval has to be attributed to a person. Send `actor`.' },
-      400,
-    )
-  }
+
+  // Attribution comes from the verified session, not from the body. A caller can supply a
+  // display name, but it can never stand in for who actually signed this off.
+  const actor = attribution(body.value.actor, staff)
 
   const result =
     action === 'approve'
@@ -351,7 +397,7 @@ async function handleApproval(req: Request, action: 'approve' | 'reject'): Promi
  * tried to send a flagged proposal and was stopped" is exactly the line the panel will want to
  * see. `override` re-prices at the requested discount and still leaves the approval gate shut.
  */
-async function handleProposalAction(req: Request): Promise<Response> {
+async function handleProposalAction(req: Request, staff: AuthOk): Promise<Response> {
   if (req.method !== 'POST') return json({ ok: false, error: 'POST only' }, 405)
   const body = await readJsonBody<{
     inquiry_id?: string
@@ -364,7 +410,7 @@ async function handleProposalAction(req: Request): Promise<Response> {
   if (!body.ok) return json({ ok: false, error: body.error }, 400)
 
   const { inquiry_id, action, justification, override_discount_pct } = body.value
-  const actor = body.value.actor?.trim() || 'group sales'
+  const actor = attribution(body.value.actor, staff)
   let proposalId = body.value.proposal_id
 
   if (!action) return json({ ok: false, error: 'action is required' }, 400)
@@ -384,6 +430,8 @@ async function handleProposalAction(req: Request): Promise<Response> {
     inquiry_id: inquiry_id ?? null,
     action,
     actor,
+    actor_id: staff.actor,
+    actor_role: staff.role,
     justification: justification ?? null,
     override_discount_pct: override_discount_pct ?? null,
   })
@@ -447,7 +495,7 @@ async function handleProposalAction(req: Request): Promise<Response> {
   })
 }
 
-async function handleSend(req: Request): Promise<Response> {
+async function handleSend(req: Request, staff: AuthOk): Promise<Response> {
   if (req.method !== 'POST') return json({ ok: false, error: 'POST only' }, 405)
   const body = await readJsonBody<{ proposal_id?: string; actor?: string }>(req)
   if (!body.ok) return json({ ok: false, error: body.error }, 400)
@@ -455,7 +503,7 @@ async function handleSend(req: Request): Promise<Response> {
 
   const result = await send_proposal({
     proposal_id: body.value.proposal_id,
-    actor: body.value.actor ?? null,
+    actor: attribution(body.value.actor, staff),
   })
   return json(result)
 }
@@ -505,18 +553,34 @@ function handleProposals(): Response {
   })
 }
 
-/** Serves the PDF the SMS link points at. `<proposal_id>.pdf` or `?proposal_id=`. */
-function servePdf(idSegment: string): Response {
+/**
+ * The FALLBACK PDF route, used only when Supabase Storage is not configured.
+ *
+ * The customer's email and text link at the public `proposals` bucket, whose object path
+ * carries the proposal's random access token. This route serves the same bytes out of memory
+ * and is gated on the same token, so a customer with no login can open their own proposal and
+ * nobody can walk PRP-0001, PRP-0002, PRP-0003 and read the pipeline. A signed-in member of
+ * group sales or admin can also open it without the token, which is what the admin preview uses.
+ */
+async function servePdf(req: Request, idSegment: string, token: string | null): Promise<Response> {
   const proposalId = idSegment.replace(/\.pdf$/i, '')
   const proposal = proposalId ? getProposal(proposalId) : null
-  if (!proposal?.pdf_bytes) {
-    return json(
-      {
-        ok: false,
-        error: `No proposal PDF is being held for "${proposalId}". Proposal PDFs live in Supabase Storage once it is configured; this in-memory copy only survives for the life of the function instance.`,
-      },
-      404,
-    )
+
+  // Answer identically whether the proposal is missing or the token is wrong, so this route
+  // cannot be used to discover which proposal ids exist.
+  const notFound = json(
+    {
+      ok: false,
+      error: `No proposal PDF is available at this link. Proposal PDFs live in the Supabase Storage "proposals" bucket; this route only holds a copy for the life of a function instance, and it needs the access token from the original email or text.`,
+    },
+    404,
+  )
+
+  if (!proposal?.pdf_bytes) return notFound
+
+  if (!tokenMatches(proposal, token)) {
+    const staff = await authorizeStaff(req)
+    if (!staff.ok) return notFound
   }
   return new Response(new Uint8Array(proposal.pdf_bytes), {
     status: 200,

@@ -30,6 +30,10 @@
  *   --refresh        Update an existing assistant's instructions and tools from agent/sol.md.
  *   --force          Continue past a zero/low balance warning.
  *   --no-env-write   Print what would go into .env instead of writing it.
+ *   --integration-secret
+ *                    Store TOOL_WEBHOOK_SECRET as a Telnyx integration secret and reference it
+ *                    from the tool headers instead of embedding the literal value. UNVERIFIED
+ *                    placeholder syntax: prove it on a funded call before relying on it.
  *
  * Deliberately NOT a retry loop. Telnyx charges real money and this account is small. Every step
  * makes at most one attempt (two only where an API revision changed a verb), reports the failure
@@ -58,6 +62,8 @@ const NAMES = {
   insightGroup: 'Solstice FDE - Call Insights',
 }
 
+const INTEGRATION_SECRET_ID = 'solstice-tool-key'
+
 // The number Enrique already owns. JARVIS is retired, so repointing it is approved.
 const DEFAULT_REUSE_NUMBER = '+13057866217'
 
@@ -73,6 +79,7 @@ const flags = {
   refresh: argv.includes('--refresh') || argv.includes('--refresh-instructions'),
   force: argv.includes('--force'),
   noEnvWrite: argv.includes('--no-env-write'),
+  integrationSecret: argv.includes('--integration-secret'),
   areaCode: valueOf('--area-code') ?? '305',
   baseUrl: valueOf('--base-url'),
 }
@@ -447,17 +454,53 @@ const TOOL_SPECS = {
   },
 }
 
-function buildWebhookTool(name, toolsBaseUrl) {
-  const spec = TOOL_SPECS[name]
-  if (!spec) return null
+/**
+ * Auth header for every webhook tool.
+ *
+ * /api/tools/<name> enforces TOOL_WEBHOOK_SECRET: it accepts `x-solstice-tool-key: <secret>` or
+ * `authorization: Bearer <secret>`, and returns 401 without one. Registering tools without this
+ * header means every tool call Sol makes on a live call 401s, which is silent death for the voice
+ * path -- the model just gets an error body back and has nothing to ground an answer on.
+ *
+ * The literal value is the DEFAULT because it is verifiable: after provisioning we read the
+ * assistant back and confirm the header is attached, and the endpoint itself can be curled with
+ * the same header. `--integration-secret` instead stores the token in Telnyx
+ * (POST /v2/integration_secrets, type bearer) and emits a {{integration_secret.<id>}} reference,
+ * which keeps the secret out of the assistant config but CANNOT be verified without a live call:
+ * if the placeholder syntax is wrong it fails exactly the way we are fixing. Use it once there is
+ * a funded call to prove it with, not before.
+ */
+function authHeaders(secret, integrationSecretIdentifier) {
+  const headers = [{ name: 'X-Solstice-Source', value: 'telnyx-assistant' }]
+  if (integrationSecretIdentifier) {
+    headers.push({ name: 'x-solstice-tool-key', value: `{{integration_secret.${integrationSecretIdentifier}}}` })
+  } else if (secret) {
+    headers.push({ name: 'x-solstice-tool-key', value: secret })
+  }
+  return headers
+}
+
+function specProperties(spec) {
   const properties = {}
   const required = []
   for (const [param, def] of Object.entries(spec.params)) {
     properties[param] = { type: def.type, description: def.description }
     if (def.required) required.push(param)
   }
+  return { properties, required }
+}
+
+/**
+ * Concierge + routing tools: one URL per tool, flat arguments.
+ * The dispatcher reads the tool name from the last path segment and treats session_id /
+ * call_control_id as control keys rather than arguments.
+ */
+function buildWebhookTool(name, toolsBaseUrl, headers) {
+  const spec = TOOL_SPECS[name]
+  if (!spec) return null
+  const { properties, required } = specProperties(spec)
   // The tools function needs to know which call it is serving. Telnyx substitutes the dynamic
-  // variable at call time; the tools layer should fall back to telnyx_conversation_id if absent.
+  // variable at call time; the tools layer falls back to telnyx_conversation_id if absent.
   properties.call_control_id = {
     type: 'string',
     description: 'Always pass {{call_control_id}} so the tool can attach its trace to this call.',
@@ -470,19 +513,52 @@ function buildWebhookTool(name, toolsBaseUrl) {
       description: spec.description,
       url: `${toolsBaseUrl}/${name}`,
       method: 'POST',
-      headers: [{ name: 'X-Solstice-Source', value: 'telnyx-assistant' }],
+      headers,
+      body_parameters: { type: 'object', properties, required },
+    },
+  }
+}
+
+/**
+ * Group tools live behind a DIFFERENT dispatcher with a different body shape.
+ * netlify/functions/tools/registry.ts mounts only CONCIERGE_TOOLS + ROUTING_TOOLS, so a group
+ * tool posted to /api/tools/<name> comes back 404 "Unknown tool". The group dispatcher takes
+ * every group tool on one URL:  POST /api/group/tool  { tool, args, call_control_id }.
+ * `enum` pins the tool name to a single legal value so the model cannot mis-address the call.
+ */
+function buildGroupWebhookTool(name, groupToolUrl, headers) {
+  const spec = TOOL_SPECS[name]
+  if (!spec) return null
+  const { properties, required } = specProperties(spec)
+
+  return {
+    type: 'webhook',
+    webhook: {
+      name,
+      description: spec.description,
+      url: groupToolUrl,
+      method: 'POST',
+      headers,
       body_parameters: {
         type: 'object',
-        properties,
-        required,
+        properties: {
+          tool: { type: 'string', enum: [name], description: `Always exactly "${name}".` },
+          args: { type: 'object', description: 'The arguments for this tool.', properties, required },
+          call_control_id: {
+            type: 'string',
+            description: 'Always pass {{call_control_id}} so the tool can attach its trace to this call.',
+          },
+        },
+        required: ['tool', 'args'],
       },
     },
   }
 }
 
-function buildToolList(toolNames, toolsBaseUrl, transferTarget) {
+function buildToolList(toolNames, urls, transferTarget, headers) {
   const tools = []
   const skipped = []
+  const groupNames = new Set(toolNames.group)
   for (const name of [...toolNames.routing, ...toolNames.concierge, ...toolNames.group]) {
     // transfer_to_human is a native Telnyx handoff, not a webhook. plans/02: transfer targets can
     // be a phone number or a SIP URI, and warm_transfer_acceptance only works under
@@ -503,12 +579,49 @@ function buildToolList(toolNames, toolsBaseUrl, transferTarget) {
       })
       continue
     }
-    const tool = buildWebhookTool(name, toolsBaseUrl)
+    const tool = groupNames.has(name)
+      ? buildGroupWebhookTool(name, urls.groupTool, headers)
+      : buildWebhookTool(name, urls.tools, headers)
     if (tool) tools.push(tool)
     else skipped.push(`${name} (no parameter spec in provision.mjs)`)
   }
   tools.push({ type: 'hangup', hangup: { description: 'End the call once the guest confirms there is nothing else.' } })
   return { tools, skipped }
+}
+
+/**
+ * Telnyx integration secrets live at /v2/integration_secrets (NOT /v2/ai/integration_secrets,
+ * which 404s). Creating one is safe and idempotent by identifier. Whether a webhook tool header
+ * resolves `{{integration_secret.<identifier>}}` is NOT documented anywhere we could verify, which
+ * is why this is opt-in behind --integration-secret.
+ */
+async function ensureIntegrationSecret(secret) {
+  if (!secret) {
+    record('integration secret', 'SKIPPED', 'TOOL_WEBHOOK_SECRET unset')
+    return null
+  }
+  if (flags.dryRun) {
+    record('integration secret', 'PLANNED', `POST /v2/integration_secrets identifier=${INTEGRATION_SECRET_ID}`)
+    return INTEGRATION_SECRET_ID
+  }
+
+  const list = await api('/integration_secrets', { query: { 'page[size]': 100 } })
+  const existing = list.ok ? (list.data ?? []).find((x) => x.identifier === INTEGRATION_SECRET_ID) : null
+  if (existing) {
+    record('integration secret', 'REUSED', `identifier ${INTEGRATION_SECRET_ID}`)
+    return INTEGRATION_SECRET_ID
+  }
+
+  const created = await api('/integration_secrets', {
+    method: 'POST',
+    body: { identifier: INTEGRATION_SECRET_ID, type: 'bearer', token: secret },
+  })
+  if (!created.ok) {
+    record('integration secret', 'FAILED', `${created.error}; falling back to the literal header value`)
+    return null
+  }
+  record('integration secret', 'CREATED', `identifier ${INTEGRATION_SECRET_ID}`)
+  return INTEGRATION_SECRET_ID
 }
 
 // ---------------------------------------------------------------------------- steps
@@ -675,15 +788,39 @@ async function buyNumber(connectionId) {
 async function stepAssistant(env, baseUrl, sol) {
   section('4. AI Assistant "Sol"')
 
-  const toolsBaseUrl = env.TOOLS_BASE_URL || `${baseUrl}/api/tools`
+  const urls = {
+    tools: env.TOOLS_BASE_URL || `${baseUrl}/api/tools`,
+    groupTool: env.GROUP_TOOL_URL || `${baseUrl}/api/group/tool`,
+  }
   let toolNames = { concierge: [], group: [], routing: [] }
   try {
     toolNames = parseToolNames(await readFile(TOOL_CONTRACTS_PATH, 'utf8'))
   } catch (err) {
     record('shared/toolContracts.ts', 'FAILED', err.message)
   }
-  const { tools, skipped } = buildToolList(toolNames, toolsBaseUrl, env.DEMO_PHONE || null)
-  record('tools compiled', 'REUSED', `${tools.length} tools -> ${toolsBaseUrl}/<name>`)
+
+  const secret = env.TOOL_WEBHOOK_SECRET || process.env.TOOL_WEBHOOK_SECRET || null
+  const integrationSecretId = flags.integrationSecret ? await ensureIntegrationSecret(secret) : null
+  if (!secret) {
+    console.warn('  !  TOOL_WEBHOOK_SECRET is not set. Tools will be registered WITHOUT an auth header.')
+    console.warn('     /api/tools enforces the secret when it is set in the Netlify env, so if it is set')
+    console.warn('     there and not here, every tool call Sol makes will 401. Set it in .env and re-run.')
+    record('tool auth header', 'SKIPPED', 'TOOL_WEBHOOK_SECRET unset')
+  } else {
+    record(
+      'tool auth header',
+      'REUSED',
+      integrationSecretId
+        ? `x-solstice-tool-key -> {{integration_secret.${integrationSecretId}}}`
+        : `x-solstice-tool-key -> TOOL_WEBHOOK_SECRET (${secret.length} chars, value not printed)`,
+    )
+  }
+
+  const headers = authHeaders(secret, integrationSecretId)
+  const { tools, skipped } = buildToolList(toolNames, urls, env.DEMO_PHONE || null, headers)
+  record('tools compiled', 'REUSED', `${tools.length} tools`)
+  console.log(`      concierge + routing -> ${urls.tools}/<name>   (flat body)`)
+  console.log(`      group               -> ${urls.groupTool}   ({ tool, args })`)
   if (skipped.length) console.log(`      skipped: ${skipped.join(', ')}`)
 
   const model = env.TELNYX_ASSISTANT_MODEL || 'openai/gpt-4o'
@@ -927,6 +1064,49 @@ async function stepWebhooks(assistantId, webhookUrl) {
   )
 }
 
+/**
+ * Read the assistant back and confirm every webhook tool actually carries the auth header.
+ * This is the check that would have caught the 401 break: registration succeeding is not the same
+ * as the header being attached. Header NAMES are printed; values never are.
+ */
+async function stepVerifyTools(assistantId, expectedHeader) {
+  section('9. Verify registered tools')
+
+  if (flags.dryRun || !assistantId || assistantId === '<dry-run>') {
+    record('verify tools', 'SKIPPED', 'needs a live assistant id')
+    return
+  }
+
+  const got = await api(`/ai/assistants/${assistantId}`)
+  if (!got.ok) {
+    record('verify tools', 'FAILED', got.error)
+    return
+  }
+
+  const tools = got.data?.tools ?? []
+  const webhookTools = tools.filter((t) => t.type === 'webhook')
+  const missing = []
+  const urlCounts = {}
+
+  for (const t of webhookTools) {
+    const hook = t.webhook ?? {}
+    const names = (hook.headers ?? []).map((h) => (h.name ?? '').toLowerCase())
+    if (!names.includes(expectedHeader.toLowerCase())) missing.push(hook.name ?? '(unnamed)')
+    urlCounts[hook.url] = (urlCounts[hook.url] ?? 0) + 1
+  }
+
+  record('tools on assistant', 'REUSED', `${tools.length} total, ${webhookTools.length} webhook`)
+  for (const [url, count] of Object.entries(urlCounts)) console.log(`      ${count} -> ${url}`)
+
+  if (missing.length === 0 && webhookTools.length > 0) {
+    record(`header ${expectedHeader}`, 'REUSED', `present on all ${webhookTools.length} webhook tools`)
+  } else if (webhookTools.length === 0) {
+    record(`header ${expectedHeader}`, 'FAILED', 'no webhook tools are registered on this assistant')
+  } else {
+    record(`header ${expectedHeader}`, 'FAILED', `MISSING on ${missing.length}: ${missing.slice(0, 8).join(', ')}`)
+  }
+}
+
 // ---------------------------------------------------------------------------- main
 
 async function main() {
@@ -965,9 +1145,10 @@ async function main() {
   const webrtc = await stepWebrtcCredential(sip.id)
   await stepAttachNumber(assistant.id, number.number, app.id)
   await stepWebhooks(assistant.id, app.webhookUrl)
+  await stepVerifyTools(assistant.id, 'x-solstice-tool-key')
 
   // ------------------------------------------------------------------ .env
-  section('9. .env')
+  section('10. .env')
   const updates = {}
   const set = (k, v) => {
     if (v !== null && v !== undefined && v !== '' && v !== '<dry-run>') updates[k] = v

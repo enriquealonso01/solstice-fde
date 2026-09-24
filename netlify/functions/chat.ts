@@ -65,6 +65,44 @@ const EFFORT = (process.env.SOL_EFFORT ?? 'low') as 'low' | 'medium' | 'high' | 
  */
 const THINKING: Anthropic.ThinkingConfigParam =
   process.env.SOL_THINKING === 'disabled' ? { type: 'disabled' } : { type: 'adaptive' }
+/**
+ * Whether Sol says "let me pull that up" BEFORE a tool call on this channel.
+ *
+ * Off by default in chat, on purpose. The transcript already shows the guest a plain-English
+ * chip for every tool as it runs, grounded in what actually executed, so a spoken preamble is
+ * redundant here; worse, the model tends to restate itself once the tool returns, which arrives
+ * as two replies welded together. Voice keeps the narration, because silence on a phone sounds
+ * like a dropped line. SOL_NARRATION=on restores it if the room prefers the earlier first word.
+ */
+const NARRATE_BEFORE_TOOLS = process.env.SOL_NARRATION === 'on'
+/** Separator between two utterances from different tool rounds. Never concatenate them raw. */
+const PARAGRAPH_BREAK = '\n\n'
+
+/**
+ * Not every model takes the same knobs, and swapping ANTHROPIC_MODEL is something we actively
+ * want to be able to do live. Haiku 4.5 rejects `output_config.effort` outright with a 400, and
+ * the same is true of the older Sonnet and Haiku generations, so sending it would break every
+ * turn on exactly the models someone would reach for to cut latency.
+ *
+ * The table below is the known-good list; `sendTuning` false means "plain request, no effort and
+ * no adaptive thinking". Anything unrecognised is assumed to take the knobs and is protected by
+ * the one-shot retry in the turn loop, so a model released after this was written degrades to a
+ * slightly slower first turn rather than a dead endpoint.
+ */
+function modelTakesTuning(model: string): boolean {
+  if (process.env.SOL_EFFORT === 'off') return false
+  if (/^claude-haiku/.test(model)) return false
+  if (/^claude-(sonnet|opus)-[0-3]/.test(model)) return false
+  return true
+}
+
+const SEND_TUNING = modelTakesTuning(MODEL)
+
+/** True when a 400 is the model rejecting a tuning parameter rather than a real request error. */
+function isUnsupportedParameterError(err: unknown): boolean {
+  if (!(err instanceof Anthropic.APIError) || err.status !== 400) return false
+  return /does not support the (effort|thinking) parameter|thinking.*not supported|effort/i.test(String(err.message))
+}
 /** Tool rounds per turn. Six is generous for a concierge answer and stops a runaway loop. */
 const MAX_TOOL_ROUNDS = Number.parseInt(process.env.SOL_MAX_TOOL_ROUNDS ?? '6', 10)
 /** How much history we replay. Long enough to hold a conversation, short enough to stay fast. */
@@ -238,24 +276,40 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
   /** tool_use block ids whose "running" chip has already gone out mid-stream. */
   const announced = new Set<string>()
   let assistantText = ''
+  /**
+   * The model can speak in more than one round: a phrase before a tool call, the answer after
+   * it. Those are separate utterances and must never be concatenated character-to-character,
+   * which is what produced "...review it for you.This is now with our AGM...". Belt and braces
+   * behind the prompt-level fix: whatever the model does, the transcript stays readable.
+   */
+  let roundHasEmittedText = false
   let toolCalls = 0
   let failure: string | null = null
+  // Cache accounting, summed across the rounds in this turn. If cache_read stays at zero across
+  // repeated turns something is silently invalidating the prefix, or the prefix is below the
+  // model's minimum cacheable size, and we are paying full price for the prompt every time.
+  const usage = { input: 0, output: 0, cache_read: 0, cache_write: 0 }
+  /** Cleared for the rest of the turn the first time the model rejects a tuning parameter. */
+  let tuningEnabled = SEND_TUNING
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     let message: Anthropic.Message
-    try {
-      const stream = client.messages.stream({
+    roundHasEmittedText = false
+    let roundEmittedAnything = false
+
+    const openStream = (tuned: boolean) =>
+      client.messages.stream({
         model: MODEL,
         max_tokens: MAX_TOKENS,
         // Adaptive thinking is the on-mode on the current models; effort and this switch, not a
-        // token budget, are the latency dials.
-        thinking: THINKING,
-        output_config: { effort: EFFORT },
+        // token budget, are the latency dials. Models that reject them get a plain request.
+        ...(tuned ? { thinking: THINKING, output_config: { effort: EFFORT } } : {}),
         system: systemBlocks(ctx.guest_id, verifiedLabel),
         tools,
         messages,
       })
 
+    const consume = async (stream: ReturnType<typeof openStream>): Promise<Anthropic.Message> => {
       for await (const event of stream) {
         // A tool_use block announces its name the moment it opens, well before the message
         // finishes. Emitting the chip here rather than after finalMessage() is the difference
@@ -263,6 +317,7 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
         if (event.type === 'content_block_start' && event.content_block.type === 'tool_use') {
           announced.add(event.content_block.id)
           if (firstEventAt === null) firstEventAt = Date.now()
+          roundEmittedAnything = true
           emit('tool', { name: event.content_block.name, status: 'running', summary: runningLabel(event.content_block.name), citations: [] as Citation[] })
         }
         // Thinking blocks stream too; we only forward visible text, and we never assume
@@ -270,18 +325,50 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
         if (event.type === 'content_block_delta' && event.delta.type === 'text_delta' && event.delta.text) {
           if (firstTokenAt === null) firstTokenAt = Date.now()
           if (firstEventAt === null) firstEventAt = Date.now()
+          if (!roundHasEmittedText && assistantText.trim() !== '') {
+            // A new round is speaking after an earlier one already did. Separate them.
+            assistantText += PARAGRAPH_BREAK
+            emit('delta', { text: PARAGRAPH_BREAK })
+          }
+          roundHasEmittedText = true
+          roundEmittedAnything = true
           assistantText += event.delta.text
           emit('delta', { text: event.delta.text })
         }
       }
 
-      message = await stream.finalMessage()
-    } catch (err) {
-      failure = err instanceof Error ? err.message : String(err)
-      console.error('[chat] model call failed:', failure)
-      emit('error', { message: GUEST_SAFE_FAILURE })
-      break
+      return await stream.finalMessage()
     }
+
+    try {
+      message = await consume(openStream(tuningEnabled))
+    } catch (err) {
+      // A model that rejects `effort` or adaptive thinking fails the request outright, before
+      // anything has been streamed, so retrying plain is safe and invisible to the guest. This
+      // is what makes "swap ANTHROPIC_MODEL live" a real option rather than a broken endpoint.
+      if (tuningEnabled && !roundEmittedAnything && isUnsupportedParameterError(err)) {
+        console.warn(`[chat] ${MODEL} rejected the tuning parameters; retrying without them.`)
+        tuningEnabled = false
+        try {
+          message = await consume(openStream(false))
+        } catch (retryErr) {
+          failure = retryErr instanceof Error ? retryErr.message : String(retryErr)
+          console.error('[chat] model call failed after retry:', failure)
+          emit('error', { message: GUEST_SAFE_FAILURE })
+          break
+        }
+      } else {
+        failure = err instanceof Error ? err.message : String(err)
+        console.error('[chat] model call failed:', failure)
+        emit('error', { message: GUEST_SAFE_FAILURE })
+        break
+      }
+    }
+
+    usage.input += message.usage.input_tokens ?? 0
+    usage.output += message.usage.output_tokens ?? 0
+    usage.cache_read += message.usage.cache_read_input_tokens ?? 0
+    usage.cache_write += message.usage.cache_creation_input_tokens ?? 0
 
     if (message.stop_reason === 'refusal') {
       emit('error', { message: GUEST_SAFE_FAILURE })
@@ -355,6 +442,12 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
   void recordTurnMetrics(sessionId, {
     model: MODEL,
     effort: EFFORT,
+    thinking: THINKING.type,
+    narration: NARRATE_BEFORE_TOOLS ? 'on' : 'off',
+    input_tokens: usage.input,
+    output_tokens: usage.output,
+    cache_read_tokens: usage.cache_read,
+    cache_write_tokens: usage.cache_write,
     first_token_ms: firstTokenMs,
     first_event_ms: firstEventMs,
     total_ms: totalMs,
@@ -373,8 +466,16 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
  * it never invalidates the cached prefix.
  */
 function systemBlocks(guestId: string | undefined, label: string | null): Anthropic.TextBlockParam[] {
+  // The channel line is constant for this runtime, so it lives INSIDE the cached prefix rather
+  // than after the breakpoint. agent/sol.md branches on it under SPEAKING AROUND A TOOL CALL.
+  const channel = [
+    'CHANNEL',
+    NARRATE_BEFORE_TOOLS
+      ? 'This conversation is in the chat channel.'
+      : 'This conversation is in the chat channel. Say nothing before a tool call: give one answer once the tools have returned, and never restate something you have already said in this reply.',
+  ].join('\n')
   const blocks: Anthropic.TextBlockParam[] = [
-    { type: 'text', text: systemPrompt(), cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: [systemPrompt(), channel].join(PARAGRAPH_BREAK), cache_control: { type: 'ephemeral' } },
   ]
   if (guestId) {
     blocks.push({
@@ -561,6 +662,9 @@ async function loadHistory(sessionId: string, fallback: Anthropic.MessageParam[]
  * `tool = 'turn_metrics'` to separate it from the guest-facing chips.
  */
 async function recordTurnMetrics(sessionId: string, metrics: Record<string, unknown>): Promise<void> {
+  // Always emit to the function log too: it is the only place these numbers exist when Supabase
+  // is not configured, and in production it is what you grep after a slow demo.
+  console.log('[chat] turn_metrics', JSON.stringify({ session_id: sessionId, ...metrics }))
   try {
     const db = getDatabase()
     if (!db) return

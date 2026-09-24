@@ -88,7 +88,13 @@ TELNYX_API_KEY  TELNYX_PUBLIC_KEY  TELNYX_ASSISTANT_ID  TELNYX_PHONE_NUMBER
 TELNYX_CALL_CONTROL_APP_ID  TELNYX_SIP_CONNECTION_ID  TELNYX_TELEPHONY_CREDENTIAL_ID
 TELNYX_SIP_USERNAME  TELNYX_SIP_PASSWORD  TELNYX_SIP_URI  PUBLIC_BASE_URL
 SUPABASE_URL  SUPABASE_ANON_KEY  SUPABASE_SERVICE_ROLE_KEY  DEMO_PHONE
+TOOL_WEBHOOK_SECRET
 ```
+
+`TOOL_WEBHOOK_SECRET` must be **identical** in `.env` and in the Netlify environment. `/api/tools`
+enforces it; provisioning reads it from `.env` and bakes it into the assistant's tool headers. If
+the two ever diverge, every tool call Sol makes returns 401 and the model answers with nothing to
+ground on. Change it in both places, then re-run `--refresh`.
 
 ### 5. After `agent/sol.md` changes
 
@@ -100,6 +106,43 @@ Pushes recompiled instructions and the regenerated tool list onto the existing a
 create anything new. This is the loop to use when tuning Sol's persona.
 
 ---
+
+## How tools are registered
+
+The 24 tools on the assistant are not all the same shape. Two dispatchers, two body shapes, one
+auth header.
+
+| Tools | URL | Body |
+|---|---|---|
+| 11 concierge + `classify_intent` | `POST /api/tools/<name>` | flat arguments, plus `call_control_id` |
+| 11 group tools | `POST /api/group/tool` | `{ tool, args: {...}, call_control_id }` |
+| `transfer_to_human` | native Telnyx `transfer` tool | not a webhook |
+| `hangup` | native Telnyx `hangup` tool | not a webhook |
+
+`netlify/functions/tools/registry.ts` mounts only `CONCIERGE_TOOLS` + `ROUTING_TOOLS`. A group
+tool posted to `/api/tools/<name>` comes back **404 "Unknown tool"**, so group tools must go to
+the group dispatcher, with the tool name pinned by a single-value `enum` so the model cannot
+mis-address the call.
+
+Every webhook tool carries two headers:
+
+```
+X-Solstice-Source: telnyx-assistant
+x-solstice-tool-key: <TOOL_WEBHOOK_SECRET>
+```
+
+`/api/tools` returns **401** without the second one. `/api/group/tool` is currently open and
+accepts it harmlessly, so securing the group dispatcher later needs no change here.
+
+`--integration-secret` is an opt-in that stores the token in Telnyx
+(`POST /v2/integration_secrets`, type `bearer`, identifier `solstice-tool-key`) and emits
+`{{integration_secret.solstice-tool-key}}` as the header value instead of the literal. That keeps
+the secret out of the assistant config, but whether a webhook tool header resolves that
+placeholder is not documented anywhere we could verify, and if it does not resolve the result is
+exactly the 401 outage this replaced. Default is the literal value, which is verifiable. Prove the
+placeholder on a funded call before switching.
+
+Note: `/v2/integration_secrets` is the real path. `/v2/ai/integration_secrets` 404s.
 
 ## Verification, in order
 
@@ -134,6 +177,31 @@ demo beat. If the call connects but no rows appear, `ai_assistant_start` failed 
 Reminder from `plans/02-voice-realtime.md`: the event is
 `call.ai_gather.message_history_updated`, **not** `call.conversation.*`. Do not go looking in the
 wrong namespace.
+
+### V2b — tool calls authenticate (the 401 regression)
+
+Provisioning ends with a verification step that reads the assistant back and confirms
+`x-solstice-tool-key` is on every webhook tool. It prints header names, never values. Expect:
+
+```
+[=] REUSED  tools on assistant — 24 total, 22 webhook
+    11 -> https://<site>/api/tools/<name>
+    11 -> https://<site>/api/group/tool
+[=] REUSED  header x-solstice-tool-key — present on all 22 webhook tools
+```
+
+To confirm the stored value actually authenticates rather than merely being present, replay a call
+with the header Telnyx holds:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}
+' -X POST "$PUBLIC_BASE_URL/api/tools/get_policy"   -H 'content-type: application/json' -d '{"topic":"cancellation"}'                    # expect 401
+curl -s -o /dev/null -w '%{http_code}
+' -X POST "$PUBLIC_BASE_URL/api/tools/get_policy"   -H 'content-type: application/json' -H "x-solstice-tool-key: $TOOL_WEBHOOK_SECRET"   -d '{"topic":"cancellation"}'                                                        # expect 200
+```
+
+Do **not** "fix" a 401 by unsetting `TOOL_WEBHOOK_SECRET`. The endpoint is deliberately open when
+the variable is unset; unsetting it in production would leave the tool layer world-callable.
 
 ### V3 — caller identification
 
