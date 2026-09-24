@@ -81,7 +81,7 @@ export async function accessToken(): Promise<string | null> {
  * Separates "you are not allowed" from "the table is empty" on a PostgREST error.
  * PGRST301 is an expired or invalid JWT; 42501 is an RLS refusal on a write.
  */
-function classifyRead(error: Postgrestish): AccessProblem | null {
+export function classifyDbError(error: Postgrestish): AccessProblem | null {
   const code = error.code ?? ''
   const msg = (error.message ?? '').toLowerCase()
   if (error.status === 401 || code === 'PGRST301' || msg.includes('jwt expired') || msg.includes('invalid jwt')) {
@@ -106,7 +106,7 @@ async function readOrMock<T>(run: () => PromiseLike<QueryShape>, fallback: T[]):
   try {
     const { data, error } = await run()
     if (error) {
-      const access = classifyRead(error)
+      const access = classifyDbError(error)
       if (access) return { rows: [], source: 'demo', error: null, access }
       return { rows: fallback, source: 'demo', error: error.message, access: null }
     }

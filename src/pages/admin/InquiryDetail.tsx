@@ -13,17 +13,19 @@ import { Link, useParams } from 'react-router-dom'
 import AdminShell from '@/components/admin/AdminShell'
 import InquiryAssistant from '@/components/admin/InquiryAssistant'
 import {
+  AccessNotice,
   EmptyState,
   Field,
   Panel,
   PanelHeader,
+  ProposalPdfLink,
   ProposalStatusChip,
   SeverityChip,
   SourceBadge,
   SourceChip,
   VerdictChip,
 } from '@/components/admin/ui'
-import { postJson, useInquiry } from '@/components/admin/useAdminData'
+import { isMissingBackend, postJson, useInquiry } from '@/components/admin/useAdminData'
 import {
   money,
   renderProposalBody,
@@ -56,10 +58,11 @@ interface LogEntry {
 
 export default function InquiryDetail() {
   const { id } = useParams<{ id: string }>()
-  const { inquiry, proposal, source, loading, patchProposal } = useInquiry(id)
+  const { inquiry, proposal, source, loading, access, patchProposal } = useInquiry(id)
   const [log, setLog] = useState<LogEntry[]>([])
   const [prompt, setPrompt] = useState<Decision | null>(null)
   const [busy, setBusy] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const severity = useMemo(() => (proposal ? verdictSeverity(proposal.verdicts) : 'flag'), [proposal])
 
@@ -69,6 +72,14 @@ export default function InquiryDetail() {
         <Panel>
           <EmptyState title="Loading inquiry…" />
         </Panel>
+      </AdminShell>
+    )
+  }
+
+  if (access) {
+    return (
+      <AdminShell title="Group inquiry">
+        <AccessNotice problem={access} />
       </AdminShell>
     )
   }
@@ -106,6 +117,7 @@ export default function InquiryDetail() {
   async function commit(action: Decision, justification: string | null) {
     if (!proposal || !inquiry) return
     setBusy(true)
+    setActionError(null)
     const res = await postJson<{ ok: boolean; status?: ProposalRow['status'] }>('/api/group/proposal-action', {
       inquiry_id: inquiry.id,
       proposal_id: proposal.id,
@@ -115,6 +127,14 @@ export default function InquiryDetail() {
         ? { override_discount_pct: proposal.pricing.requested_discount_pct }
         : {}),
     })
+    if (!res.ok && !isMissingBackend(res.failure)) {
+      // The backend is live and refused. Applying the transition anyway would leave the
+      // rep looking at an "approved" proposal that no record anywhere agrees with.
+      setActionError(res.error)
+      setBusy(false)
+      setPrompt(null)
+      return
+    }
     const simulated = !res.ok
 
     // Optimistic local transition so the surface is demonstrable with or without the endpoint.
@@ -248,6 +268,12 @@ export default function InquiryDetail() {
                   Reject
                 </button>
               </div>
+
+              {actionError ? (
+                <p role="alert" className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+                  {actionError} Nothing was changed.
+                </p>
+              ) : null}
 
               {log.length > 0 ? (
                 <ul className="mt-4 space-y-1.5 border-t border-solstice-sand pt-3 text-xs">
@@ -414,11 +440,7 @@ export default function InquiryDetail() {
             <Panel>
               <PanelHeader
                 title="Generated proposal"
-                right={
-                  <span className="text-xs font-normal text-solstice-stone">
-                    {proposal.pdf_path ? `PDF: ${proposal.pdf_path}` : 'PDF generated on send'}
-                  </span>
-                }
+                right={<ProposalPdfLink pdfPath={proposal.pdf_path} />}
               />
               <pre className="whitespace-pre-wrap px-5 py-4 font-sans text-sm leading-relaxed text-solstice-ink">
                 {proposal.body ?? renderProposalBody(inquiry, proposal)}

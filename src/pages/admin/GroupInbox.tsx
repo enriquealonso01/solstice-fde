@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AdminShell from '@/components/admin/AdminShell'
 import {
+  AccessNotice,
   EmptyState,
   ErrorNote,
   Metric,
@@ -63,6 +64,14 @@ export default function GroupInbox() {
   const readyToSend = decorated.filter((d) => d.severity === 'clear' && d.proposal && d.proposal.status !== 'sent').length
   const sent = decorated.filter((d) => d.proposal?.status === 'sent').length
   const awaitingGuest = inquiries.rows.filter((i) => i.missing_fields.length > 0 && !byInquiry.get(i.id)).length
+
+  if (inquiries.access) {
+    return (
+      <AdminShell title="Group inquiries">
+        <AccessNotice problem={inquiries.access} />
+      </AdminShell>
+    )
+  }
 
   return (
     <AdminShell

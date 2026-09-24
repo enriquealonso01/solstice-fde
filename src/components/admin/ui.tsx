@@ -1,9 +1,10 @@
 // Small shared admin primitives. Everything leans on .panel / .btn-* / .chip from
 // src/index.css so the three dashboards read as one product.
 
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import type { Channel } from '../../../shared/types'
-import type { DataSource } from './useAdminData'
+import { ACCESS_MESSAGE, type AccessProblem, type DataSource } from './useAdminData'
 import type { SessionStatus } from './mockData'
 
 export function Panel({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -138,5 +139,81 @@ export function ErrorNote({ message }: { message: string | null }) {
     <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
       Live read failed, showing demo fixtures. {message}
     </p>
+  )
+}
+
+/**
+ * Shown INSTEAD of data when the failure was about credentials.
+ * Deliberately not a quiet footnote: the alternative is a signed-out operator reading
+ * fixture numbers as if they were this hotel's real bookings.
+ */
+export function AccessNotice({ problem }: { problem: AccessProblem }) {
+  return (
+    <div role="alert" className="panel border-rose-200 bg-rose-50 p-5">
+      <h2 className="font-display text-xl text-rose-900">
+        {problem === 'expired' ? 'Session expired' : problem === 'forbidden' ? 'Not permitted' : 'Server unavailable'}
+      </h2>
+      <p className="mt-1 max-w-2xl text-sm leading-relaxed text-rose-900">{ACCESS_MESSAGE[problem]}</p>
+      <p className="mt-2 max-w-2xl text-xs leading-relaxed text-rose-800">
+        Demo fixtures are suppressed on this screen on purpose. Showing you numbers that are not
+        this hotel's would be worse than showing you nothing.
+      </p>
+      {problem === 'expired' ? (
+        <Link to="/login" className="btn-primary mt-4 inline-flex">
+          Sign in again
+        </Link>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * The proposal PDF link is a Supabase Storage URL with an access token in its path,
+ * so anyone holding the string can read the document. It is rendered as an action and
+ * never as visible text: this page also shows the customer's email and phone, and the
+ * whole screen gets projected during the demo.
+ */
+export function ProposalPdfLink({ pdfPath }: { pdfPath: string | null }) {
+  const [copied, setCopied] = useState(false)
+
+  if (!pdfPath) {
+    return <span className="text-xs font-normal text-solstice-stone">PDF is generated when this proposal is sent.</span>
+  }
+
+  if (!/^https?:\/\//i.test(pdfPath)) {
+    // A storage path, not yet a signed URL. Show the filename only; it carries no token.
+    const name = pdfPath.split('/').pop() ?? pdfPath
+    return <span className="text-xs font-normal text-solstice-stone">Stored as {name}; signed link issued at send.</span>
+  }
+
+  const href = pdfPath
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(href)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }
+
+  return (
+    <span className="flex items-center gap-2">
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer noopener"
+        className="chip bg-solstice-sand/60 text-solstice-slate hover:bg-solstice-sand"
+      >
+        Open PDF
+      </a>
+      <button type="button" onClick={() => void copy()} className="chip bg-solstice-sand/60 text-solstice-slate hover:bg-solstice-sand">
+        {copied ? 'Link copied' : 'Copy link'}
+      </button>
+      <span className="text-[11px] font-normal text-solstice-stone" title="Anyone with this link can open the document">
+        link carries an access token
+      </span>
+    </span>
   )
 }

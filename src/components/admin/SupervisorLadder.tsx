@@ -12,7 +12,7 @@
 import { useState } from 'react'
 import type { Channel } from '../../../shared/types'
 import type { SessionStatus } from './mockData'
-import { postJson } from './useAdminData'
+import { isMissingBackend, postJson } from './useAdminData'
 
 export type LadderAction = 'listen' | 'whisper' | 'barge' | 'takeover'
 
@@ -68,12 +68,21 @@ export default function SupervisorLadder({
       if (action === 'takeover') onTakeover?.()
       return
     }
-    // The endpoint belongs to another agent and may not be deployed yet. Advance the
-    // rung locally so the surface is demonstrable, and say plainly that it is simulated.
-    setSimulated(true)
-    setActive(action)
-    setError(res.status === 404 || res.status === 0 ? null : res.error)
-    if (action === 'takeover') onTakeover?.()
+
+    if (isMissingBackend(res.failure)) {
+      // The endpoint is not deployed yet. Advance the rung locally so the surface is
+      // demonstrable, and say plainly that no Telnyx leg was created.
+      setSimulated(true)
+      setActive(action)
+      setError(null)
+      if (action === 'takeover') onTakeover?.()
+      return
+    }
+
+    // The backend answered and refused. Do not move the rung: claiming a supervisor is
+    // listening to a live call when nobody is would be the worst lie this screen can tell.
+    setSimulated(false)
+    setError(res.error)
   }
 
   return (

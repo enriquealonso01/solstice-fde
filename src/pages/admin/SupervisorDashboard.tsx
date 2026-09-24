@@ -5,14 +5,24 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AdminShell from '@/components/admin/AdminShell'
-import { EmptyState, ErrorNote, ChannelChip, Metric, Panel, PanelHeader, SessionStatusChip, SourceChip } from '@/components/admin/ui'
+import {
+  AccessNotice,
+  ChannelChip,
+  EmptyState,
+  ErrorNote,
+  Metric,
+  Panel,
+  PanelHeader,
+  SessionStatusChip,
+  SourceChip,
+} from '@/components/admin/ui'
 import { useNow, useSessions } from '@/components/admin/useAdminData'
 import { duration, intentLabel, shortDate, clockTime, type SessionRow } from '@/components/admin/mockData'
 
 type ChannelFilter = 'all' | 'voice' | 'chat'
 
 export default function SupervisorDashboard() {
-  const { rows, source, loading, error } = useSessions()
+  const { rows, source, loading, error, access } = useSessions()
   const now = useNow(1000)
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all')
 
@@ -26,6 +36,14 @@ export default function SupervisorDashboard() {
   const voiceCount = rows.filter((s) => s.status !== 'ended' && s.channel === 'voice').length
   const chatCount = rows.filter((s) => s.status !== 'ended' && s.channel === 'chat').length
   const takenOver = rows.filter((s) => s.status === 'taken_over').length
+
+  if (access) {
+    return (
+      <AdminShell title="Live sessions">
+        <AccessNotice problem={access} />
+      </AdminShell>
+    )
+  }
 
   return (
     <AdminShell

@@ -8,7 +8,7 @@
 // and labels every reply it produced as simulated. It never pretends to have acted.
 
 import { useState, type FormEvent } from 'react'
-import { postJson, useStickToBottom } from './useAdminData'
+import { isMissingBackend, postJson, useStickToBottom } from './useAdminData'
 import type { InquiryRow, ProposalRow } from './mockData'
 import { money, verdictSeverity } from './mockData'
 
@@ -23,6 +23,7 @@ interface Turn {
   role: 'rep' | 'assistant'
   text: string
   simulated?: boolean
+  refused?: boolean
 }
 
 const QUICK_PROMPTS = [
@@ -66,10 +67,17 @@ export default function InquiryAssistant({
     if (res.ok && res.data?.reply) {
       setTurns((t) => [...t, { id: `a-${Date.now()}`, role: 'assistant', text: res.data!.reply }])
       if (res.data.suggestions?.length) setSuggestions(res.data.suggestions)
-    } else {
+    } else if (isMissingBackend(res.failure)) {
       setTurns((t) => [
         ...t,
         { id: `a-${Date.now()}`, role: 'assistant', text: simulate(clean, inquiry, proposal), simulated: true },
+      ])
+    } else {
+      // The endpoint is live and refused us. Say so rather than answering locally and
+      // letting the rep believe they are talking to the real assistant.
+      setTurns((t) => [
+        ...t,
+        { id: `a-${Date.now()}`, role: 'assistant', text: res.error ?? 'The assistant is unavailable.', refused: true },
       ])
     }
     setBusy(false)
@@ -94,7 +102,9 @@ export default function InquiryAssistant({
               className={`sol-rise max-w-[92%] rounded-lg px-3 py-2 text-sm leading-relaxed ${
                 t.role === 'rep'
                   ? 'bg-solstice-ink text-white'
-                  : 'border border-solstice-sand bg-solstice-cream text-solstice-ink'
+                  : t.refused
+                    ? 'border border-rose-200 bg-rose-50 text-rose-900'
+                    : 'border border-solstice-sand bg-solstice-cream text-solstice-ink'
               }`}
             >
               <p className="whitespace-pre-wrap">{t.text}</p>

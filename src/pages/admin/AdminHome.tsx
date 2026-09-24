@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import AdminShell from '@/components/admin/AdminShell'
 import { supabase } from '@/lib/supabase'
 import {
+  AccessNotice,
   ChannelChip,
   EmptyState,
   ErrorNote,
@@ -17,6 +18,8 @@ import {
   SourceChip,
 } from '@/components/admin/ui'
 import {
+  ACCESS_MESSAGE,
+  classifyDbError,
   useAuditLog,
   useIdentity,
   useInquiries,
@@ -55,6 +58,15 @@ export default function AdminHome() {
     .map((inq) => ({ inq, proposal: proposalByInquiry.get(inq.id) ?? null }))
     .filter(({ proposal }) => !proposal || verdictSeverity(proposal.verdicts) !== 'clear')
     .filter(({ proposal }) => proposal?.status !== 'sent')
+
+  const access = sessions.access ?? inquiries.access ?? proposals.access ?? members.access
+  if (access) {
+    return (
+      <AdminShell title="Overview">
+        <AccessNotice problem={access} />
+      </AdminShell>
+    )
+  }
 
   return (
     <AdminShell
@@ -210,7 +222,15 @@ function Members({ members }: { members: ReturnType<typeof useMembers> }) {
     setNote(null)
     const { error } = await supabase.from('invites').insert({ email: clean, granted_role: role, status: 'pending' })
     if (error) {
-      // Table not applied yet, or RLS refused. Keep the demo moving and say which.
+      const access = classifyDbError(error)
+      if (access) {
+        // Refused on credentials. A local row here would look like a granted invite that
+        // nobody was ever sent, which is the kind of thing an admin only discovers later.
+        setNote(`${ACCESS_MESSAGE[access]} No invite was created.`)
+        setBusy(false)
+        return
+      }
+      // Table not applied yet. Keep the demo moving and say exactly what happened.
       invites.addLocal({
         id: `local-${Date.now()}`,
         email: clean,
@@ -218,7 +238,7 @@ function Members({ members }: { members: ReturnType<typeof useMembers> }) {
         status: 'pending (local)',
         created_at: new Date().toISOString(),
       })
-      setNote(`Recorded locally only: ${error.message}`)
+      setNote(`Recorded locally only, not in the database: ${error.message}`)
     } else {
       invites.refresh()
       setNote(`Invite queued for ${clean} as ${role.replace('_', ' ')}.`)
@@ -227,10 +247,17 @@ function Members({ members }: { members: ReturnType<typeof useMembers> }) {
     setBusy(false)
   }
 
-  async function changeRole(id: string, next: StaffRole) {
+  async function changeRole(id: string, previous: StaffRole, next: StaffRole) {
     setRoleOverride((r) => ({ ...r, [id]: next }))
     const { error } = await supabase.from('profiles').update({ role: next }).eq('id', id)
-    setNote(error ? `Role change not persisted: ${error.message}` : 'Role updated.')
+    if (!error) {
+      setNote('Role updated.')
+      return
+    }
+    // Snap the control back, so the dropdown never shows a grant that did not happen.
+    setRoleOverride((r) => ({ ...r, [id]: previous }))
+    const access = classifyDbError(error)
+    setNote(access ? `${ACCESS_MESSAGE[access]} The role was not changed.` : `Role change not persisted: ${error.message}`)
   }
 
   return (
@@ -294,7 +321,7 @@ function Members({ members }: { members: ReturnType<typeof useMembers> }) {
               <td className="px-4 py-2.5">
                 <select
                   value={roleOverride[m.id] ?? m.role}
-                  onChange={(e) => void changeRole(m.id, e.target.value as StaffRole)}
+                  onChange={(e) => void changeRole(m.id, roleOverride[m.id] ?? m.role, e.target.value as StaffRole)}
                   className="rounded-md border border-solstice-sand bg-white px-2 py-1 text-sm outline-none focus:border-solstice-ember"
                 >
                   {ROLES.map((r) => (

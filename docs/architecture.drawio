@@ -1,0 +1,683 @@
+<mxfile host="app.diagrams.net" agent="solstice-fde" type="device" version="24.7.17">
+  <diagram id="future" name="Future state (production)">
+    <mxGraphModel dx="1400" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2500" pageHeight="1670" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="c_guest" value="<div style="font-size:15px;font-weight:700;color:#141210">Guest channels</div><div style="font-size:10px;font-weight:400;color:#5A534B">Where a guest starts</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="110" width="340" height="608" as="geometry" />
+        </mxCell>
+        <mxCell id="g_chat" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Web chat widget</div><div style="font-size:11px;color:#3B3630;margin-top:2px">React SPA on the Solstice site. Streaming replies, tool chips, inline policy citations.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_guest">
+          <mxGeometry x="20" y="56" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="g_sms" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">SMS and WhatsApp</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Telnyx Messaging. Same agent, same tools, asynchronous turns. Today: outbound only.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_guest">
+          <mxGeometry x="20" y="166" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="g_form" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Group inquiry intake</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Website portal form and the shared sales inbox. Today: the provided CSV export, seeded once.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_guest">
+          <mxGeometry x="20" y="276" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="g_pstn" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Phone call (PSTN)</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Published Telnyx DID. Sol answers with the same greeting as the chat widget.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_guest">
+          <mxGeometry x="20" y="386" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="g_webrtc" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Browser voice</div><div style="font-size:11px;color:#3B3630;margin-top:2px">@telnyx/webrtc mic inside the same widget, same assistant as the phone line.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_guest">
+          <mxGeometry x="20" y="496" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="c_sec" value="<div style="font-size:15px;font-weight:700;color:#141210">Security, secrets and tenancy</div><div style="font-size:10px;font-weight:400;color:#5A534B">Cross-cutting</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="758" width="340" height="498" as="geometry" />
+        </mxCell>
+        <mxCell id="s_secrets" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Secrets and keys</div><div style="font-size:11px;color:#3B3630;margin-top:2px">AWS Secrets Manager and KMS, rotated. Today: Netlify env vars; only the Supabase anon key reaches the browser.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_sec">
+          <mxGeometry x="20" y="56" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="s_tenant" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Per-tenant isolation</div><div style="font-size:11px;color:#3B3630;margin-top:2px">tenant_id per brand and property, enforced by Postgres RLS. 140 properties on one cluster, not 140 stacks.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_sec">
+          <mxGeometry x="20" y="166" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="s_pii" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">PII masking and retention</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Masked at the tool boundary before any model or log sees it. Future: retention sweep, zero-retention model terms.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_sec">
+          <mxGeometry x="20" y="276" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="s_kill" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Kill switch and rollout</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Off per property and per capability. Shadow mode, then a three to five property pilot, then the estate.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_sec">
+          <mxGeometry x="20" y="386" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="c_edge" value="<div style="font-size:15px;font-weight:700;color:#141210">Edge and identity</div><div style="font-size:10px;font-weight:400;color:#5A534B">Public boundary</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="110" width="340" height="388" as="geometry" />
+        </mxCell>
+        <mxCell id="e_cdn" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">CDN and WAF</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Amazon CloudFront and AWS WAF. Today: the Netlify CDN with an SPA rewrite.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_edge">
+          <mxGeometry x="20" y="56" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="e_gw" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">API gateway</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Authentication, rate limits and a per-tenant quota in front of every agent call.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_edge">
+          <mxGeometry x="20" y="166" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sso" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Staff SSO</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Okta or Microsoft Entra ID with SCIM. Today: Supabase Auth and three scoped logins.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_edge">
+          <mxGeometry x="20" y="276" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="c_voice" value="<div style="font-size:15px;font-weight:700;color:#141210">Telephony and voice</div><div style="font-size:10px;font-weight:400;color:#5A534B">Telnyx, managed</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="538" width="340" height="608" as="geometry" />
+        </mxCell>
+        <mxCell id="v_cc" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Telnyx Programmable Voice</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Call Control legs over SIP. Every leg is ordinary Call Control, which is why supervision works.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_voice">
+          <mxGeometry x="20" y="56" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="v_sol" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">AI Assistant &quot;Sol&quot;</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Voice runtime: turn-taking, barge-in, ASR and TTS. Config generated from agent/sol.md.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_voice">
+          <mxGeometry x="20" y="166" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="v_hist" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Transcript events</div><div style="font-size:11px;color:#3B3630;margin-top:2px">call.ai_gather.message_history_updated, one event per turn, diffed before insert.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_voice">
+          <mxGeometry x="20" y="276" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="v_sup" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Supervisor leg</div><div style="font-size:11px;color:#3B3630;margin-top:2px">supervise_call_control_id, switch_supervisor_role, then ai_assistant_stop for a full handover.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_voice">
+          <mxGeometry x="20" y="386" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="v_fail" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE  [fallback 3]</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Carrier failover</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Standby DID on a second carrier. The number on the site is runtime config, not a build constant.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_voice">
+          <mxGeometry x="20" y="496" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="c_rt" value="<div style="font-size:15px;font-weight:700;color:#141210">Agent runtime</div><div style="font-size:10px;font-weight:400;color:#5A534B">Amazon ECS Fargate, private subnets. This is where the agent runs.</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="800" y="110" width="380" height="718" as="geometry" />
+        </mxCell>
+        <mxCell id="r_def" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Agent definition registry</div><div style="font-size:11px;color:#3B3630;margin-top:2px">agent/sol.md compiles to the Telnyx assistant JSON and the Claude system prompt. One definition, two runtimes.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_rt">
+          <mxGeometry x="20" y="56" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="r_orch" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Chat orchestrator</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Stateless container on ECS Fargate, autoscaled. Today: the same code as a Netlify Function at /api/chat.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_rt">
+          <mxGeometry x="20" y="166" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="r_gw" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE  [fallback 2]</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Model gateway</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Anthropic API primary, Amazon Bedrock (Claude) standby. Timeouts, retries, circuit breaker, token budget.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_rt">
+          <mxGeometry x="20" y="276" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="r_tools" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Tool service</div><div style="font-size:11px;color:#3B3630;margin-top:2px">identify_guest, get_reservation, get_policy, evaluate_group_rules, price_block, availability_service.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_rt">
+          <mxGeometry x="20" y="386" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="r_rules" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Rules engine</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Thresholds, seasonal caps and blackouts live in src/lib/rules as data, never inside a prompt.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_rt">
+          <mxGeometry x="20" y="496" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="r_env" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">ToolResult envelope</div><div style="font-size:11px;color:#3B3630;margin-top:2px">ok, grounded, citations, masked_fields, latency_ms. grounded:false is a checkable order to escalate.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_rt">
+          <mxGeometry x="20" y="606" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="c_async" value="<div style="font-size:15px;font-weight:700;color:#141210">Async work</div><div style="font-size:10px;font-weight:400;color:#5A534B">Amazon SQS and Fargate workers</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="800" y="868" width="380" height="388" as="geometry" />
+        </mxCell>
+        <mxCell id="a_q" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Queue</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Amazon SQS with a dead-letter queue: proposal render and send, PMS writes behind an approval gate, webhook ingest.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_async">
+          <mxGeometry x="20" y="56" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="a_w" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Workers</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Idempotent container workers. Retry with backoff; the dead-letter queue is alerted on, never drained silently.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_async">
+          <mxGeometry x="20" y="166" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="a_job" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Reconciliation and jobs</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Nightly PMS and CRS reconciliation, rate-cache warm, transcript retention sweep.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_async">
+          <mxGeometry x="20" y="276" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="c_data" value="<div style="font-size:15px;font-weight:700;color:#141210">Data platform</div><div style="font-size:10px;font-weight:400;color:#5A534B">Solstice-owned, per-tenant</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="110" width="380" height="718" as="geometry" />
+        </mxCell>
+        <mxCell id="d_acl" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE  [fallback 1]</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Anti-corruption layer</div><div style="font-size:11px;color:#3B3630;margin-top:2px">The only component that knows a vendor field name. Read-only credentials first; writes queue behind approval.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_data">
+          <mxGeometry x="20" y="56" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="d_cache" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE  [fallback 1]</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Read cache</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Amazon ElastiCache (Redis) for reservations, policies and rates. TTL plus a stale_as_of stamp on every hit.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_data">
+          <mxGeometry x="20" y="166" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="d_pg" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE  [fallback 5]</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Operational Postgres</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Amazon RDS Multi-AZ. The same RLS policies that run on Supabase today move across unchanged.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_data">
+          <mxGeometry x="20" y="276" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="d_rt" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY  [fallback 6]</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Realtime fan-out</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Supabase Realtime on sessions, messages, tool_invocations and inquiries. Future: Postgres CDC.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_data">
+          <mxGeometry x="20" y="386" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="d_s3" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Object storage</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Amazon S3 with time-limited signed URLs for proposal PDFs. Today: Supabase Storage.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_data">
+          <mxGeometry x="20" y="496" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="d_qa" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Data-quality quarantine</div><div style="font-size:11px;color:#3B3630;margin-top:2px">SOL-PVD base_rate_suite is -395. Flagged and excluded, never priced from, in every environment.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_data">
+          <mxGeometry x="20" y="606" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="c_del" value="<div style="font-size:15px;font-weight:700;color:#141210">Delivery</div><div style="font-size:10px;font-weight:400;color:#5A534B">One adapter, swappable providers</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="978" width="380" height="498" as="geometry" />
+        </mxCell>
+        <mxCell id="l_ad" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Channel adapter</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Email if there is an address, SMS if there is only a number, flagged for a human if neither.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_del">
+          <mxGeometry x="20" y="56" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="l_em" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Telnyx Email API</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Branded HTML with the PDF attached. One provider across voice, SMS and email.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_del">
+          <mxGeometry x="20" y="166" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="l_sms" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Telnyx SMS (10DLC)</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Short message plus a signed link to the PDF. Blocked on carrier registration, not on code.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_del">
+          <mxGeometry x="20" y="276" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="l_bk" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE  [fallback 4]</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Backup sender</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Amazon SES behind the same adapter. If every sender fails the proposal stays queued and reads as not sent.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_del">
+          <mxGeometry x="20" y="386" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="c_up" value="<div style="font-size:15px;font-weight:700;color:#141210">Upstream systems of record</div><div style="font-size:10px;font-weight:400;color:#5A534B">Where guest and reservation data actually comes from</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="1640" y="110" width="340" height="608" as="geometry" />
+        </mxCell>
+        <mxCell id="u_pms" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Property management system</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Oracle OPERA Cloud through the Hospitality Integration Platform; Mews, Cloudbeds or Agilysys elsewhere.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_up">
+          <mxGeometry x="20" y="56" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="u_crs" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Central reservation system</div><div style="font-size:11px;color:#3B3630;margin-top:2px">SynXis, Amadeus or a brand-built CRS. Rates, availability and channel distribution.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_up">
+          <mxGeometry x="20" y="166" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="u_crm" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Loyalty and CRM</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Revinate, Cendyn or Salesforce Marketing Cloud. Tier, points, stay history and opt-in.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_up">
+          <mxGeometry x="20" y="276" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="u_sc" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Sales and catering</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Amadeus Delphi. Group blocks, function space and signed contracts.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_up">
+          <mxGeometry x="20" y="386" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="u_csv" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Provided CSV exports</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Guest profiles, properties, group inquiries and the front-desk policy reference. Seeded once.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_up">
+          <mxGeometry x="20" y="496" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="c_staff" value="<div style="font-size:15px;font-weight:700;color:#141210">Staff surfaces</div><div style="font-size:10px;font-weight:400;color:#5A534B">Three scoped logins, scoped in Postgres</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="1640" y="758" width="340" height="498" as="geometry" />
+        </mxCell>
+        <mxCell id="t_sup" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Concierge supervisor</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Live sessions, streaming transcript, tool trace, and listen, whisper, barge, take over.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_staff">
+          <mxGeometry x="20" y="56" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="t_grp" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Group sales console</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Inquiry inbox, rule verdicts, generated proposal, side chat, and Accept and send.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_staff">
+          <mxGeometry x="20" y="166" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="t_adm" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Super admin</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Invites and roles, plus the interactive system map this diagram was generated from.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_staff">
+          <mxGeometry x="20" y="276" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="t_esc" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Escalation queue</div><div style="font-size:11px;color:#3B3630;margin-top:2px">On-call rota and an SLA timer. The human opens with everything the agent already tried.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_staff">
+          <mxGeometry x="20" y="386" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="c_obs" value="<div style="font-size:15px;font-weight:700;color:#141210">Observability, operations and release</div><div style="font-size:10px;font-weight:400;color:#5A534B">Cross-cutting: every service above emits here</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1446" width="2420" height="168" as="geometry" />
+        </mxCell>
+        <mxCell id="o_ci" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">CI/CD and release gates</div><div style="font-size:11px;color:#3B3630;margin-top:2px">GitHub Actions to an image, rolling ECS deploy. Typecheck, rules tests and a golden-transcript run gate every release.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_obs">
+          <mxGeometry x="20" y="56" width="320" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="o_log" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Structured logs</div><div style="font-size:11px;color:#3B3630;margin-top:2px">JSON correlated by session_id to CloudWatch Logs. Masked at the source, so no log can leak PII.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_obs">
+          <mxGeometry x="360" y="56" width="320" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="o_otel" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Traces and metrics</div><div style="font-size:11px;color:#3B3630;margin-top:2px">OpenTelemetry SDK and Collector to Grafana Cloud. One trace per turn: model, tools, PMS, delivery.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_obs">
+          <mxGeometry x="700" y="56" width="320" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="o_llm" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">LLM observability</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Langfuse: prompt version, tokens, cost, tool path and groundedness rate per release.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_obs">
+          <mxGeometry x="1040" y="56" width="320" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="o_slo" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Dashboards and SLOs</div><div style="font-size:11px;color:#3B3630;margin-top:2px">p95 per tool and per channel, containment rate, escalation rate, delivery success, cache staleness.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_obs">
+          <mxGeometry x="1380" y="56" width="320" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="o_alert" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">FUTURE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Alerting and on-call</div><div style="font-size:11px;color:#3B3630;margin-top:2px">PagerDuty on SLO burn, an open circuit, a grounded:false spike, queue depth or a delivery failure.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="c_obs">
+          <mxGeometry x="1720" y="56" width="320" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="o_trace" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">TODAY</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">In-product trace</div><div style="font-size:11px;color:#3B3630;margin-top:2px">tool_invocations, audit_log and the supervisor console. Observability a non-engineer can read.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="c_obs">
+          <mxGeometry x="2060" y="56" width="320" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e0" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="g_chat" target="e_cdn">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e1" value="webhook" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="g_sms" target="e_gw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="g_form" target="e_gw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e3" value="PSTN" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="g_pstn" target="v_cc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e4" value="WebRTC" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="g_webrtc" target="v_cc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="e_cdn" target="e_gw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e6" value="sessions, SSE" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="e_gw" target="r_orch">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e7" value="compiles" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="r_def" target="r_orch">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e8" value="completions" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="r_orch" target="r_gw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e9" value="reads" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="r_tools" target="r_rules">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e10" value="returns" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="r_rules" target="r_env">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e11" value="ai_assistant_start" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="v_cc" target="v_sol">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e12" value="per turn" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="v_sol" target="v_hist">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e13" value="webhook tools" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="v_sol" target="r_tools">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e14" value="turn events" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="v_hist" target="a_q">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e15" value="reads" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="r_tools" target="d_cache">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e16" value="writes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="r_tools" target="d_pg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e17" value="miss" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d_cache" target="d_acl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e18" value="CDC" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d_pg" target="d_rt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e19" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="a_q" target="a_w">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e20" value="send_proposal" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="a_w" target="l_ad">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e21" value="adapters" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d_acl" target="u_pms">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e22" value="adapters" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d_acl" target="u_crs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e23" value="adapters" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d_acl" target="u_crm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e24" value="adapters" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d_acl" target="u_sc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e25" value="seeded once" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=6 4;" edge="1" parent="1" source="u_csv" target="d_pg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e26" value="live updates" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d_rt" target="t_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e27" value="live updates" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d_rt" target="t_grp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e28" value="address present" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="l_ad" target="l_em">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e29" value="phone only" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="l_ad" target="l_sms">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e30" value="primary failed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=6 4;" edge="1" parent="1" source="l_ad" target="l_bk">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e31" value="signed link" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d_s3" target="l_sms">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e32" value="attached" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="d_s3" target="l_em">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e33" value="listen / whisper / barge / take over" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="t_sup" target="v_sup">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e34" value="accept and send" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="t_grp" target="a_q">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e35" value="supervises" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=6 4;" edge="1" parent="1" source="v_sup" target="v_sol">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e36" value="on outage" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=6 4;" edge="1" parent="1" source="v_cc" target="v_fail">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e37" value="secrets at boot" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=6 4;" edge="1" parent="1" source="s_secrets" target="r_orch">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e38" value="spans, logs, metrics" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=6 4;" edge="1" parent="1" source="r_gw" target="o_otel">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e39" value="every tool call" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=6 4;" edge="1" parent="1" source="r_tools" target="o_trace">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e40" value="delivery events" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=6 4;" edge="1" parent="1" source="l_ad" target="o_alert">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e41" value="SSO" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=6 4;" edge="1" parent="1" source="e_sso" target="t_adm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="future_e42" value="queued writes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=6 4;" edge="1" parent="1" source="a_q" target="d_acl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f_title" value="<div style="font-size:26px;font-weight:700;color:#141210">Solstice Hotel Group - future state, production-hardened</div><div style="font-size:13px;color:#3B3630;margin-top:3px">One agent definition, two runtimes, one tool layer. 140 properties, one cluster. Guest and reservation data comes from the systems of record on the right.</div>" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#6B625A;strokeWidth=2;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="1240" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="f_legend" value="<div style="font-size:13px;font-weight:700">Reading this diagram</div><div style="font-size:11px;margin-top:4px"><b>TODAY</b> (solid border) runs in the build demoed on the call.<br/><b>FUTURE</b> (dashed border) is production hardening, designed but not built.<br/>A TODAY node whose detail starts with &quot;Future:&quot; keeps its job and gets hardened.<br/>Solid arrow = request path. Dashed arrow = fallback or cross-cutting.<br/>[fallback n] points at the panel on the right.</div>" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#6B625A;strokeWidth=2;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="20" width="1160" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="f_panel" value="<div style="font-size:15px;font-weight:700;color:#141210">When something upstream fails</div><div style="font-size:10px;color:#5A534B;margin-bottom:6px">Degrade to a smaller, honest answer. Never to a confident guess.</div><div style="margin-top:9px"><span style="font-size:12px;font-weight:700">1. PMS or CRS unreachable</span><div style="font-size:11px;color:#3B3630;margin-top:1px">The circuit opens. Reads come from the Redis cache, stamped stale_as_of. With no cache the tool returns grounded:false, Sol says it cannot confirm that and books a callback. Writes queue. Nothing is guessed.</div></div><div style="margin-top:9px"><span style="font-size:12px;font-weight:700">2. Model provider down or throttled</span><div style="font-size:11px;color:#3B3630;margin-top:1px">The model gateway retries, then fails over from the Anthropic API to Amazon Bedrock. If both are down, chat answers only what the rules engine can prove and offers a human; voice plays a held message and transfers.</div></div><div style="margin-top:9px"><span style="font-size:12px;font-weight:700">3. Telephony degraded</span><div style="font-size:11px;color:#3B3630;margin-top:1px">A standby DID on a second carrier takes the traffic, and the number on the site is runtime config. If the assistant itself is unhealthy, calls forward to central reservations and a session row is still opened.</div></div><div style="margin-top:9px"><span style="font-size:12px;font-weight:700">4. Email or SMS provider fails</span><div style="font-size:11px;color:#3B3630;margin-top:1px">Same adapter, different sender: Amazon SES. If every sender fails the proposal stays on the queue and the console reads not sent. A proposal is never marked sent on a failed send.</div></div><div style="margin-top:9px"><span style="font-size:12px;font-weight:700">5. Database write outage</span><div style="font-size:11px;color:#3B3630;margin-top:1px">Multi-AZ failover. During it the app is read-only: chat continues from cache, new turns buffer in SQS and replay in order. The dead-letter queue is alerted on, never drained silently.</div></div><div style="margin-top:9px"><span style="font-size:12px;font-weight:700">6. Realtime stream drops</span><div style="font-size:11px;color:#3B3630;margin-top:1px">The supervisor console falls back to five-second polling and shows a live updates degraded banner. The transcript is rebuilt from Postgres, which is the same source the archive already reads.</div></div><div style="margin-top:12px;font-size:11px;font-weight:700;color:#141210">The rule underneath all six: degrade to a smaller, honest answer plus a human. Never to a confident guess.</div>" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=6;spacingRight=10;fillColor=#FFFDF9;strokeColor=#6B625A;strokeWidth=2;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="2020" y="110" width="440" height="1256" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="today" name="Today (MVP)">
+    <mxGraphModel dx="1400" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2460" pageHeight="1060" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="y_guest" value="<div style="font-size:15px;font-weight:700;color:#141210">Guest side</div><div style="font-size:10px;font-weight:400;color:#5A534B">Public, one Netlify deploy</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="110" width="340" height="388" as="geometry" />
+        </mxCell>
+        <mxCell id="y_land" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Landing page</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Netlify CDN. Typography-driven, no stock photography, support number displayed.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_guest">
+          <mxGeometry x="20" y="56" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_bub" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Chat bubble</div><div style="font-size:11px;color:#3B3630;margin-top:2px">React. Streaming replies, typing indicator, tool chips, inline policy citations.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_guest">
+          <mxGeometry x="20" y="166" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_ph" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">PENDING</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Support phone number</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Telnyx DID, reused from a retired connection. Waiting on account funding.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#8A6A1F;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="y_guest">
+          <mxGeometry x="20" y="276" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_dep" value="<div style="font-size:15px;font-weight:700;color:#141210">Deploy</div><div style="font-size:10px;font-weight:400;color:#5A534B">One repo, one build</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="570" width="340" height="388" as="geometry" />
+        </mxCell>
+        <mxCell id="y_repo" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Repository</div><div style="font-size:11px;color:#3B3630;margin-top:2px">App, functions, schema, agent definition and plans in one place.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_dep">
+          <mxGeometry x="20" y="56" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_build" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Netlify build</div><div style="font-size:11px;color:#3B3630;margin-top:2px">vite build to dist, esbuild bundling for netlify/functions, /api/* rewrite.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_dep">
+          <mxGeometry x="20" y="166" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_env" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Secret boundary</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Only SUPABASE_URL and the anon key reach the bundle. Service role, Telnyx and Anthropic keys stay server-side.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_dep">
+          <mxGeometry x="20" y="276" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_rt" value="<div style="font-size:15px;font-weight:700;color:#141210">Runtimes</div><div style="font-size:10px;font-weight:400;color:#5A534B">Two engines, one definition</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="110" width="380" height="498" as="geometry" />
+        </mxCell>
+        <mxCell id="y_chat" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">PENDING</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">/api/chat</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Netlify Function. Holds the Anthropic key, runs the tool loop, writes every turn to Postgres.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#8A6A1F;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="y_rt">
+          <mxGeometry x="20" y="56" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_claude" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">BLOCKED</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Claude (Anthropic API)</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Key is not workspace-scoped and currently 400s. Code is written against the contract.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#8C2F1F;strokeWidth=3;dashed=1;dashPattern=2 3;" vertex="1" parent="y_rt">
+          <mxGeometry x="20" y="166" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_sol" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">BLOCKED</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Telnyx AI Assistant &quot;Sol&quot;</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Voice runtime. Blocked on account funding, not on design.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#8C2F1F;strokeWidth=3;dashed=1;dashPattern=2 3;" vertex="1" parent="y_rt">
+          <mxGeometry x="20" y="276" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_ev" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">PENDING</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">/api/telnyx/events</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Verifies the signature, diffs the cumulative history, inserts only new turns.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#8A6A1F;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="y_rt">
+          <mxGeometry x="20" y="386" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_tools" value="<div style="font-size:15px;font-weight:700;color:#141210">Tool layer</div><div style="font-size:10px;font-weight:400;color:#5A534B">Netlify Functions, shared by both runtimes</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="570" width="380" height="498" as="geometry" />
+        </mxCell>
+        <mxCell id="y_tl" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Shared tool layer</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Concierge tools and group tools. One implementation, so voice and chat cannot diverge.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_tools">
+          <mxGeometry x="20" y="56" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_rules" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Rules as data</div><div style="font-size:11px;color:#3B3630;margin-top:2px">src/lib/rules: thresholds, seasonal caps, blackouts. Changing one is a one-line edit.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_tools">
+          <mxGeometry x="20" y="166" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_av" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">availability_service</div><div style="font-size:11px;color:#3B3630;margin-top:2px">The net-new tool. Deterministic simulated inventory, stamped simulated_inventory_service.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_tools">
+          <mxGeometry x="20" y="276" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_envl" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">ToolResult envelope</div><div style="font-size:11px;color:#3B3630;margin-top:2px">ok, grounded, citations, masked_fields, latency_ms on every tool without exception.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_tools">
+          <mxGeometry x="20" y="386" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_data" value="<div style="font-size:15px;font-weight:700;color:#141210">Data</div><div style="font-size:10px;font-weight:400;color:#5A534B">One Supabase project</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="110" width="380" height="608" as="geometry" />
+        </mxCell>
+        <mxCell id="y_pg" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Postgres and RLS</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Concierge cannot read inquiries, group sales cannot read messages. Scoping is a database policy.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_data">
+          <mxGeometry x="20" y="56" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_rtm" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Realtime</div><div style="font-size:11px;color:#3B3630;margin-top:2px">postgres_changes on sessions, messages, tool_invocations, inquiries and proposals.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_data">
+          <mxGeometry x="20" y="166" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_st" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Storage</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Generated proposal PDFs, handed out as time-limited signed URLs.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_data">
+          <mxGeometry x="20" y="276" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_aud" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">audit_log and tool_invocations</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Who approved, overrode or sent what, and every tool call with masked arguments.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_data">
+          <mxGeometry x="20" y="386" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_seed" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">CSV seeder</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Parses data/*.csv, extracts the rules buried in free-text notes, quarantines the -395 suite rate.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_data">
+          <mxGeometry x="20" y="496" width="340" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_del" value="<div style="font-size:15px;font-weight:700;color:#141210">Delivery</div><div style="font-size:10px;font-weight:400;color:#5A534B">One adapter, one provider</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="110" width="340" height="388" as="geometry" />
+        </mxCell>
+        <mxCell id="y_ad" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Channel adapter</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Email if there is an address, SMS if only a number, flagged if neither.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_del">
+          <mxGeometry x="20" y="56" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_em" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">PENDING</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Telnyx Email API</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Branded HTML with the PDF attached. Waiting on the sending domain.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#8A6A1F;strokeWidth=2;dashed=1;dashPattern=8 4;" vertex="1" parent="y_del">
+          <mxGeometry x="20" y="166" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_sm" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">BLOCKED</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Telnyx SMS (10DLC)</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Carrier registration cannot clear before submission. Upstream of Telnyx, so no vendor choice fixes it.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#8C2F1F;strokeWidth=3;dashed=1;dashPattern=2 3;" vertex="1" parent="y_del">
+          <mxGeometry x="20" y="276" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_staff" value="<div style="font-size:15px;font-weight:700;color:#141210">Staff surfaces</div><div style="font-size:10px;font-weight:400;color:#5A534B">Same bundle, three doors</div>" style="swimlane;html=1;startSize=56;rounded=1;arcSize=3;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;swimlaneFillColor=#FBF8F3;horizontal=1;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="570" width="340" height="388" as="geometry" />
+        </mxCell>
+        <mxCell id="y_cs" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Concierge supervisor</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Live session grid, streaming transcript, tool trace, the takeover ladder.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_staff">
+          <mxGeometry x="20" y="56" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_gs" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Group sales</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Inquiry inbox, rule verdicts, proposal, side chat, Accept and send.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_staff">
+          <mxGeometry x="20" y="166" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="y_sa" value="<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:#5A534B">LIVE</div><div style="font-size:13px;font-weight:700;color:#141210;margin-top:1px">Super admin</div><div style="font-size:11px;color:#3B3630;margin-top:2px">Invites and roles, plus the interactive backend map narrated to the panel.</div>" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=0;spacingRight=6;fontSize=12;fontColor=#141210;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;" vertex="1" parent="y_staff">
+          <mxGeometry x="20" y="276" width="300" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e0" value="mounts" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_land" target="y_bub">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e1" value="displays" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_land" target="y_ph">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e2" value="POST, SSE back" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_bub" target="y_chat">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e3" value="PSTN" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_ph" target="y_sol">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e4" value="messages API" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_chat" target="y_claude">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e5" value="tool_use" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_claude" target="y_tl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e6" value="webhook tools" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_sol" target="y_tl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e7" value="history events" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_sol" target="y_ev">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e8" value="reads" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_tl" target="y_rules">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e9" value="reads" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_tl" target="y_av">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e10" value="returns" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_tl" target="y_envl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e11" value="writes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_tl" target="y_pg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e12" value="new turns only" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_ev" target="y_pg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e13" value="every turn" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_chat" target="y_pg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e14" value="reference tables" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_seed" target="y_pg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e15" value="publication" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_pg" target="y_rtm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e16" value="live" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_rtm" target="y_cs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e17" value="live" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_rtm" target="y_gs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e18" value="send_proposal" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_tl" target="y_ad">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e19" value="address present" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_ad" target="y_em">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e20" value="phone only" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_ad" target="y_sm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e21" value="attached" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_st" target="y_em">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e22" value="signed link" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_st" target="y_sm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e23" value="accept and send" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_gs" target="y_ad">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e24" value="masked" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_tl" target="y_aud">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e25" value="push" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_repo" target="y_build">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e26" value="injected" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_env" target="y_build">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e27" value="bundles" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_build" target="y_chat">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="today_e28" value="publishes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;fontSize=11;fontColor=#141210;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="y_build" target="y_land">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t_title" value="<div style="font-size:26px;font-weight:700;color:#141210">Today - the MVP that runs at the demo (2026-09-27)</div><div style="font-size:13px;color:#3B3630;margin-top:3px">One deployed application on Netlify plus one Supabase project. Everything here is real; the blocked pieces are blocked outside the code.</div>" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#6B625A;strokeWidth=2;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="1160" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="t_legend" value="<div style="font-size:13px;font-weight:700">Status, honestly</div><div style="font-size:11px;margin-top:4px"><b>LIVE</b> (solid) is running. <b>PENDING</b> (dashed) is written and waiting on an account.<br/><b>BLOCKED</b> (dotted, thick) is written and blocked by something outside the code:<br/>the Anthropic key is not workspace-scoped, and 10DLC carrier registration cannot clear in time.</div>" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#6B625A;strokeWidth=2;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="20" width="1180" height="74" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="degrade" name="Degradation and failover">
+    <mxGraphModel dx="1400" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2240" pageHeight="1130" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="d_title" value="<div style="font-size:26px;font-weight:700;color:#141210">Degradation paths - future state</div><div style="font-size:13px;color:#3B3630;margin-top:3px">Every row is a real upstream failure, the mechanism that absorbs it, and what the guest and the staff actually see.</div>" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#6B625A;strokeWidth=2;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="2180" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="dh_60" value="Upstream failure" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="60" y="120" width="660" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="dh_760" value="Mechanism" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="760" y="120" width="660" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="dh_1460" value="What the guest and staff see" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EDE5D8;strokeColor=#6B625A;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="1460" y="120" width="660" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="dr0_0" value="<div style="font-size:13px;font-weight:700;color:#141210">PMS or CRS unreachable</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#8C2F1F;strokeWidth=2;dashed=1;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="60" y="172" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="da0_0" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="237" as="sourcePoint" />
+            <mxPoint x="760" y="237" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dr0_1" value="<div style="font-size:12px;color:#3B3630">Circuit breaker opens after three failures. Reads fall to the Redis cache with a stale_as_of stamp.</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="760" y="172" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="da0_1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1420" y="237" as="sourcePoint" />
+            <mxPoint x="1460" y="237" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dr0_2" value="<div style="font-size:12px;color:#3B3630">Sol quotes the cached stay and says how old it is. With no cache: grounded:false, &quot;I cannot confirm that&quot;, escalation plus callback.</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="1460" y="172" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="dr1_0" value="<div style="font-size:13px;font-weight:700;color:#141210">Model provider down or throttled</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#8C2F1F;strokeWidth=2;dashed=1;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="60" y="318" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="da1_0" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="383" as="sourcePoint" />
+            <mxPoint x="760" y="383" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dr1_1" value="<div style="font-size:12px;color:#3B3630">Model gateway retries with backoff, then fails over from the Anthropic API to Amazon Bedrock (Claude).</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="760" y="318" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="da1_1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1420" y="383" as="sourcePoint" />
+            <mxPoint x="1460" y="383" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dr1_2" value="<div style="font-size:12px;color:#3B3630">Nothing visible. If both are down, chat answers only what the rules engine proves and offers a human; voice transfers.</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="1460" y="318" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="dr2_0" value="<div style="font-size:13px;font-weight:700;color:#141210">Telephony degraded</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#8C2F1F;strokeWidth=2;dashed=1;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="60" y="464" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="da2_0" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="529" as="sourcePoint" />
+            <mxPoint x="760" y="529" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dr2_1" value="<div style="font-size:12px;color:#3B3630">Standby DID on a second carrier. The displayed number is runtime config, so it changes without a deploy.</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="760" y="464" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="da2_1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1420" y="529" as="sourcePoint" />
+            <mxPoint x="1460" y="529" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dr2_2" value="<div style="font-size:12px;color:#3B3630">The call connects. If the assistant is unhealthy, the call forwards to central reservations and still opens a session row.</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="1460" y="464" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="dr3_0" value="<div style="font-size:13px;font-weight:700;color:#141210">Email or SMS provider fails</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#8C2F1F;strokeWidth=2;dashed=1;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="60" y="610" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="da3_0" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="675" as="sourcePoint" />
+            <mxPoint x="760" y="675" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dr3_1" value="<div style="font-size:12px;color:#3B3630">The channel adapter picks the next sender (Amazon SES). Nothing above the adapter changes.</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="760" y="610" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="da3_1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1420" y="675" as="sourcePoint" />
+            <mxPoint x="1460" y="675" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dr3_2" value="<div style="font-size:12px;color:#3B3630">The proposal arrives by another route. If all senders fail it stays queued and the console reads not sent, never sent.</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="1460" y="610" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="dr4_0" value="<div style="font-size:13px;font-weight:700;color:#141210">Database write outage</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#8C2F1F;strokeWidth=2;dashed=1;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="60" y="756" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="da4_0" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="821" as="sourcePoint" />
+            <mxPoint x="760" y="821" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dr4_1" value="<div style="font-size:12px;color:#3B3630">RDS Multi-AZ failover. The app flips to read-only; new turns buffer in SQS and replay in order.</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="760" y="756" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="da4_1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1420" y="821" as="sourcePoint" />
+            <mxPoint x="1460" y="821" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dr4_2" value="<div style="font-size:12px;color:#3B3630">Chat keeps answering from cache. Transcripts backfill within seconds of recovery; the dead-letter queue is alerted on.</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="1460" y="756" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="dr5_0" value="<div style="font-size:13px;font-weight:700;color:#141210">Realtime stream drops</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#8C2F1F;strokeWidth=2;dashed=1;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="60" y="902" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="da5_0" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="720" y="967" as="sourcePoint" />
+            <mxPoint x="760" y="967" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dr5_1" value="<div style="font-size:12px;color:#3B3630">The supervisor console falls back to five-second polling against Postgres.</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#F2EEE7;strokeColor=#2E2A26;strokeWidth=2;dashed=1;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="760" y="902" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="da5_1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3B3630;strokeWidth=1.6;endArrow=blockThin;endFill=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1420" y="967" as="sourcePoint" />
+            <mxPoint x="1460" y="967" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dr5_2" value="<div style="font-size:12px;color:#3B3630">A live updates degraded banner. The transcript still reconstructs from the same rows the archive reads.</div>" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=10;fillColor=#FFFFFF;strokeColor=#1F5C3D;strokeWidth=2;dashed=0;dashPattern=8 4;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="1460" y="902" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="d_foot" value="<div style="font-size:13px;font-weight:700;color:#141210">The rule underneath all six: degrade to a smaller, honest answer plus a human. Never to a confident guess.</div><div style="font-size:12px;color:#3B3630;margin-top:4px">A tool that cannot ground an answer returns grounded:false, and grounded:false is a machine-checkable order to escalate rather than improvise. That is why every row above ends in an honest sentence and a human, not a guess.</div>" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=6;spacingRight=10;fillColor=#FFFDF9;strokeColor=#6B625A;strokeWidth=2;fontSize=12;fontColor=#141210;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1058" width="2060" height="92" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -10,6 +10,7 @@ import { Link, useParams } from 'react-router-dom'
 import AdminShell from '@/components/admin/AdminShell'
 import SupervisorLadder from '@/components/admin/SupervisorLadder'
 import {
+  AccessNotice,
   ChannelChip,
   EmptyState,
   ErrorNote,
@@ -37,7 +38,7 @@ const ROLE_STYLE: Record<MessageRow['role'], { rail: string; label: string; tone
 
 export default function SessionDetail() {
   const { id } = useParams<{ id: string }>()
-  const { row: session, source, loading } = useSession(id)
+  const { row: session, source, loading, access } = useSession(id)
   const transcript = useTranscript(id)
   const trace = useToolTrace(id)
   const now = useNow(1000)
@@ -53,6 +54,14 @@ export default function SessionDetail() {
         <Panel>
           <EmptyState title="Loading session…" />
         </Panel>
+      </AdminShell>
+    )
+  }
+
+  if (access) {
+    return (
+      <AdminShell title="Session">
+        <AccessNotice problem={access} />
       </AdminShell>
     )
   }
