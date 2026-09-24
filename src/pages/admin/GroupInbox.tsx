@@ -51,12 +51,19 @@ export default function GroupInbox() {
       if (filter === 'ready' && !(severity === 'clear' && proposal && proposal.status !== 'sent')) return false
       if (filter === 'sent' && proposal?.status !== 'sent') return false
       if (!q) return true
-      return (
-        inq.inquiry_code.toLowerCase().includes(q) ||
-        inq.payload.company_name.toLowerCase().includes(q) ||
-        inq.payload.contact_name.toLowerCase().includes(q) ||
-        inq.payload.property_name.toLowerCase().includes(q)
-      )
+      // Null-safe on purpose: a live row can be missing any of these (INQ-2004 has no dates and
+      // no phone), and one undefined here threw inside render, which unmounted the whole app.
+      return [
+        inq.inquiry_code,
+        inq.payload.company_name,
+        inq.payload.contact_name,
+        inq.payload.contact_email,
+        inq.payload.contact_phone,
+        inq.payload.property_name,
+        inq.payload.preferred_property_code,
+      ]
+        .filter((v): v is string => typeof v === 'string')
+        .some((v) => v.toLowerCase().includes(q))
     })
   }, [decorated, query, filter])
 
