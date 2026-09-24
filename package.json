@@ -13,7 +13,8 @@
     "data:check": "node scripts/data/build.mjs --check",
     "db:schema": "node scripts/data/apply-schema.mjs",
     "db:seed": "node scripts/data/seed.mjs",
-    "seed:users": "node scripts/seed-users.mjs"
+    "seed:users": "node scripts/seed-users.mjs",
+    "telnyx:export": "node scripts/telnyx/export-assistant.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

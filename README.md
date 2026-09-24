@@ -19,6 +19,7 @@ staff console behind three scoped logins. Same agent on both channels, same tool
 | Architecture diagram, future-state production | [`docs/architecture.drawio`](docs/architecture.drawio), [`docs/architecture.svg`](docs/architecture.svg), guide in [`docs/README-diagram.md`](docs/README-diagram.md) |
 | Integration recommendation | [`docs/integration-recommendation.md`](docs/integration-recommendation.md) |
 | Latency target and its justification | [`docs/latency-target.md`](docs/latency-target.md) |
+| How this was built, and what the agents caught in each other's work | [`docs/how-this-was-built.md`](docs/how-this-was-built.md) |
 | At least one net-new tool | `availability_service` — see Assumptions below |
 | Native platform export | Telnyx assistant provisioned from source by [`scripts/telnyx/provision.mjs`](scripts/telnyx/provision.mjs) |
 

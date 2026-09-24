@@ -148,8 +148,10 @@ export function sendEmail(payload: EmailPayload, apiKey: string | null): Promise
       from: payload.from,
       to: [payload.to],
       subject: payload.subject,
-      html: payload.html,
-      text: payload.text,
+      // Telnyx names these html_body / text_body, not html / text. The wrong names were latent:
+      // the API validates the sending domain BEFORE the body, so a domain error masked them.
+      html_body: payload.html,
+      text_body: payload.text,
       attachments: payload.attachments?.map((a) => ({
         filename: a.filename,
         content: a.content_base64,
