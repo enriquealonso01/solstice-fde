@@ -1,0 +1,262 @@
+/**
+ * identify_guest and get_reservation.
+ *
+ * Two guardrails live here rather than in the prompt:
+ *  1. A NAME IS NEVER ENOUGH. The provided data contains two unrelated guests
+ *     called Michael Smith (G10009, G10010). Releasing stay details on a name
+ *     match would be wrong even when the name happens to be unique, so a second
+ *     factor is always required.
+ *  2. THE CARD LAST 4 NEVER LEAVES THE TOOL LAYER. It is not returned to the
+ *     model at all, so the model cannot say it, on either channel.
+ */
+import type { Citation, Reservation, ToolResult } from '../../../shared/types'
+import { toolOk, toolFail, toolState, toolUngrounded } from './_deps'
+import {
+  atLocalTime,
+  guestCitation,
+  hoursBetween,
+  nowFrom,
+  optString,
+  policyCitation,
+  propertyCitation,
+  reservationCitation,
+  type ToolArgs,
+  type ToolContext,
+} from './helpers'
+import { findPropertyByCode, findReservationById, matchGuests, pickRelevantReservation, reservationsForGuest } from './lookups'
+import { POLICY_RULES, RATE_PLAN_TERMS } from './rules'
+
+// ------------------------------------------------------------- identify_guest
+
+export async function identifyGuest(args: ToolArgs, _ctx: ToolContext): Promise<ToolResult> {
+  const query = {
+    guest_id: optString(args, 'guest_id'),
+    reservation_id: optString(args, 'reservation_id') ?? optString(args, 'confirmation_number'),
+    phone: optString(args, 'phone'),
+    email: optString(args, 'email'),
+    last_name: optString(args, 'last_name'),
+    first_name: optString(args, 'first_name'),
+  }
+
+  if (!query.guest_id && !query.reservation_id && !query.phone && !query.email && !query.last_name && !query.first_name) {
+    return toolFail('No identifying detail supplied. Ask for a confirmation number, or the phone number or email on the booking.')
+  }
+
+  const matches = await matchGuests(query)
+
+  if (matches.length === 0) {
+    return toolState(
+      {
+        verified: false,
+        matches: 0,
+        next_step:
+          'No matching guest record. Ask the guest to confirm the spelling, or for the confirmation number from their booking email. Do not guess a record.',
+      },
+      {},
+    )
+  }
+
+  const best = matches[0]
+  const strongFactors = best.matched_on.filter((f) => f === 'guest_id' || f === 'reservation_id' || f === 'phone' || f === 'email')
+  const nameOnly = strongFactors.length === 0
+
+  // Ambiguous: more than one person fits what we were told.
+  if (matches.length > 1) {
+    return toolState(
+      {
+        verified: false,
+        matches: matches.length,
+        ambiguous: true,
+        matched_on: best.matched_on,
+        disambiguator_required: 'confirmation_number',
+        next_step:
+          `${matches.length} guest records fit that. Ask for the confirmation number, or the phone number or email on the booking, before releasing any stay detail. Never pick one.`,
+      },
+      {},
+    )
+  }
+
+  // Exactly one match, but only on a name. Policy-safe answer is still "not verified".
+  if (nameOnly) {
+    return toolState(
+      {
+        verified: false,
+        matches: 1,
+        matched_on: best.matched_on,
+        disambiguator_required: 'confirmation_number',
+        next_step:
+          'A name alone is not enough to verify a guest. Ask for the confirmation number, or the phone number or email on the booking, before releasing any stay detail.',
+      },
+      {},
+    )
+  }
+
+  const guest = best.guest
+  const stays = await reservationsForGuest(guest.guest_id)
+  const relevant = pickRelevantReservation(stays, nowFrom(_ctx))
+
+  const citations: Citation[] = [guestCitation(guest.guest_id)]
+  if (relevant) citations.push(reservationCitation(relevant.reservation_id))
+
+  return toolOk(
+    {
+      verified: true,
+      matches: 1,
+      matched_on: best.matched_on,
+      guest: {
+        guest_id: guest.guest_id,
+        first_name: guest.first_name,
+        last_name: guest.last_name,
+        loyalty_tier: guest.loyalty_tier,
+        loyalty_points: guest.loyalty_points,
+        member_since: guest.member_since,
+        email_masked: guest.email_masked,
+        phone_masked: guest.phone_masked,
+      },
+      reservations: stays.map((r) => ({
+        reservation_id: r.reservation_id,
+        property_code: r.property_code,
+        check_in_date: r.check_in_date,
+        check_out_date: r.check_out_date,
+        status: r.status,
+      })),
+      most_relevant_reservation_id: relevant?.reservation_id ?? null,
+    },
+    { citations, masked_fields: ['email', 'phone'] },
+  )
+}
+
+// ------------------------------------------------------------- get_reservation
+
+interface CancellationTerms {
+  rate_plan: string
+  refund_class: string
+  human_summary: string
+  recourse: string | null
+  free_cancellation_deadline: string | null
+  inside_free_cancellation_window: boolean | null
+  penalty_if_cancelled_now: string | null
+  policy_ref: number | null
+  no_show_charge_applied: boolean
+}
+
+function cancellationTerms(reservation: Reservation, now: Date): CancellationTerms {
+  const terms = RATE_PLAN_TERMS[reservation.rate_plan] ?? {
+    refund_class: 'not_documented' as const,
+    policy_ref: null,
+    human_summary: `No written policy covers the rate plan "${reservation.rate_plan}". Do not extrapolate.`,
+    recourse: null,
+  }
+
+  const isNoShow = reservation.status === 'No-show'
+  const base: CancellationTerms = {
+    rate_plan: reservation.rate_plan,
+    refund_class: terms.refund_class,
+    human_summary: terms.human_summary,
+    recourse: terms.recourse,
+    free_cancellation_deadline: null,
+    inside_free_cancellation_window: null,
+    penalty_if_cancelled_now: null,
+    policy_ref: terms.policy_ref,
+    no_show_charge_applied: isNoShow,
+  }
+
+  if (isNoShow) {
+    base.human_summary =
+      'Marked a no-show. Policy 4 charges the full first night whatever the rate plan. On an Advance Purchase booking already paid in full there is nothing further to refund.'
+    base.policy_ref = 4
+    return base
+  }
+
+  if (terms.refund_class === 'free_cancellation_window') {
+    const checkIn = atLocalTime(reservation.check_in_date, POLICY_RULES.standard_check_in_local)
+    const deadline = new Date(checkIn.getTime() - POLICY_RULES.free_cancellation_window_hours * 3_600_000)
+    base.free_cancellation_deadline = deadline.toISOString()
+    const inside = now.getTime() > deadline.getTime()
+    base.inside_free_cancellation_window = !inside
+    base.penalty_if_cancelled_now = inside ? POLICY_RULES.late_cancellation_penalty : 'none'
+  }
+
+  if (terms.refund_class === 'non_refundable') {
+    base.penalty_if_cancelled_now = 'the full booking; it is non-refundable and non-changeable'
+  }
+
+  return base
+}
+
+export async function getReservation(args: ToolArgs, ctx: ToolContext): Promise<ToolResult> {
+  const reservationId = optString(args, 'reservation_id') ?? optString(args, 'confirmation_number')
+  const guestId = optString(args, 'guest_id') ?? ctx.guest_id
+  const now = nowFrom(ctx)
+
+  let reservation: Reservation | null = null
+  if (reservationId) {
+    reservation = await findReservationById(reservationId)
+    if (!reservation) {
+      return toolFail(`No reservation found for ${reservationId}. Do not guess a reservation; ask the guest to re-read the confirmation number.`)
+    }
+  } else if (guestId) {
+    const stays = await reservationsForGuest(guestId)
+    reservation = pickRelevantReservation(stays, now)
+    if (!reservation) return toolFail(`No reservations found for guest ${guestId}.`)
+  } else {
+    return toolFail('Need a reservation id or a verified guest id. Identify the guest first.')
+  }
+
+  const property = await findPropertyByCode(reservation.property_code)
+  const terms = cancellationTerms(reservation, now)
+
+  const citations: Citation[] = [reservationCitation(reservation.reservation_id)]
+  if (property) citations.push(propertyCitation(property.property_code, property.property_name))
+  if (terms.policy_ref) citations.push(policyCitation(terms.policy_ref))
+
+  const hoursToCheckIn = hoursBetween(now, atLocalTime(reservation.check_in_date, POLICY_RULES.standard_check_in_local))
+  const hoursSinceCheckOut = hoursBetween(atLocalTime(reservation.check_out_date, POLICY_RULES.standard_check_out_local), now)
+
+  const data = {
+    reservation: {
+      reservation_id: reservation.reservation_id,
+      guest_id: reservation.guest_id,
+      property_code: reservation.property_code,
+      property_name: property?.property_name ?? null,
+      check_in_date: reservation.check_in_date,
+      check_out_date: reservation.check_out_date,
+      room_type: reservation.room_type,
+      rate_plan: reservation.rate_plan,
+      nightly_rate: reservation.nightly_rate,
+      total_nights: reservation.total_nights,
+      status: reservation.status,
+      special_requests: reservation.special_requests,
+    },
+    // The card last 4 is deliberately absent. The model never sees it, so it can
+    // never read it back on a call or print it in a chat.
+    payment_on_file: true,
+    timing: {
+      hours_until_check_in: Math.round(hoursToCheckIn * 10) / 10,
+      hours_since_check_out: Math.round(hoursSinceCheckOut * 10) / 10,
+      standard_check_in_local: POLICY_RULES.standard_check_in_local,
+      standard_check_out_local: POLICY_RULES.standard_check_out_local,
+    },
+    cancellation_terms: terms,
+    /**
+     * Operational instructions attached to the record by staff. These steer the
+     * agent's behaviour; they are internal and must never be read back to the
+     * guest verbatim.
+     */
+    staff_directives: reservation.internal_notes ? [reservation.internal_notes] : [],
+    staff_directives_are_internal: true,
+  }
+
+  if (terms.refund_class === 'not_documented') {
+    return toolUngrounded(
+      {
+        ...data,
+        escalation_required: true,
+        escalation_reason: `No written policy covers cancellation or refund of a ${reservation.rate_plan} booking. Say plainly that you cannot confirm it and hand to the property team.`,
+      },
+      { citations, masked_fields: ['payment_last4'] },
+    )
+  }
+
+  return toolOk(data, { citations, masked_fields: ['payment_last4'] })
+}

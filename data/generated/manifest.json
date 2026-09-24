@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "sources": {
+    "properties": {
+      "file": "data/solstice-properties.csv",
+      "sha256": "4876829ad29618291057f8a468d7a991551ab35fd4440d622dc6fd6137c22608"
+    },
+    "guests": {
+      "file": "data/solstice-guest-profiles.csv",
+      "sha256": "2ce175e2e5b4d187c22322936a2c0729dad3cd88c98d49770cb2807ad5417c18"
+    },
+    "inquiries": {
+      "file": "data/solstice-group-inquiries.csv",
+      "sha256": "568d42817b51ab95368217d5bcdbbc1a98a6abcea91e6eadeb9ea17c538c1fae"
+    },
+    "policies": {
+      "file": "data/SOLSTICE HOTEL GROUP — FRONT DESK POLICY REFERENCE.md",
+      "sha256": "50773004bc5c7cdc109b0b1f6b34953cab2c174c17646629478b9543e995cf5b"
+    }
+  },
+  "counts": {
+    "properties": 10,
+    "guests": 24,
+    "reservations": 25,
+    "policies": 15,
+    "inquiries": 10,
+    "rules": 65
+  }
+}

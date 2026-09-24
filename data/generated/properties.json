@@ -1,0 +1,309 @@
+[
+  {
+    "property_code": "SOL-CHI",
+    "property_name": "Solstice Chicago Riverwalk",
+    "city": "Chicago",
+    "state": "IL",
+    "market_type": "Urban",
+    "total_rooms": 220,
+    "inventory": {
+      "Standard King": 90,
+      "Standard Double": 60,
+      "Deluxe King": 40,
+      "Suite": 20,
+      "Accessible King": 10
+    },
+    "base_rate_standard": 219,
+    "base_rate_deluxe": 259,
+    "base_rate_suite": 379,
+    "meeting_space_sqft": 8500,
+    "max_meeting_capacity": 300,
+    "group_block_auto_approve_max_rooms": 25,
+    "max_discount_auto_approve_pct": 12,
+    "blackout_dates": [
+      {
+        "start": "2026-07-02",
+        "end": "2026-07-06"
+      },
+      {
+        "start": "2026-12-28",
+        "end": "2027-01-02"
+      }
+    ],
+    "general_manager": "Renee Okafor",
+    "notes": "Highest-demand property in the portfolio; group requests over 25 rooms need 2+ weeks lead time.",
+    "data_quality_flags": []
+  },
+  {
+    "property_code": "SOL-AUS",
+    "property_name": "Solstice Austin Congress Ave",
+    "city": "Austin",
+    "state": "TX",
+    "market_type": "Urban",
+    "total_rooms": 180,
+    "inventory": {
+      "Standard King": 70,
+      "Standard Double": 50,
+      "Deluxe King": 35,
+      "Suite": 20,
+      "Accessible King": 5
+    },
+    "base_rate_standard": 199,
+    "base_rate_deluxe": 239,
+    "base_rate_suite": 349,
+    "meeting_space_sqft": 6000,
+    "max_meeting_capacity": 220,
+    "group_block_auto_approve_max_rooms": 30,
+    "max_discount_auto_approve_pct": 15,
+    "blackout_dates": [
+      {
+        "start": "2027-03-10",
+        "end": "2027-03-19"
+      }
+    ],
+    "general_manager": "Marcus Webb",
+    "notes": "SXSW week is a hard blackout; no group holds accepted regardless of discount.",
+    "data_quality_flags": []
+  },
+  {
+    "property_code": "SOL-DEN",
+    "property_name": "Solstice Denver Union Station",
+    "city": "Denver",
+    "state": "CO",
+    "market_type": "Urban",
+    "total_rooms": 160,
+    "inventory": {
+      "Standard King": 60,
+      "Standard Double": 45,
+      "Deluxe King": 30,
+      "Suite": 20,
+      "Accessible King": 5
+    },
+    "base_rate_standard": 189,
+    "base_rate_deluxe": 229,
+    "base_rate_suite": 329,
+    "meeting_space_sqft": 5200,
+    "max_meeting_capacity": 180,
+    "group_block_auto_approve_max_rooms": 25,
+    "max_discount_auto_approve_pct": 12,
+    "blackout_dates": [
+      {
+        "start": "2026-08-01",
+        "end": "2026-08-05"
+      }
+    ],
+    "general_manager": "Priya Nair",
+    "notes": "Ski-season weekends (Dec-Feb, Thu-Sun) run at reduced group discount ceiling of 8%.",
+    "data_quality_flags": []
+  },
+  {
+    "property_code": "SOL-NSH",
+    "property_name": "Solstice Nashville Music Row",
+    "city": "Nashville",
+    "state": "TN",
+    "market_type": "Urban",
+    "total_rooms": 150,
+    "inventory": {
+      "Standard King": 55,
+      "Standard Double": 40,
+      "Deluxe King": 30,
+      "Suite": 20,
+      "Accessible King": 5
+    },
+    "base_rate_standard": 209,
+    "base_rate_deluxe": 249,
+    "base_rate_suite": 359,
+    "meeting_space_sqft": 4800,
+    "max_meeting_capacity": 150,
+    "group_block_auto_approve_max_rooms": 20,
+    "max_discount_auto_approve_pct": 10,
+    "blackout_dates": [
+      {
+        "start": "2026-06-06",
+        "end": "2026-06-09"
+      }
+    ],
+    "general_manager": "Tyler Combs",
+    "notes": "Very high leisure/bachelorette demand on weekends; weekday group blocks preferred.",
+    "data_quality_flags": []
+  },
+  {
+    "property_code": "SOL-TPA",
+    "property_name": "Solstice Tampa Bayshore",
+    "city": "Tampa",
+    "state": "FL",
+    "market_type": "Resort",
+    "total_rooms": 210,
+    "inventory": {
+      "Standard King": 80,
+      "Standard Double": 55,
+      "Deluxe King": 40,
+      "Suite": 25,
+      "Accessible King": 10
+    },
+    "base_rate_standard": 179,
+    "base_rate_deluxe": 219,
+    "base_rate_suite": 329,
+    "meeting_space_sqft": 9000,
+    "max_meeting_capacity": 320,
+    "group_block_auto_approve_max_rooms": 35,
+    "max_discount_auto_approve_pct": 15,
+    "blackout_dates": [
+      {
+        "start": "2027-02-05",
+        "end": "2027-02-09"
+      }
+    ],
+    "general_manager": "Andrea Lin",
+    "notes": "Popular for sports-team travel; has a dedicated group check-in lane.",
+    "data_quality_flags": []
+  },
+  {
+    "property_code": "SOL-PHX",
+    "property_name": "Solstice Phoenix Camelback",
+    "city": "Phoenix",
+    "state": "AZ",
+    "market_type": "Resort",
+    "total_rooms": 240,
+    "inventory": {
+      "Standard King": 95,
+      "Standard Double": 65,
+      "Deluxe King": 45,
+      "Suite": 25,
+      "Accessible King": 10
+    },
+    "base_rate_standard": 169,
+    "base_rate_deluxe": 209,
+    "base_rate_suite": 309,
+    "meeting_space_sqft": 10500,
+    "max_meeting_capacity": 350,
+    "group_block_auto_approve_max_rooms": 35,
+    "max_discount_auto_approve_pct": 15,
+    "blackout_dates": [
+      {
+        "start": "2027-01-15",
+        "end": "2027-01-19"
+      }
+    ],
+    "general_manager": "Diego Fuentes",
+    "notes": "Rate drops ~20% June-Aug (off-peak); best value window for large blocks.",
+    "data_quality_flags": []
+  },
+  {
+    "property_code": "SOL-CLT",
+    "property_name": "Solstice Charlotte Uptown",
+    "city": "Charlotte",
+    "state": "NC",
+    "market_type": "Urban",
+    "total_rooms": 170,
+    "inventory": {
+      "Standard King": 65,
+      "Standard Double": 45,
+      "Deluxe King": 30,
+      "Suite": 25,
+      "Accessible King": 5
+    },
+    "base_rate_standard": 189,
+    "base_rate_deluxe": 229,
+    "base_rate_suite": 339,
+    "meeting_space_sqft": 5600,
+    "max_meeting_capacity": 200,
+    "group_block_auto_approve_max_rooms": 25,
+    "max_discount_auto_approve_pct": 12,
+    "blackout_dates": [],
+    "general_manager": "Sam Whitfield",
+    "notes": "New property (opened 2025); still building group-sales track record.",
+    "data_quality_flags": []
+  },
+  {
+    "property_code": "SOL-SAC",
+    "property_name": "Solstice Sacramento Capitol",
+    "city": "Sacramento",
+    "state": "CA",
+    "market_type": "Urban",
+    "total_rooms": 140,
+    "inventory": {
+      "Standard King": 50,
+      "Standard Double": 40,
+      "Deluxe King": 25,
+      "Suite": 20,
+      "Accessible King": 5
+    },
+    "base_rate_standard": 179,
+    "base_rate_deluxe": 219,
+    "base_rate_suite": 319,
+    "meeting_space_sqft": 4200,
+    "max_meeting_capacity": 140,
+    "group_block_auto_approve_max_rooms": 20,
+    "max_discount_auto_approve_pct": 10,
+    "blackout_dates": [
+      {
+        "start": "2027-05-03",
+        "end": "2027-05-07"
+      }
+    ],
+    "general_manager": "Karen Ostrowski",
+    "notes": "State-legislature session weeks (Jan-May, weekdays) run at reduced discount ceiling of 8%.",
+    "data_quality_flags": []
+  },
+  {
+    "property_code": "SOL-CMH",
+    "property_name": "Solstice Columbus Short North",
+    "city": "Columbus",
+    "state": "OH",
+    "market_type": "Urban",
+    "total_rooms": 130,
+    "inventory": {
+      "Standard King": 50,
+      "Standard Double": 35,
+      "Deluxe King": 25,
+      "Suite": 15,
+      "Accessible King": 5
+    },
+    "base_rate_standard": 169,
+    "base_rate_deluxe": 199,
+    "base_rate_suite": 289,
+    "meeting_space_sqft": 3800,
+    "max_meeting_capacity": 120,
+    "group_block_auto_approve_max_rooms": 20,
+    "max_discount_auto_approve_pct": 10,
+    "blackout_dates": [
+      {
+        "start": "2026-09-04",
+        "end": "2026-09-07"
+      }
+    ],
+    "general_manager": "Lauren Ashby",
+    "notes": "Popular with university-affiliated group travel; verify insurance certificate for youth groups.",
+    "data_quality_flags": []
+  },
+  {
+    "property_code": "SOL-PVD",
+    "property_name": "Solstice Providence Waterplace",
+    "city": "Providence",
+    "state": "RI",
+    "market_type": "Urban",
+    "total_rooms": 120,
+    "inventory": {
+      "Standard King": 45,
+      "Standard Double": 35,
+      "Deluxe King": 20,
+      "Suite": 15,
+      "Accessible King": 5
+    },
+    "base_rate_standard": 159,
+    "base_rate_deluxe": 189,
+    "base_rate_suite": -395,
+    "meeting_space_sqft": 3200,
+    "max_meeting_capacity": 100,
+    "group_block_auto_approve_max_rooms": 15,
+    "max_discount_auto_approve_pct": 10,
+    "blackout_dates": [],
+    "general_manager": "Owen Fitzgerald",
+    "notes": "Smallest property in the portfolio; blocks over 15 rooms should be routed to Boston-area sister property instead.",
+    "data_quality_flags": [
+      "base_rate_suite_negative",
+      "notes_reference_unresolved_property"
+    ]
+  }
+]
