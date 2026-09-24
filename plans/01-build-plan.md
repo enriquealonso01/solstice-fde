@@ -21,6 +21,9 @@ Deadline: submit ~2026-09-27.
 | D13 | Supervisor | Full ladder: listen, whisper, barge, take over |
 | D14 | SMS | Registering fresh 2026-09-24; email default at submission, SMS if it clears by panel |
 | D15 | Email | Telnyx Email API confirmed, Resend dropped |
+| D16 | Phone number | REUSE existing +13057866217 (was connection "JARVIS", retired). Do not buy new |
+| D17 | Telnyx account | Switched to a funded account 2026-09-24. Balance $5.07, needs top-up for 10DLC |
+| D18 | SMS registration | No brand/campaign exists on the funded account. Clock restarts here |
 
 ## D11 — NEEDS ENRIQUE'S CONFIRMATION: one agent definition, two runtimes
 

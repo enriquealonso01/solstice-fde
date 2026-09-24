@@ -8,7 +8,8 @@
 
 param(
     [switch]$Status,
-    [switch]$Force
+    [switch]$Force,
+    [string[]]$Only   # e.g. -Only TELNYX_API_KEY   (re-asks just that one, even if already set)
 )
 
 $ErrorActionPreference = 'Stop'
@@ -235,7 +236,12 @@ Write-Host '  Type  q  at any prompt to stop. Everything is saved as you go.' -F
 foreach ($f in $fields) {
     $existing = ''
     if ($values.Contains($f.Key)) { $existing = $values[$f.Key] }
-    if ((-not $Force) -and (-not [string]::IsNullOrWhiteSpace($existing))) { continue }
+
+    if ($Only -and $Only.Count -gt 0) {
+        # Targeted mode: ask only for the named keys, and always re-ask them.
+        if ($Only -notcontains $f.Key) { continue }
+    }
+    elseif ((-not $Force) -and (-not [string]::IsNullOrWhiteSpace($existing))) { continue }
 
     Write-Host ''
     Write-Host ('  ' + $f.Label) -ForegroundColor White
