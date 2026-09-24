@@ -1110,7 +1110,8 @@ export function nextQuestion(inquiry: GroupInquiry): { field: string; ask: strin
     return { field: 'contact_email', ask: 'What is the best email address to send the proposal to?' }
   if (!p.contact_email)
     return { field: 'contact_email', ask: 'What email address should the proposal go to?' }
-  if (!p.company_name || /^unknown/i.test(p.company_name))
+  // The parser fills a placeholder when no name was given, so treat those as still missing.
+  if (!p.company_name || /^(unknown|unnamed|untitled)\b/i.test(p.company_name.trim()))
     return { field: 'company_name', ask: 'And which company or group is this for?' }
   if (!p.preferred_property_code)
     return { field: 'preferred_property_code', ask: 'Which Solstice hotel did you have in mind?' }
