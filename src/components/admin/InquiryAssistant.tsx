@@ -99,7 +99,9 @@ export default function InquiryAssistant({
         <span className="chip bg-solstice-ember/10 text-solstice-ember">scoped to this inquiry</span>
       </header>
 
-      <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto p-4">
+      {/* overscroll-contain stops the page behind from taking over the wheel once this list
+          hits its end, which made the panel feel like it was leaking scroll. */}
+      <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-4">
         {turns.map((t) => (
           <div key={t.id} className={t.role === 'rep' ? 'flex justify-end' : ''}>
             <div

@@ -3,7 +3,7 @@
 // Concierge accounts cannot read this table at all; the policy is in the database.
 
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import AdminShell from '@/components/admin/AdminShell'
 import {
   AccessNotice,
@@ -167,9 +167,15 @@ function InboxRow({
   const p = inquiry.payload
   const requested = p.requested_discount_pct
   const priced = proposal?.pricing.discount_pct
+  const navigate = useNavigate()
+  const href = `/admin/inquiries/${inquiry.id}`
 
+  // The whole row is the target; the Open link stays for keyboard and screen-reader users.
   return (
-    <tr className="border-b border-solstice-sand/60 transition last:border-0 hover:bg-solstice-cream/60">
+    <tr
+      onClick={() => navigate(href)}
+      className="cursor-pointer border-b border-solstice-sand/60 transition last:border-0 hover:bg-solstice-cream/60"
+    >
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs text-solstice-stone">{inquiry.inquiry_code}</span>
@@ -220,7 +226,7 @@ function InboxRow({
       </td>
       <td className="px-4 py-3">{proposal ? <ProposalStatusChip status={proposal.status} /> : <span className="text-xs text-solstice-stone">none yet</span>}</td>
       <td className="px-4 py-3 text-right">
-        <Link to={`/admin/inquiries/${inquiry.id}`} className="btn-ghost">
+        <Link to={href} className="btn-ghost" onClick={(e) => e.stopPropagation()}>
           Open
         </Link>
       </td>

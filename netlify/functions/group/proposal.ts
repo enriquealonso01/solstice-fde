@@ -329,7 +329,7 @@ export async function renderProposalPdf(doc: ProposalDocument): Promise<Uint8Arr
   })
   page.drawText('GROUP SALES', {
     x: PAGE.margin,
-    y: PAGE.height - 74,
+    y: PAGE.height - 79,
     size: 9,
     font: regular,
     color: PDF_COLORS.ember,
@@ -381,7 +381,7 @@ export async function renderProposalPdf(doc: ProposalDocument): Promise<Uint8Arr
     [
       'Nightly rate',
       doc.discount_pct > 0
-        ? `${formatUsd(doc.nightly_net)}  (${doc.discount_pct}% off ${formatUsd(doc.nightly_rack)})`
+        ? `${formatUsd(doc.nightly_net)} (${doc.discount_pct}% off ${formatUsd(doc.nightly_rack)})`
         : formatUsd(doc.nightly_net),
     ],
     ['Rooms subtotal', formatUsd(doc.subtotal_cents)],
@@ -450,6 +450,55 @@ export async function renderProposalPdf(doc: ProposalDocument): Promise<Uint8Arr
       cursor.y -= 4
     }
     cursor.y -= 10
+  }
+
+  // Next steps. Deliberately says nothing the data does not support: the hold date is the only
+  // commitment made anywhere on this page, and it comes from the proposal itself.
+  if (cursor.y > 250) {
+    page.drawText('NEXT STEPS', { x: PAGE.margin, y: cursor.y, size: 9, font: bold, color: PDF_COLORS.stone })
+    cursor.y -= 16
+    for (const step of [
+      'Reply to this proposal to accept, and we will confirm the block.',
+      `Rates above are held until ${speakDate(doc.expires_on)}.`,
+      'Any change to dates, room count or discount comes back to us before it is confirmed.',
+    ]) {
+      drawWrapped(page, `•  ${step}`, regular, 10, PAGE.margin, cursor, contentWidth)
+      cursor.y -= 4
+    }
+    cursor.y -= 12
+  }
+
+  // Acceptance strip, only when there is genuine room for it. Without this the page ran from the
+  // total straight to the footer with a large void in between.
+  if (cursor.y > 190) {
+    const lineY = 150
+    const half = (contentWidth - 24) / 2
+    page.drawLine({
+      start: { x: PAGE.margin, y: lineY },
+      end: { x: PAGE.margin + half, y: lineY },
+      thickness: 0.5,
+      color: PDF_COLORS.stone,
+    })
+    page.drawLine({
+      start: { x: PAGE.margin + half + 24, y: lineY },
+      end: { x: PAGE.margin + contentWidth, y: lineY },
+      thickness: 0.5,
+      color: PDF_COLORS.stone,
+    })
+    page.drawText('Authorised signature', {
+      x: PAGE.margin,
+      y: lineY - 12,
+      size: 8,
+      font: regular,
+      color: PDF_COLORS.stone,
+    })
+    page.drawText('Date', {
+      x: PAGE.margin + half + 24,
+      y: lineY - 12,
+      size: 8,
+      font: regular,
+      color: PDF_COLORS.stone,
+    })
   }
 
   // Footer

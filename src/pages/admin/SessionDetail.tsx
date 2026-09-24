@@ -124,7 +124,7 @@ export default function SessionDetail() {
               )
             }
           />
-          <div ref={transcriptRef} className="flex-1 space-y-3 overflow-y-auto p-4">
+          <div ref={transcriptRef} className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-4">
             {transcript.rows.length === 0 ? (
               <EmptyState title="No turns yet" body="Voice transcripts arrive one conversation turn at a time." />
             ) : (
@@ -159,7 +159,7 @@ export default function SessionDetail() {
               )
             }
           />
-          <div ref={traceRef} className="flex-1 space-y-2 overflow-y-auto p-3">
+          <div ref={traceRef} className="flex-1 space-y-2 overflow-y-auto overscroll-contain p-3">
             {trace.rows.length === 0 ? (
               <EmptyState title="No tool calls yet" body="Every tool the agent runs lands here with its masked arguments." />
             ) : (
