@@ -64,6 +64,15 @@ $fields = @(
         Required = $true
     }
     [pscustomobject]@{
+        Key      = 'NETLIFY_AUTH_TOKEN'
+        Label    = 'Netlify personal access token'
+        Where    = 'app.netlify.com  ->  User settings  ->  Applications  ->  Personal access tokens'
+        Note     = 'Only needed if "netlify login" will not open a browser. Optional'
+        Pattern  = '.{20,}'
+        Secret   = $true
+        Required = $false
+    }
+    [pscustomobject]@{
         Key      = 'DEMO_EMAIL'
         Label    = 'Demo email address'
         Where    = 'your own inbox'
@@ -181,14 +190,23 @@ function Show-Status($map) {
     Write-Host '  ---------------' -ForegroundColor Cyan
     # File-based checks on purpose: invoking these CLIs just to probe them makes
     # PowerShell 5.1 treat their stderr banner as a terminating error.
+    # gh keeps its token in the Windows keyring, so a file check false-negatives.
+    # cmd /c swallows the CLI banner that would otherwise blow up PowerShell 5.1.
     $checks = @(
-        @{ n = 'Netlify'; c = 'netlify'; path = (Join-Path $env:USERPROFILE '.netlify\config.json'); needle = 'auth'; fix = 'netlify login' },
-        @{ n = 'GitHub'; c = 'gh'; path = (Join-Path $env:USERPROFILE '.config\gh\hosts.yml'); needle = 'oauth_token'; fix = 'gh auth login' }
+        @{ n = 'Netlify'; c = 'netlify'; path = (Join-Path $env:USERPROFILE '.netlify\config.json'); needle = 'auth'; probe = 'netlify api getCurrentUser'; fix = 'netlify login  (or paste NETLIFY_AUTH_TOKEN)' },
+        @{ n = 'GitHub'; c = 'gh'; path = (Join-Path $env:USERPROFILE '.config\gh\hosts.yml'); needle = 'oauth_token'; probe = 'gh auth status'; fix = 'gh auth login' }
     )
     foreach ($chk in $checks) {
         $installed = Get-Command $chk.c -ErrorAction SilentlyContinue
         $loggedIn = $false
-        if (Test-Path -LiteralPath $chk.path) {
+        if ($chk.n -eq 'Netlify' -and -not [string]::IsNullOrWhiteSpace($map['NETLIFY_AUTH_TOKEN'])) {
+            $loggedIn = $true
+        }
+        if ((-not $loggedIn) -and $installed) {
+            cmd /c "$($chk.probe) >nul 2>&1"
+            if ($LASTEXITCODE -eq 0) { $loggedIn = $true }
+        }
+        if ((-not $loggedIn) -and (Test-Path -LiteralPath $chk.path)) {
             $raw = Get-Content -LiteralPath $chk.path -Raw -ErrorAction SilentlyContinue
             if ($raw -and $raw -match $chk.needle) { $loggedIn = $true }
         }
