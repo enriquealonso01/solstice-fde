@@ -49,7 +49,7 @@ export interface AssistantReply {
   ok: boolean
   reply: string
   /** Next things worth asking, offered as one-click chips. Derived from the state of the
-   *  enquiry, not from the model, so they cost nothing and never contradict the verdicts. */
+   *  inquiry, not from the model, so they cost nothing and never contradict the verdicts. */
   suggestions?: string[]
   trace: AssistantTrace[]
   model: string
@@ -59,7 +59,7 @@ export interface AssistantReply {
 const SYSTEM = `You are Sol, the group sales assistant at Solstice Hotels. You are talking to a Solstice sales rep on the inside of the system, not to a customer.
 
 How you work:
-- You are bound to one enquiry. Every tool you have already knows which one, so never ask for an enquiry reference and never assume you can look at another.
+- You are bound to one inquiry. Every tool you have already knows which one, so never ask for an inquiry reference and never assume you can look at another.
 - Never state a room cap, a discount ceiling, a blackout window, a meeting capacity or a rate from memory. Those live in the rules engine. Call evaluate_group_rules and quote what it returns.
 - If a tool comes back with ok:false or grounded:false, say plainly what you cannot confirm and what would need to happen. Do not fill the gap yourself. Inventing a rate or an availability figure is the worst thing you can do here.
 - When the rules engine returns decision_options, lay them out as the choice they are: what each one costs, who has to approve it, and what the tradeoff is. Do not pick for the rep unless they ask.
@@ -78,7 +78,7 @@ const TOOLS: {
   {
     name: 'evaluate_group_rules',
     description:
-      'Run every booking rule against this enquiry. Returns one verdict per rule with the number asked for, the number allowed, and a sentence you can read aloud. Also returns decision_options when the only problem is the discount. Call this before answering any question about what is or is not allowed.',
+      'Run every booking rule against this inquiry. Returns one verdict per rule with the number asked for, the number allowed, and a sentence you can read aloud. Also returns decision_options when the only problem is the discount. Call this before answering any question about what is or is not allowed.',
     input_schema: { type: 'object', properties: {} },
     run: (inquiry_id) => evaluate_group_rules({ inquiry_id }),
   },
@@ -105,7 +105,7 @@ const TOOLS: {
   {
     name: 'draft_clarifying_questions',
     description:
-      'The questions that must be answered before this enquiry can be quoted, plus a ready-to-send email body.',
+      'The questions that must be answered before this inquiry can be quoted, plus a ready-to-send email body.',
     input_schema: { type: 'object', properties: {} },
     run: (inquiry_id) => draft_clarifying_questions({ inquiry_id }),
   },
@@ -116,7 +116,7 @@ const TOOLS: {
     input_schema: { type: 'object', properties: {} },
     run: async (inquiry_id) => {
       const inquiry = await loadInquiry(inquiry_id)
-      if (!inquiry) return { ok: false, grounded: false, error: 'enquiry not found' }
+      if (!inquiry) return { ok: false, grounded: false, error: 'inquiry not found' }
       return check_availability({
         property_code: inquiry.preferred_property_code,
         room_type: inquiry.room_type_preference,
@@ -132,7 +132,7 @@ const TOOLS: {
     input_schema: { type: 'object', properties: {} },
     run: async (inquiry_id) => {
       const inquiry = await loadInquiry(inquiry_id)
-      if (!inquiry) return { ok: false, grounded: false, error: 'enquiry not found' }
+      if (!inquiry) return { ok: false, grounded: false, error: 'inquiry not found' }
       return validate_property_data({ property_code: inquiry.preferred_property_code })
     },
   },
@@ -167,7 +167,7 @@ const TOOLS: {
     run: async (inquiry_id, input) => {
       const proposal = await findProposalByInquiry(inquiry_id)
       if (!proposal) {
-        return { ok: false, grounded: false, error: 'There is no proposal on this enquiry yet.' }
+        return { ok: false, grounded: false, error: 'There is no proposal on this inquiry yet.' }
       }
       return submit_for_approval({
         proposal_id: proposal.proposal_id,
@@ -184,7 +184,7 @@ const TOOLS: {
     run: async (inquiry_id) => {
       const proposal = await findProposalByInquiry(inquiry_id)
       if (!proposal) {
-        return { ok: false, grounded: false, error: 'There is no proposal on this enquiry yet.' }
+        return { ok: false, grounded: false, error: 'There is no proposal on this inquiry yet.' }
       }
       return send_proposal({ proposal_id: proposal.proposal_id })
     },
@@ -202,7 +202,7 @@ function summarise(result: ToolResult<unknown>): string {
 async function buildContext(inquiry: GroupInquiry): Promise<string> {
   const property = await loadProperty(inquiry.preferred_property_code)
   return [
-    `Enquiry ${inquiry.inquiry_id} from ${inquiry.company_name} (${inquiry.contact_name}).`,
+    `Inquiry ${inquiry.inquiry_id} from ${inquiry.company_name} (${inquiry.contact_name}).`,
     `Hotel requested: ${property?.property_name ?? inquiry.preferred_property_code}.`,
     `Event: ${inquiry.event_type}. Arrival ${inquiry.arrival_date ?? 'not given'}, departure ${inquiry.departure_date ?? 'not given'}.`,
     `Rooms: ${inquiry.rooms_requested ?? 'not given'} ${inquiry.room_type_preference ?? ''}. Discount asked for: ${inquiry.requested_discount_pct ?? 'none stated'}%.`,
@@ -226,7 +226,7 @@ export async function runAssistant(args: {
   if (!inquiry) {
     return {
       ok: false,
-      reply: `I cannot find an enquiry with the reference ${args.inquiry_id}.`,
+      reply: `I cannot find an inquiry with the reference ${args.inquiry_id}.`,
       trace,
       model: ASSISTANT_MODEL,
       error: 'inquiry_not_found',
@@ -236,7 +236,7 @@ export async function runAssistant(args: {
     return {
       ok: false,
       reply:
-        'The assistant is not available on this environment because no Anthropic API key is configured. Everything else on this enquiry, including the rule checks and the proposal, still works.',
+        'The assistant is not available on this environment because no Anthropic API key is configured. Everything else on this inquiry, including the rule checks and the proposal, still works.',
       trace,
       model: ASSISTANT_MODEL,
       error: 'ANTHROPIC_API_KEY is not set',
@@ -259,7 +259,7 @@ export async function runAssistant(args: {
       const response = await client.messages.create({
         model: ASSISTANT_MODEL,
         max_tokens: MAX_TOKENS,
-        system: `${SYSTEM}\n\nThe enquiry you are bound to:\n${context}`,
+        system: `${SYSTEM}\n\nThe inquiry you are bound to:\n${context}`,
         messages,
         tools: TOOLS.map((t) => ({
           name: t.name,
@@ -338,7 +338,7 @@ export async function runAssistant(args: {
     const message = err instanceof Error ? err.message : String(err)
     return {
       ok: false,
-      reply: `I could not reach the model just then, so I have not answered. The rule verdicts and the proposal on this enquiry are unaffected. (${message})`,
+      reply: `I could not reach the model just then, so I have not answered. The rule verdicts and the proposal on this inquiry are unaffected. (${message})`,
       trace,
       model: ASSISTANT_MODEL,
       error: message,
@@ -346,7 +346,7 @@ export async function runAssistant(args: {
   }
 }
 
-/** Deterministic follow-ups, keyed off where this enquiry actually is. No model call. */
+/** Deterministic follow-ups, keyed off where this inquiry actually is. No model call. */
 export async function buildSuggestions(inquiryId: string): Promise<string[]> {
   const evaluation = await evaluate_group_rules({ inquiry_id: inquiryId })
   const proposal = await findProposalByInquiry(inquiryId)

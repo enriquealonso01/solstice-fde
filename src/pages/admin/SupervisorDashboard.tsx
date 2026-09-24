@@ -5,6 +5,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AdminShell from '@/components/admin/AdminShell'
+import SupervisorAudioStatus from '@/components/admin/SupervisorAudioStatus'
 import {
   AccessNotice,
   ChannelChip,
@@ -51,6 +52,10 @@ export default function SupervisorDashboard() {
       subtitle="Every call and chat Sol is handling right now, streaming from Supabase Realtime."
       actions={<SourceChip source={source} />}
     >
+      <div className="mb-4">
+        <SupervisorAudioStatus />
+      </div>
+
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Metric label="Active now" value={live.length} hint={`${voiceCount} voice · ${chatCount} chat`} />
         <Metric label="Human in control" value={takenOver} hint="Supervisor took the call" />

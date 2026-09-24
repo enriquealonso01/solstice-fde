@@ -422,7 +422,7 @@ async function handleProposalAction(req: Request, staff: AuthOk): Promise<Respon
   }
   if (!proposalId) {
     return json(
-      { ok: false, error: 'No proposal has been generated for this enquiry yet.' },
+      { ok: false, error: 'No proposal has been generated for this inquiry yet.' },
       404,
     )
   }

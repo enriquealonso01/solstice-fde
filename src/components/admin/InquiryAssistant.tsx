@@ -60,7 +60,9 @@ export default function InquiryAssistant({
     setTurns((t) => [...t, { id: `rep-${Date.now()}`, role: 'rep', text: clean }])
 
     const res = await postJson<AssistantReply>('/api/group/assistant', {
-      inquiry_id: inquiry.id,
+      // The tool layer speaks in INQ-2001. Reading live from Postgres gives us a uuid primary key,
+      // so send the code when we have it; the backend tolerates either.
+      inquiry_id: inquiry.inquiry_code ?? inquiry.id,
       message: clean,
     })
 
@@ -89,7 +91,9 @@ export default function InquiryAssistant({
   }
 
   return (
-    <div className="panel flex h-full min-h-[30rem] flex-col">
+    // Bounded and sticky on purpose: h-full inside a tall grid column let the panel grow with the
+    // page, which pushed the composer below the fold and made the rep scroll to reach Send.
+    <div className="panel sticky top-4 flex h-[calc(100vh-7rem)] max-h-[46rem] min-h-[26rem] flex-col">
       <header className="panel-header flex items-center justify-between gap-2">
         <span>Assistant · {inquiry.inquiry_code}</span>
         <span className="chip bg-solstice-ember/10 text-solstice-ember">scoped to this inquiry</span>

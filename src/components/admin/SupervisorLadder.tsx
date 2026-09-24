@@ -8,11 +8,17 @@
 //
 // The browser never touches Telnyx directly. It posts { session_id, action } to
 // /api/voice/supervisor and that function owns the API key and the leg bookkeeping.
+//
+// The rungs are gated on this browser being REGISTERED as a SIP client first. Telnyx
+// dials a leg at our SIP address; with nobody registered there it opens and dies two
+// seconds later in silence. A disabled button with a reason on it is a far better
+// outcome than a dialled leg nobody answers.
 
 import { useState } from 'react'
 import type { Channel } from '../../../shared/types'
 import type { SessionStatus } from './mockData'
 import { isMissingBackend, postJson } from './useAdminData'
+import { useSupervisorVoice } from './useSupervisorVoice'
 
 export type LadderAction = 'listen' | 'whisper' | 'barge' | 'takeover'
 
@@ -36,6 +42,18 @@ export interface SupervisorResponse {
   message?: string
 }
 
+const AUDIO_CHIP: Record<string, { label: string; cls: string }> = {
+  registered: { label: 'audio ready', cls: 'bg-emerald-50 text-emerald-800' },
+  ringing: { label: 'connecting audio', cls: 'bg-amber-50 text-amber-900' },
+  live: { label: 'audio live', cls: 'bg-emerald-600 text-white' },
+  requesting: { label: 'getting credentials', cls: 'bg-solstice-sand/60 text-solstice-stone' },
+  connecting: { label: 'registering', cls: 'bg-solstice-sand/60 text-solstice-stone' },
+  forbidden: { label: 'not permitted', cls: 'bg-rose-50 text-rose-800' },
+  unavailable: { label: 'audio unavailable', cls: 'bg-rose-50 text-rose-800' },
+  unsupported: { label: 'browser unsupported', cls: 'bg-rose-50 text-rose-800' },
+  error: { label: 'audio failed', cls: 'bg-rose-50 text-rose-800' },
+}
+
 export default function SupervisorLadder({
   sessionId,
   channel,
@@ -54,8 +72,14 @@ export default function SupervisorLadder({
 
   const isVoice = channel === 'voice'
   const isLive = status !== 'ended'
+
+  // Only register a SIP client where a leg could actually be dialled. A chat session
+  // or a finished call has no audio path, so minting credentials for one is noise.
+  const voice = useSupervisorVoice(isVoice && isLive)
+
   const locked = active === 'takeover'
   const activeIndex = active ? RUNGS.findIndex((r) => r.action === active) : -1
+  const audioChip = AUDIO_CHIP[voice.state]
 
   async function climb(action: LadderAction) {
     setPending(action)
@@ -85,13 +109,26 @@ export default function SupervisorLadder({
     setError(res.error)
   }
 
+  function onRungClick(action: LadderAction) {
+    // Synchronous, inside the click, before any await: this is the user gesture that
+    // buys us permission to play the call audio when Telnyx dials back.
+    voice.primeAudio()
+    void climb(action)
+  }
+
   return (
     <div className="panel">
+      {/* Telnyx renders the supervisor's copy of the call into this element. */}
+      <audio ref={voice.remoteAudioRef} autoPlay playsInline className="hidden" />
+
       <header className="panel-header flex items-center justify-between gap-3">
         <span>Supervisor control</span>
         {isVoice && isLive ? (
-          <span className="text-xs font-normal text-solstice-stone">
-            {activeIndex < 0 ? 'Not engaged' : `Rung ${activeIndex + 1} of ${RUNGS.length}`}
+          <span className="flex items-center gap-2">
+            {audioChip ? <span className={`chip ${audioChip.cls}`}>{audioChip.label}</span> : null}
+            <span className="text-xs font-normal text-solstice-stone">
+              {activeIndex < 0 ? 'Not engaged' : `Rung ${activeIndex + 1} of ${RUNGS.length}`}
+            </span>
           </span>
         ) : null}
       </header>
@@ -106,19 +143,34 @@ export default function SupervisorLadder({
           <p className="rounded-md border border-solstice-sand bg-solstice-cream px-3 py-2 text-sm text-solstice-stone">
             This call has ended. The ladder is disabled; the transcript and tool trace below are the archive.
           </p>
+        ) : !voice.ready ? (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+            <p className="font-medium">Supervisor audio is not registered.</p>
+            <p className="mt-0.5 text-xs leading-relaxed">{voice.unavailableReason}</p>
+            <p className="mt-1.5 text-xs leading-relaxed">
+              The rungs stay disabled until this browser is registered. Telnyx would dial a leg at
+              your SIP address and nobody would be there to answer it.
+            </p>
+            {voice.state === 'unavailable' || voice.state === 'error' ? (
+              <button type="button" className="btn-ghost mt-2 !py-1 text-xs" onClick={voice.retry}>
+                Try again
+              </button>
+            ) : null}
+          </div>
         ) : null}
 
-        <div className={`mt-0 grid gap-2 ${isVoice && isLive ? '' : 'pointer-events-none mt-3 opacity-40'}`}>
+        <div className={`grid gap-2 ${isVoice && isLive ? 'mt-3' : 'pointer-events-none mt-3 opacity-40'}`}>
           {RUNGS.map((rung, i) => {
             const isActive = active === rung.action
             const isPast = activeIndex >= 0 && i < activeIndex
-            const disabled = !isVoice || !isLive || pending !== null || locked
+            const disabled = !isVoice || !isLive || !voice.ready || pending !== null || locked
             return (
               <button
                 key={rung.action}
                 type="button"
                 disabled={disabled}
-                onClick={() => void climb(rung.action)}
+                title={!voice.ready && isVoice && isLive ? (voice.unavailableReason ?? undefined) : undefined}
+                onClick={() => onRungClick(rung.action)}
                 className={`flex items-start gap-3 rounded-md border px-3 py-2.5 text-left transition disabled:cursor-not-allowed ${
                   isActive
                     ? 'border-solstice-ember bg-solstice-ember/10'
@@ -158,6 +210,12 @@ export default function SupervisorLadder({
         {locked ? (
           <p className="mt-3 rounded-md border border-solstice-gold/50 bg-solstice-gold/10 px-3 py-2 text-xs text-solstice-ink">
             Sol has stepped aside. The guest is still connected and is now speaking to you.
+          </p>
+        ) : null}
+
+        {voice.ready && voice.error ? (
+          <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            {voice.error}
           </p>
         ) : null}
 

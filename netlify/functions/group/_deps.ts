@@ -22,6 +22,7 @@ import {
   listInquiries as listGeneratedInquiries,
   listProperties as listGeneratedProperties,
 } from '../_lib/data'
+import { tryGetDb } from '../_lib/db'
 
 // ---------------------------------------------------------------- envelope
 
@@ -166,20 +167,44 @@ export async function loadInquiries(): Promise<GroupInquiry[]> {
   return await source.inquiries()
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const codeByRowId = new Map<string, string>()
+
+/** Every tool here speaks in `INQ-2001`, but the admin UI reads inquiries straight from Postgres,
+ *  where the primary key is a uuid. Accept either rather than making the caller guess which one
+ *  this particular entry point wanted. Cached: inquiry ids never move. */
+async function toInquiryCode(idOrCode: string): Promise<string> {
+  if (!UUID_RE.test(idOrCode)) return idOrCode
+  const cached = codeByRowId.get(idOrCode)
+  if (cached) return cached
+  const db = tryGetDb()
+  if (!db) return idOrCode
+  const { data, error } = await db
+    .from('inquiries')
+    .select('inquiry_code')
+    .eq('id', idOrCode)
+    .limit(1)
+  if (error || !data?.[0]) return idOrCode
+  const code = (data[0] as { inquiry_code: string }).inquiry_code
+  codeByRowId.set(idOrCode, code)
+  return code
+}
+
 export async function loadInquiry(id: string): Promise<GroupInquiry | null> {
+  const code = await toInquiryCode(id)
   const all = await loadInquiries()
-  return all.find((i) => i.inquiry_id === id) ?? null
+  return all.find((i) => i.inquiry_id === code) ?? null
 }
 
 export async function loadInquiryContext(id: string): Promise<InquiryContext | null> {
   if (!source.inquiryContext) return null
-  return (await source.inquiryContext(id)) ?? null
+  return (await source.inquiryContext(await toInquiryCode(id))) ?? null
 }
 
 /** The send path, and the send path only. */
 export async function loadInquiryContact(id: string): Promise<InquiryContact | null> {
   if (source.contactFor) {
-    const contact = await source.contactFor(id)
+    const contact = await source.contactFor(await toInquiryCode(id))
     if (contact) return contact
   }
   return null

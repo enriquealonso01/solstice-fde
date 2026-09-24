@@ -90,7 +90,7 @@ export function evaluateGroupRules(options: EvaluateOptions): EvaluationResult {
         `missing ${describeMissing([...completeness.blocking_missing, ...completeness.advisory_missing])}`,
         'arrival date, departure date, exact room count and a way to reach the customer',
         blocking
-          ? `We cannot put a price on this yet. The enquiry is missing the ${describeMissing(completeness.blocking_missing)}, and guessing any of those would mean quoting a block we cannot actually hold. We have ${completeness.questions.length} short questions ready to send back.`
+          ? `We cannot put a price on this yet. The inquiry is missing the ${describeMissing(completeness.blocking_missing)}, and guessing any of those would mean quoting a block we cannot actually hold. We have ${completeness.questions.length} short questions ready to send back.`
           : `We can price this, but we are still missing the ${describeMissing(completeness.advisory_missing)}, so we should ask alongside the proposal.`,
       ),
     )

@@ -111,7 +111,7 @@ export function resetProposalStore(): void {
 
 // ---------------------------------------------------------------- identity
 
-/** `INQ-2001` -> `PRP-2001`. One live proposal per enquiry, so the code is stable and a rep
+/** `INQ-2001` -> `PRP-2001`. One live proposal per inquiry, so the code is stable and a rep
  *  clicking generate twice gets the same reference back rather than a second proposal. */
 export function proposalCodeFor(inquiryCode: string, revision = 1): string {
   const suffix = inquiryCode.replace(/^INQ-/i, '') || inquiryCode
@@ -288,7 +288,7 @@ export async function getProposal(code: string): Promise<StoredProposal | null> 
   return memory.get(code) ?? null
 }
 
-/** The live proposal for an enquiry: the most recent one that has not been sent, or the most
+/** The live proposal for an inquiry: the most recent one that has not been sent, or the most
  *  recent one overall if they all have. */
 export async function findProposalByInquiry(inquiryCode: string): Promise<StoredProposal | null> {
   const all = await listProposals()
@@ -314,7 +314,7 @@ export interface ProposalSlot {
  * Works out which proposal a generation is going to become, BEFORE the PDF is rendered, because
  * the code is baked into the PDF, its filename and its link.
  *
- * Idempotent per enquiry: a rep who clicks generate twice lands on the same slot and updates the
+ * Idempotent per inquiry: a rep who clicks generate twice lands on the same slot and updates the
  * existing draft. The one exception is a proposal that has already gone to the customer. That
  * one is history and cannot be rewritten, so a regeneration opens the next revision.
  */

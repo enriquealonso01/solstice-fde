@@ -124,7 +124,7 @@ export async function deliver(
       needs_human: true,
       failure_kind: 'no_contact',
       human_reason:
-        'This enquiry has neither an email address nor a phone number on it, so there is nowhere for us to send the proposal. Someone needs to get a contact detail from the customer before this can go out. We have not guessed one.',
+        'This inquiry has neither an email address nor a phone number on it, so there is nowhere for us to send the proposal. Someone needs to get a contact detail from the customer before this can go out. We have not guessed one.',
       attempted_at: attemptedAt,
     }
     await logAttempt(request, outcome, env)

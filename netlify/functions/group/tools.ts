@@ -133,7 +133,7 @@ export async function parse_inquiry(args: ParseInquiryArgs): Promise<ToolResult<
 }>> {
   if (args.inquiry_id) {
     const existing = await loadInquiry(args.inquiry_id)
-    if (!existing) return fail(`We have no record of an enquiry with the reference ${args.inquiry_id}.`)
+    if (!existing) return fail(`We have no record of an inquiry with the reference ${args.inquiry_id}.`)
     const context = await loadInquiryContext(args.inquiry_id)
     const completeness = assessCompleteness(
       existing,
@@ -323,7 +323,7 @@ export async function evaluate_group_rules(args: EvaluateArgs): Promise<ToolResu
   const inquiry = args.inquiry ?? (args.inquiry_id ? await loadInquiry(args.inquiry_id) : null)
   if (!inquiry) {
     return fail(
-      `We have no record of an enquiry with the reference ${args.inquiry_id ?? '(none supplied)'}.`,
+      `We have no record of an inquiry with the reference ${args.inquiry_id ?? '(none supplied)'}.`,
     )
   }
 
@@ -429,7 +429,7 @@ export async function price_block(args: PriceBlockArgs): Promise<ToolResult<Pric
 
   if (args.inquiry_id) {
     const inquiry = await loadInquiry(args.inquiry_id)
-    if (!inquiry) return fail(`We have no record of an enquiry with the reference ${args.inquiry_id}.`)
+    if (!inquiry) return fail(`We have no record of an inquiry with the reference ${args.inquiry_id}.`)
     property = await loadProperty(inquiry.preferred_property_code)
     rooms = args.rooms ?? inquiry.rooms_requested ?? 0
     arrival = arrival ?? inquiry.arrival_date
@@ -489,7 +489,7 @@ export async function find_alternates(args: { inquiry_id: string; limit?: number
   ToolResult<ReturnType<typeof findAlternates> & { human_summary: string }>
 > {
   const inquiry = await loadInquiry(args.inquiry_id)
-  if (!inquiry) return fail(`We have no record of an enquiry with the reference ${args.inquiry_id}.`)
+  if (!inquiry) return fail(`We have no record of an inquiry with the reference ${args.inquiry_id}.`)
   const properties = await loadProperties()
   const rules = getPropertyRules(inquiry.preferred_property_code)
 
@@ -515,7 +515,7 @@ export async function draft_clarifying_questions(args: { inquiry_id?: string; in
 > {
   const inquiry = args.inquiry ?? (args.inquiry_id ? await loadInquiry(args.inquiry_id) : null)
   if (!inquiry) {
-    return fail(`We have no record of an enquiry with the reference ${args.inquiry_id ?? '(none supplied)'}.`)
+    return fail(`We have no record of an inquiry with the reference ${args.inquiry_id ?? '(none supplied)'}.`)
   }
   const context = await loadInquiryContext(inquiry.inquiry_id)
   const completeness = assessCompleteness(
@@ -572,7 +572,7 @@ export interface GenerateProposalPayload {
   /** False means this proposal exists only in one server's memory and the next request will
    *  not find it. Surfaced rather than assumed: that failure once looked exactly like success. */
   persisted: boolean
-  /** True when this updated the draft already on the enquiry instead of adding a second one. */
+  /** True when this updated the draft already on the inquiry instead of adding a second one. */
   replaced_existing: boolean
   verdicts: RuleVerdict[]
   discount_pct: number
@@ -589,7 +589,7 @@ export async function generate_proposal(
   args: GenerateProposalArgs,
 ): Promise<ToolResult<GenerateProposalPayload>> {
   const inquiry = await loadInquiry(args.inquiry_id)
-  if (!inquiry) return fail(`We have no record of an enquiry with the reference ${args.inquiry_id}.`)
+  if (!inquiry) return fail(`We have no record of an inquiry with the reference ${args.inquiry_id}.`)
 
   const property = await loadProperty(inquiry.preferred_property_code)
   if (!property) {
@@ -749,7 +749,7 @@ export async function generate_proposal(
           ? `Proposal ${proposalId} is drafted at ${formatUsd(block.total_cents)}, and it is waiting on an approval before it can go anywhere. ${canSend(stored).human_reason}`
           : `Proposal ${proposalId} is ready at ${formatUsd(block.total_cents)}. Every rule check passed, so it can go straight out.`) +
         (slot.replaces_existing
-          ? ` This replaces the earlier draft on the same enquiry rather than adding a second one.`
+          ? ` This replaces the earlier draft on the same inquiry rather than adding a second one.`
           : '') +
         durabilityNote(stored),
     },
@@ -768,7 +768,7 @@ export async function generate_proposal(
  * Rebuilds the customer-facing letter from a stored proposal.
  *
  * The `proposals` table holds numbers, not prose, which is deliberate: the letter is derived
- * from the pricing that was approved plus the enquiry and the property, so the words a customer
+ * from the pricing that was approved plus the inquiry and the property, so the words a customer
  * reads cannot drift away from the figures a manager signed off. It also means a proposal
  * generated on one function instance can be sent from another, which is the bug this replaced.
  *
@@ -908,12 +908,12 @@ export async function send_proposal(args: {
   }
 
   // The proposal row carries pricing, not prose: the letter is re-rendered from the stored
-  // numbers plus the enquiry and the property, so what the customer receives cannot drift away
+  // numbers plus the inquiry and the property, so what the customer receives cannot drift away
   // from what the database says was approved.
   const materialised = await materialiseProposal(proposal)
   if (!materialised) {
     return fail(
-      `Proposal ${proposal.proposal_id} is on file but we cannot rebuild the letter for it, because enquiry ${proposal.inquiry_id} or its hotel is no longer in the directory. Nothing was sent.`,
+      `Proposal ${proposal.proposal_id} is on file but we cannot rebuild the letter for it, because inquiry ${proposal.inquiry_id} or its hotel is no longer in the directory. Nothing was sent.`,
     )
   }
   const { document, pdfBytes } = materialised
@@ -998,7 +998,7 @@ export function getCreatedInquiry(id: string): GroupInquiry | null {
   return created.get(id) ?? null
 }
 
-/** For enquiries that arrive by phone. Sol takes the details on the call and this puts a real
+/** For inquiries that arrive by phone. Sol takes the details on the call and this puts a real
  *  row on the group sales board within the second, which is the whole point of the split-screen
  *  demo. Phone calls usually arrive with a number and no email, which is exactly the case the
  *  delivery adapter routes to SMS. */
@@ -1006,12 +1006,12 @@ export async function create_inquiry(args: CreateInquiryArgs): Promise<
   ToolResult<{ inquiry: GroupInquiry; missing_fields: string[]; questions: string[]; human_summary: string }>
 > {
   if (!args.company_name?.trim()) {
-    return fail('We need the name of the company or group before we can open an enquiry for them.')
+    return fail('We need the name of the company or group before we can open an inquiry for them.')
   }
   const property = await loadProperty(args.preferred_property_code)
   if (!property) {
     return fail(
-      `We have no record of a Solstice hotel with the code ${args.preferred_property_code}, so we cannot open an enquiry against it.`,
+      `We have no record of a Solstice hotel with the code ${args.preferred_property_code}, so we cannot open an inquiry against it.`,
     )
   }
 
@@ -1026,7 +1026,7 @@ export async function create_inquiry(args: CreateInquiryArgs): Promise<
       alternate_property_ok: args.alternate_property_ok === true,
     },
   })
-  if (!parsed.ok || !parsed.data) return fail(parsed.error ?? 'We could not open the enquiry.')
+  if (!parsed.ok || !parsed.data) return fail(parsed.error ?? 'We could not open the inquiry.')
 
   const inquiry = parsed.data.inquiry
   created.set(id, inquiry)
@@ -1045,7 +1045,7 @@ export async function create_inquiry(args: CreateInquiryArgs): Promise<
       inquiry,
       missing_fields: inquiry.missing_fields,
       questions: parsed.data.questions,
-      human_summary: `Enquiry ${id} is open for ${inquiry.company_name} at ${property.property_name}.${
+      human_summary: `Inquiry ${id} is open for ${inquiry.company_name} at ${property.property_name}.${
         inquiry.missing_fields.length
           ? ` There are still ${parsed.data.questions.length} things to confirm before we can quote.`
           : ' Everything we need is on it.'
@@ -1173,7 +1173,7 @@ export async function override_proposal(args: {
   }
 
   const inquiry = await loadInquiry(existing.inquiry_id)
-  if (!inquiry) return fail(`We have no record of enquiry ${existing.inquiry_id}.`)
+  if (!inquiry) return fail(`We have no record of inquiry ${existing.inquiry_id}.`)
 
   const requested = args.discount_pct ?? inquiry.requested_discount_pct ?? existing.discount_pct
   const regenerated = await generate_proposal({

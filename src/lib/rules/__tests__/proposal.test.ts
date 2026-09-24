@@ -156,7 +156,7 @@ describe('the proposal artifacts', () => {
   })
 })
 
-describe('generation is idempotent per enquiry', () => {
+describe('generation is idempotent per inquiry', () => {
   it('a rep clicking generate twice gets one proposal, not two', async () => {
     const first = await generate_proposal({ inquiry_id: 'INQ-2001' })
     const second = await generate_proposal({ inquiry_id: 'INQ-2001' })
@@ -170,9 +170,9 @@ describe('generation is idempotent per enquiry', () => {
     expect(all.filter((p) => p.inquiry_id === 'INQ-2001')).toHaveLength(1)
   })
 
-  it('derives the reference from the enquiry rather than a counter', async () => {
+  it('derives the reference from the inquiry rather than a counter', async () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2009' })
-    // A counter gives PRP-0001 on one instance and PRP-0007 on another for the same enquiry.
+    // A counter gives PRP-0001 on one instance and PRP-0007 on another for the same inquiry.
     expect(generated.data!.proposal_id).toBe('PRP-2009')
     expect(proposalCodeFor('INQ-2009')).toBe('PRP-2009')
   })
