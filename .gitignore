@@ -5,3 +5,5 @@ dist/
 .netlify/
 *.log
 .DS_Store
+DEMO_LOGINS.md
+.env.bak

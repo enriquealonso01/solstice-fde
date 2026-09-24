@@ -75,6 +75,43 @@ function Check-Messaging {
     catch { return @{ ok = $false; detail = 'could not check' } }
 }
 
+function Check-Migrations {
+    if (-not ((Has 'SUPABASE_URL') -and (Has 'SUPABASE_SERVICE_ROLE_KEY'))) { return @{ ok = $false; detail = 'supabase keys missing' } }
+    $dir = Join-Path $root 'supabase\migrations'
+    if (-not (Test-Path $dir)) { return @{ ok = $true; detail = 'none pending' } }
+    # 001 is detectable by the column it adds. Add a probe here per future migration.
+    try {
+        $null = Invoke-RestMethod -Uri "$($e['SUPABASE_URL'])/rest/v1/sessions?select=supervisor_call_control_id&limit=1" -Headers @{
+            apikey = $e['SUPABASE_SERVICE_ROLE_KEY']; Authorization = "Bearer $($e['SUPABASE_SERVICE_ROLE_KEY'])"
+        }
+        return @{ ok = $true; detail = 'up to date' }
+    }
+    catch { return @{ ok = $false; detail = '1 migration pending' } }
+}
+
+function Do-Migrations {
+    $ref = Get-ProjectRef
+    $dir = Join-Path $root 'supabase\migrations'
+    $sql = (Get-ChildItem -Path $dir -Filter '*.sql' | Sort-Object Name | ForEach-Object {
+            "-- ===== $($_.Name) =====`r`n" + (Get-Content -LiteralPath $_.FullName -Raw)
+        }) -join "`r`n`r`n"
+    Set-Clipboard -Value $sql
+    $url = "https://supabase.com/dashboard/project/$ref/sql/new"
+
+    Write-Host ''
+    Write-Host '  Migrations copied to your clipboard. These are safe to re-run.' -ForegroundColor Green
+    Start-Process $url
+    Write-Host ''
+    Write-Host '   1. Click into the editor' -ForegroundColor White
+    Write-Host '   2. Press Ctrl+V' -ForegroundColor White
+    Write-Host '   3. Click Run' -ForegroundColor White
+    Write-Host ''
+    Read-Host '  Press Enter once it has run'
+    $v = Check-Migrations
+    if ($v.ok) { Write-Host '  Migrations applied.' -ForegroundColor Green }
+    else { Write-Host '  Still pending. Paste any red error to Claude.' -ForegroundColor Yellow }
+}
+
 function Check-Netlify {
     if (Test-Path (Join-Path $root '.netlify\state.json')) { return @{ ok = $true; detail = 'site linked' } }
     return @{ ok = $false; detail = 'not linked yet' }
@@ -156,6 +193,7 @@ $steps = @(
     @{ n = 'Telnyx API key'; check = { Check-Telnyx }; act = $null; required = $true }
     @{ n = 'Anthropic API key'; check = { Check-Anthropic }; act = $null; required = $true }
     @{ n = 'Database schema'; check = { Check-Schema }; act = { Do-Schema }; required = $true }
+    @{ n = 'Database migrations'; check = { Check-Migrations }; act = { Do-Migrations }; required = $true }
     @{ n = 'Netlify site'; check = { Check-Netlify }; act = { Do-Netlify }; required = $true }
     @{ n = 'SMS registration'; check = { Check-Messaging }; act = { Do-Topup }; required = $false }
 )
