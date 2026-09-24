@@ -127,7 +127,11 @@ const CONCIERGE_SPECS: ToolSpec[] = [
     description:
       'Facts about one Solstice property. Deliberately carries no parking price: there is no chain-wide parking rate, so it returns the refusal and the right thing to say instead. Also quarantines impossible values in the property record rather than repeating them.',
     parameters: {
-      property_code: { type: 'string', description: 'Property code, e.g. SOL-CHI.', required: true },
+      property_code: {
+        type: 'string',
+        description: 'Property code (SOL-CHI), or the city or hotel name the guest used ("Columbus", "Denver Union Station"). Ambiguous names come back as a question, never a guess.',
+        required: true,
+      },
       topic: { type: 'string', description: 'What the guest wants to know, so the tool can flag refusals such as parking.' },
     },
   },

@@ -207,6 +207,8 @@ says what we claim it says.
 | G15 | The front desk lane never prices a group block | `GROUP_BLOCK_RULES`, applied in `classify_intent` | "What's your rate for 20 rooms in October?" | Any rate or discount. Correct: captured as an inquiry for Sales |
 | G16 | A failed handoff is never described as a handoff | `transferToHuman` fallback branch | Unset `TELNYX_TRANSFER_TARGET` and ask for a manager on a call | "I'm transferring you now" into silence. Correct: a manager will call back today, and an escalation exists |
 | G17 | Every tool call is recorded, masked | `recordToolInvocation` in `registry.ts`, `maskArgs` | Watch the supervisor dashboard during a chat | An unmasked email or phone in the trace |
+| G18 | A guest is never quoted the wrong hotel | `resolveProperty` in `lookups.ts` | Ask about "the Columbus hotel", then somewhere ambiguous | Sol picks one. Correct: it resolves the single match, or asks which one |
+| G19 | A dropped connection does not duplicate the guest | `persistGuestMessage` in `chat.ts` | Kill the stream mid-answer and let the client retry | The guest's line appears twice in the supervisor transcript |
 
 ---
 
@@ -240,6 +242,13 @@ deliberate, defensible choice, and each is visible in the code rather than burie
 11. **The Providence overflow target is not in our directory.** SOL-PVD routes blocks over 15
     rooms to a "Boston-area sister property" that does not exist in the data. Sol surfaces the
     referral and never claims inventory, rates or availability for it.
+12. **The browser cannot assert who it is.** `/api/chat` is public and unauthenticated, so it
+    accepts no guest id and no clock override from the request body. Identity is established
+    only by `identify_guest` and then bound to the session row, and the demo clock comes only
+    from the server-side `DEMO_NOW`. Taking either from the body would let anyone post someone
+    else's guest id and be handed their stay, or move the clock to walk into a closed policy
+    window. The voice tool endpoint does take both, because the assistant is a trusted caller
+    behind `TOOL_WEBHOOK_SECRET`; set that secret in production.
 
 ---
 
@@ -335,7 +344,7 @@ Abbreviated, with the tool trace the supervisor sees on the right-hand side of t
 | Runtime prompt fallback | `netlify/functions/tools/solPrompt.ts` |
 | Chat runtime | `netlify/functions/chat.ts`, streams SSE to the browser |
 | Tool layer | `netlify/functions/tools/` |
-| Tool layer over HTTPS (for voice) | `GET`/`POST` `/api/tools` |
+| Tool layer over HTTPS (for voice) | `POST /api/tools/<tool_name>`, one URL per tool; catalogue at `GET /api/tools` |
 | Business rules as data | `netlify/functions/tools/rules.ts` |
 | Net-new availability service | `netlify/functions/tools/availability.ts` |
 | Conversation and trace storage | Supabase `sessions`, `messages`, `tool_invocations`, `escalations` |

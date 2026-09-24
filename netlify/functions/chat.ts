@@ -9,12 +9,17 @@
 //   done     { message_id, latency_ms, first_token_ms, first_event_ms }
 //   error    { message }
 //
-// Request body: { message: string, session_id?: string, guest_id?: string, now?: string,
-//                 history?: [{ role, content }] }
+// Request body: { message: string, session_id?: string, history?: [{ role, content }] }
 // `session_id` is optional on the first turn; the response's `session` event carries the id to
 // send back on every turn after that. History lives server-side in `messages`, so the client
 // never has to replay the conversation; `history` is only a fallback for when Supabase is not
 // configured.
+//
+// THE BROWSER CANNOT ASSERT WHO IT IS. This endpoint is public and unauthenticated, so it takes
+// no `guest_id` and no clock override from the request. Identity is established only by the
+// identify_guest tool and then bound to the session row; a demo clock comes only from the
+// server-side DEMO_NOW. Accepting either from the body would let anyone POST someone else's
+// guest id and be handed their stay, or move the clock to walk into a closed policy window.
 //
 // LATENCY. The target is p50 under 800ms to the first observable event, because a chat that
 // pauses feels broken in a way a phone call does not. Four things buy that:
@@ -144,12 +149,8 @@ export default async function handler(req: Request, _context: Context): Promise<
 
   const sessionId = str(body.session_id) ?? newUuid()
   const isNewSession = !str(body.session_id)
-  const ctx: ToolContext = {
-    session_id: sessionId,
-    channel: 'chat',
-    guest_id: str(body.guest_id),
-    now: str(body.now),
-  }
+  // No guest_id and no `now` from the body, deliberately. See the note at the top of the file.
+  const ctx: ToolContext = { session_id: sessionId, channel: 'chat' }
 
   const encoder = new TextEncoder()
   const stream = new ReadableStream<Uint8Array>({
@@ -204,8 +205,8 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
   // 2. Writes are fire-and-forget, but ORDERED: `messages.session_id` has a foreign key onto
   //    `sessions`, so racing the two inserts loses the guest's message. Chaining keeps the
   //    ordering without putting either round trip on the path the guest is waiting on.
-  const sessionReady: Promise<unknown> = isNewSession ? ensureSession(sessionId, ctx.guest_id) : Promise.resolve()
-  void sessionReady.then(() => persistMessage(sessionId, 'user', userText))
+  const sessionReady: Promise<unknown> = isNewSession ? ensureSession(sessionId, undefined) : Promise.resolve()
+  void sessionReady.then(() => persistGuestMessage(sessionId, userText, isNewSession))
 
   // 3. History and the session's bound identity are the only reads on the critical path, they
   //    only happen on a continuing conversation, and they happen together.
@@ -425,6 +426,48 @@ async function ensureSession(sessionId: string, guestId: string | undefined): Pr
   } catch (err) {
     console.warn('[chat] session insert failed:', err instanceof Error ? err.message : String(err))
   }
+}
+
+/**
+ * The guest's own turn, written once even when the client retries.
+ *
+ * A dropped SSE stream makes the browser re-POST the same { session_id, message }, and an
+ * unconditional insert then shows the guest saying the same thing twice on the supervisor's
+ * split screen. There is no idempotency column on `messages` to key off, so we look for an
+ * identical turn in the last DEDUPE_WINDOW_MS and skip the insert if one is already there.
+ *
+ * The tradeoff, stated plainly: a guest who genuinely types "yes" twice inside the window loses
+ * the second one from the transcript. A duplicated turn is the more visible failure, and the
+ * conversation itself is unaffected either way. If the client ever sends a per-turn id, key on
+ * that instead and delete this.
+ */
+const DEDUPE_WINDOW_MS = 30_000
+
+async function persistGuestMessage(sessionId: string, content: string, isNewSession: boolean): Promise<string> {
+  if (!isNewSession) {
+    try {
+      const db = getDatabase()
+      if (db) {
+        const since = new Date(Date.now() - DEDUPE_WINDOW_MS).toISOString()
+        const { data, error } = await db
+          .from('messages')
+          .select('id')
+          .eq('session_id', sessionId)
+          .eq('role', 'user')
+          .eq('content', content)
+          .gte('created_at', since)
+          .limit(1)
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const existing = data[0] as { id?: unknown }
+          return typeof existing.id === 'string' ? existing.id : newUuid()
+        }
+      }
+    } catch {
+      // If the check itself fails, fall through and insert: losing the guest's message is worse
+      // than showing it twice.
+    }
+  }
+  return persistMessage(sessionId, 'user', content)
 }
 
 async function persistMessage(sessionId: string, role: 'user' | 'assistant' | 'system', content: string): Promise<string> {

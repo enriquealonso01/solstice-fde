@@ -15,6 +15,7 @@ import {
   getReservation,
   listReservationsForGuest,
 } from './_deps'
+import { loadProperties } from './_deps'
 import { normalizeText } from './helpers'
 
 export async function findReservationById(reservationId: string): Promise<Reservation | null> {
@@ -27,6 +28,41 @@ export async function findGuestById(guestId: string): Promise<Guest | null> {
 
 export async function findPropertyByCode(propertyCode: string): Promise<Property | null> {
   return getProperty(propertyCode)
+}
+
+export type PropertyResolution =
+  | { status: 'found'; property: Property; matched_on: 'code' | 'city' | 'name' }
+  | { status: 'ambiguous'; candidates: Array<{ property_code: string; property_name: string; city: string }> }
+  | { status: 'not_found' }
+
+/**
+ * Guests say "the Columbus hotel", not "SOL-CMH", and a caller on the phone certainly does.
+ * Resolve a code, a city or a property name, and return `ambiguous` rather than picking when
+ * more than one fits: telling someone the wrong hotel's facts is a quiet way to be wrong.
+ */
+export async function resolveProperty(input: string): Promise<PropertyResolution> {
+  const raw = input.trim()
+  if (raw === '') return { status: 'not_found' }
+
+  const direct = getProperty(raw) ?? getProperty(`SOL-${raw.replace(/^sol-/i, '')}`)
+  if (direct) return { status: 'found', property: direct, matched_on: 'code' }
+
+  const needle = normalizeText(raw)
+  const all = await loadProperties()
+
+  const byCity = all.filter((p) => normalizeText(p.city) === needle || needle.includes(normalizeText(p.city)))
+  if (byCity.length === 1) return { status: 'found', property: byCity[0], matched_on: 'city' }
+  if (byCity.length > 1) return { status: 'ambiguous', candidates: byCity.map(describe) }
+
+  const byName = all.filter((p) => normalizeText(p.property_name).includes(needle) || needle.includes(normalizeText(p.property_name)))
+  if (byName.length === 1) return { status: 'found', property: byName[0], matched_on: 'name' }
+  if (byName.length > 1) return { status: 'ambiguous', candidates: byName.map(describe) }
+
+  return { status: 'not_found' }
+}
+
+function describe(p: Property): { property_code: string; property_name: string; city: string } {
+  return { property_code: p.property_code, property_name: p.property_name, city: p.city }
 }
 
 export async function reservationsForGuest(guestId: string): Promise<Reservation[]> {

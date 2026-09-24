@@ -11,7 +11,7 @@
 import type { Citation, ToolResult } from '../../../shared/types'
 import { getPropertyRate, loadPolicies, toolFail, toolOk } from './_deps'
 import { normalizeText, optString, policyCitation, propertyCitation, type ToolArgs, type ToolContext } from './helpers'
-import { findPropertyByCode } from './lookups'
+import { resolveProperty } from './lookups'
 import {
 
   PARKING_RULES,
@@ -123,17 +123,25 @@ function referenceRate(propertyCode: string, roomClass: string): { value: number
 }
 
 export async function getPropertyInfo(args: ToolArgs, _ctx: ToolContext): Promise<ToolResult> {
-  const code = optString(args, 'property_code') ?? optString(args, 'property')
+  const code = optString(args, 'property_code') ?? optString(args, 'property') ?? optString(args, 'city')
   const topic = optString(args, 'topic') ?? optString(args, 'query') ?? ''
 
-  if (!code) return toolFail('Need a property code, for example SOL-CHI.')
+  if (!code) return toolFail('Need a property: a code such as SOL-CHI, or the city or hotel name the guest used.')
 
-  const property = await findPropertyByCode(code)
-  if (!property) {
+  const resolved = await resolveProperty(code)
+  if (resolved.status === 'ambiguous') {
     return toolFail(
-      `${code} is not a Solstice property in our directory. Do not describe a property we do not hold a record for.`,
+      `"${code}" matches more than one Solstice property (${resolved.candidates
+        .map((c) => `${c.property_name} in ${c.city}`)
+        .join('; ')}). Ask the guest which one they mean rather than choosing.`,
     )
   }
+  if (resolved.status === 'not_found') {
+    return toolFail(
+      `"${code}" is not a Solstice property in our directory. Do not describe a property we do not hold a record for.`,
+    )
+  }
+  const property = resolved.property
 
   const askedAboutParking = PARKING_WORDS.some((w) => normalizeText(topic).includes(w))
 
