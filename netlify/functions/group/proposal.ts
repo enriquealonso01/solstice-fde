@@ -51,7 +51,8 @@ export interface ProposalProse {
 
 export const EDITABLE_PROSE_FIELDS = ['intro', 'body', 'customer_notes'] as const
 export const LOCKED_NUMERIC_FIELDS = [
-  'nightly_rate',
+  'nightly_rate_cents',
+  'line_total_cents',
   'discount_pct',
   'subtotal',
   'total',
@@ -73,8 +74,8 @@ export interface ProposalDocument {
   rooms: number
   nights: number
   room_type: string
-  nightly_rack: number
-  nightly_net: number
+  nightly_rack_cents: number
+  nightly_net_cents: number
   discount_pct: number
   subtotal_cents: number
   discount_cents: number
@@ -125,8 +126,8 @@ export function buildProposalDocument(input: BuildDocumentInput): ProposalDocume
     rooms: input.block.rooms,
     nights: input.block.nights,
     room_type: input.block.room_type,
-    nightly_rack: input.block.nightly_rack_cents,
-    nightly_net: input.block.nightly_net_cents,
+    nightly_rack_cents: input.block.nightly_rack_cents,
+    nightly_net_cents: input.block.nightly_net_cents,
     discount_pct: input.block.discount_pct,
     subtotal_cents: input.block.subtotal_cents,
     discount_cents: input.block.discount_cents,
@@ -231,7 +232,7 @@ export function renderProposalHtml(doc: ProposalDocument, pdfUrl?: string | null
           </tr>
           <tr>
             <th align="left" style="padding:10px 12px;font-weight:600;border:1px solid ${BRAND.sand};">Nightly rate</th>
-            <td style="padding:10px 12px;border:1px solid ${BRAND.sand};">${formatUsd(doc.nightly_net)} per room, per night${doc.discount_pct > 0 ? ` <span style="color:${BRAND.stone};">(${doc.discount_pct}% off ${formatUsd(doc.nightly_rack)})</span>` : ''}</td>
+            <td style="padding:10px 12px;border:1px solid ${BRAND.sand};">${formatUsd(doc.nightly_net_cents)} per room, per night${doc.discount_pct > 0 ? ` <span style="color:${BRAND.stone};">(${doc.discount_pct}% off ${formatUsd(doc.nightly_rack_cents)})</span>` : ''}</td>
           </tr>
           <tr style="background:${BRAND.ink};color:${BRAND.cream};">
             <th align="left" style="padding:14px 12px;font-weight:600;border:1px solid ${BRAND.ink};">Total for the block</th>
@@ -293,7 +294,7 @@ export function renderProposalText(doc: ProposalDocument, pdfUrl?: string | null
     `Arrival:        ${speakDate(doc.arrival_date)}`,
     `Departure:      ${speakDate(doc.departure_date)}`,
     `Rooms:          ${doc.rooms} x ${doc.room_type}, ${doc.nights} night${doc.nights === 1 ? '' : 's'}`,
-    `Nightly rate:   ${formatUsd(doc.nightly_net)} per room per night${doc.discount_pct > 0 ? ` (${doc.discount_pct}% off ${formatUsd(doc.nightly_rack)})` : ''}`,
+    `Nightly rate:   ${formatUsd(doc.nightly_net_cents)} per room per night${doc.discount_pct > 0 ? ` (${doc.discount_pct}% off ${formatUsd(doc.nightly_rack_cents)})` : ''}`,
     `Block total:    ${formatUsd(doc.total_cents)}`,
     '',
   ]
@@ -439,8 +440,8 @@ export async function renderProposalPdf(doc: ProposalDocument): Promise<Uint8Arr
     [
       'Nightly rate',
       doc.discount_pct > 0
-        ? `${formatUsd(doc.nightly_net)} (${doc.discount_pct}% off ${formatUsd(doc.nightly_rack)})`
-        : formatUsd(doc.nightly_net),
+        ? `${formatUsd(doc.nightly_net_cents)} (${doc.discount_pct}% off ${formatUsd(doc.nightly_rack_cents)})`
+        : formatUsd(doc.nightly_net_cents),
     ],
     ['Rooms subtotal', formatUsd(doc.subtotal_cents)],
     ['Group discount', `-${formatUsd(doc.discount_cents)}`],

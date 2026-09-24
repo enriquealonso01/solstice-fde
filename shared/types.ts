@@ -116,12 +116,26 @@ export interface Proposal {
   sent_at: string | null
 }
 
+/**
+ * Every money field carries `_cents` in its NAME and an integer in its value. The previous shape
+ * used bare `nightly_rate` / `line_total`, which held dollars while the sibling totals held cents,
+ * and the table rendered $197.10 as $1.97. Names that state their unit are the fix.
+ *
+ * Gross and net are both stored so nothing downstream recomputes either:
+ * rack figures sum to `subtotal_cents`, net figures sum to `total_cents`.
+ */
 export interface ProposalLine {
   room_type: string
   rooms: number
   nights: number
-  nightly_rate: number
-  line_total: number
+  /** Rack rate, before the group discount. */
+  nightly_rate_cents: number
+  /** rooms x nights x nightly_rate_cents. Sums to subtotal_cents across lines. */
+  line_total_cents: number
+  /** Rate after the group discount. */
+  nightly_net_cents: number
+  /** rooms x nights x nightly_net_cents. Sums to total_cents across lines. */
+  net_total_cents: number
 }
 
 export interface EscalationPacket {

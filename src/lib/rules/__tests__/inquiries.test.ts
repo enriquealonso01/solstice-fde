@@ -244,7 +244,8 @@ describe('INQ-2007 Ocean State Alumni, SOL-PVD over 15 rooms', () => {
     const proposal = await generate_proposal({ inquiry_id: 'INQ-2007' })
     expect(proposal.ok).toBe(true)
     // 20 rooms x 2 nights x $159, 10% off = $5,724.00
-    expect(proposal.data?.total).toBe(5724)
+    expect(proposal.data?.total_cents).toBe(572_400)
+    expect(proposal.data?.total_display).toBe('$5,724.00')
     expect(proposal.data?.requires_approval).toBe(true)
   })
 })
@@ -336,7 +337,8 @@ describe('INQ-2009 Camelback Fitness, SOL-PHX — the judgment moment', () => {
     const proposal = await generate_proposal({ inquiry_id: 'INQ-2009', discount_pct: 15 })
     // $209 less 15% is $177.65 a night; 15 rooms x 3 nights = $7,994.25. The discount is taken
     // off the nightly rate and then multiplied, which is how a hotel quotes it.
-    expect(proposal.data?.total).toBe(7994.25)
+    expect(proposal.data?.total_cents).toBe(799_425)
+    expect(proposal.data?.total_display).toBe('$7,994.25')
   })
 })
 

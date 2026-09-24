@@ -18,6 +18,7 @@ const NAV: NavItem[] = [
   { to: '/admin/sessions', label: 'Live sessions', roles: ['concierge', 'admin'] },
   { to: '/admin/inquiries', label: 'Group inbox', roles: ['group_sales', 'admin'] },
   { to: '/admin/backend', label: 'Backend map', roles: ['admin'] },
+  { to: '/admin/cost', label: 'Cost', roles: ['admin'] },
 ]
 
 const ROLE_LABEL: Record<StaffRole, string> = {

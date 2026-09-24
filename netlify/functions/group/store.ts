@@ -26,7 +26,8 @@
 // hand them the link.
 
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
-import type { Proposal, ProposalLine, RuleVerdict } from '../../../shared/types'
+import type { Proposal, RuleVerdict } from '../../../shared/types'
+import type { ProposalLineCents } from '../../../src/lib/rules/pricing'
 import { tryGetDb } from '../_lib/db'
 import { auditLog, describeError } from '../_delivery/audit'
 import type { ProposalProse } from './proposal'
@@ -37,7 +38,8 @@ import type { ProposalProse } from './proposal'
  * shared/types.ts declares them; anything doing arithmetic uses the `_cents` fields.
  */
 export interface Pricing {
-  line_items: ProposalLine[]
+  /** Integer cents throughout, per field name. See ProposalLineCents. */
+  line_items: ProposalLineCents[]
   subtotal_cents: number
   discount_pct: number
   discount_cents: number
@@ -66,7 +68,11 @@ export interface ProposalMeta {
   prose?: ProposalProse
 }
 
-export interface StoredProposal extends Proposal {
+/** `Omit<Proposal, 'line_items'>` until shared/types.ts renames ProposalLine's money fields to
+ *  `_cents`. That interface declares `nightly_rate` and `line_total`, which is where a dollar
+ *  value ended up sitting inside an object of cents; we do not widen back onto it. */
+export interface StoredProposal extends Omit<Proposal, 'line_items' | 'subtotal' | 'total'> {
+  line_items: ProposalLineCents[]
   /** `PRP-2001`, stable for the life of this proposal. */
   proposal_id: string
   /** `proposals.id`. Null only when we are running without a database. */
@@ -185,9 +191,7 @@ function fromRow(row: ProposalRow, inquiryCode: string): StoredProposal {
     verdicts: row.verdicts ?? [],
     pricing,
     line_items: pricing.line_items ?? [],
-    subtotal: (pricing.subtotal_cents ?? 0) / 100,
     discount_pct: pricing.discount_pct ?? 0,
-    total: (pricing.total_cents ?? 0) / 100,
     pdf_path: row.pdf_path,
     pdf_url: row.pdf_path,
     sent_via: row.sent_via,
@@ -367,9 +371,7 @@ export async function saveProposal(input: SaveInput): Promise<StoredProposal> {
     verdicts: input.verdicts,
     pricing: input.pricing,
     line_items: input.pricing.line_items,
-    subtotal: input.pricing.subtotal_cents / 100,
     discount_pct: input.pricing.discount_pct,
-    total: input.pricing.total_cents / 100,
     pdf_path: input.pdf_path,
     pdf_url: input.pdf_path,
     sent_via: null,

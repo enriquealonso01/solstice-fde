@@ -144,8 +144,6 @@ describe('the proposal artifacts', () => {
         discount_cents: 0,
         total_cents: 87_600,
         line_items: [],
-        subtotal: 876,
-        total: 876,
       },
       verdicts: [],
       required_follow_ups: [],

@@ -13,6 +13,7 @@
 // "sent to b***@harlowvance.com, redirected to the demo inbox for this run" and both halves are
 // true.
 
+import { formatUsd } from '../../../src/lib/rules'
 import { tryGetDb } from '../_lib/db'
 import { recentAudit } from '../_delivery/audit'
 import { readDeliveryEnv } from '../_delivery/config'
@@ -149,7 +150,7 @@ export async function getCommunications(inquiryIdOrUuid: string): Promise<Commun
       direction: 'outbound',
       channel,
       subject: `Group proposal ${proposal.proposal_id} for ${inquiry?.company_name ?? code}`,
-      preview: `Proposal ${proposal.proposal_id}: ${proposal.pricing.line_items[0]?.rooms ?? 0} rooms, ${(proposal.pricing.total_cents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })} total at ${proposal.pricing.discount_pct}% off.`,
+      preview: `Proposal ${proposal.proposal_id}: ${proposal.pricing.line_items[0]?.rooms ?? 0} rooms, ${formatUsd(proposal.pricing.total_cents)} total at ${proposal.pricing.discount_pct}% off.`,
       body: proposal.pdf_url
         ? `The full proposal was sent, with the PDF at ${proposal.pdf_url}`
         : 'The full proposal was sent in the body of the message.',

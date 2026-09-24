@@ -402,8 +402,8 @@ export default function InquiryDetail() {
                       <td className="px-4 py-2.5 text-solstice-ink">{l.room_type}</td>
                       <td className="px-4 py-2.5 tabular-nums text-solstice-slate">{l.rooms}</td>
                       <td className="px-4 py-2.5 tabular-nums text-solstice-slate">{l.nights}</td>
-                      <td className="px-4 py-2.5 tabular-nums text-solstice-slate">{money(l.nightly_rate)}</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-solstice-slate">{money(l.line_total)}</td>
+                      <td className="px-4 py-2.5 tabular-nums text-solstice-slate">{money(l.nightly_rate_cents)}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-solstice-slate">{money(l.line_total_cents)}</td>
                     </tr>
                   ))}
                   <tr className="border-b border-solstice-sand/60">

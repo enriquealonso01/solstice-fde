@@ -586,7 +586,8 @@ export interface GenerateProposalPayload {
   replaced_existing: boolean
   verdicts: RuleVerdict[]
   discount_pct: number
-  total: number
+  /** Integer cents. `total_display` is the same figure formatted for a person. */
+  total_cents: number
   total_display: string
   pdf_url: string | null
   pdf_bytes_length: number
@@ -750,7 +751,7 @@ export async function generate_proposal(
       replaced_existing: slot.replaces_existing,
       verdicts: evaluation.verdicts,
       discount_pct: discount,
-      total: block.total,
+      total_cents: block.total_cents,
       total_display: formatUsd(block.total_cents),
       pdf_url: pdfUrl,
       pdf_bytes_length: pdfBytes?.length ?? 0,
@@ -824,15 +825,15 @@ export async function materialiseProposal(
     rooms: line?.rooms ?? inquiry.rooms_requested ?? 0,
     nights: line?.nights ?? 0,
     rate_field: rateFieldForRoomType(line?.room_type ?? inquiry.room_type_preference),
-    nightly_rack_cents: rate.ok ? rate.cents : 0,
-    nightly_net_cents: Math.round((line?.nightly_rate ?? 0) * 100),
+    // Already cents on the stored line. The previous version multiplied by 100 here, which is
+    // how a dollar value ended up in an object of cents in the first place.
+    nightly_rack_cents: line?.nightly_rate_cents ?? (rate.ok ? rate.cents : 0),
+    nightly_net_cents: line?.nightly_net_cents ?? 0,
     discount_pct: proposal.pricing.discount_pct,
     subtotal_cents: proposal.pricing.subtotal_cents,
     discount_cents: proposal.pricing.discount_cents,
     total_cents: proposal.pricing.total_cents,
     line_items: proposal.pricing.line_items,
-    subtotal: proposal.pricing.subtotal_cents / 100,
-    total: proposal.pricing.total_cents / 100,
   }
 
   const document = buildProposalDocument({

@@ -11,6 +11,7 @@ import GroupInbox from '@/pages/admin/GroupInbox'
 import InquiryDetail from '@/pages/admin/InquiryDetail'
 import AdminHome from '@/pages/admin/AdminHome'
 import BackendMap from '@/pages/admin/BackendMap'
+import CostPage from '@/pages/admin/CostPage'
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
         <Route element={<RequireRole allow={['admin']} />}>
           <Route path="/admin" element={<AdminHome />} />
           <Route path="/admin/backend" element={<BackendMap />} />
+          <Route path="/admin/cost" element={<CostPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

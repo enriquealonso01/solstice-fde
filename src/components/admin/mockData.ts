@@ -138,12 +138,21 @@ const NOW = Date.now()
 const ago = (seconds: number) => new Date(NOW - seconds * 1000).toISOString()
 
 /** rooms x nights x nightly rate, in integer cents. Arithmetic never touches floats. */
-function line(room_type: string, rooms: number, nights: number, nightly_rate: number): ProposalLine {
-  return { room_type, rooms, nights, nightly_rate, line_total: rooms * nights * nightly_rate }
+function line(room_type: string, rooms: number, nights: number, nightly_rate_cents: number, discount_pct = 0): ProposalLine {
+  const nightly_net_cents = Math.round(nightly_rate_cents * (1 - discount_pct / 100))
+  return {
+    room_type,
+    rooms,
+    nights,
+    nightly_rate_cents,
+    line_total_cents: rooms * nights * nightly_rate_cents,
+    nightly_net_cents,
+    net_total_cents: rooms * nights * nightly_net_cents,
+  }
 }
 
 function priced(items: ProposalLine[], discount_pct: number, requested?: number): Pricing {
-  const subtotal_cents = items.reduce((sum, i) => sum + i.line_total, 0)
+  const subtotal_cents = items.reduce((sum, i) => sum + i.line_total_cents, 0)
   const discount_cents = Math.round((subtotal_cents * discount_pct) / 100)
   return {
     line_items: items,
@@ -813,7 +822,7 @@ export function verdictSeverity(verdicts: RuleVerdict[]): 'clear' | 'flag' | 'fa
 export function renderProposalBody(inquiry: InquiryRow, proposal: ProposalRow): string {
   const p = inquiry.payload
   const lines = proposal.pricing.line_items
-    .map((l) => `  ${l.rooms} x ${l.room_type}, ${l.nights} night(s) at ${money(l.nightly_rate)} = ${money(l.line_total)}`)
+    .map((l) => `  ${l.rooms} x ${l.room_type}, ${l.nights} night(s) at ${money(l.nightly_rate_cents)} = ${money(l.line_total_cents)}`)
     .join('\n')
   const requested = proposal.pricing.requested_discount_pct
   const discountNote =
