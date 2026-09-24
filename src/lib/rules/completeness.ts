@@ -65,7 +65,14 @@ const FIELD_SPECS: FieldSpec[] = [
   },
 ]
 
-function isPresent(inquiry: GroupInquiry, field: RequiredField): boolean {
+/** Facts the engine cannot read off a `GroupInquiry` because the record it is handed has been
+ *  redacted. The inquiry inbox nulls the real email and phone so nothing downstream can leak
+ *  them; "is there a way to reach this customer" therefore has to be told to us. */
+export interface CompletenessContext {
+  contact_present?: boolean
+}
+
+function isPresent(inquiry: GroupInquiry, field: RequiredField, context: CompletenessContext): boolean {
   switch (field) {
     case 'arrival_date':
       return parseDate(inquiry.arrival_date) !== null
@@ -78,6 +85,7 @@ function isPresent(inquiry: GroupInquiry, field: RequiredField): boolean {
     case 'meeting_capacity_needed':
       return typeof inquiry.meeting_capacity_needed === 'number' && inquiry.meeting_capacity_needed > 0
     case 'contact_channel':
+      if (typeof context.contact_present === 'boolean') return context.contact_present
       return Boolean(inquiry.contact_email?.trim() || inquiry.contact_phone?.trim())
     default:
       return true
@@ -99,6 +107,7 @@ export interface CompletenessResult {
 export function assessCompleteness(
   inquiry: GroupInquiry,
   rawValues: Partial<Record<RequiredField, string>> = {},
+  context: CompletenessContext = {},
 ): CompletenessResult {
   const blocking: RequiredField[] = []
   const advisory: RequiredField[] = []
@@ -106,7 +115,7 @@ export function assessCompleteness(
 
   for (const spec of FIELD_SPECS) {
     if (spec.requiredWhen && !spec.requiredWhen(inquiry)) continue
-    if (isPresent(inquiry, spec.field)) continue
+    if (isPresent(inquiry, spec.field, context)) continue
 
     const raw = rawValues[spec.field]?.trim()
     const question =

@@ -27,7 +27,8 @@ import {
   decodeClientState,
   encodeClientState,
 } from './_lib/telnyxClient'
-import { maskPhone, safeLog } from './_lib/mask'
+import { maskArgs, maskPhone, safeLog } from '../_lib/mask'
+import { missingDbEnv, recordToolInvocation, tryGetDb } from '../_lib/db'
 import {
   SUPERVISOR_LEG_ENDED_TOOL,
   findSessionByCallControlId,
@@ -35,14 +36,11 @@ import {
   getSessionById,
   identifyCallerByPhone,
   insertSession,
-  isDbUnavailable,
-  recordToolInvocation,
-  serviceClient,
   updateSession,
   upsertTranscriptTurns,
   type SessionRow,
   type TranscriptTurn,
-} from './_lib/db'
+} from './_lib/sessions'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 interface TelnyxEvent {
@@ -85,7 +83,7 @@ export default async function handler(req: Request, _context: Context): Promise<
     publicKeyBase64: envOrNull('TELNYX_PUBLIC_KEY'),
   })
   if (!check.ok) {
-    safeLog(`webhook signature rejected: ${check.reason}`)
+    safeLog('[solstice] webhook signature rejected', { reason: check.reason })
     return json({ ok: false, error: 'invalid_signature' }, 401)
   }
   if (check.skipped) {
@@ -101,10 +99,12 @@ export default async function handler(req: Request, _context: Context): Promise<
     return json({ ok: false, error: 'invalid_json' }, 400)
   }
 
-  const sb = serviceClient()
-  if (isDbUnavailable(sb)) {
+  const sb = tryGetDb()
+  if (!sb) {
     // Still acknowledge: Telnyx must not retry-storm while Supabase env is being wired.
-    console.error(`[solstice] ${event.event_type} received but Supabase is unavailable: ${sb.error}`)
+    console.error(
+      `[solstice] ${event.event_type} received but Supabase is unconfigured: ${missingDbEnv().join(', ')} unset`,
+    )
     return ack('supabase_unavailable', { event_type: event.event_type })
   }
 
@@ -132,7 +132,7 @@ async function route(sb: SupabaseClient, event: TelnyxEvent): Promise<Response> 
     case 'call.hangup':
       return onHangup(sb, payload)
     default:
-      safeLog(`unhandled event ${event.event_type}`)
+      safeLog('[solstice] unhandled event', { event_type: event.event_type })
       return ack('ignored', { event_type: event.event_type })
   }
 }
@@ -150,7 +150,7 @@ async function onCallInitiated(sb: SupabaseClient, payload: Record<string, unkno
   // The supervisor leg is an OUTGOING call we placed ourselves. It must never create a guest
   // session, and Sol must never be started on it.
   if (clientState?.kind === 'supervisor' || direction === 'outgoing') {
-    safeLog('ignoring non-guest leg on call.initiated', { direction, kind: clientState?.kind })
+    safeLog('[solstice] ignoring non-guest leg on call.initiated', { direction, kind: clientState?.kind })
     return ack('supervisor_or_outgoing_leg')
   }
 
@@ -161,16 +161,16 @@ async function onCallInitiated(sb: SupabaseClient, payload: Record<string, unkno
   const answered = await answerCall(callControlId, guestState)
   if (!answered.ok) {
     console.error(`[solstice] answer failed for session ${session.id}: ${answered.error}`)
-    await recordToolInvocation(sb, {
+    await trace({
       session_id: session.id,
       tool: 'voice.answer',
-      result_summary: `FAILED: ${answered.error}`,
+      summary: `FAILED: ${answered.error}`,
       grounded: false,
     })
     return ack('answer_failed', { error: answered.error })
   }
 
-  const started = await startAssistant(sb, session.id, callControlId, guestState)
+  const started = await startAssistant(session.id, callControlId, guestState)
   if (!started) assistantStartFailed.add(callControlId)
 
   return ack('call_answered', { session_id: session.id, assistant_started: started })
@@ -184,7 +184,7 @@ async function onCallAnswered(sb: SupabaseClient, payload: Record<string, unknow
   if (!callControlId) return ack('no_call_control_id')
 
   if (clientState?.kind === 'supervisor') {
-    safeLog('supervisor leg answered')
+    safeLog('[solstice] supervisor leg answered', { call_control_id: callControlId })
     return ack('supervisor_leg_answered')
   }
 
@@ -196,7 +196,7 @@ async function onCallAnswered(sb: SupabaseClient, payload: Record<string, unknow
   if (!session) return ack('no_session_for_leg')
 
   const guestState = encodeClientState({ kind: 'guest', session_id: session.id })
-  const started = await startAssistant(sb, session.id, callControlId, guestState)
+  const started = await startAssistant(session.id, callControlId, guestState)
   if (started) assistantStartFailed.delete(callControlId)
   return ack('retry_start', { session_id: session.id, assistant_started: started })
 }
@@ -283,11 +283,11 @@ async function onConversationEnded(sb: SupabaseClient, payload: Record<string, u
   if (session.status !== 'taken_over') patch.status = 'ended'
   await updateSession(sb, session.id, patch)
 
-  await recordToolInvocation(sb, {
+  await trace({
     session_id: session.id,
     tool: 'voice.conversation_ended',
-    args_masked: { conversation_id: conversationId ?? null },
-    result_summary: 'Telnyx reported the assistant conversation ended',
+    args: { conversation_id: conversationId ?? null },
+    summary: 'Telnyx reported the assistant conversation ended',
     grounded: true,
   })
   return ack('conversation_ended', { session_id: session.id })
@@ -307,13 +307,14 @@ async function onInsightsGenerated(sb: SupabaseClient, payload: Record<string, u
   if (!session && callControlId) session = await findSessionByCallControlId(sb, callControlId)
 
   const results = payload.results ?? payload.insights ?? payload.insight_results ?? null
-  const summary = typeof results === 'string' ? results : JSON.stringify(results ?? {}).slice(0, 8000)
+  const insightSummary =
+    typeof results === 'string' ? results : JSON.stringify(results ?? {}).slice(0, 8000)
 
-  await recordToolInvocation(sb, {
+  await trace({
     session_id: session?.id ?? null,
     tool: 'voice.conversation_insights',
-    args_masked: { conversation_id: conversationId ?? null },
-    result_summary: summary,
+    args: { conversation_id: conversationId ?? null },
+    summary: insightSummary,
     grounded: true,
   })
 
@@ -329,11 +330,11 @@ async function onHangup(sb: SupabaseClient, payload: Record<string, unknown>): P
 
   if (clientState?.kind === 'supervisor' && clientState.session_id) {
     // Retire the leg so the next Listen click dials a fresh one instead of switching a dead leg.
-    await recordToolInvocation(sb, {
+    await trace({
       session_id: clientState.session_id,
       tool: SUPERVISOR_LEG_ENDED_TOOL,
-      args_masked: { supervisor_call_control_id: callControlId },
-      result_summary: 'supervisor leg hung up',
+      args: { supervisor_call_control_id: callControlId },
+      summary: 'supervisor leg hung up',
       grounded: true,
     })
     return ack('supervisor_leg_closed')
@@ -376,20 +377,23 @@ async function ensureGuestSession(
     status: 'active',
   })
 
-  await recordToolInvocation(sb, {
+  await trace({
     session_id: session.id,
     tool: 'identify_guest',
-    args_masked: { channel: 'voice', phone: from },
-    result_summary: guest ? `Matched ${guest.guest_id}` : 'No guest matched this caller ID',
+    args: { channel: 'voice', phone: from },
+    summary: guest ? `Matched ${guest.guest_id}` : 'No guest matched this caller ID',
     grounded: Boolean(guest),
   })
 
-  safeLog('voice session opened', { session_id: session.id, guest_id: guest?.guest_id ?? null, phone: from })
+  safeLog('[solstice] voice session opened', {
+    session_id: session.id,
+    guest_id: guest?.guest_id ?? null,
+    phone: from,
+  })
   return session
 }
 
 async function startAssistant(
-  sb: SupabaseClient,
   sessionId: string,
   callControlId: string,
   clientState: string,
@@ -397,10 +401,10 @@ async function startAssistant(
   const assistantId = envOrNull('TELNYX_ASSISTANT_ID')
   if (!assistantId) {
     console.error('[solstice] TELNYX_ASSISTANT_ID is not set; run scripts/telnyx/provision.mjs')
-    await recordToolInvocation(sb, {
+    await trace({
       session_id: sessionId,
       tool: 'voice.ai_assistant_start',
-      result_summary: 'FAILED: TELNYX_ASSISTANT_ID not configured',
+      summary: 'FAILED: TELNYX_ASSISTANT_ID not configured',
       grounded: false,
     })
     return false
@@ -413,17 +417,40 @@ async function startAssistant(
   })
   const latency = Date.now() - started.getTime()
 
-  await recordToolInvocation(sb, {
+  await trace({
     session_id: sessionId,
     tool: 'voice.ai_assistant_start',
-    args_masked: { assistant_id: assistantId, send_message_history_updates: true },
-    result_summary: res.ok ? 'Sol started with live history updates' : `FAILED: ${res.error}`,
+    args: { assistant_id: assistantId, send_message_history_updates: true },
+    summary: res.ok ? 'Sol started with live history updates' : `FAILED: ${res.error}`,
     grounded: res.ok,
     latency_ms: latency,
   })
 
   if (!res.ok) console.error(`[solstice] ai_assistant_start failed: ${res.error}`)
   return res.ok
+}
+
+/**
+ * Trace row helper. Fills the shared recordToolInvocation contract and runs args through the
+ * shared maskArgs, so nothing unmasked can reach `tool_invocations.args_masked`. The shared
+ * helper resolves its own client and never throws, so a failed trace cannot drop a live call.
+ */
+async function trace(row: {
+  session_id: string | null
+  tool: string
+  args?: Record<string, unknown>
+  summary: string
+  grounded: boolean
+  latency_ms?: number | null
+}): Promise<void> {
+  await recordToolInvocation({
+    session_id: row.session_id,
+    tool: row.tool,
+    args_masked: maskArgs(row.args ?? {}).masked,
+    result_summary: row.summary,
+    grounded: row.grounded,
+    latency_ms: row.latency_ms ?? null,
+  })
 }
 
 function str(value: unknown): string | null {

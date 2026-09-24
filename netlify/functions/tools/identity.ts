@@ -23,7 +23,7 @@ import {
   type ToolArgs,
   type ToolContext,
 } from './helpers'
-import { findPropertyByCode, findReservationById, matchGuests, pickRelevantReservation, reservationsForGuest } from './lookups'
+import { findPropertyByCode, findReservationById, pickRelevantReservation, reservationsForGuest, resolveIdentity } from './lookups'
 import { POLICY_RULES, RATE_PLAN_TERMS } from './rules'
 
 // ------------------------------------------------------------- identify_guest
@@ -42,56 +42,39 @@ export async function identifyGuest(args: ToolArgs, _ctx: ToolContext): Promise<
     return toolFail('No identifying detail supplied. Ask for a confirmation number, or the phone number or email on the booking.')
   }
 
-  const matches = await matchGuests(query)
+  const outcome = await resolveIdentity(query)
 
-  if (matches.length === 0) {
-    return toolState(
-      {
-        verified: false,
-        matches: 0,
-        next_step:
-          'No matching guest record. Ask the guest to confirm the spelling, or for the confirmation number from their booking email. Do not guess a record.',
-      },
-      {},
-    )
+  if (outcome.status === 'not_found') {
+    return toolState({
+      verified: false,
+      matches: 0,
+      next_step: `${outcome.reason} Do not guess a record.`,
+    })
   }
 
-  const best = matches[0]
-  const strongFactors = best.matched_on.filter((f) => f === 'guest_id' || f === 'reservation_id' || f === 'phone' || f === 'email')
-  const nameOnly = strongFactors.length === 0
-
-  // Ambiguous: more than one person fits what we were told.
-  if (matches.length > 1) {
-    return toolState(
-      {
-        verified: false,
-        matches: matches.length,
-        ambiguous: true,
-        matched_on: best.matched_on,
-        disambiguator_required: 'confirmation_number',
-        next_step:
-          `${matches.length} guest records fit that. Ask for the confirmation number, or the phone number or email on the booking, before releasing any stay detail. Never pick one.`,
-      },
-      {},
-    )
+  // More than one person fits what we were told. Asking is the guardrail, not a fallback.
+  if (outcome.status === 'ambiguous') {
+    return toolState({
+      verified: false,
+      matches: outcome.count,
+      ambiguous: true,
+      disambiguator_required: outcome.disambiguator,
+      next_step: `${outcome.reason} Never pick one.`,
+    })
   }
 
-  // Exactly one match, but only on a name. Policy-safe answer is still "not verified".
-  if (nameOnly) {
-    return toolState(
-      {
-        verified: false,
-        matches: 1,
-        matched_on: best.matched_on,
-        disambiguator_required: 'confirmation_number',
-        next_step:
-          'A name alone is not enough to verify a guest. Ask for the confirmation number, or the phone number or email on the booking, before releasing any stay detail.',
-      },
-      {},
-    )
+  // Exactly one profile fits, but only on a name, which proves nothing.
+  if (outcome.status === 'needs_second_factor') {
+    return toolState({
+      verified: false,
+      matches: 1,
+      disambiguator_required: outcome.disambiguator,
+      next_step: outcome.reason,
+    })
   }
 
-  const guest = best.guest
+  const guest = outcome.guest
+  const matchedOn = outcome.matched_on
   const stays = await reservationsForGuest(guest.guest_id)
   const relevant = pickRelevantReservation(stays, nowFrom(_ctx))
 
@@ -102,7 +85,7 @@ export async function identifyGuest(args: ToolArgs, _ctx: ToolContext): Promise<
     {
       verified: true,
       matches: 1,
-      matched_on: best.matched_on,
+      matched_on: matchedOn,
       guest: {
         guest_id: guest.guest_id,
         first_name: guest.first_name,

@@ -62,6 +62,10 @@ export interface SeasonalRateNote {
 export interface LeadTimeRule {
   over_rooms: number
   min_days: number
+  /** Severity as data. The notes say a big block at this hotel "needs" two weeks, which the
+   *  generated ruleset reads as a hard requirement; flip this to 'flag' in one line if the
+   *  business would rather it were a GM conversation. */
+  on_violation: 'flag' | 'fail'
   source_note: string
 }
 

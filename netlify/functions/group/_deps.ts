@@ -2,22 +2,26 @@
  * SINGLE IMPORT BOUNDARY for the group booking tools.
  *
  * Two jobs:
- *  1. The `ToolResult` envelope helpers, so every group tool answers in the shape the agent
- *     runtimes expect. These match the contract A1 is building in `_lib/result.ts`; when that
- *     lands, the three functions below become one-line re-exports and nothing else moves.
- *  2. The DATA SEAM. The group engine never reaches for a file or a database directly. It asks
- *     this module, which serves whatever source has been installed. The default source is the
- *     seed copy of the provided CSVs, so the rules engine, the tools and the tests all run with
- *     zero I/O and zero dependency on whether Supabase has been seeded yet.
+ *  1. The `ToolResult` envelope helpers, so every group tool answers in the shape both agent
+ *     runtimes expect.
+ *  2. The DATA SEAM. The group engine never reaches for a file or a database itself; it asks
+ *     this module. The default source is `netlify/functions/_lib/data.ts`, which serves
+ *     data/generated/*.json, built deterministically from the four provided files. There is
+ *     exactly one copy of the hotel data in this repository and this is how everything reaches
+ *     it.
  *
- * `netlify/functions/group/index.ts` installs the real source at request time. Nothing in the
- * testable path imports A1's modules, which is deliberate: the ten inquiry outcomes have to be
- * provable on their own.
+ * Note what `listInquiries()` does NOT return: the real contact details, and the challenge
+ * author's own commentary on each row. The commentary is an answer key, and an engine that can
+ * read the answer key has proved nothing. The real address is reachable only through
+ * `contactFor` below, which `send_proposal` alone calls.
  */
 
 import type { Citation, GroupInquiry, Property, ToolResult } from '../../../shared/types'
-import { SEED_INQUIRIES, SEED_INQUIRY_CONTEXT, type InquiryContext } from '../../../src/lib/rules/fixtures/inquiries'
-import { SEED_PROPERTIES } from '../../../src/lib/rules/fixtures/properties'
+import {
+  getInquiryDeliveryTarget,
+  listInquiries as listGeneratedInquiries,
+  listProperties as listGeneratedProperties,
+} from '../_lib/data'
 
 // ---------------------------------------------------------------- envelope
 
@@ -75,6 +79,18 @@ export function policyCitation(section: string, label: string): Citation {
 
 // ---------------------------------------------------------------- data seam
 
+/** Columns the shared `GroupInquiry` interface does not model, carried alongside so the engine
+ *  can ask the questions the export can actually answer. */
+export interface InquiryContext {
+  date_received: string
+  nights: number | null
+  stated_budget_per_night: number | null
+  meeting_space_needed: boolean
+  /** What the customer literally wrote, e.g. "around 25". Quoted back in a question rather
+   *  than rounded into a number we then hold inventory against. */
+  raw_rooms?: string
+}
+
 /** Contact details, split so the real address is only ever reached on the send path.
  *  Everything a screen or a prompt sees uses the masked pair. */
 export interface InquiryContact {
@@ -89,58 +105,48 @@ export interface GroupDataSource {
   properties(): Promise<Property[]> | Property[]
   inquiries(): Promise<GroupInquiry[]> | GroupInquiry[]
   inquiryContext?(id: string): Promise<InquiryContext | null> | InquiryContext | null
-  /** Only `send_proposal` calls this. A source may hold the real address behind it. */
+  /** Only `send_proposal` calls this. */
   contactFor?(id: string): Promise<InquiryContact | null> | InquiryContact | null
 }
 
-function maskEmailLocal(email: string | null): string {
-  if (!email) return ''
-  const at = email.lastIndexOf('@')
-  return at > 0 ? `${email[0]}***${email.slice(at)}` : '***'
-}
-
-function maskPhoneLocal(phone: string | null): string {
-  if (!phone) return ''
-  const digits = phone.replace(/\D/g, '')
-  if (digits.length <= 4) return phone.replace(/\d/g, '*')
-  let seen = 0
-  const keepFrom = digits.length - 4
-  let out = ''
-  for (const ch of phone) {
-    if (ch >= '0' && ch <= '9') {
-      out += seen >= keepFrom ? ch : '*'
-      seen += 1
-    } else out += ch
-  }
-  return out
-}
-
-export const SEED_SOURCE: GroupDataSource = {
-  name: 'seed (data/solstice-*.csv, transcribed)',
-  properties: () => SEED_PROPERTIES,
-  inquiries: () => SEED_INQUIRIES,
-  inquiryContext: (id) => SEED_INQUIRY_CONTEXT[id] ?? null,
-  contactFor: (id) => {
-    const inquiry = SEED_INQUIRIES.find((i) => i.inquiry_id === id)
-    if (!inquiry) return null
+export const GENERATED_SOURCE: GroupDataSource = {
+  name: 'data/generated (built from data/solstice-*.csv)',
+  properties: () => listGeneratedProperties(),
+  inquiries: () => listGeneratedInquiries(),
+  inquiryContext: (id) => {
+    const record = listGeneratedInquiries().find((i) => i.inquiry_id === id)
+    if (!record) return null
     return {
-      email: inquiry.contact_email,
-      phone: inquiry.contact_phone,
-      email_masked: maskEmailLocal(inquiry.contact_email),
-      phone_masked: maskPhoneLocal(inquiry.contact_phone),
+      date_received: record.date_received ?? '',
+      nights: record.nights,
+      stated_budget_per_night: record.stated_budget_per_night,
+      meeting_space_needed: record.meeting_space_needed,
+      raw_rooms: record.rooms_requested_raw ?? undefined,
+    }
+  },
+  contactFor: (id) => {
+    const record = listGeneratedInquiries().find((i) => i.inquiry_id === id)
+    if (!record) return null
+    const target = getInquiryDeliveryTarget(id)
+    return {
+      email: target?.channel === 'email' ? target.address : null,
+      phone: target?.channel === 'sms' ? target.address : null,
+      email_masked: record.contact_email_masked ?? '',
+      phone_masked: record.contact_phone_masked ?? '',
     }
   },
 }
 
-let source: GroupDataSource = SEED_SOURCE
+let source: GroupDataSource = GENERATED_SOURCE
 
-/** Installed by the function entry point once A1's data layer is available. */
+/** Test seam, and the hook a future PMS integration plugs into: swap the whole dataset without
+ *  touching a single rule. */
 export function setGroupDataSource(next: GroupDataSource): void {
   source = next
 }
 
 export function resetGroupDataSource(): void {
-  source = SEED_SOURCE
+  source = GENERATED_SOURCE
 }
 
 export function currentSourceName(): string {
@@ -170,21 +176,11 @@ export async function loadInquiryContext(id: string): Promise<InquiryContext | n
   return (await source.inquiryContext(id)) ?? null
 }
 
-/** The send path, and the send path only. Falls back to whatever is on the inquiry record
- *  when the installed source does not separate real from masked. */
+/** The send path, and the send path only. */
 export async function loadInquiryContact(id: string): Promise<InquiryContact | null> {
   if (source.contactFor) {
     const contact = await source.contactFor(id)
     if (contact) return contact
   }
-  const inquiry = await loadInquiry(id)
-  if (!inquiry) return null
-  return {
-    email: inquiry.contact_email,
-    phone: inquiry.contact_phone,
-    email_masked: maskEmailLocal(inquiry.contact_email),
-    phone_masked: maskPhoneLocal(inquiry.contact_phone),
-  }
+  return null
 }
-
-export type { InquiryContext }

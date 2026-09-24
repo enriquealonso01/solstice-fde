@@ -51,6 +51,16 @@ export interface PriceBlockInput {
   /** Whole percentage points. The caller decides which number this is:
    *  what the customer asked for, or what the rules engine will actually allow. */
   discount_pct: number
+  /**
+   * The rack rate in integer cents, supplied by the caller.
+   *
+   * `netlify/functions/_lib/data.ts#getPropertyRate()` is the sanctioned way to obtain a rate:
+   * it is the function that refuses SOL-PVD's quarantined suite rate. The group tools call it
+   * and pass the result here. When this is omitted we fall back to reading the property record
+   * and re-running the same quarantine check locally, which keeps this module pure and
+   * browser-safe for the admin UI. The two paths agree, and a test asserts it.
+   */
+  nightly_rack_cents?: number
 }
 
 export interface PricedBlock {
@@ -130,7 +140,13 @@ export function priceBlock(input: PriceBlockInput): PricedBlock {
     )
   }
 
-  const nightlyRackCents = toCents(Number(property[rateField]))
+  const nightlyRackCents = input.nightly_rack_cents ?? toCents(Number(property[rateField]))
+  if (!Number.isFinite(nightlyRackCents) || nightlyRackCents <= 0) {
+    return failure(
+      input,
+      `We do not have a usable nightly rate for ${roomType} at ${property.property_name}, so this block cannot be priced automatically.`,
+    )
+  }
   const nightlyNetCents = Math.round((nightlyRackCents * (100 - discount_pct)) / 100)
 
   const subtotalCents = nightlyRackCents * rooms * nights

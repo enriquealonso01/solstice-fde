@@ -50,18 +50,16 @@ import {
   switchSupervisorRole,
   type SupervisorRole,
 } from '../telnyx/_lib/telnyxClient'
+import { missingDbEnv, recordToolInvocation, tryGetDb } from '../_lib/db'
+import { maskArgs, safeLog } from '../_lib/mask'
 import {
   SUPERVISOR_LEG_TOOL,
   findLiveSupervisorLeg,
   getSessionById,
   insertMessage,
-  isDbUnavailable,
-  recordToolInvocation,
-  serviceClient,
   updateSession,
   writeAudit,
-} from '../telnyx/_lib/db'
-import { safeLog } from '../telnyx/_lib/mask'
+} from '../telnyx/_lib/sessions'
 
 export const SUPERVISOR_ACTIONS = ['listen', 'whisper', 'barge', 'takeover'] as const
 export type SupervisorAction = (typeof SUPERVISOR_ACTIONS)[number]
@@ -116,8 +114,8 @@ export async function handleSupervisor(req: Request): Promise<Response> {
     return fail(`action must be one of ${SUPERVISOR_ACTIONS.join(', ')}`, 400)
   }
 
-  const sb = serviceClient()
-  if (isDbUnavailable(sb)) return fail(sb.error, 503, action)
+  const sb = tryGetDb()
+  if (!sb) return fail(`Supabase is not configured: ${missingDbEnv().join(' and ')} unset.`, 503, action)
 
   const connectionId = envOrNull('TELNYX_CALL_CONTROL_APP_ID')
   const fromNumber = envOrNull('TELNYX_PHONE_NUMBER')
@@ -157,7 +155,7 @@ export async function handleSupervisor(req: Request): Promise<Response> {
     if (action === 'takeover') {
       const stopped = await aiAssistantStop(guestLeg)
       if (!stopped.ok) {
-        await trace(sb, session.id, 'supervisor.takeover', { role: 'barge' }, `FAILED: ${stopped.error}`, false)
+        await trace(session.id, 'supervisor.takeover', { role: 'barge' }, `FAILED: ${stopped.error}`, false)
         return fail(`ai_assistant_stop failed: ${stopped.error}`, 502, action)
       }
 
@@ -186,7 +184,7 @@ export async function handleSupervisor(req: Request): Promise<Response> {
         subject: `session:${session.id}`,
         detail: { supervisor_call_control_id: leg.callControlId, leg_error: leg.error ?? null },
       })
-      await trace(sb, session.id, 'supervisor.takeover', { role: 'barge' }, 'Sol stopped, call still live', true)
+      await trace(session.id, 'supervisor.takeover', { role: 'barge' }, 'Sol stopped, call still live', true)
 
       const body: SupervisorResponseBody = {
         ok: true,
@@ -219,18 +217,15 @@ export async function handleSupervisor(req: Request): Promise<Response> {
 
       const switched = await switchSupervisorRole(existing.supervisor_call_control_id, targetRole, clientState)
       if (!switched.ok) {
-        await trace(sb, session.id, `supervisor.${action}`, { role: targetRole }, `FAILED: ${switched.error}`, false)
+        await trace(session.id, `supervisor.${action}`, { role: targetRole }, `FAILED: ${switched.error}`, false)
         return fail(`switch_supervisor_role failed: ${switched.error}`, 502, action)
       }
 
       // Re-record the leg at its new role so the next lookup reads the current rung.
-      await recordToolInvocation(sb, {
-        session_id: session.id,
-        tool: SUPERVISOR_LEG_TOOL,
-        args_masked: { supervisor_call_control_id: existing.supervisor_call_control_id, role: targetRole },
-        result_summary: `Supervisor role switched to ${targetRole}`,
-        grounded: true,
-      })
+      await trace(session.id, SUPERVISOR_LEG_TOOL, {
+        supervisor_call_control_id: existing.supervisor_call_control_id,
+        role: targetRole,
+      }, `Supervisor role switched to ${targetRole}`, true)
       await writeAudit(sb, {
         actor: actorId ?? null,
         action: `voice.${action}`,
@@ -284,7 +279,7 @@ export async function handleSupervisor(req: Request): Promise<Response> {
     }
     return json(body, 200)
   } catch (err) {
-    safeLog(`supervisor ${action} threw`, { session_id: sessionId })
+    safeLog('[solstice] supervisor action threw', { action, session_id: sessionId, error: (err as Error).message })
     return fail((err as Error).message, 500, action)
   }
 }
@@ -314,13 +309,10 @@ async function ensureLeg(
     if (existing.role === args.role) return { callControlId: existing.supervisor_call_control_id }
     const switched = await switchSupervisorRole(existing.supervisor_call_control_id, args.role, args.clientState)
     if (switched.ok) {
-      await recordToolInvocation(sb, {
-        session_id: args.sessionId,
-        tool: SUPERVISOR_LEG_TOOL,
-        args_masked: { supervisor_call_control_id: existing.supervisor_call_control_id, role: args.role },
-        result_summary: `Supervisor role switched to ${args.role}`,
-        grounded: true,
-      })
+      await trace(args.sessionId, SUPERVISOR_LEG_TOOL, {
+        supervisor_call_control_id: existing.supervisor_call_control_id,
+        role: args.role,
+      }, `Supervisor role switched to ${args.role}`, true)
       return { callControlId: existing.supervisor_call_control_id }
     }
     return { callControlId: existing.supervisor_call_control_id, error: switched.error }
@@ -338,7 +330,6 @@ async function ensureLeg(
 
   if (!dialled.ok) {
     await trace(
-      sb,
       args.sessionId,
       SUPERVISOR_LEG_TOOL,
       { role: args.role, to: args.sipUri },
@@ -350,19 +341,23 @@ async function ensureLeg(
   }
 
   const ccid = dialled.data?.call_control_id ?? null
-  await recordToolInvocation(sb, {
-    session_id: args.sessionId,
-    tool: SUPERVISOR_LEG_TOOL,
-    args_masked: { supervisor_call_control_id: ccid, role: args.role, to: args.sipUri },
-    result_summary: `Supervisor leg dialled at ${args.role}`,
-    grounded: true,
-    latency_ms: Date.now() - started,
-  })
+  await trace(
+    args.sessionId,
+    SUPERVISOR_LEG_TOOL,
+    { supervisor_call_control_id: ccid, role: args.role, to: args.sipUri },
+    `Supervisor leg dialled at ${args.role}`,
+    true,
+    Date.now() - started,
+  )
   return { callControlId: ccid }
 }
 
+/**
+ * Trace row helper. Args go through the shared maskArgs before they are stored, and the shared
+ * recordToolInvocation resolves its own client and never throws, so a failed trace write can
+ * never drop a supervisor action.
+ */
 async function trace(
-  sb: SupabaseClient,
   sessionId: string,
   tool: string,
   args: Record<string, unknown>,
@@ -370,10 +365,10 @@ async function trace(
   grounded: boolean,
   latencyMs?: number,
 ): Promise<void> {
-  await recordToolInvocation(sb, {
+  await recordToolInvocation({
     session_id: sessionId,
     tool,
-    args_masked: args,
+    args_masked: maskArgs(args).masked,
     result_summary: summary,
     grounded,
     latency_ms: latencyMs ?? null,

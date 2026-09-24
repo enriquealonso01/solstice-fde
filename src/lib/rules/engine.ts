@@ -33,6 +33,9 @@ export interface EvaluateOptions {
   received_date?: string | null
   /** Raw, unparsed values so questions can quote the customer back to themselves. */
   raw_values?: Partial<Record<RequiredField, string>>
+  /** Whether we hold any way of reaching this customer. Passed in because the inquiry record
+   *  the engine is handed has its real email and phone redacted. */
+  contact_present?: boolean
 }
 
 export function evaluateGroupRules(options: EvaluateOptions): EvaluationResult {
@@ -75,7 +78,9 @@ export function evaluateGroupRules(options: EvaluateOptions): EvaluationResult {
   const roomType = inquiry.room_type_preference?.trim() || DEFAULT_ROOM_TYPE
 
   // ------------------------------------------------------------------ completeness
-  const completeness = assessCompleteness(inquiry, options.raw_values ?? {})
+  const completeness = assessCompleteness(inquiry, options.raw_values ?? {}, {
+    contact_present: options.contact_present,
+  })
   if (completeness.blocking_missing.length > 0 || completeness.advisory_missing.length > 0) {
     const blocking = completeness.blocking_missing.length > 0
     verdicts.push(
@@ -240,7 +245,7 @@ export function evaluateGroupRules(options: EvaluateOptions): EvaluationResult {
       verdicts.push(
         verdict(
           'GRP-LEAD-TIME',
-          short ? 'flag' : 'pass',
+          short ? rules.lead_time.on_violation : 'pass',
           `${daysOut} days before arrival`,
           `${rules.lead_time.min_days} days for blocks over ${rules.lead_time.over_rooms} rooms`,
           short

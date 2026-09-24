@@ -27,6 +27,7 @@ import {
   type EvaluationResult,
   type PricedBlock,
 } from '../../../src/lib/rules'
+import { getPropertyRate } from '../_lib/data'
 import { deliver, type DeliveryOutcome } from '../_delivery'
 import { auditLog } from '../_delivery/audit'
 import {
@@ -65,6 +66,14 @@ import {
   requiresApproval,
   type StoredProposal,
 } from './store'
+
+/** The inquiry records handed to the engine have their real email and phone redacted, so
+ *  "do we have any way of reaching this customer" has to come from the contact seam. */
+async function contactPresent(inquiryId: string): Promise<boolean> {
+  const contact = await loadInquiryContact(inquiryId)
+  if (!contact) return false
+  return Boolean(contact.email || contact.phone || contact.email_masked || contact.phone_masked)
+}
 
 // ---------------------------------------------------------------- 1. parse_inquiry
 
@@ -121,7 +130,11 @@ export async function parse_inquiry(args: ParseInquiryArgs): Promise<ToolResult<
     const existing = await loadInquiry(args.inquiry_id)
     if (!existing) return fail(`We have no record of an enquiry with the reference ${args.inquiry_id}.`)
     const context = await loadInquiryContext(args.inquiry_id)
-    const completeness = assessCompleteness(existing, { rooms_requested: context?.raw_rooms })
+    const completeness = assessCompleteness(
+      existing,
+      { rooms_requested: context?.raw_rooms },
+      { contact_present: await contactPresent(existing.inquiry_id) },
+    )
     return ok(
       {
         inquiry: existing,
@@ -170,7 +183,11 @@ export async function parse_inquiry(args: ParseInquiryArgs): Promise<ToolResult<
   if (!inquiry.contact_email && !inquiry.contact_phone) missing.push('contact_channel')
   inquiry.missing_fields = missing
 
-  const completeness = assessCompleteness(inquiry, { rooms_requested: rawRooms ?? undefined })
+  const completeness = assessCompleteness(
+    inquiry,
+    { rooms_requested: rawRooms ?? undefined },
+    { contact_present: Boolean(inquiry.contact_email || inquiry.contact_phone) },
+  )
 
   return ok({
     inquiry,
@@ -314,6 +331,7 @@ export async function evaluate_group_rules(args: EvaluateArgs): Promise<ToolResu
     property,
     received_date: args.received_date ?? context?.date_received ?? null,
     raw_values: { rooms_requested: context?.raw_rooms },
+    contact_present: await contactPresent(inquiry.inquiry_id),
   })
 
   const blocking = result.verdicts.filter((v) => v.status === 'flag' || v.status === 'fail')
@@ -322,6 +340,7 @@ export async function evaluate_group_rules(args: EvaluateArgs): Promise<ToolResu
 
   let options: DecisionOption[] = []
   if (onlyDiscount && property && rules) {
+    const rate = sanctionedRate(property.property_code, inquiry.room_type_preference)
     options = buildDecisionOptions({
       inquiry,
       property,
@@ -329,6 +348,7 @@ export async function evaluate_group_rules(args: EvaluateArgs): Promise<ToolResu
       ceiling_pct: result.effective_discount_pct_ceiling,
       requested_pct: inquiry.requested_discount_pct ?? 0,
       general_manager: property.general_manager,
+      nightly_rack_cents: rate.ok ? rate.cents : undefined,
     })
   }
 
@@ -366,6 +386,21 @@ function summarise(result: EvaluationResult, blocking: RuleVerdict[], onlyDiscou
   return `This needs a sign-off before it can go out. ${blocking.map((v) => v.human_reason).join(' ')}`
 }
 
+// ---------------------------------------------------------------- rate access
+
+/**
+ * `getPropertyRate()` is the ONLY sanctioned way to a nightly rate. Reading
+ * `property.base_rate_suite` directly is a bug, because that column carries SOL-PVD's -395 and
+ * the quarantine lives in the lookup. Everything in this file that needs a rate goes here.
+ */
+function sanctionedRate(
+  propertyCode: string,
+  roomType: string | null | undefined,
+): { ok: true; cents: number } | { ok: false; reason: string } {
+  const lookup = getPropertyRate(propertyCode, roomType ?? 'Standard King')
+  return lookup.ok ? { ok: true, cents: lookup.nightly_rate_cents } : { ok: false, reason: lookup.reason }
+}
+
 // ---------------------------------------------------------------- 5. price_block
 
 export interface PriceBlockArgs {
@@ -396,7 +431,11 @@ export async function price_block(args: PriceBlockArgs): Promise<ToolResult<Pric
     departure = departure ?? inquiry.departure_date
     roomType = roomType ?? inquiry.room_type_preference
     if (discount === undefined) {
-      const evaluation = evaluateGroupRules({ inquiry, property })
+      const evaluation = evaluateGroupRules({
+        inquiry,
+        property,
+        contact_present: await contactPresent(inquiry.inquiry_id),
+      })
       // Default to the compliant number, never the one we are not allowed to give.
       discount = Math.min(inquiry.requested_discount_pct ?? 0, evaluation.effective_discount_pct_ceiling)
     }
@@ -406,6 +445,13 @@ export async function price_block(args: PriceBlockArgs): Promise<ToolResult<Pric
 
   if (!property) return fail('We need to know which hotel this block is for before we can price it.')
 
+  const rate = sanctionedRate(property.property_code, roomType)
+  if (!rate.ok) {
+    return fail(rate.reason, {
+      citations: [propertyCitation(property.property_code, property.property_name)],
+    })
+  }
+
   const block = priceBlock({
     property,
     rooms,
@@ -414,6 +460,7 @@ export async function price_block(args: PriceBlockArgs): Promise<ToolResult<Pric
     departure_date: departure,
     room_type: roomType,
     discount_pct: discount ?? 0,
+    nightly_rack_cents: rate.cents,
   })
 
   if (!block.ok) {
@@ -466,7 +513,11 @@ export async function draft_clarifying_questions(args: { inquiry_id?: string; in
     return fail(`We have no record of an enquiry with the reference ${args.inquiry_id ?? '(none supplied)'}.`)
   }
   const context = await loadInquiryContext(inquiry.inquiry_id)
-  const completeness = assessCompleteness(inquiry, { rooms_requested: context?.raw_rooms })
+  const completeness = assessCompleteness(
+    inquiry,
+    { rooms_requested: context?.raw_rooms },
+    { contact_present: await contactPresent(inquiry.inquiry_id) },
+  )
 
   const numbered = completeness.questions.map((q, i) => `${i + 1}. ${q}`).join('\n')
   const email_body = completeness.questions.length
@@ -543,6 +594,7 @@ export async function generate_proposal(
     property,
     received_date: context?.date_received ?? null,
     raw_values: { rooms_requested: context?.raw_rooms },
+    contact_present: await contactPresent(inquiry.inquiry_id),
   })
 
   // Refuse to price what the rules say must not be priced.
@@ -569,6 +621,13 @@ export async function generate_proposal(
     args.discount_pct ??
     Math.min(inquiry.requested_discount_pct ?? 0, evaluation.effective_discount_pct_ceiling)
 
+  const rate = sanctionedRate(property.property_code, inquiry.room_type_preference)
+  if (!rate.ok) {
+    return fail(rate.reason, {
+      citations: [propertyCitation(property.property_code, property.property_name)],
+    })
+  }
+
   const block = priceBlock({
     property,
     rooms: inquiry.rooms_requested ?? 0,
@@ -576,6 +635,7 @@ export async function generate_proposal(
     departure_date: inquiry.departure_date,
     room_type: inquiry.room_type_preference,
     discount_pct: discount,
+    nightly_rack_cents: rate.cents,
   })
   if (!block.ok) {
     return fail(block.error ?? 'We were not able to price this block.', {
@@ -946,7 +1006,11 @@ export async function buildInquiryRow(inquiry: GroupInquiry): Promise<InquiryRow
   const nights = arrival && departure ? nightsBetween(arrival, departure) : (context?.nights ?? null)
 
   const proposal = findProposalByInquiry(inquiry.inquiry_id)
-  const evaluation = evaluateGroupRules({ inquiry, property })
+  const evaluation = evaluateGroupRules({
+    inquiry,
+    property,
+    contact_present: Boolean(contact?.email || contact?.phone || contact?.email_masked || contact?.phone_masked),
+  })
 
   return {
     id: inquiry.inquiry_id,

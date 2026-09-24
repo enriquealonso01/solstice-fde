@@ -56,6 +56,7 @@ export const PHOENIX_OFF_PEAK: SeasonalRateNote = {
 export const CHICAGO_LEAD_TIME: LeadTimeRule = {
   over_rooms: 25,
   min_days: 14,
+  on_violation: 'fail',
   source_note:
     'Highest-demand property in the portfolio; group requests over 25 rooms need 2+ weeks lead time.',
 }

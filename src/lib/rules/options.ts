@@ -42,6 +42,8 @@ export interface DecisionOptionsInput {
   ceiling_pct: number
   requested_pct: number
   general_manager?: string
+  /** Rack rate in cents from the sanctioned rate lookup. See PriceBlockInput. */
+  nightly_rack_cents?: number
 }
 
 /** The value-adds a rep may attach to a counter-offer, in preference order.
@@ -98,6 +100,7 @@ function price(input: DecisionOptionsInput, pct: number): PricedBlock {
     departure_date: input.inquiry.departure_date,
     room_type: input.inquiry.room_type_preference,
     discount_pct: pct,
+    nightly_rack_cents: input.nightly_rack_cents,
   })
 }
 

@@ -9,11 +9,11 @@
  *    "corrected" to 395 and never priced off.
  */
 import type { Citation, ToolResult } from '../../../shared/types'
-import { loadPolicies, toolFail, toolOk } from './_deps'
+import { getPropertyRate, loadPolicies, toolFail, toolOk } from './_deps'
 import { normalizeText, optString, policyCitation, propertyCitation, type ToolArgs, type ToolContext } from './helpers'
 import { findPropertyByCode } from './lookups'
 import {
-  DATA_QUALITY_QUARANTINE,
+
   PARKING_RULES,
   POLICY_INDEX,
   PROPERTY_NOTE_RULES,
@@ -111,13 +111,15 @@ export async function getPolicy(args: ToolArgs, _ctx: ToolContext): Promise<Tool
 
 const PARKING_WORDS = ['parking', 'park', 'valet', 'garage', 'car', 'vehicle']
 
-function quarantineRate(propertyCode: string, field: string, value: number): { value: number | null; unavailable_reason: string | null } {
-  const flagged = DATA_QUALITY_QUARANTINE.find((q) => q.property_code === propertyCode && q.field === field)
-  if (flagged) return { value: null, unavailable_reason: flagged.reason }
-  if (!Number.isFinite(value) || value <= 0) {
-    return { value: null, unavailable_reason: `The stored ${field} for ${propertyCode} is not a usable rate, so it is withheld rather than quoted.` }
-  }
-  return { value, unavailable_reason: null }
+/**
+ * Rates come from `getPropertyRate` and nowhere else. It is the function that quarantines
+ * SOL-PVD's `base_rate_suite = -395`: reading `property.base_rate_suite` directly here would
+ * quietly reintroduce the exact bug the data was planted to catch.
+ */
+function referenceRate(propertyCode: string, roomClass: string): { value: number | null; unavailable_reason: string | null } {
+  const lookup = getPropertyRate(propertyCode, roomClass)
+  if (lookup.ok) return { value: lookup.nightly_rate, unavailable_reason: null }
+  return { value: null, unavailable_reason: lookup.reason }
 }
 
 export async function getPropertyInfo(args: ToolArgs, _ctx: ToolContext): Promise<ToolResult> {
@@ -135,9 +137,9 @@ export async function getPropertyInfo(args: ToolArgs, _ctx: ToolContext): Promis
 
   const askedAboutParking = PARKING_WORDS.some((w) => normalizeText(topic).includes(w))
 
-  const standard = quarantineRate(property.property_code, 'base_rate_standard', property.base_rate_standard)
-  const deluxe = quarantineRate(property.property_code, 'base_rate_deluxe', property.base_rate_deluxe)
-  const suite = quarantineRate(property.property_code, 'base_rate_suite', property.base_rate_suite)
+  const standard = referenceRate(property.property_code, 'Standard King')
+  const deluxe = referenceRate(property.property_code, 'Deluxe King')
+  const suite = referenceRate(property.property_code, 'Suite')
 
   const noteRules = PROPERTY_NOTE_RULES.filter((r) => r.property_code === property.property_code)
 

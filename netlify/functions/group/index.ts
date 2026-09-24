@@ -25,17 +25,11 @@
 import type { Context } from '@netlify/functions'
 import type { ToolResult } from '../../../shared/types'
 import { GROUP_TOOLS, type GroupTool } from '../../../shared/toolContracts'
-import { json, readJsonBody } from '../telnyx/_lib/http'
-import { findSessionByCallControlId, isDbUnavailable, recordToolInvocation, serviceClient } from '../telnyx/_lib/db'
+import { recordToolInvocation, tryGetDb } from '../_lib/db'
+import { findSessionByCallControlId } from '../telnyx/_lib/sessions'
 import { maskArgs } from '../_lib/mask'
 import { auditLog, recentAudit } from '../_delivery/audit'
-import {
-  getInquiryDeliveryTarget,
-  getProperty as getGeneratedProperty,
-  listInquiries as listGeneratedInquiries,
-  listProperties as listGeneratedProperties,
-} from '../_lib/data'
-import { currentSourceName, loadInquiries, loadProperties, setGroupDataSource } from './_deps'
+import { currentSourceName, loadInquiries, loadProperties } from './_deps'
 import { runAssistant, buildSuggestions, ASSISTANT_MODEL, type AssistantTurn } from './assistant'
 import { findProposalByInquiry, getProposal, listProposals } from './store'
 import { pdfFilename } from './proposal'
@@ -60,43 +54,29 @@ import {
 
 type AnyArgs = Record<string, unknown>
 
-/**
- * Install the generated dataset as the live source.
- *
- * `listInquiries()` deliberately nulls out the real contact details and strips the challenge
- * author's own commentary on each row, so the agent can never read the answer key or leak an
- * address. The real address is reachable only through `getInquiryDeliveryTarget`, which is why
- * the data seam keeps `contactFor` separate from the record itself.
- *
- * The seed copy in src/lib/rules/fixtures stays as the fallback, so the tool layer still runs
- * if the generated files are ever missing from a bundle.
- */
-setGroupDataSource({
-  name: 'data/generated (built from data/solstice-*.csv)',
-  properties: () => listGeneratedProperties(),
-  inquiries: () => listGeneratedInquiries(),
-  inquiryContext: (id) => {
-    const record = listGeneratedInquiries().find((i) => i.inquiry_id === id)
-    if (!record) return null
-    return {
-      date_received: record.date_received ?? '',
-      nights: record.nights,
-      stated_budget_per_night: record.stated_budget_per_night,
-      meeting_space_needed: record.meeting_space_needed,
-      raw_rooms: record.rooms_requested_raw ?? undefined,
-    }
-  },
-  contactFor: (id) => {
-    const record = listGeneratedInquiries().find((i) => i.inquiry_id === id)
-    const target = getInquiryDeliveryTarget(id)
-    return {
-      email: target?.channel === 'email' ? target.address : null,
-      phone: target?.channel === 'sms' ? target.address : null,
-      email_masked: record?.contact_email_masked ?? '',
-      phone_masked: record?.contact_phone_masked ?? '',
-    }
-  },
-})
+// Local copies rather than an import from another function's private `_lib`. Four lines is a
+// cheaper price than a cross-function coupling that breaks whenever that directory is moved.
+function json<T>(body: T, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+  })
+}
+
+async function readJsonBody<T>(req: Request): Promise<{ ok: true; value: T } | { ok: false; error: string }> {
+  let text: string
+  try {
+    text = await req.text()
+  } catch (err) {
+    return { ok: false, error: `could not read request body: ${(err as Error).message}` }
+  }
+  if (!text.trim()) return { ok: false, error: 'request body is empty' }
+  try {
+    return { ok: true, value: JSON.parse(text) as T }
+  } catch {
+    return { ok: false, error: 'request body is not valid JSON' }
+  }
+}
 
 /** The tool table. Exactly the eleven names in shared/toolContracts.ts, no more. */
 const TOOL_TABLE: Record<GroupTool, (args: AnyArgs) => Promise<ToolResult<unknown>>> = {
@@ -249,22 +229,22 @@ async function trace(input: {
   const summary = summariseResult(input.result)
 
   try {
-    const sb = serviceClient()
-    if (!isDbUnavailable(sb)) {
-      let sessionId = input.session_id ?? null
-      if (!sessionId && input.call_control_id) {
-        const session = await findSessionByCallControlId(sb, input.call_control_id)
+    let sessionId = input.session_id ?? null
+    if (!sessionId && input.call_control_id) {
+      const db = tryGetDb()
+      if (db) {
+        const session = await findSessionByCallControlId(db, input.call_control_id)
         sessionId = session?.id ?? null
       }
-      await recordToolInvocation(sb, {
-        session_id: sessionId,
-        tool: input.tool,
-        args_masked: (masked as Record<string, unknown>) ?? {},
-        result_summary: summary,
-        grounded: input.result.grounded,
-        latency_ms: input.latency,
-      })
     }
+    await recordToolInvocation({
+      session_id: sessionId,
+      tool: input.tool,
+      args_masked: masked ?? {},
+      result_summary: summary,
+      grounded: input.result.grounded,
+      latency_ms: input.latency,
+    })
   } catch {
     // A trace write must never take a tool call down with it.
   }

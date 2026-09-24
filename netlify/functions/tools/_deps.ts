@@ -9,14 +9,41 @@
  * synchronously against bundled data: `await` on a non-promise is a no-op, and it
  * keeps this boundary stable if the data layer ever moves behind a network call.
  */
-import { getGuests, getPolicies, getProperties, getReservations, type PolicySection } from '../_lib/data'
+import {
+  findGuestsByName,
+  getGuest,
+  getGuestByEmail,
+  getGuestByPhone,
+  getGuests,
+  getPolicies,
+  getProperties,
+  getProperty,
+  getPropertyRate,
+  getReservation,
+  getReservations,
+  listReservationsForGuest,
+  type GeneratedGuest,
+  type GuestLookup,
+  type PolicySection,
+  type RateLookup,
+} from '../_lib/data'
 import { maskArgs, maskEmail, maskPhone } from '../_lib/mask'
 import { ok, fail } from '../_lib/result'
 import { tryGetDb } from '../_lib/db'
 
 import type { Citation, Guest, Property, Reservation, ToolResult } from '../../../shared/types'
 
-export type { PolicySection }
+export type { GeneratedGuest, GuestLookup, PolicySection, RateLookup }
+
+/**
+ * Record access goes through A1's sanctioned lookups rather than scanning the arrays here.
+ * Two of them exist specifically to stop this layer guessing:
+ *  - `getGuestByPhone` returns `ambiguous` rather than picking, because two pairs of guests in
+ *    this data share their last four digits.
+ *  - `getPropertyRate` is the ONLY sanctioned path to a nightly rate; it is what quarantines
+ *    SOL-PVD's -395 suite rate. Reading `property.base_rate_*` directly is a bug.
+ */
+export { findGuestsByName, getGuest, getGuestByEmail, getGuestByPhone, getProperty, getPropertyRate, getReservation, listReservationsForGuest }
 
 export async function loadGuests(): Promise<Guest[]> {
   return await getGuests()

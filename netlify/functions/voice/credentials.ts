@@ -24,7 +24,7 @@ import { createClient } from '@supabase/supabase-js'
 import { json } from '../telnyx/_lib/http'
 import { envOrNull, supervisorSipUri } from '../telnyx/_lib/env'
 import { mintWebrtcToken } from '../telnyx/_lib/telnyxClient'
-import { isDbUnavailable, serviceClient } from '../telnyx/_lib/db'
+import { missingDbEnv, tryGetDb } from '../_lib/db'
 
 export interface VoiceCredentialResponse {
   ok: boolean
@@ -127,8 +127,10 @@ async function authoriseSupervisor(req: Request): Promise<AuthOk | AuthErr> {
     return { ok: false, error: 'invalid or expired session token', status: 401 }
   }
 
-  const sb = serviceClient()
-  if (isDbUnavailable(sb)) return { ok: false, error: sb.error, status: 503 }
+  const sb = tryGetDb()
+  if (!sb) {
+    return { ok: false, error: `Supabase is not configured: ${missingDbEnv().join(' and ')} unset.`, status: 503 }
+  }
 
   const profile = await sb.from('profiles').select('role').eq('id', data.user.id).limit(1)
   if (profile.error) {

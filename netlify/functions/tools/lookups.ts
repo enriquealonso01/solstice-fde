@@ -1,40 +1,42 @@
 /**
- * Record resolution shared by several concierge tools. Thin on purpose: the data
- * layer (A1) owns loading and masking; this file owns "which record did the guest
- * mean", which is a business question, not a data question.
+ * Record resolution for the concierge tools.
+ *
+ * The lookups themselves belong to the data layer (`_lib/data.ts`); this file owns the business
+ * question on top of them: "which record did the guest mean, and have we actually proved it is
+ * theirs?" Those are two different questions and only the second one is a guardrail.
  */
 import type { Guest, Property, Reservation } from '../../../shared/types'
-import { loadGuests, loadProperties, loadReservations } from './_deps'
-import { normalizeText, phoneKey } from './helpers'
+import {
+  findGuestsByName,
+  getGuest,
+  getGuestByEmail,
+  getGuestByPhone,
+  getProperty,
+  getReservation,
+  listReservationsForGuest,
+} from './_deps'
+import { normalizeText } from './helpers'
 
 export async function findReservationById(reservationId: string): Promise<Reservation | null> {
-  const wanted = reservationId.trim().toUpperCase()
-  const all = await loadReservations()
-  return all.find((r) => r.reservation_id.toUpperCase() === wanted) ?? null
+  return getReservation(reservationId)
 }
 
 export async function findGuestById(guestId: string): Promise<Guest | null> {
-  const wanted = guestId.trim().toUpperCase()
-  const all = await loadGuests()
-  return all.find((g) => g.guest_id.toUpperCase() === wanted) ?? null
+  return getGuest(guestId)
 }
 
 export async function findPropertyByCode(propertyCode: string): Promise<Property | null> {
-  const wanted = propertyCode.trim().toUpperCase()
-  const all = await loadProperties()
-  return all.find((p) => p.property_code.toUpperCase() === wanted) ?? null
+  return getProperty(propertyCode)
 }
 
 export async function reservationsForGuest(guestId: string): Promise<Reservation[]> {
-  const wanted = guestId.trim().toUpperCase()
-  const all = await loadReservations()
-  return all.filter((r) => r.guest_id.toUpperCase() === wanted)
+  return listReservationsForGuest(guestId.trim().toUpperCase())
 }
 
 /**
- * Chooses the stay a guest is most likely asking about when they give a guest id
- * and no reservation id: the one in progress, else the next one starting, else
- * the most recent one that ended.
+ * Chooses the stay a guest is most likely asking about when they give a guest id and no
+ * reservation id: the one in progress, else the next one starting, else the most recent one
+ * that ended.
  */
 export function pickRelevantReservation(reservations: Reservation[], now: Date): Reservation | null {
   if (reservations.length === 0) return null
@@ -51,7 +53,7 @@ export function pickRelevantReservation(reservations: Reservation[], now: Date):
   return past[0] ?? null
 }
 
-// ------------------------------------------------------------------ identity match
+// ------------------------------------------------------------------ identity resolution
 
 export interface IdentityQuery {
   guest_id?: string
@@ -62,74 +64,89 @@ export interface IdentityQuery {
   first_name?: string
 }
 
-export interface IdentityMatch {
-  guest: Guest
-  /** Which fields actually matched. Drives the verification rule. */
-  matched_on: string[]
-}
+export type IdentityResult =
+  /** Verified: a strong factor matched exactly one record. */
+  | { status: 'found'; guest: Guest; matched_on: string[] }
+  /** More than one person fits. NEVER pick one; ask. */
+  | { status: 'ambiguous'; count: number; reason: string; disambiguator: string }
+  /** Exactly one person fits, but only on a name, which is not proof of anything. */
+  | { status: 'needs_second_factor'; reason: string; disambiguator: string }
+  | { status: 'not_found'; reason: string }
+
+const CONFIRMATION = 'confirmation_number'
 
 /**
- * Masked contact fields are all the data layer gives us, which is the point: we
- * match on a masked value by comparing the masked form of the input, so no raw
- * email or phone ever needs to be held in the tool layer.
+ * Identity resolution, in strength order. A name is never a verification factor: the provided
+ * data holds two unrelated guests called Michael Smith, and the phone lookup returns `ambiguous`
+ * rather than guessing when only the last four digits are known, because two pairs of guests
+ * share theirs. Attaching the wrong reservation to a caller is the worst failure this system
+ * has, so every uncertain path ends in a question rather than a record.
  */
-function maskedContains(maskedValue: string, rawInput: string): boolean {
-  const digitsIn = phoneKey(rawInput)
-  if (digitsIn.length >= 4) {
-    const digitsStored = maskedValue.replace(/\D/g, '')
-    if (digitsStored.length >= 4 && digitsIn.endsWith(digitsStored.slice(-4))) return true
-  }
-  const a = normalizeText(maskedValue).replace(/\*/g, '')
-  const b = normalizeText(rawInput)
-  if (a.length >= 3 && b.includes(a.split(' ')[0])) return true
-  // Email: compare the domain and the leading character, which survive masking.
-  if (maskedValue.includes('@') && rawInput.includes('@')) {
-    const [maskedLocal, maskedDomain] = maskedValue.split('@')
-    const [rawLocal, rawDomain] = rawInput.split('@')
-    if (maskedDomain?.toLowerCase() === rawDomain?.toLowerCase()) {
-      const firstStored = maskedLocal?.replace(/\*/g, '')[0]
-      const firstRaw = rawLocal?.[0]
-      if (firstStored && firstRaw && firstStored.toLowerCase() === firstRaw.toLowerCase()) return true
-    }
-  }
-  return false
-}
-
-export async function matchGuests(query: IdentityQuery): Promise<IdentityMatch[]> {
-  const guests = await loadGuests()
-  const reservations = await loadReservations()
-
+export async function resolveIdentity(query: IdentityQuery): Promise<IdentityResult> {
   if (query.guest_id) {
-    const g = guests.find((x) => x.guest_id.toUpperCase() === query.guest_id!.trim().toUpperCase())
-    return g ? [{ guest: g, matched_on: ['guest_id'] }] : []
+    const guest = getGuest(query.guest_id)
+    return guest
+      ? { status: 'found', guest, matched_on: ['guest_id'] }
+      : { status: 'not_found', reason: `No guest profile ${query.guest_id}.` }
   }
 
   if (query.reservation_id) {
-    const wanted = query.reservation_id.trim().toUpperCase()
-    const r = reservations.find((x) => x.reservation_id.toUpperCase() === wanted)
-    if (!r) return []
-    const g = guests.find((x) => x.guest_id === r.guest_id)
-    if (!g) return []
+    const reservation = getReservation(query.reservation_id)
+    if (!reservation) {
+      return {
+        status: 'not_found',
+        reason: `No reservation ${query.reservation_id}. Ask the guest to re-read the confirmation number from their booking email.`,
+      }
+    }
+    const guest = getGuest(reservation.guest_id)
+    if (!guest) return { status: 'not_found', reason: `Reservation ${reservation.reservation_id} has no guest profile attached.` }
     const matched = ['reservation_id']
-    if (query.last_name && normalizeText(g.last_name) === normalizeText(query.last_name)) matched.push('last_name')
-    return [{ guest: g, matched_on: matched }]
+    if (query.last_name && normalizeText(guest.last_name) === normalizeText(query.last_name)) matched.push('last_name')
+    return { status: 'found', guest, matched_on: matched }
   }
 
-  const results: IdentityMatch[] = []
-  for (const g of guests) {
-    const matched: string[] = []
-    if (query.phone && g.phone_masked && maskedContains(g.phone_masked, query.phone)) matched.push('phone')
-    if (query.email && g.email_masked && maskedContains(g.email_masked, query.email)) matched.push('email')
-    if (query.last_name && normalizeText(g.last_name) === normalizeText(query.last_name)) matched.push('last_name')
-    if (query.first_name && normalizeText(g.first_name) === normalizeText(query.first_name)) matched.push('first_name')
-    if (matched.length > 0) results.push({ guest: g, matched_on: matched })
+  if (query.phone) {
+    const hit = getGuestByPhone(query.phone)
+    if (hit.status === 'found') return { status: 'found', guest: hit.guest, matched_on: ['phone', hit.matched_on] }
+    if (hit.status === 'ambiguous') {
+      return { status: 'ambiguous', count: hit.candidates.length, reason: hit.reason, disambiguator: CONFIRMATION }
+    }
+    if (!query.email && !query.last_name && !query.first_name) return { status: 'not_found', reason: hit.reason }
   }
 
-  // Strongest match first: a phone or email hit outranks a name hit.
-  const weight = (m: IdentityMatch) =>
-    (m.matched_on.includes('phone') ? 4 : 0) +
-    (m.matched_on.includes('email') ? 4 : 0) +
-    (m.matched_on.includes('last_name') ? 1 : 0) +
-    (m.matched_on.includes('first_name') ? 1 : 0)
-  return results.sort((a, b) => weight(b) - weight(a))
+  if (query.email) {
+    const hit = getGuestByEmail(query.email)
+    if (hit.status === 'found') return { status: 'found', guest: hit.guest, matched_on: ['email'] }
+    if (hit.status === 'ambiguous') {
+      return { status: 'ambiguous', count: hit.candidates.length, reason: hit.reason, disambiguator: CONFIRMATION }
+    }
+    if (!query.last_name && !query.first_name) return { status: 'not_found', reason: hit.reason }
+  }
+
+  const name = [query.first_name, query.last_name].filter(Boolean).join(' ').trim()
+  if (name) {
+    const hits = findGuestsByName(name)
+    if (hits.length === 0) {
+      return {
+        status: 'not_found',
+        reason: `No guest profile matches "${name}". Ask the guest to confirm the spelling, or for the confirmation number.`,
+      }
+    }
+    if (hits.length > 1) {
+      return {
+        status: 'ambiguous',
+        count: hits.length,
+        reason: `${hits.length} guest profiles match that name. Ask for the confirmation number, or the phone number or email on the booking, before releasing any stay detail.`,
+        disambiguator: CONFIRMATION,
+      }
+    }
+    return {
+      status: 'needs_second_factor',
+      reason:
+        'A name alone is not enough to verify a guest, even when only one profile matches. Ask for the confirmation number, or the phone number or email on the booking, before releasing any stay detail.',
+      disambiguator: CONFIRMATION,
+    }
+  }
+
+  return { status: 'not_found', reason: 'No identifying detail supplied.' }
 }

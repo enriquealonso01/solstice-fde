@@ -110,7 +110,7 @@ Do these in sequence. Each one isolates a different failure.
 Call `+13057866217`. In the Netlify function log for `telnyx` you should see, within a second:
 
 ```
-[solstice] voice session opened {"session_id":"...","guest_id":"G100xx","phone":"(***) ***-0148"}
+[solstice] voice session opened {"session_id":"...","guest_id":"G100xx","phone":"+*******0148"}
 ```
 
 If nothing arrives: the number is still on the old connection, or `--base-url` was wrong.
@@ -139,8 +139,13 @@ wrong namespace.
 
 `sessions.guest_label` should read a real guest name for a phone in
 `data/solstice-guest-profiles.csv` (they are stored as `312-555-0148`, matched on the last ten
-digits), and `Unknown caller (***) ***-1234` otherwise. `sessions.phone_masked` must never contain
-a full number.
+digits), and `Unknown caller +*******1234` otherwise. `sessions.phone_masked` must never contain a
+full number.
+
+Masking comes from `netlify/functions/_lib/mask.ts`, the single source of truth for the whole
+system, so the voice path cannot mask less than the data layer does. Separators are preserved and
+only the last four digits survive, and `maskPhone` is idempotent, so a value that is masked twice
+is unchanged rather than reduced to `+***********`.
 
 ### V4 — the browser supervisor can register
 
