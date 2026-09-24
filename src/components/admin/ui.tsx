@@ -217,3 +217,54 @@ export function ProposalPdfLink({ pdfPath }: { pdfPath: string | null }) {
     </span>
   )
 }
+
+/**
+ * A panel that starts collapsed. The inquiry page grew long enough that a rep had to scroll past
+ * verdicts and pricing to reach the proposal, so the heavy sections fold away and the summary
+ * stays on the header where it can be read without expanding anything.
+ *
+ * `defaultOpen` is for the section a rep looks at first; everything else earns its space.
+ */
+export function CollapsiblePanel({
+  title,
+  summary,
+  right,
+  defaultOpen = false,
+  children,
+  className = '',
+}: {
+  title: ReactNode
+  summary?: ReactNode
+  right?: ReactNode
+  defaultOpen?: boolean
+  children: ReactNode
+  className?: string
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <section className={`panel ${className}`}>
+      <header className="panel-header flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left transition hover:text-solstice-ink"
+        >
+          <svg
+            viewBox="0 0 12 12"
+            aria-hidden="true"
+            className={`h-3 w-3 shrink-0 text-solstice-stone transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
+          >
+            <path d="M4 2.5 8 6l-4 3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="truncate">{title}</span>
+          {summary && !open ? (
+            <span className="truncate text-xs font-normal text-solstice-stone">{summary}</span>
+          ) : null}
+        </button>
+        {right ? <span className="flex shrink-0 items-center gap-2">{right}</span> : null}
+      </header>
+      {open ? children : null}
+    </section>
+  )
+}

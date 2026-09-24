@@ -654,11 +654,7 @@ export async function generate_proposal(
   }
 
   // Only things a customer should actually read. Internal thresholds stay internal.
-  const customerNotes: string[] = []
-  if (inquiry.special_requests) {
-    customerNotes.push(`We have noted your request: ${inquiry.special_requests}.`)
-  }
-  for (const referral of evaluation.referrals) customerNotes.push(referral)
+  const customerNotes = derivedCustomerNotes(inquiry, evaluation)
 
   // Reserve the slot BEFORE rendering, because the code is baked into the PDF, its filename
   // and its link. Reserving also decides whether this replaces an existing draft, which is what
@@ -762,6 +758,15 @@ export async function generate_proposal(
   )
 }
 
+/** The notes we put in front of a customer when nobody has written their own. Derived, so a
+ *  referral or a special request never silently disappears from the letter. */
+function derivedCustomerNotes(inquiry: GroupInquiry, evaluation: EvaluationResult): string[] {
+  const notes: string[] = []
+  if (inquiry.special_requests) notes.push(`We have noted your request: ${inquiry.special_requests}.`)
+  for (const referral of evaluation.referrals) notes.push(referral)
+  return notes
+}
+
 // ---------------------------------------------------------------- rehydration
 
 /**
@@ -778,6 +783,7 @@ export async function generate_proposal(
  */
 export async function materialiseProposal(
   proposal: StoredProposal,
+  opts: { force_render?: boolean } = {},
 ): Promise<{ document: ProposalDocument; pdfBytes: Uint8Array | null } | null> {
   const inquiry = await loadInquiry(proposal.inquiry_id)
   if (!inquiry) return null
@@ -813,12 +819,6 @@ export async function materialiseProposal(
     total: proposal.pricing.total_cents / 100,
   }
 
-  const customerNotes: string[] = []
-  if (inquiry.special_requests) {
-    customerNotes.push(`We have noted your request: ${inquiry.special_requests}.`)
-  }
-  for (const referral of evaluation.referrals) customerNotes.push(referral)
-
   const document = buildProposalDocument({
     proposal_id: proposal.proposal_id,
     inquiry,
@@ -826,11 +826,12 @@ export async function materialiseProposal(
     block,
     verdicts: proposal.verdicts,
     required_follow_ups: evaluation.required_follow_ups,
-    customer_notes: customerNotes,
+    customer_notes: derivedCustomerNotes(inquiry, evaluation),
+    prose: proposal.prose,
     prepared_on: new Date(proposal.created_at),
   })
 
-  let pdfBytes = cachedPdf(proposal.proposal_id)
+  let pdfBytes = opts.force_render ? null : cachedPdf(proposal.proposal_id)
   if (!pdfBytes) {
     try {
       pdfBytes = await renderProposalPdf(document)

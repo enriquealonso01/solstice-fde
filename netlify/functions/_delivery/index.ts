@@ -41,7 +41,13 @@ export interface DeliveryAttachment {
   content_type: string
 }
 
+export type DeliveryKind = 'proposal' | 'follow_up'
+
 export interface DeliveryRequest {
+  /** What is being sent. Drives the audit action and the default SMS wording; the routing
+   *  rule itself is the same for both, which is the point of an adapter. */
+  kind?: DeliveryKind
+  /** The artifact's own reference: a proposal code or a follow-up code. */
   proposal_id: string
   inquiry_id: string
   contact: DeliveryContact
@@ -89,6 +95,11 @@ const REAL_TRANSPORT: Transport = { email: sendEmail, sms: sendSms }
 
 export function buildSmsBody(request: DeliveryRequest, companyOrName: string): string {
   const who = companyOrName ? `${companyOrName}, ` : ''
+  if (request.kind === 'follow_up') {
+    // A follow-up has no attachment and no link; the whole message is the question, so the
+    // caller supplies the body and this is only the fallback wrapper.
+    return `Hi ${who}this is Sol at Solstice Hotels about your group enquiry. ${request.text}`.trim()
+  }
   const link = request.pdf_url
     ? ` Your full proposal is here: ${request.pdf_url}`
     : ' Your full proposal is on its way by email.'
@@ -227,10 +238,11 @@ async function logAttempt(
   outcome: DeliveryOutcome,
   env: DeliveryEnv,
 ): Promise<void> {
+  const kind = request.kind ?? 'proposal'
   try {
     await auditLog(
-      outcome.ok ? 'proposal.sent' : 'proposal.send_failed',
-      `proposal:${request.proposal_id}`,
+      outcome.ok ? `${kind}.sent` : `${kind}.send_failed`,
+      `${kind}:${request.proposal_id}`,
       {
         inquiry_id: request.inquiry_id,
         channel: outcome.channel,

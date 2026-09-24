@@ -11,8 +11,10 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import AdminShell from '@/components/admin/AdminShell'
+import ConversationThread from '@/components/admin/ConversationThread'
 import InquiryAssistant from '@/components/admin/InquiryAssistant'
 import {
+  CollapsiblePanel,
   AccessNotice,
   EmptyState,
   Field,
@@ -335,19 +337,23 @@ export default function InquiryDetail() {
           </Panel>
 
           {/* verdicts */}
-          <Panel>
-            <PanelHeader
-              title="Rule verdicts"
-              right={
-                proposal ? (
-                  <span className="text-xs font-normal text-solstice-stone">
-                    {proposal.verdicts.filter((v) => v.status === 'pass').length} pass ·{' '}
-                    {proposal.verdicts.filter((v) => v.status === 'flag').length} flag ·{' '}
-                    {proposal.verdicts.filter((v) => v.status === 'fail').length} fail
-                  </span>
-                ) : null
-              }
-            />
+          <CollapsiblePanel
+            title="Rule verdicts"
+            summary={
+              proposal
+                ? `${proposal.verdicts.filter((v) => v.status !== 'pass').length} need attention of ${proposal.verdicts.length}`
+                : 'not run yet'
+            }
+            right={
+              proposal ? (
+                <span className="text-xs font-normal text-solstice-stone">
+                  {proposal.verdicts.filter((v) => v.status === 'pass').length} pass ·{' '}
+                  {proposal.verdicts.filter((v) => v.status === 'flag').length} flag ·{' '}
+                  {proposal.verdicts.filter((v) => v.status === 'fail').length} fail
+                </span>
+              ) : null
+            }
+          >
             {!proposal ? (
               <EmptyState title="No verdicts yet" body="The rules engine runs once the request is complete." />
             ) : (
@@ -371,15 +377,15 @@ export default function InquiryDetail() {
                 ))}
               </ul>
             )}
-          </Panel>
+          </CollapsiblePanel>
 
           {/* pricing */}
           {proposal ? (
-            <Panel>
-              <PanelHeader
-                title="Pricing"
-                right={<span className="text-xs font-normal text-solstice-stone">Integer cents, computed from property base rates</span>}
-              />
+            <CollapsiblePanel
+              title="Pricing"
+              summary={`${money(proposal.pricing.total_cents)} · ${proposal.pricing.discount_pct}% off`}
+              right={<span className="text-xs font-normal text-solstice-stone">Integer cents, computed from property base rates</span>}
+            >
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-solstice-sand text-left text-xs uppercase tracking-wide text-solstice-stone">
@@ -432,21 +438,24 @@ export default function InquiryDetail() {
                   </tr>
                 </tbody>
               </table>
-            </Panel>
+            </CollapsiblePanel>
           ) : null}
 
           {/* proposal artifact */}
           {proposal ? (
-            <Panel>
-              <PanelHeader
-                title="Generated proposal"
-                right={<ProposalPdfLink pdfPath={proposal.pdf_path} />}
-              />
+            <CollapsiblePanel
+              title="Generated proposal"
+              summary={`${proposal.status} · ${proposal.pdf_path ? 'PDF ready' : 'no PDF yet'}`}
+              right={<ProposalPdfLink pdfPath={proposal.pdf_path} />}
+            >
               <pre className="whitespace-pre-wrap px-5 py-4 font-sans text-sm leading-relaxed text-solstice-ink">
                 {proposal.body ?? renderProposalBody(inquiry, proposal)}
               </pre>
-            </Panel>
+            </CollapsiblePanel>
           ) : null}
+
+          {/* everything we have said to this customer, and everything they said to us */}
+          <ConversationThread inquiry={inquiry} />
         </div>
 
         <div className="xl:col-span-4">

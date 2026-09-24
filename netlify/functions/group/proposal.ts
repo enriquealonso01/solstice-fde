@@ -31,6 +31,34 @@ const PDF_COLORS = {
   white: rgb(1, 1, 1),
 }
 
+/**
+ * The parts of a proposal a sales rep may rewrite by hand.
+ *
+ * PROSE ONLY, and deliberately so. Rates, discounts, totals and rule verdicts are derived by the
+ * rules engine and are not in this interface, because a hand-edited total is precisely the
+ * failure this architecture exists to prevent: a number in a customer's inbox that no rule ever
+ * produced and no audit row explains. A rep who wants a different discount uses the override
+ * path, which re-prices through the engine and records who decided and why.
+ */
+export interface ProposalProse {
+  /** Replaces the opening paragraph. */
+  intro?: string
+  /** An extra paragraph before the sign-off, typically next steps. */
+  body?: string
+  /** Replaces the derived "Good to know" list. */
+  customer_notes?: string[]
+}
+
+export const EDITABLE_PROSE_FIELDS = ['intro', 'body', 'customer_notes'] as const
+export const LOCKED_NUMERIC_FIELDS = [
+  'nightly_rate',
+  'discount_pct',
+  'subtotal',
+  'total',
+  'line_items',
+  'verdicts',
+] as const
+
 export interface ProposalDocument {
   proposal_id: string
   inquiry_id: string
@@ -53,6 +81,10 @@ export interface ProposalDocument {
   total_cents: number
   /** Only the verdicts a customer should see: never internal thresholds. */
   customer_notes: string[]
+  /** Rep-written opening paragraph, or null to use the standard one. */
+  intro: string | null
+  /** Rep-written extra paragraph before the sign-off, or null. */
+  body_note: string | null
   /** Internal, for the rep's copy and the audit trail. */
   verdicts: RuleVerdict[]
   required_follow_ups: string[]
@@ -69,6 +101,7 @@ export interface BuildDocumentInput {
   verdicts: RuleVerdict[]
   required_follow_ups: string[]
   customer_notes?: string[]
+  prose?: ProposalProse
   prepared_on?: Date
 }
 
@@ -98,7 +131,9 @@ export function buildProposalDocument(input: BuildDocumentInput): ProposalDocume
     subtotal_cents: input.block.subtotal_cents,
     discount_cents: input.block.discount_cents,
     total_cents: input.block.total_cents,
-    customer_notes: input.customer_notes ?? [],
+    customer_notes: input.prose?.customer_notes ?? input.customer_notes ?? [],
+    intro: input.prose?.intro?.trim() || null,
+    body_note: input.prose?.body?.trim() || null,
     verdicts: input.verdicts,
     required_follow_ups: input.required_follow_ups,
     prepared_on: prepared.toISOString().slice(0, 10),
@@ -115,6 +150,22 @@ function escapeHtml(value: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+}
+
+export function defaultIntro(doc: ProposalDocument): string {
+  return `Thank you for thinking of us for ${doc.company_name}. Here is the group block we have put together for you, held for you until ${speakDate(doc.expires_on)}.`
+}
+
+/** Rep-written prose arrives as plain text with blank lines between paragraphs. It is escaped
+ *  and wrapped, never injected as markup: a sales rep pasting an angle bracket must not be able
+ *  to break the email for every recipient. */
+function paragraphs(text: string): string {
+  return text
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `<p style="margin:0 0 16px;">${escapeHtml(p).replace(/\n/g, '<br>')}</p>`)
+    .join('')
 }
 
 /** Table-based, inline-styled HTML. Email clients are not browsers; this is written the way
@@ -161,7 +212,7 @@ export function renderProposalHtml(doc: ProposalDocument, pdfUrl?: string | null
 
       <tr><td style="padding:24px 32px 0;color:${BRAND.slate};font-size:15px;line-height:24px;">
         <p style="margin:0 0 16px;">Dear ${escapeHtml(doc.contact_name)},</p>
-        <p style="margin:0 0 16px;">Thank you for thinking of us for ${escapeHtml(doc.company_name)}. Here is the group block we have put together for you, held for you until ${escapeHtml(speakDate(doc.expires_on))}.</p>
+        ${paragraphs(doc.intro ?? defaultIntro(doc))}
       </td></tr>
 
       <tr><td style="padding:16px 32px 0;">
@@ -212,6 +263,7 @@ export function renderProposalHtml(doc: ProposalDocument, pdfUrl?: string | null
       </td></tr>
 
       <tr><td style="padding:28px 32px 32px;color:${BRAND.slate};font-size:15px;line-height:24px;">
+        ${doc.body_note ? paragraphs(doc.body_note) : ''}
         <p style="margin:0 0 4px;">With best wishes,</p>
         <p style="margin:0;font-family:Georgia,serif;font-size:18px;color:${BRAND.ink};">Sol</p>
         <p style="margin:2px 0 0;color:${BRAND.stone};font-size:13px;">Group Sales, on behalf of ${escapeHtml(doc.general_manager)}, General Manager</p>
@@ -236,7 +288,7 @@ export function renderProposalText(doc: ProposalDocument, pdfUrl?: string | null
     '',
     `Dear ${doc.contact_name},`,
     '',
-    `Thank you for thinking of us. Here is the group block we have put together for you at ${doc.property_name} in ${doc.city}, ${doc.state}.`,
+    doc.intro ?? `Thank you for thinking of us. Here is the group block we have put together for you at ${doc.property_name} in ${doc.city}, ${doc.state}.`,
     '',
     `Arrival:        ${speakDate(doc.arrival_date)}`,
     `Departure:      ${speakDate(doc.departure_date)}`,
@@ -256,6 +308,7 @@ export function renderProposalText(doc: ProposalDocument, pdfUrl?: string | null
     lines.push('')
   }
   if (pdfUrl) lines.push(`Full proposal: ${pdfUrl}`, '')
+  if (doc.body_note) lines.push(doc.body_note, '')
   lines.push(
     'With best wishes,',
     'Sol',
@@ -370,7 +423,12 @@ export async function renderProposalPdf(doc: ProposalDocument): Promise<Uint8Arr
     cursor,
     contentWidth,
   )
-  cursor.y -= 14
+  cursor.y -= 6
+  if (doc.intro) {
+    drawWrapped(page, doc.intro.replace(/\s+/g, ' '), regular, 10, PAGE.margin, cursor, contentWidth)
+    cursor.y -= 6
+  }
+  cursor.y -= 8
 
   // Detail rows
   const rows: [string, string][] = [
@@ -499,6 +557,12 @@ export async function renderProposalPdf(doc: ProposalDocument): Promise<Uint8Arr
       font: regular,
       color: PDF_COLORS.stone,
     })
+  }
+
+  if (doc.body_note && cursor.y > 140) {
+    page.drawText('NEXT STEPS', { x: PAGE.margin, y: cursor.y, size: 9, font: bold, color: PDF_COLORS.stone })
+    cursor.y -= 16
+    drawWrapped(page, doc.body_note.replace(/\s+/g, ' '), regular, 10, PAGE.margin, cursor, contentWidth)
   }
 
   // Footer

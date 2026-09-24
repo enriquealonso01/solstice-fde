@@ -29,7 +29,7 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 import type { Proposal, ProposalLine, RuleVerdict } from '../../../shared/types'
 import { tryGetDb } from '../_lib/db'
 import { auditLog, describeError } from '../_delivery/audit'
-import type { ProposalDocument } from './proposal'
+import type { ProposalProse } from './proposal'
 
 /**
  * The `proposals.pricing` jsonb payload, and the shape the admin UI renders against.
@@ -58,6 +58,12 @@ export interface ProposalMeta {
   chosen_option?: string | null
   /** Bumped when a proposal is regenerated after an earlier one was already sent. */
   revision: number
+  /**
+   * Rep-written prose. PROSE ONLY: there is nothing numeric in here and there never will be,
+   * because a hand-edited total is the one failure this architecture exists to prevent. The
+   * numbers beside it in `pricing` are produced by the rules engine and by nothing else.
+   */
+  prose?: ProposalProse
 }
 
 export interface StoredProposal extends Proposal {
@@ -75,6 +81,8 @@ export interface StoredProposal extends Proposal {
   approval_note: string | null
   rejected_reason: string | null
   revision: number
+  /** Rep-written prose overrides. Empty object when nobody has edited it. */
+  prose: ProposalProse
   pdf_url: string | null
   /**
    * TRUE means this row is in Postgres and the next request will find it.
@@ -190,6 +198,7 @@ function fromRow(row: ProposalRow, inquiryCode: string): StoredProposal {
     approval_note: meta?.approval_note ?? null,
     rejected_reason: meta?.rejected_reason ?? null,
     revision: meta?.revision ?? 1,
+    prose: meta?.prose ?? {},
     persisted: true,
     created_at: row.created_at,
   }
@@ -208,6 +217,7 @@ function toRowPayload(proposal: StoredProposal): Record<string, unknown> {
     approval_note: proposal.approval_note,
     rejected_reason: proposal.rejected_reason,
     revision: proposal.revision,
+    prose: proposal.prose,
   }
   return {
     inquiry_id: proposal.inquiry_row_id,
@@ -339,6 +349,7 @@ export interface SaveInput {
   verdicts: RuleVerdict[]
   pricing: Pricing
   pdf_path: string | null
+  prose?: ProposalProse
 }
 
 export async function saveProposal(input: SaveInput): Promise<StoredProposal> {
@@ -369,6 +380,7 @@ export async function saveProposal(input: SaveInput): Promise<StoredProposal> {
     approval_note: null,
     rejected_reason: null,
     revision,
+    prose: input.prose ?? {},
     persisted: false,
     created_at: slot.created_at,
   }
@@ -569,6 +581,14 @@ export async function markSent(
     by,
     persisted: proposal.persisted,
   })
+  memory.set(proposal.proposal_id, proposal)
+  return proposal
+}
+
+/** Saves a change to an existing proposal that is not a regeneration: a prose edit, or a new
+ *  PDF link after a re-render. Numbers are never touched by this path. */
+export async function updateProposal(proposal: StoredProposal): Promise<StoredProposal> {
+  await persist(proposal)
   memory.set(proposal.proposal_id, proposal)
   return proposal
 }

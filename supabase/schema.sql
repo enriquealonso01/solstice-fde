@@ -97,6 +97,30 @@ create table proposals (
   created_at  timestamptz not null default now()
 );
 
+-- A follow-up is what we send when an enquiry cannot be quoted yet: a short message asking for
+-- exactly the fields that are missing. It gets the same discipline as a proposal, because it
+-- also goes to a customer in the hotel's name: drafted, reviewed by a person, approved, then
+-- sent. `missing_fields` is stored so the message can be audited against what was actually
+-- absent, rather than trusting that the body asked for the right things.
+create table follow_ups (
+  id             uuid primary key default gen_random_uuid(),
+  inquiry_id     uuid not null references inquiries(id) on delete cascade,
+  follow_up_code text unique not null,
+  channel        text not null check (channel in ('email','sms','needs_human')),
+  subject        text,
+  body           text not null,
+  missing_fields text[] not null default '{}',
+  status         text not null default 'draft'
+                 check (status in ('draft','approved','sent','discarded','needs_human')),
+  approved_by    text,
+  approved_at    timestamptz,
+  sent_to        text,
+  sent_at        timestamptz,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+create index on follow_ups (inquiry_id, created_at);
+
 create table audit_log (
   id          uuid primary key default gen_random_uuid(),
   actor       uuid references profiles(id),
@@ -123,6 +147,7 @@ alter table tool_invocations enable row level security;
 alter table escalations      enable row level security;
 alter table inquiries        enable row level security;
 alter table proposals        enable row level security;
+alter table follow_ups       enable row level security;
 alter table audit_log        enable row level security;
 alter table properties       enable row level security;
 alter table guests           enable row level security;
@@ -151,6 +176,8 @@ create policy inq_read   on inquiries for select using (my_role() in ('group_sal
 create policy inq_write  on inquiries for all    using (my_role() in ('group_sales','admin')) with check (my_role() in ('group_sales','admin'));
 create policy prop_read  on proposals for select using (my_role() in ('group_sales','admin'));
 create policy prop_write on proposals for all    using (my_role() in ('group_sales','admin')) with check (my_role() in ('group_sales','admin'));
+create policy fup_read   on follow_ups for select using (my_role() in ('group_sales','admin'));
+create policy fup_write  on follow_ups for all    using (my_role() in ('group_sales','admin')) with check (my_role() in ('group_sales','admin'));
 create policy audit_read on audit_log for select using (my_role() in ('group_sales','admin'));
 create policy audit_ins  on audit_log for insert with check (auth.uid() is not null);
 
@@ -167,3 +194,4 @@ alter publication supabase_realtime add table tool_invocations;
 alter publication supabase_realtime add table escalations;
 alter publication supabase_realtime add table inquiries;
 alter publication supabase_realtime add table proposals;
+alter publication supabase_realtime add table follow_ups;
