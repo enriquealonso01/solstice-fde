@@ -28,6 +28,7 @@ export const GROUP_TOOLS = [
   'submit_for_approval',
   'send_proposal',
   'create_inquiry',
+  'update_inquiry',
 ] as const
 
 export const ROUTING_TOOLS = ['classify_intent'] as const

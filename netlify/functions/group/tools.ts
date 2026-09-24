@@ -1021,11 +1021,20 @@ export function getCreatedInquiry(id: string): GroupInquiry | null {
 export async function create_inquiry(args: CreateInquiryArgs): Promise<
   ToolResult<{ inquiry: GroupInquiry; missing_fields: string[]; questions: string[]; human_summary: string }>
 > {
-  if (!args.company_name?.trim()) {
-    return fail('We need the name of the company or group before we can open an inquiry for them.')
+  // Open the record on the FIRST useful thing the caller gives us, which in practice is an email
+  // address. A caller who hangs up after answering one question should still be reachable; an
+  // inquiry that only exists once every field is known is an inquiry we lose.
+  const hasContact = Boolean(args.contact_email?.trim() || args.contact_phone?.trim())
+  if (!hasContact && !args.company_name?.trim()) {
+    return fail(
+      'We need at least one way to reach them, an email address or a phone number, or the name of the group, before we can open an inquiry.',
+    )
   }
-  const property = await loadProperty(args.preferred_property_code)
-  if (!property) {
+
+  // The property may not be known yet. If one is named it must be real; if none is named the
+  // inquiry opens without it and the gap is reported like any other missing field.
+  const property = args.preferred_property_code ? await loadProperty(args.preferred_property_code) : null
+  if (args.preferred_property_code && !property) {
     return fail(
       `We have no record of a Solstice hotel with the code ${args.preferred_property_code}, so we cannot open an inquiry against it.`,
     )
@@ -1070,18 +1079,106 @@ export async function create_inquiry(args: CreateInquiryArgs): Promise<
       inquiry,
       missing_fields: inquiry.missing_fields,
       questions: parsed.data.questions,
-      human_summary: `Inquiry ${id} is open for ${inquiry.company_name} at ${property.property_name}.${
+      next_question: nextQuestion(inquiry),
+      human_summary: `Inquiry ${id} is open for ${inquiry.company_name}${
+        property ? ` at ${property.property_name}` : ''
+      }.${
         inquiry.missing_fields.length
-          ? ` There are still ${parsed.data.questions.length} things to confirm before we can quote.`
+          ? ` Still to confirm: ${inquiry.missing_fields.join(', ')}.`
           : ' Everything we need is on it.'
-      }${inquiry.contact_email ? '' : ' They gave us a phone number and no email, so the proposal goes out by text with a link.'}${
+      }${inquiry.contact_email ? '' : ' No email yet, so anything we send goes by text with a link.'}${
         persisted
           ? ''
           : ' Note that this inquiry is only held in memory on this server, because the database is not reachable, so it will disappear if the process restarts.'
       }`,
     },
-    { citations: [propertyCitation(property.property_code, property.property_name)] },
+    { citations: property ? [propertyCitation(property.property_code, property.property_name)] : [] },
   )
+}
+
+/**
+ * The single next thing to ask, in the order that protects the business.
+ *
+ * Contact first: a caller who hangs up after one answer is still reachable. Then who they are,
+ * then where and when, then size, then the negotiable parts. Sol asks these ONE AT A TIME; a
+ * list of six questions read down a phone line is how a caller decides to fill in a web form
+ * instead.
+ */
+export function nextQuestion(inquiry: GroupInquiry): { field: string; ask: string } | null {
+  const p = inquiry
+  if (!p.contact_email && !p.contact_phone)
+    return { field: 'contact_email', ask: 'What is the best email address to send the proposal to?' }
+  if (!p.contact_email)
+    return { field: 'contact_email', ask: 'What email address should the proposal go to?' }
+  if (!p.company_name || /^unknown/i.test(p.company_name))
+    return { field: 'company_name', ask: 'And which company or group is this for?' }
+  if (!p.preferred_property_code)
+    return { field: 'preferred_property_code', ask: 'Which Solstice hotel did you have in mind?' }
+  if (!p.arrival_date) return { field: 'arrival_date', ask: 'What dates are you looking at?' }
+  if (!p.rooms_requested) return { field: 'rooms_requested', ask: 'Roughly how many rooms do you need?' }
+  if (!p.contact_name) return { field: 'contact_name', ask: 'And who should the proposal be addressed to?' }
+  return null
+}
+
+export interface UpdateInquiryArgs extends Partial<CreateInquiryArgs> {
+  inquiry_id: string
+}
+
+/**
+ * Add what the caller just told us to an inquiry that is already open.
+ *
+ * This is the other half of asking one question at a time: `create_inquiry` opens the record on
+ * the first answer, and every answer after it lands here. Without it the agent either holds the
+ * whole interview in its head until the end, or opens a second inquiry per answer.
+ */
+export async function update_inquiry(args: UpdateInquiryArgs): Promise<
+  ToolResult<{ inquiry: GroupInquiry; missing_fields: string[]; next_question: { field: string; ask: string } | null; human_summary: string }>
+> {
+  const current = await loadInquiry(args.inquiry_id)
+  if (!current) {
+    return fail(`We have no record of an inquiry with the reference ${args.inquiry_id}.`)
+  }
+
+  if (args.preferred_property_code) {
+    const property = await loadProperty(args.preferred_property_code)
+    if (!property) {
+      return fail(
+        `We have no record of a Solstice hotel with the code ${args.preferred_property_code}, so it cannot go on this inquiry.`,
+      )
+    }
+  }
+
+  // Only overwrite what was actually supplied; an omitted field keeps whatever we already had.
+  const merged: Record<string, unknown> = { ...current }
+  for (const [key, value] of Object.entries(args)) {
+    if (key === 'inquiry_id') continue
+    if (value === undefined) continue
+    merged[key] = value
+  }
+
+  const parsed = await parse_inquiry({ raw: { ...merged, inquiry_id: current.inquiry_id, source: current.source } })
+  if (!parsed.ok || !parsed.data) return fail(parsed.error ?? 'We could not update the inquiry.')
+
+  const inquiry = parsed.data.inquiry
+  registerInquiry(inquiry, { raw_rooms: parsed.data.raw_rooms ?? undefined })
+  const persisted = await persistInquiry(inquiry, false)
+
+  const changed = Object.keys(args).filter((k) => k !== 'inquiry_id')
+  await auditLog('inquiry.updated', `inquiry:${inquiry.inquiry_id}`, {
+    persisted,
+    changed,
+    missing_fields: inquiry.missing_fields,
+  })
+
+  const next = nextQuestion(inquiry)
+  return ok({
+    inquiry,
+    missing_fields: inquiry.missing_fields,
+    next_question: next,
+    human_summary: `Updated ${inquiry.inquiry_id} with ${changed.join(', ')}.${
+      next ? ` Next we need: ${next.field}.` : ' We have everything we need to quote.'
+    }`,
+  })
 }
 
 /** Writes a runtime-created inquiry to the `inquiries` table. The payload is the same

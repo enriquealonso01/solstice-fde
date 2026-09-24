@@ -53,6 +53,7 @@ import {
   edit_proposal,
   check_availability,
   create_inquiry,
+  update_inquiry,
   createdInquiries,
   draft_clarifying_questions,
   evaluate_group_rules,
@@ -115,6 +116,7 @@ const TOOL_TABLE: Record<GroupTool, (args: AnyArgs) => Promise<ToolResult<unknow
   submit_for_approval: (a) => submit_for_approval(a as { proposal_id: string }),
   send_proposal: (a) => send_proposal(a as { proposal_id: string }),
   create_inquiry: (a) => create_inquiry(a as never),
+  update_inquiry: (a) => update_inquiry(a as never),
 }
 
 /**
@@ -318,7 +320,7 @@ async function trace(input: {
 
   // Approvals, overrides and sends are audited separately by the tools themselves. What we add
   // here is the bare fact that a group tool ran, which is what the Backend Map counts.
-  if (input.tool === 'create_inquiry' || input.tool === 'send_proposal') {
+  if (input.tool === 'create_inquiry' || input.tool === 'update_inquiry' || input.tool === 'send_proposal') {
     await auditLog(`group.${input.tool}`, `tool:${input.tool}`, {
       ok: input.result.ok,
       grounded: input.result.grounded,
