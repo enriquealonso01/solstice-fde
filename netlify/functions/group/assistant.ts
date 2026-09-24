@@ -11,10 +11,14 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import type { GroupInquiry, ToolResult } from '../../../shared/types'
+import { formatUsd } from '../../../src/lib/rules'
 import { loadInquiry, loadProperty } from './_deps'
+import { communicationsSummary } from './communications'
+import { actOnFollowUp, draftFollowUp, findFollowUpByInquiry, listFollowUps } from './followUps'
 import {
   check_availability,
   draft_clarifying_questions,
+  edit_proposal,
   evaluate_group_rules,
   find_alternates,
   generate_proposal,
@@ -23,6 +27,7 @@ import {
   submit_for_approval,
   validate_property_data,
   findProposalByInquiry,
+  canSend,
 } from './tools'
 
 /** Verified working 2026-09-24. Responses may open with a `thinking` block, so never index
@@ -64,9 +69,24 @@ How you work:
 - If a tool comes back with ok:false or grounded:false, say plainly what you cannot confirm and what would need to happen. Do not fill the gap yourself. Inventing a rate or an availability figure is the worst thing you can do here.
 - When the rules engine returns decision_options, lay them out as the choice they are: what each one costs, who has to approve it, and what the tradeoff is. Do not pick for the rep unless they ask.
 - If a proposal needs an approval, say so and stop. Do not try to send it; the send will be refused anyway and the rep deserves a straight answer rather than a failed attempt.
-- Talk like a colleague: short, specific, no hedging, no bullet-point salad unless you are genuinely listing options.`
+- Talk like a colleague: short, specific, no hedging, no bullet-point salad unless you are genuinely listing options.
 
-type ToolHandler = (inquiryId: string, input: Record<string, unknown>) => Promise<ToolResult<unknown>>
+What you can actually do, not just describe:
+- Read the current proposal with get_proposal. Do this before answering ANY question about the proposal, including "what did we quote" and "has it gone out". Never answer from the conversation so far.
+- Send a proposal, draft and send a follow-up, and rewrite the wording of a proposal.
+- Answer "have we already followed up?" from get_follow_up_history and "what have we sent this customer?" from get_communication_history. Never from memory.
+
+The rules you run under are the same ones the buttons run under, because they are the same code:
+- A flagged proposal will not send until somebody has approved it. If you try, the tool refuses. Do not try; say what is blocking it and offer to submit it for approval.
+- A follow-up will not send until somebody has approved it, for the same reason.
+- An edit or an override needs a justification. If the rep has not given you a reason, ask for one in a sentence rather than inventing one.
+- You can rewrite words. You cannot change a rate, a discount or a total; those come from the rules engine. If a rep asks you to change a number, say so plainly and point them at the override, which re-prices properly and records the decision.`
+
+type ToolHandler = (
+  inquiryId: string,
+  input: Record<string, unknown>,
+  actor: string,
+) => Promise<ToolResult<unknown>>
 
 /** The scoped tool surface. Note what is NOT here: nothing takes an inquiry_id. */
 const TOOLS: {
@@ -134,6 +154,191 @@ const TOOLS: {
       const inquiry = await loadInquiry(inquiry_id)
       if (!inquiry) return { ok: false, grounded: false, error: 'inquiry not found' }
       return validate_property_data({ property_code: inquiry.preferred_property_code })
+    },
+  },
+  {
+    name: 'get_proposal',
+    description:
+      'The proposal currently on this enquiry: its reference, status, totals, discount, rule verdicts, any prose a rep has written, and whether it has been sent. Call this before answering ANY question about the proposal. If it returns nothing, no proposal has been generated yet.',
+    input_schema: { type: 'object', properties: {} },
+    run: async (inquiry_id) => {
+      const proposal = await findProposalByInquiry(inquiry_id)
+      if (!proposal) {
+        return {
+          ok: true,
+          grounded: true,
+          data: {
+            exists: false,
+            human_summary:
+              'There is no proposal on this enquiry yet. I can draft one if the rules allow it.',
+          },
+        }
+      }
+      const gate = canSend(proposal)
+      return {
+        ok: true,
+        grounded: true,
+        data: {
+          exists: true,
+          proposal_id: proposal.proposal_id,
+          status: proposal.status,
+          revision: proposal.revision,
+          discount_pct: proposal.pricing.discount_pct,
+          requested_discount_pct: proposal.pricing.requested_discount_pct ?? null,
+          total: formatUsd(proposal.pricing.total_cents),
+          subtotal: formatUsd(proposal.pricing.subtotal_cents),
+          line_items: proposal.pricing.line_items,
+          verdicts: proposal.verdicts,
+          prose: proposal.prose,
+          pdf_url: proposal.pdf_url,
+          sent_via: proposal.sent_via,
+          sent_at: proposal.sent_at,
+          approved_by: proposal.approved_by,
+          can_send_now: gate.allowed,
+          human_summary: `Proposal ${proposal.proposal_id} is ${proposal.status}, ${formatUsd(proposal.pricing.total_cents)} at ${proposal.pricing.discount_pct}% off. ${gate.human_reason}`,
+        },
+      }
+    },
+  },
+  {
+    name: 'edit_proposal',
+    description:
+      'Rewrite the words in the proposal: the opening paragraph (intro), the next-steps paragraph (body), or the "good to know" notes (customer_notes). PROSE ONLY. Rates, discounts and totals are produced by the rules engine and cannot be edited here; if the discount itself needs to change, say so and let the rep use the override. Needs a justification, which goes in the audit trail.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        intro: { type: 'string', description: 'Replacement opening paragraph.' },
+        body: { type: 'string', description: 'Replacement next-steps paragraph.' },
+        customer_notes: {
+          type: 'array',
+          description: 'Replacement "good to know" bullet points.',
+        },
+        justification: { type: 'string', description: 'What changed and why. Required.' },
+      },
+      required: ['justification'],
+    },
+    run: async (inquiry_id, input, actor) => {
+      const proposal = await findProposalByInquiry(inquiry_id)
+      if (!proposal) {
+        return { ok: false, grounded: false, error: 'There is no proposal on this enquiry yet.' }
+      }
+      const edits: Record<string, unknown> = {}
+      if (typeof input.intro === 'string') edits.intro = input.intro
+      if (typeof input.body === 'string') edits.body = input.body
+      if (Array.isArray(input.customer_notes)) edits.customer_notes = input.customer_notes
+      if (Object.keys(edits).length === 0) {
+        return {
+          ok: false,
+          grounded: false,
+          error: 'Nothing to change. Pass intro, body or customer_notes.',
+        }
+      }
+      return edit_proposal({
+        proposal_id: proposal.proposal_id,
+        edits,
+        justification: String(input.justification ?? ''),
+        actor,
+      })
+    },
+  },
+  {
+    name: 'draft_follow_up',
+    description:
+      'Draft the message asking the customer for exactly the fields this enquiry is missing. Picks email or text from the contact details we hold. It is a draft: somebody has to approve it before it can go.',
+    input_schema: { type: 'object', properties: {} },
+    run: async (inquiry_id) => {
+      const result = await draftFollowUp(inquiry_id)
+      return result.ok
+        ? { ok: true, grounded: true, data: { ...result.follow_up, human_summary: result.human_summary } }
+        : { ok: false, grounded: false, error: result.error }
+    },
+  },
+  {
+    name: 'follow_up_action',
+    description:
+      'Approve, send or discard the follow-up on this enquiry. Sending a follow-up that has not been approved is refused: somebody reads what we are about to say to a customer before we say it.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        action: { type: 'string', description: 'approve | send | discard' },
+        edited_body: { type: 'string', description: 'Replacement wording, optional.' },
+        justification: { type: 'string', description: 'Why, for the audit trail.' },
+      },
+      required: ['action'],
+    },
+    run: async (inquiry_id, input, actor) => {
+      const followUp = await findFollowUpByInquiry(inquiry_id)
+      if (!followUp) {
+        return {
+          ok: false,
+          grounded: false,
+          error: 'There is no follow-up on this enquiry yet. Draft one first.',
+        }
+      }
+      const result = await actOnFollowUp({
+        follow_up_id: followUp.follow_up_id,
+        action: input.action as 'approve' | 'send' | 'discard',
+        actor,
+        edited_body: input.edited_body as string | undefined,
+        justification: (input.justification as string | undefined) ?? null,
+      })
+      return result.ok
+        ? {
+            ok: true,
+            grounded: true,
+            data: { status: result.status, human_summary: result.human_summary },
+          }
+        : { ok: false, grounded: false, error: result.error }
+    },
+  },
+  {
+    name: 'get_follow_up_history',
+    description:
+      'Every follow-up on this enquiry and what happened to each: drafted, approved, sent, discarded. Use this to answer "have we already followed up?" rather than guessing.',
+    input_schema: { type: 'object', properties: {} },
+    run: async (inquiry_id) => {
+      const all = (await listFollowUps()).filter((f) => f.inquiry_id === inquiry_id)
+      return {
+        ok: true,
+        grounded: true,
+        data: {
+          count: all.length,
+          follow_ups: all.map((f) => ({
+            follow_up_id: f.follow_up_id,
+            status: f.status,
+            channel: f.channel,
+            missing_fields: f.missing_fields,
+            approved_by: f.approved_by,
+            sent_at: f.sent_at,
+            sent_to: f.sent_to,
+            created_at: f.created_at,
+          })),
+          human_summary:
+            all.length === 0
+              ? 'We have never sent this customer a follow-up.'
+              : `There ${all.length === 1 ? 'is 1 follow-up' : `are ${all.length} follow-ups`} on this enquiry. ${all.filter((f) => f.status === 'sent').length} of them went out.`,
+        },
+      }
+    },
+  },
+  {
+    name: 'get_communication_history',
+    description:
+      'Everything we have sent this customer and everything they have sent us, oldest first: proposals, follow-ups, and the call the enquiry came from. Use this to answer "what have we sent this customer?".',
+    input_schema: { type: 'object', properties: {} },
+    run: async (inquiry_id) => {
+      const summary = await communicationsSummary(inquiry_id)
+      return {
+        ok: true,
+        grounded: true,
+        data: {
+          ...summary,
+          human_summary:
+            summary.count === 0
+              ? 'Nothing has gone to this customer yet and nothing has come in.'
+              : `There ${summary.count === 1 ? 'is 1 item' : `are ${summary.count} items`} on this thread. The last thing we sent was on ${summary.last_contacted_at?.slice(0, 10) ?? 'an unrecorded date'}.`,
+        },
+      }
     },
   },
   {
@@ -218,6 +423,9 @@ export async function runAssistant(args: {
   message: string
   history?: AssistantTurn[]
   apiKey?: string | null
+  /** The verified staff member on the other end of the chat. Every approval, edit and send the
+   *  assistant performs is attributed to them, exactly as if they had pressed the button. */
+  actor?: string
 }): Promise<AssistantReply> {
   const apiKey = args.apiKey ?? process.env.ANTHROPIC_API_KEY?.trim() ?? null
   const trace: AssistantTrace[] = []
@@ -298,7 +506,7 @@ export async function runAssistant(args: {
           result = { ok: false, grounded: false, error: `no such tool: ${block.name}` }
         } else {
           try {
-            result = await tool.run(args.inquiry_id, block.input ?? {})
+            result = await tool.run(args.inquiry_id, block.input ?? {}, args.actor ?? 'group sales side chat')
           } catch (err) {
             result = {
               ok: false,

@@ -79,14 +79,22 @@ function Check-Migrations {
     if (-not ((Has 'SUPABASE_URL') -and (Has 'SUPABASE_SERVICE_ROLE_KEY'))) { return @{ ok = $false; detail = 'supabase keys missing' } }
     $dir = Join-Path $root 'supabase\migrations'
     if (-not (Test-Path $dir)) { return @{ ok = $true; detail = 'none pending' } }
-    # 001 is detectable by the column it adds. Add a probe here per future migration.
-    try {
-        $null = Invoke-RestMethod -Uri "$($e['SUPABASE_URL'])/rest/v1/sessions?select=supervisor_call_control_id&limit=1" -Headers @{
-            apikey = $e['SUPABASE_SERVICE_ROLE_KEY']; Authorization = "Bearer $($e['SUPABASE_SERVICE_ROLE_KEY'])"
+    # One probe per migration: something the migration creates that did not exist before.
+    $probes = @(
+        @{ n = '001 supervisor fields'; url = 'sessions?select=supervisor_call_control_id&limit=1' },
+        @{ n = '002 follow-ups'; url = 'follow_ups?select=id&limit=1' }
+    )
+    $pending = @()
+    foreach ($probe in $probes) {
+        try {
+            $null = Invoke-RestMethod -Uri "$($e['SUPABASE_URL'])/rest/v1/$($probe.url)" -Headers @{
+                apikey = $e['SUPABASE_SERVICE_ROLE_KEY']; Authorization = "Bearer $($e['SUPABASE_SERVICE_ROLE_KEY'])"
+            }
         }
-        return @{ ok = $true; detail = 'up to date' }
+        catch { $pending += $probe.n }
     }
-    catch { return @{ ok = $false; detail = '1 migration pending' } }
+    if ($pending.Count -eq 0) { return @{ ok = $true; detail = 'up to date' } }
+    return @{ ok = $false; detail = "$($pending.Count) pending: $($pending -join ', ')" }
 }
 
 function Do-Migrations {

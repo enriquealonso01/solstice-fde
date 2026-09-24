@@ -17,6 +17,7 @@
  */
 
 import type { Citation, GroupInquiry, Property, ToolResult } from '../../../shared/types'
+import { maskEmail, maskPhone } from '../_lib/mask'
 import {
   getInquiryDeliveryTarget,
   listInquiries as listGeneratedInquiries,
@@ -138,6 +139,46 @@ export const GENERATED_SOURCE: GroupDataSource = {
   },
 }
 
+/**
+ * Enquiries opened at runtime, by Sol on a phone call. They are not in the generated dataset,
+ * because they did not exist when it was built, and every tool that takes an inquiry_id has to
+ * be able to see them or the phone-only demo path dead-ends the moment the call ends.
+ *
+ * They are ALSO written to the `inquiries` table by `create_inquiry`; this overlay is what makes
+ * them visible within the same request, before and regardless of that write.
+ */
+const runtimeInquiries = new Map<string, { inquiry: GroupInquiry; contact: InquiryContact; context: InquiryContext }>()
+
+export function registerInquiry(
+  inquiry: GroupInquiry,
+  context: Partial<InquiryContext> = {},
+): void {
+  runtimeInquiries.set(inquiry.inquiry_id, {
+    inquiry,
+    contact: {
+      email: inquiry.contact_email,
+      phone: inquiry.contact_phone,
+      email_masked: maskEmail(inquiry.contact_email),
+      phone_masked: maskPhone(inquiry.contact_phone),
+    },
+    context: {
+      date_received: context.date_received ?? new Date().toISOString().slice(0, 10),
+      nights: context.nights ?? null,
+      stated_budget_per_night: context.stated_budget_per_night ?? null,
+      meeting_space_needed: context.meeting_space_needed ?? false,
+      raw_rooms: context.raw_rooms,
+    },
+  })
+}
+
+export function registeredInquiries(): GroupInquiry[] {
+  return [...runtimeInquiries.values()].map((entry) => entry.inquiry)
+}
+
+export function resetRegisteredInquiries(): void {
+  runtimeInquiries.clear()
+}
+
 let source: GroupDataSource = GENERATED_SOURCE
 
 /** Test seam, and the hook a future PMS integration plugs into: swap the whole dataset without
@@ -164,7 +205,7 @@ export async function loadProperty(code: string): Promise<Property | null> {
 }
 
 export async function loadInquiries(): Promise<GroupInquiry[]> {
-  return await source.inquiries()
+  return [...(await source.inquiries()), ...registeredInquiries()]
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -192,19 +233,27 @@ async function toInquiryCode(idOrCode: string): Promise<string> {
 
 export async function loadInquiry(id: string): Promise<GroupInquiry | null> {
   const code = await toInquiryCode(id)
-  const all = await loadInquiries()
+  const runtime = runtimeInquiries.get(code)
+  if (runtime) return runtime.inquiry
+  const all = await source.inquiries()
   return all.find((i) => i.inquiry_id === code) ?? null
 }
 
 export async function loadInquiryContext(id: string): Promise<InquiryContext | null> {
+  const code = await toInquiryCode(id)
+  const runtime = runtimeInquiries.get(code)
+  if (runtime) return runtime.context
   if (!source.inquiryContext) return null
-  return (await source.inquiryContext(await toInquiryCode(id))) ?? null
+  return (await source.inquiryContext(code)) ?? null
 }
 
 /** The send path, and the send path only. */
 export async function loadInquiryContact(id: string): Promise<InquiryContact | null> {
+  const code = await toInquiryCode(id)
+  const runtime = runtimeInquiries.get(code)
+  if (runtime) return runtime.contact
   if (source.contactFor) {
-    const contact = await source.contactFor(await toInquiryCode(id))
+    const contact = await source.contactFor(code)
     if (contact) return contact
   }
   return null

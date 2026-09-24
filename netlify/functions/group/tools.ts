@@ -29,11 +29,15 @@ import {
   type PricedBlock,
 } from '../../../src/lib/rules'
 import { getPropertyRate } from '../_lib/data'
+import { tryGetDb } from '../_lib/db'
 import { deliver, type DeliveryOutcome } from '../_delivery'
 import { auditLog } from '../_delivery/audit'
 import {
   fail,
   inquiryCitation,
+  registerInquiry,
+  registeredInquiries,
+  resetRegisteredInquiries,
   loadInquiry,
   loadInquiries,
   loadInquiryContact,
@@ -47,8 +51,11 @@ import {
 } from './_deps'
 import {
   buildProposalDocument,
+  EDITABLE_PROSE_FIELDS,
+  LOCKED_NUMERIC_FIELDS,
   pdfFilename,
   type ProposalDocument,
+  type ProposalProse,
   renderProposalHtml,
   renderProposalPdf,
   renderProposalText,
@@ -69,6 +76,7 @@ import {
   requiresApproval,
   reserveProposalSlot,
   saveProposal,
+  updateProposal,
   type StoredProposal,
 } from './store'
 
@@ -562,6 +570,8 @@ export interface GenerateProposalArgs {
   discount_pct?: number
   /** Recorded on the proposal when the rep took an option off the judgment list. */
   chosen_option?: string
+  /** Carried onto a new revision so a rep's own words survive a re-price. Prose only. */
+  prose?: ProposalProse
   prepared_on?: string
 }
 
@@ -662,6 +672,10 @@ export async function generate_proposal(
   const slot = await reserveProposalSlot(inquiry.inquiry_id)
   const proposalId = slot.code
 
+  // A regeneration keeps whatever the rep had already written, unless they pass new prose.
+  const existing = slot.replaces_existing ? await getProposal(proposalId) : null
+  const prose = args.prose ?? existing?.prose ?? {}
+
   const document = buildProposalDocument({
     proposal_id: proposalId,
     inquiry,
@@ -670,6 +684,7 @@ export async function generate_proposal(
     verdicts: evaluation.verdicts,
     required_follow_ups: evaluation.required_follow_ups,
     customer_notes: customerNotes,
+    prose,
     prepared_on: args.prepared_on ? new Date(args.prepared_on) : undefined,
   })
 
@@ -711,6 +726,7 @@ export async function generate_proposal(
           : undefined,
     },
     pdf_path: pdfUrl,
+    prose,
   })
 
   await auditLog('proposal.generated', `proposal:${proposalId}`, {
@@ -985,18 +1001,16 @@ export interface CreateInquiryArgs {
   source?: GroupInquiry['source']
 }
 
-const created = new Map<string, GroupInquiry>()
-
 export function resetCreatedInquiries(): void {
-  created.clear()
+  resetRegisteredInquiries()
 }
 
 export function createdInquiries(): GroupInquiry[] {
-  return [...created.values()]
+  return registeredInquiries()
 }
 
 export function getCreatedInquiry(id: string): GroupInquiry | null {
-  return created.get(id) ?? null
+  return registeredInquiries().find((i) => i.inquiry_id === id) ?? null
 }
 
 /** For inquiries that arrive by phone. Sol takes the details on the call and this puts a real
@@ -1017,7 +1031,7 @@ export async function create_inquiry(args: CreateInquiryArgs): Promise<
   }
 
   const existing = await loadInquiries()
-  const id = `INQ-${String(2000 + existing.length + created.size + 1)}`
+  const id = `INQ-${String(2000 + existing.length + 1)}`
 
   const parsed = await parse_inquiry({
     raw: {
@@ -1030,9 +1044,18 @@ export async function create_inquiry(args: CreateInquiryArgs): Promise<
   if (!parsed.ok || !parsed.data) return fail(parsed.error ?? 'We could not open the inquiry.')
 
   const inquiry = parsed.data.inquiry
-  created.set(id, inquiry)
+
+  // Visible to every tool in this process immediately...
+  registerInquiry(inquiry, {
+    meeting_space_needed: args.meeting_space_needed === true,
+    raw_rooms: parsed.data.raw_rooms ?? undefined,
+  })
+  // ...and written to the `inquiries` table, so the row survives the call that created it and
+  // so a proposal or a follow-up raised against it has a foreign key to point at.
+  const persisted = await persistInquiry(inquiry, args.meeting_space_needed === true)
 
   await auditLog('inquiry.created', `inquiry:${id}`, {
+    persisted,
     source: inquiry.source,
     company_name: inquiry.company_name,
     property_code: inquiry.preferred_property_code,
@@ -1050,10 +1073,42 @@ export async function create_inquiry(args: CreateInquiryArgs): Promise<
         inquiry.missing_fields.length
           ? ` There are still ${parsed.data.questions.length} things to confirm before we can quote.`
           : ' Everything we need is on it.'
-      }${inquiry.contact_email ? '' : ' They gave us a phone number and no email, so the proposal goes out by text with a link.'}`,
+      }${inquiry.contact_email ? '' : ' They gave us a phone number and no email, so the proposal goes out by text with a link.'}${
+        persisted
+          ? ''
+          : ' Note that this inquiry is only held in memory on this server, because the database is not reachable, so it will disappear if the process restarts.'
+      }`,
     },
     { citations: [propertyCitation(property.property_code, property.property_name)] },
   )
+}
+
+/** Writes a runtime-created inquiry to the `inquiries` table. The payload is the same
+ *  denormalised shape the seeded rows carry, so the inbox renders a phoned-in inquiry exactly
+ *  like a portal one. Never throws: a database that is not there must not lose the call. */
+async function persistInquiry(inquiry: GroupInquiry, meetingSpaceNeeded: boolean): Promise<boolean> {
+  const db = tryGetDb()
+  if (!db) return false
+  try {
+    const row = await buildInquiryRow(inquiry)
+    const { error } = await db.from('inquiries').upsert(
+      {
+        inquiry_code: inquiry.inquiry_id,
+        source: inquiry.source,
+        payload: { ...row.payload, meeting_space_needed: meetingSpaceNeeded },
+        missing_fields: inquiry.missing_fields,
+        status: row.status,
+      },
+      { onConflict: 'inquiry_code' },
+    )
+    if (error) throw new Error(error.message)
+    return true
+  } catch (err) {
+    await auditLog('inquiry.persist_failed', `inquiry:${inquiry.inquiry_id}`, {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return false
+  }
 }
 
 // ---------------------------------------------------------------- inbox rows for the admin UI
@@ -1149,6 +1204,168 @@ function statusFor(evaluation: EvaluationResult): string {
   if (evaluation.decision === 'blocked') return 'blocked'
   if (evaluation.decision === 'needs_approval') return 'needs_review'
   return 'auto_approvable'
+}
+
+// ---------------------------------------------------------------- edit a proposal
+
+export interface EditProposalArgs {
+  proposal_id: string
+  edits: ProposalProse
+  justification: string
+  actor: string
+}
+
+export interface EditProposalPayload {
+  proposal: {
+    proposal_id: string
+    status: StoredProposal['status']
+    revision: number
+    prose: ProposalProse
+    pricing: StoredProposal['pricing']
+    verdicts: RuleVerdict[]
+    pdf_url: string | null
+    persisted: boolean
+    html: string
+    text: string
+  }
+  editable_fields: readonly string[]
+  locked_fields: readonly string[]
+  /** Read aloud to a rep who asks why they cannot just change the total. */
+  explanation: string
+  opened_new_revision: boolean
+}
+
+const WHY_THE_NUMBERS_ARE_LOCKED =
+  'You can rewrite anything the customer reads as words: the opening paragraph, the "good to know" notes, and the next steps. The numbers are not editable here on purpose. The rate, the discount, the totals and the rule verdicts are produced by the rules engine from the property record, and a figure typed in by hand would be one no rule ever produced and no audit row could explain. If the discount itself needs to change, use the override: it re-prices through the same engine and records who decided and why.'
+
+/**
+ * Edits the PROSE of a proposal and re-renders both the email and the PDF from the stored
+ * record, so the document a customer receives and the row a manager approved cannot drift.
+ *
+ * An edit to a proposal that has already been sent does not rewrite history. It opens the next
+ * revision, carrying the new words, and leaves the sent one exactly as the customer has it.
+ */
+export async function edit_proposal(args: EditProposalArgs): Promise<ToolResult<EditProposalPayload>> {
+  const proposal = await getProposal(args.proposal_id)
+  if (!proposal) return fail(`We have no record of a proposal with the reference ${args.proposal_id}.`)
+  if (!args.actor?.trim()) {
+    return fail('An edit has to be attributed to a person. We do not record anonymous edits.')
+  }
+  if (!args.justification?.trim()) {
+    return fail(
+      'An edit needs a note saying what changed and why. It goes in the audit trail beside the words themselves.',
+    )
+  }
+
+  // Reject anything that looks like an attempt to edit a number, loudly rather than silently.
+  const attempted = Object.keys(args.edits ?? {})
+  const rejected = attempted.filter((key) => !(EDITABLE_PROSE_FIELDS as readonly string[]).includes(key))
+  if (rejected.length > 0) {
+    return fail(
+      `${rejected.join(' and ')} cannot be edited by hand. ${WHY_THE_NUMBERS_ARE_LOCKED}`,
+    )
+  }
+
+  const merged: ProposalProse = {
+    ...proposal.prose,
+    ...(args.edits.intro !== undefined ? { intro: args.edits.intro } : {}),
+    ...(args.edits.body !== undefined ? { body: args.edits.body } : {}),
+    ...(args.edits.customer_notes !== undefined
+      ? { customer_notes: args.edits.customer_notes }
+      : {}),
+  }
+
+  // Already with the customer: open the next revision rather than rewriting what they hold.
+  if (proposal.status === 'sent') {
+    const regenerated = await generate_proposal({
+      inquiry_id: proposal.inquiry_id,
+      discount_pct: proposal.pricing.discount_pct,
+      chosen_option: 'edit_after_send',
+      prose: merged,
+    })
+    if (!regenerated.ok || !regenerated.data) {
+      return fail(regenerated.error ?? 'We were not able to open a new revision of this proposal.')
+    }
+    const fresh = (await getProposal(regenerated.data.proposal_id))!
+    await auditLog('proposal.edited', `proposal:${fresh.proposal_id}`, {
+      inquiry_id: proposal.inquiry_id,
+      actor: args.actor,
+      justification: args.justification,
+      fields: attempted,
+      opened_new_revision: true,
+      replaces_proposal: proposal.proposal_id,
+      persisted: fresh.persisted,
+    })
+    return ok(
+      await editPayload(fresh, regenerated.data.html, regenerated.data.text, true),
+      { citations: [inquiryCitation(proposal.inquiry_id, fresh.proposal_id)] },
+    )
+  }
+
+  proposal.prose = merged
+
+  // Re-render from the record, never from whatever the caller happened to send us.
+  const materialised = await materialiseProposal(proposal, { force_render: true })
+  if (!materialised) {
+    return fail(
+      `We saved nothing, because the letter for ${proposal.proposal_id} cannot be rebuilt: enquiry ${proposal.inquiry_id} or its hotel is no longer in the directory.`,
+    )
+  }
+  if (materialised.pdfBytes) {
+    const hosted = await hostPdf(
+      proposal.proposal_id,
+      materialised.pdfBytes,
+      pdfFilename(materialised.document),
+    )
+    proposal.pdf_path = hosted.url
+    proposal.pdf_url = hosted.url
+  }
+  await updateProposal(proposal)
+
+  await auditLog('proposal.edited', `proposal:${proposal.proposal_id}`, {
+    inquiry_id: proposal.inquiry_id,
+    actor: args.actor,
+    justification: args.justification,
+    fields: attempted,
+    opened_new_revision: false,
+    persisted: proposal.persisted,
+  })
+
+  return ok(
+    await editPayload(
+      proposal,
+      renderProposalHtml(materialised.document, proposal.pdf_url),
+      renderProposalText(materialised.document, proposal.pdf_url),
+      false,
+    ),
+    { citations: [inquiryCitation(proposal.inquiry_id, proposal.proposal_id)] },
+  )
+}
+
+async function editPayload(
+  proposal: StoredProposal,
+  html: string,
+  text: string,
+  openedNewRevision: boolean,
+): Promise<EditProposalPayload> {
+  return {
+    proposal: {
+      proposal_id: proposal.proposal_id,
+      status: proposal.status,
+      revision: proposal.revision,
+      prose: proposal.prose,
+      pricing: proposal.pricing,
+      verdicts: proposal.verdicts,
+      pdf_url: proposal.pdf_url,
+      persisted: proposal.persisted,
+      html,
+      text,
+    },
+    editable_fields: EDITABLE_PROSE_FIELDS,
+    locked_fields: LOCKED_NUMERIC_FIELDS,
+    explanation: WHY_THE_NUMBERS_ARE_LOCKED,
+    opened_new_revision: openedNewRevision,
+  }
 }
 
 // ---------------------------------------------------------------- staff actions (not agent tools)

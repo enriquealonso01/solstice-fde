@@ -7,6 +7,10 @@
 //   POST /api/group/tool            secret   any GROUP_TOOL by name, { tool, args }
 //   POST /api/group/assistant       staff    the per-inquiry side chat, { inquiry_id, message }
 //   POST /api/group/proposal-action staff    send | submit_for_approval | approve | override | reject
+//   POST /api/group/proposal-edit   staff    rewrite the PROSE of a proposal, never the numbers
+//   POST /api/group/follow-up       staff    draft the "we need a few more details" message
+//   POST /api/group/follow-up-action staff   approve | send | discard that message
+//   GET  /api/group/communications  staff    the conversation thread for one enquiry
 //   POST /api/group/approve         staff    a named human approves an over-authority proposal
 //   POST /api/group/reject          staff    ...or turns it down
 //   POST /api/group/send            staff    shorthand for the send_proposal tool
@@ -41,9 +45,12 @@ import { currentSourceName, loadInquiries, loadProperties } from './_deps'
 import { runAssistant, buildSuggestions, ASSISTANT_MODEL, type AssistantTurn } from './assistant'
 import { findProposalByInquiry, getProposal, listProposals, tokenMatches } from './store'
 import { pdfFilename } from './proposal'
+import { getCommunications } from './communications'
+import { actOnFollowUp, draftFollowUp, type FollowUpAction } from './followUps'
 import {
   approve,
   buildInquiryRow,
+  edit_proposal,
   check_availability,
   create_inquiry,
   createdInquiries,
@@ -148,7 +155,7 @@ export default async function handler(req: Request, _context: Context): Promise<
 
   switch (route) {
     case 'assistant':
-      return handleAssistant(req)
+      return handleAssistant(req, staff)
     case 'approve':
       return handleApproval(req, 'approve', staff)
     case 'reject':
@@ -158,6 +165,17 @@ export default async function handler(req: Request, _context: Context): Promise<
     case 'proposal-action':
     case 'proposal_action':
       return handleProposalAction(req, staff)
+    case 'proposal-edit':
+    case 'proposal_edit':
+      return handleProposalEdit(req, staff)
+    case 'follow-up':
+    case 'follow_up':
+      return handleFollowUpDraft(req, staff)
+    case 'follow-up-action':
+    case 'follow_up_action':
+      return handleFollowUpAction(req, staff)
+    case 'communications':
+      return handleCommunications(url)
     case 'inquiries':
       return handleInquiries()
     case 'proposals':
@@ -176,6 +194,10 @@ export default async function handler(req: Request, _context: Context): Promise<
             '/api/group/reject',
             '/api/group/send',
             '/api/group/proposal-action',
+            '/api/group/proposal-edit',
+            '/api/group/follow-up',
+            '/api/group/follow-up-action',
+            '/api/group/communications?inquiry_id=<code>',
             '/api/group/inquiries',
             '/api/group/proposals',
             '/api/group/audit',
@@ -327,7 +349,7 @@ interface AssistantRequest {
   session_id?: string
 }
 
-async function handleAssistant(req: Request): Promise<Response> {
+async function handleAssistant(req: Request, staff: AuthOk): Promise<Response> {
   if (req.method !== 'POST') return json({ ok: false, error: 'POST only' }, 405)
   const body = await readJsonBody<AssistantRequest>(req)
   if (!body.ok) return json({ ok: false, error: body.error }, 400)
@@ -337,7 +359,9 @@ async function handleAssistant(req: Request): Promise<Response> {
   if (!message?.trim()) return json({ ok: false, error: 'message is required' }, 400)
 
   const startedAt = Date.now()
-  const reply = await runAssistant({ inquiry_id, message, history })
+  // The assistant acts AS the signed-in rep: every approval, edit and send it performs is
+  // attributed to them in audit_log, exactly as if they had pressed the button themselves.
+  const reply = await runAssistant({ inquiry_id, message, history, actor: attribution(undefined, staff) })
   const latency = Date.now() - startedAt
 
   // One trace row per tool the assistant actually called, so the rep sees the same trace the
@@ -494,6 +518,121 @@ async function handleProposalAction(req: Request, staff: AuthOk): Promise<Respon
     human_summary:
       (result.data as { human_summary?: string } | undefined)?.human_summary ?? result.error ?? null,
   })
+}
+
+/**
+ * PROSE ONLY. The numbers are not in the accepted shape at all, and an attempt to send one is
+ * refused with the reason rather than quietly ignored, because a rep who thinks they changed
+ * the total and did not is worse off than one who was told no.
+ */
+async function handleProposalEdit(req: Request, staff: AuthOk): Promise<Response> {
+  if (req.method !== 'POST') return json({ ok: false, error: 'POST only' }, 405)
+  const body = await readJsonBody<{
+    proposal_id?: string
+    inquiry_id?: string
+    edits?: Record<string, unknown>
+    justification?: string
+    actor?: string
+  }>(req)
+  if (!body.ok) return json({ ok: false, error: body.error }, 400)
+
+  let proposalId = body.value.proposal_id
+  if (!proposalId && body.value.inquiry_id) {
+    proposalId = (await findProposalByInquiry(body.value.inquiry_id))?.proposal_id
+  }
+  if (!proposalId) {
+    return json({ ok: false, error: 'No proposal has been generated for this enquiry yet.' }, 404)
+  }
+
+  const result = await edit_proposal({
+    proposal_id: proposalId,
+    edits: (body.value.edits ?? {}) as never,
+    justification: body.value.justification ?? '',
+    actor: attribution(body.value.actor, staff),
+  })
+
+  return json(
+    result.ok
+      ? { ok: true, ...result.data }
+      : { ok: false, error: result.error },
+    result.ok ? 200 : 400,
+  )
+}
+
+async function handleFollowUpDraft(req: Request, staff: AuthOk): Promise<Response> {
+  if (req.method !== 'POST') return json({ ok: false, error: 'POST only' }, 405)
+  const body = await readJsonBody<{ inquiry_id?: string }>(req)
+  if (!body.ok) return json({ ok: false, error: body.error }, 400)
+  if (!body.value.inquiry_id) return json({ ok: false, error: 'inquiry_id is required' }, 400)
+
+  const result = await draftFollowUp(body.value.inquiry_id)
+  if (!result.ok || !result.follow_up) {
+    return json({ ok: false, error: result.error }, 400)
+  }
+  const f = result.follow_up
+  await auditLog('follow_up.requested', `follow_up:${f.follow_up_id}`, {
+    inquiry_id: f.inquiry_id,
+    actor: attribution(undefined, staff),
+    channel: f.channel,
+  })
+  return json({
+    ok: true,
+    follow_up_id: f.follow_up_id,
+    channel: f.channel,
+    subject: f.subject,
+    body: f.body,
+    missing_fields: f.missing_fields,
+    status: f.status,
+    persisted: f.persisted,
+    human_summary: result.human_summary,
+  })
+}
+
+async function handleFollowUpAction(req: Request, staff: AuthOk): Promise<Response> {
+  if (req.method !== 'POST') return json({ ok: false, error: 'POST only' }, 405)
+  const body = await readJsonBody<{
+    follow_up_id?: string
+    action?: string
+    edited_body?: string
+    justification?: string
+    actor?: string
+  }>(req)
+  if (!body.ok) return json({ ok: false, error: body.error }, 400)
+  const { follow_up_id, action, edited_body, justification } = body.value
+  if (!follow_up_id) return json({ ok: false, error: 'follow_up_id is required' }, 400)
+  if (!action || !['approve', 'send', 'discard'].includes(action)) {
+    return json(
+      { ok: false, error: `unknown action "${action ?? ''}"`, actions: ['approve', 'send', 'discard'] },
+      400,
+    )
+  }
+
+  const result = await actOnFollowUp({
+    follow_up_id,
+    action: action as FollowUpAction,
+    actor: attribution(body.value.actor, staff),
+    edited_body,
+    justification: justification ?? null,
+  })
+
+  return json(
+    {
+      ok: result.ok,
+      status: result.status ?? null,
+      follow_up_id: result.follow_up_id ?? follow_up_id,
+      error: result.ok ? undefined : result.error,
+      human_summary: result.human_summary ?? result.error ?? null,
+    },
+    result.ok ? 200 : 400,
+  )
+}
+
+/** The conversation thread. Never 404: an enquiry nobody has written to has an empty thread. */
+async function handleCommunications(url: URL): Promise<Response> {
+  const inquiryId = url.searchParams.get('inquiry_id')?.trim()
+  if (!inquiryId) return json({ ok: false, error: 'inquiry_id is required', items: [] }, 400)
+  const result = await getCommunications(inquiryId)
+  return json({ ok: true, ...result })
 }
 
 async function handleSend(req: Request, staff: AuthOk): Promise<Response> {
