@@ -22,6 +22,7 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { SOL_SYSTEM_PROMPT } from '../../../../netlify/functions/tools/solPrompt'
+import { toolDefinitions } from '../../../../netlify/functions/tools/registry'
 
 // Normalise line endings: the markdown is read from disk (CRLF on a Windows checkout) while a TS
 // template literal is normalised to LF by the language. That difference is a checkout artefact,
@@ -59,5 +60,28 @@ describe('the prompt forbids naming tools to a guest', () => {
     expect(fromMarkdown).toBeTruthy()
     expect(fromCompiled).toBeTruthy()
     expect(fromCompiled).toBe(fromMarkdown)
+  })
+
+  // The rule above suppresses the SYMPTOM. This pins the CAUSE: chat is told to call a tool it
+  // does not have, so the model keeps reporting the contradiction however the rule is worded.
+  it('chat really does not have create_inquiry, which is why the note exists', () => {
+    const names = toolDefinitions().map((t) => t.name)
+    expect(names).not.toContain('create_inquiry')
+    expect(names).not.toContain('update_inquiry')
+    // ...and the ones the channel note tells it to use instead really are there.
+    expect(names).toContain('create_escalation')
+    expect(names).toContain('classify_intent')
+  })
+
+  it('the chat channel note tells the model what this channel can do, not what it cannot call', () => {
+    const chat = readFileSync(join(process.cwd(), 'netlify/functions/chat.ts'), 'utf8')
+    const note = lf(chat).match(/const CHAT_CHANNEL_NOTE = `[^`]*`/)?.[0] ?? ''
+    expect(note).toMatch(/no inquiry-creation tool/i)
+    expect(note).toMatch(/create_escalation/)
+    // Appended to the shared definition, not replacing it: the note must come AFTER the prompt.
+    const assign = chat.split(String.fromCharCode(10)).find((line) => line.includes('cachedPrompt =')) ?? ''
+    expect(assign).toContain('SOL_SYSTEM_PROMPT')
+    expect(assign).toContain('CHAT_CHANNEL_NOTE')
+    expect(assign.indexOf('SOL_SYSTEM_PROMPT')).toBeLessThan(assign.indexOf('CHAT_CHANNEL_NOTE'))
   })
 })
