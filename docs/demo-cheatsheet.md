@@ -19,8 +19,12 @@ so open with the confirmation number and last name.
 - **"Can I bring my dog?"** → no pets, but service animals always, and it may not ask for papers. (Policy 8)
 - **"I booked Advance Purchase and my flight got cancelled, can I get a refund?"** → non-refundable,
   honestly, with travel insurance as the only real recourse. (Policy 3)
-- **"I need 40 rooms in Tampa in October at 22% off."** → routes to group booking, flags both the
-  room cap and the discount ceiling.
+- **"I need 40 rooms in Tampa in October at 22% off."** → routes to Sales and **refuses to price or
+  discount it**, then asks for an email so Sales can follow up. Rehearsed; chat calls
+  `classify_intent` and nothing else. The room cap and the discount ceiling are *not* shown to the
+  guest — those are rule verdicts, and they appear on the group sales dashboard, which is the
+  INQ-2009 beat in the runbook. Say it as the boundary it is: the front-desk lane never quotes a
+  group rate.
 - **"My room was noisy, I checked out last week, I want a refund."** → 72-hour service recovery
   window has closed; points offered, not a refund. (Policy 5)
 
