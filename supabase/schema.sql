@@ -172,12 +172,17 @@ create policy esc_read      on escalations for select using (my_role() in ('conc
 create policy esc_write     on escalations for update using (my_role() in ('concierge','admin'));
 
 -- Group sales surface: group_sales + admin only. concierge is deliberately excluded.
+-- Read-only from the browser, deliberately. These three tables carry the approval gate's own
+-- inputs: `canSend` (group/store.ts:464) returns allowed as soon as proposals.status is 'approved',
+-- so a client that can write that column can approve its own proposal and send a flagged block. A
+-- rep did exactly that against production with the public anon key on 2026-09-25. Migration 004
+-- drops the write policies; whether it has been APPLIED to production is tracked in
+-- HUMAN_INTERVENTION.md, because applying it needs database access this repo does not carry.
+-- Every real write goes through the Netlify functions on the service role key, which bypasses RLS,
+-- and the client only ever calls .select() on these tables - so there is no write policy to grant.
 create policy inq_read   on inquiries for select using (my_role() in ('group_sales','admin'));
-create policy inq_write  on inquiries for all    using (my_role() in ('group_sales','admin')) with check (my_role() in ('group_sales','admin'));
 create policy prop_read  on proposals for select using (my_role() in ('group_sales','admin'));
-create policy prop_write on proposals for all    using (my_role() in ('group_sales','admin')) with check (my_role() in ('group_sales','admin'));
 create policy fup_read   on follow_ups for select using (my_role() in ('group_sales','admin'));
-create policy fup_write  on follow_ups for all    using (my_role() in ('group_sales','admin')) with check (my_role() in ('group_sales','admin'));
 create policy audit_read on audit_log for select using (my_role() in ('group_sales','admin'));
 create policy audit_ins  on audit_log for insert with check (auth.uid() is not null);
 
