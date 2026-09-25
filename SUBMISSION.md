@@ -11,20 +11,21 @@ What goes to phData, and the note that goes with it.
 
 **2. The repository.** https://github.com/enriquealonso01/solstice-fde
 
-It is currently **private**. Before sending, either make it public or add the reviewers. Public is
-simpler and there is nothing secret in it: every credential is in `.env`, which is gitignored, and
-the Telnyx export has its shared secret redacted.
+It is **public**. Nothing secret is in it: `.env` and `DEMO_LOGINS.md` are gitignored, the Telnyx
+export has its shared secret redacted, and history was scanned for every live credential before
+the repository was opened. The demo password was rotated at that point, because an earlier value
+was present in history and history is permanent.
 
-**3. Staff credentials**, in the email body rather than the repo:
+**3. Staff credentials**, in the email body and **never in this repository**, which is public:
 
 ```
 Concierge supervisor   supervisor@solsticehotels.com
 Group sales            sales@solsticehotels.com
 Super admin            admin@solsticehotels.com
-Password (all three)   SolsticeDemo2026!
+Password (all three)   see DEMO_LOGINS.md, gitignored, on Enrique's machine
 ```
 
-These are in `DEMO_LOGINS.md`, which is deliberately not committed. Sign in at `/login`.
+Sign in at `/login`. Paste the password into the email; do not commit it here.
 
 ---
 
@@ -61,7 +62,7 @@ Two things they did not ask for, which answer their email rather than the PDF:
 >
 > To see the staff side, sign in at /login:
 > supervisor@solsticehotels.com · sales@solsticehotels.com · admin@solsticehotels.com
-> Password for all three: SolsticeDemo2026!
+> Password for all three: <paste from DEMO_LOGINS.md>
 >
 > A few things worth trying, because they are the parts I would want to see:
 >

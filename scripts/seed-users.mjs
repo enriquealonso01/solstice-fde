@@ -20,7 +20,13 @@ const URL_ = env.SUPABASE_URL
 const KEY = env.SUPABASE_SERVICE_ROLE_KEY
 if (!URL_ || !KEY) throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY required in .env')
 
-const PASSWORD = env.DEMO_PASSWORD || 'SolsticeDemo2026!'
+// No default. A literal here ends up in git history, and this repository is public, so the
+// password would be permanently published even after being removed from the working tree.
+const PASSWORD = env.DEMO_PASSWORD
+if (!PASSWORD) {
+  console.error('Set DEMO_PASSWORD in .env before seeding users. It is deliberately not defaulted.')
+  process.exit(1)
+}
 
 const USERS = [
   { email: 'supervisor@solsticehotels.com', role: 'concierge', name: 'Dana Reyes' },
