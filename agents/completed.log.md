@@ -3684,3 +3684,43 @@ Red-checked both ways, which for this guard means both directions matter:
 Compile unchanged at **29,319**; compile === live === export still holds, so no re-provision.
 
 `npx tsc -b --force` clean. `npx vitest run`: **464 passed, 36 files**.
+
+### The ship chain broke in a way worth writing down: a diverged local main, and a reverted working tree
+
+Three separate problems in one ship, none of them the change itself.
+
+**1. `git pull --ff-only` failed and the chain kept going.** After the merge, local `main` had diverged
+(a local merge commit, `7eb4d1c`, that nobody intended) and the pull aborted with *"Not possible to
+fast-forward."* `set -e` did not stop the chain, so **the deploy ran from a tree that was not
+`origin/main`.** Same family as the stale-HEAD incident earlier in this run: a git step failed, the
+sequence continued, and the failure only showed up because I read the output.
+
+**2. The working tree had been reverted under me.** After the merge landed as `c5280a3`, `git status`
+showed seven modified files — and the diffs ran the wrong way:
+
+```
+SUBMISSION.md            "Three things" -> "Two things"   (my fix, undone)
+list-counts.test.ts      deleted
+agents/completed.log.md  -49   (my It68 entry, gone)
+plans/06-master-plan.md  -327  (the PLANNER's work, gone)
+```
+
+Another agent had written a stale snapshot over the tree. Every `+` line I checked was the *older*
+text — the plan's restored lines describe T33 as open, which I closed an hour earlier — so it was an
+accident, not a considered revert. **327 lines of the Planner's plan were sitting one `git add -A`
+away from being committed as a deletion**, which is the T22 hazard inverted: not unsaved work lost,
+but saved work quietly un-saved.
+
+**3. So my deploy shipped from that tree.** No production harm — `SUBMISSION.md` is not served and a
+deleted test is not in the bundle — but the deploy check said `OK` on a **timestamp**, which is exactly
+the distinction I have been careful about all session and still nearly accepted here.
+
+**Recovery, and what I deliberately did not touch.** Restored six files from `main`, and left
+`agents/planner.status.md` alone: it was the only file with genuinely new content (+46 lines), and it
+is theirs. Verified the restore rather than assuming — `Three things` back, It68 back, guard file back,
+**473 tests green** — then redeployed from the clean tree.
+
+**The lesson for the ship sequence**, which I will raise with the Planner rather than change unilaterally
+since `agents/README.md` is protocol: **after `git pull`, assert the tree is clean and equal to
+`origin/main` before deploying.** Two lines. Today the check is "did the pull print an error", and I
+only caught this by reading output I could easily have skimmed.
