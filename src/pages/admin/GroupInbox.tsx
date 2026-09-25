@@ -231,10 +231,22 @@ function InboxRow({
           // "0 missing" was a blue chip announcing an absence of problems, on ten of thirteen
           // rows. A rep reading it has to translate "zero of what, missing from where" before
           // learning the only useful thing: this one is complete and nobody has priced it yet.
-          inquiry.missing_fields.length === 0 ? (
-            <span className="chip bg-emerald-50 text-emerald-800">ready to price</span>
-          ) : (
+          //
+          // BUT COMPLETE IS NOT THE SAME AS PRICEABLE, and the two came apart on real data. The
+          // only two rows with no proposal were INQ-2003 and INQ-2010 — and they have no proposal
+          // precisely BECAUSE the rules engine fails them on GRP-BLACKOUT ("does not take group
+          // blocks between March 10 and March 19, 2027"). So a green "ready to price" appeared on
+          // exactly the two inquiries that cannot be priced at all, and on no others: the set of
+          // complete-but-unpriced rows is dominated by the ones pricing already refused.
+          //
+          // The row already carries the answer — `status` is 'blocked' when the engine blocked it
+          // (statusFor, tools.ts:1300) — so this needs no new plumbing, only asking.
+          inquiry.missing_fields.length > 0 ? (
             <span className="chip bg-sky-50 text-sky-800">{inquiry.missing_fields.length} missing</span>
+          ) : inquiry.status === 'blocked' ? (
+            <span className="chip bg-rose-50 text-rose-800">cannot be priced</span>
+          ) : (
+            <span className="chip bg-emerald-50 text-emerald-800">ready to price</span>
           )
         )}
       </td>
