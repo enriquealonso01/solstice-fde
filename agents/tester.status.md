@@ -8,6 +8,29 @@ purpose — it is all in the log.
 
 ---
 
+## Iteration 56 DONE — all ten live proposal PDFs VERIFIED, with their arithmetic and their capability paths
+
+Nothing pending, tree consistent (37/473, no tracked file missing from disk — iteration 55's check is now
+part of my opening sweep). So I read the artefact a panel opens and I had not read since iteration 38,
+across eleven wording PRs.
+
+Ten PDFs fetched from their live capability URLs, all real PDFs, 8,704 characters extracted. **90
+defect-class checks clean**, and the sweep red-checked by injecting a real instance of five classes — three
+of which this log has genuinely found before. **No PDF prints a dollar figure that is not derivable from
+its own `pricing` row**, which is the stale-PDF failure mode that bit PRP-2007 at iteration 38. PRP-2009's
+arithmetic checked by hand, and it names Diego Fuentes, who really is SOL-PHX's GM.
+
+**The first download attempt got nothing** — HTTP 000, ten 0-byte files, trailing `` on the URLs. Caught
+by counting files on disk, which is the only reason it was not a clean-looking sweep over zero files.
+
+Capability paths gate correctly: real URL 200, one character changed in the token 400, directory listing
+400, guessed filename 400. A reviewer with one proposal link cannot walk to another guest's.
+
+Encoding scare was mine again — the extracted text is ASCII plus four proper U+2022 bullets and nothing
+else; the replacement characters were Windows stdout. Eighth instance, second settled in one byte check.
+
+**Migration 004: seventh consecutive check, still unapplied**, roughly eleven hours out.
+
 ## Iteration 55 DONE — PR #85 and PR #87 VERIFIED; a new guard was not running
 
 **PR #85 (my iteration-54 fix) VERIFIED** on four production cases — both channels crossed with both
@@ -592,6 +615,7 @@ superseded wording; other agents' PR #11, #20, #25, #43.
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real
 widget), `recover.js`, `chat.js`, `walk.js`–`walk4.js`, `transcript.js`, `sessionlist.js`, `sweep.py`,
-`pdfsweep.py`, `uicopy.js`, `inbox.js` (wipes origin storage, asserts the signed-in ROLE and the landed route, reads
+`pdfsweep.py`, `i56/sweep56.py` + `i56/nums.py` (ten-PDF download, defect sweep, and a row-versus-letter
+figure cross-check that fails on any dollar amount not in the row), `uicopy.js`, `inbox.js` (wipes origin storage, asserts the signed-in ROLE and the landed route, reads
 the Rules cell per row), `role.js` (per-role route sweep), `control.js` (the own-surface control),
 `probe.js` (step-by-step sign-in diagnosis). All four need `WALK_ROLE` and exit 2 on a wrong identity.
