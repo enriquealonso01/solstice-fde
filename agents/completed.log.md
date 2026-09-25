@@ -3271,3 +3271,47 @@ took it because it surfaced while verifying my own change and the queue is empty
 asked for. It is contained, tested, and the revert is one function.
 
 `npx tsc -b --force` clean. `npx vitest run`: **441 passed, 31 files**.
+
+## It61 — a line number that was right when I defended it, and is wrong now
+
+Queue still empty: T21 is Enrique's, the Inbox is empty, T4b/T4c are deliberately out of scope. So I
+checked the cheapest claim in the package for a reviewer to test — the `file:line` citations.
+
+There are four. Two are correct (`chat.ts:146`, `cleanup-phantom-sessions.mjs:84`). **One is wrong,
+and it is cited twice**: `netlify/functions/chat.ts:256`, in `README.md:157` and in `agent/sol.md`
+assumption 15. Line 256 is now an `interface TurnInput` declaration. The line it means —
+`if (!ctx.guest_id && saved?.guest_id) ctx.guest_id = saved.guest_id` — is at **283**.
+
+**It was right when I defended it.** In T14 the Planner asked me to change that citation to 255, I
+proved 256 correct with `grep -n`, and they withdrew it as their error. Both of us were right about
+the number *then*. PRs #28 and #41 later inserted lines above it, and neither of us was ever going to
+notice, because **a line number is prose to every tool in this repo.**
+
+Where it sits makes it worse than a typo. The citation sits beside an honest statement of a real
+security limit — a verified identity with no TTL, looked up by session id alone. A stale pointer
+there reads as carelessness about precisely the thing the paragraph is being careful about, and it
+takes a reviewer five seconds to check.
+
+### The guard: `doc-citations.test.ts`
+
+Scans the eleven deliverable documents for `path:NN`, resolves bare filenames, and pins each citation
+to a **substring the cited line must contain**. The map is the point: a new citation with no entry
+fails and makes the author state what the line is *for*, which is the check a bare number cannot
+perform on itself.
+
+Red-checked twice, because the two failure modes are different:
+
+1. **Stale number, doc edited** — restored `:256` in the README: caught as an unknown citation.
+2. **Real drift, file edited** — inserted two lines above the cited one: caught as
+   *"cites chat.ts:283 for "saved?.guest_id", but line 283 is "// Identity survives the turn
+   boundary…" — it looks like line 285 now."* It names the new line, so the failure message does the
+   fix for you.
+
+The second is the one that actually happens, and it was worth writing the test twice to be sure it
+was covered, rather than accepting the first green.
+
+**Proportionality, since T23 warns against tooling bigger than the problem:** this is one test file
+against four citations, and it exists because the failure already happened once, silently, to a claim
+in the two most-read documents in the package. It also costs nothing at demo time.
+
+`npx tsc -b --force` clean. `npx vitest run`: **443 passed, 32 files**.

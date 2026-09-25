@@ -357,7 +357,7 @@ deliberate, defensible choice, and each is visible in the code rather than burie
     the send path belongs to whatever holds identity in production, and is deliberately not
     papered over here.
 15. **A verified identity survives the whole session, with no expiry.** `identify_guest` binds the
-    guest to the session row, and every later turn restores it (`chat.ts:256`) rather than asking
+    guest to the session row, and every later turn restores it (`chat.ts:283`) rather than asking
     again. That is deliberate: the transcript records what Sol *said*, not what it *knows*, so
     without the binding it would re-verify the same guest on every message and the conversation
     would be unusable. The limit is that the binding has no TTL, and the lookup is by session id

@@ -4,58 +4,66 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 76 — 2026-09-25 ~18:17 EST
+## Iteration 77 — 2026-09-25 ~18:24 EST
 
-### Inbox empty. No lock held. One new commit (#67), log-only.
+### Inbox empty. No lock held. Deploy current with HEAD (`ready 22:18:40Z` / `HEAD 22:18:32Z`).
 
-### I got the re-provision rule wrong last iteration, and corrected it
+### PR #69 is live, and it fixed a real bug
 
-I wrote *"no deploy, no re-provision"* for PR #66, and the rule *"anyone editing sol.md between
-lines 127 and 221 must deploy and re-provision Telnyx."* **The first clause is right; the rule is
-wrong**, and it would have told the next person to skip a re-provision they needed.
+`create_escalation` fired twice in one conversation — **5 of 31 sessions**, going back to
+**2026-09-24 17:55**, a day before the change that surfaced it. Single-turn harness runs produce
+one row, which is why every earlier test of this path looked clean.
 
-The two marker systems govern **different runtimes**, and I collapsed them:
+Three things worth keeping: the Implementer **checked whether they had caused it** before reporting
+it; the guarantee went **in the tool, not the prompt** (*"do not call this twice"* is a rule a model
+follows most of the time); and **category is part of the merge key deliberately**, so a group
+enquiry that becomes a safety report still opens its own row.
 
-- `SOL:SYSTEM:BEGIN/END` (`sol.md:127-221`) bounds what the **chat** runtime extracts.
-- `provision.mjs:224-227` compiles the **whole file** minus front matter, `voice:exclude` blocks
-  and HTML comments — it never reads the `SOL:SYSTEM` markers.
+### I checked the leftover rows expecting a second T21. They are invisible
 
-So **any edit to `agent/sol.md` outside a `voice:exclude` block changes the phone agent.** PR #66's
-hunk 1 (lines 81-99) is outside `SOL:SYSTEM` — chat genuinely untouched, my md5 check was right —
-but inside the voice compile, so it **did** need `--refresh`. Hunk 2 (~368) sits inside a
-`voice:exclude` block, which is why assumption 16 never leaked.
-
-### An agent had already re-provisioned. I verified it rather than trusting the log
+The fix stops new duplicates but does not clean old ones, and **`demo:tidy` does not touch
+escalations at all**:
 
 ```
-live instructions chars: 29315     local voice compile: 29315
-  "reaches Sales"            : false
-  concierge supervisor queue : true
-  assumption 16 leaked       : false
+total escalation rows: 38
+session+category groups with >1 row: 4   (all open,open)
 ```
 
-**The log is accurate.** T19 is live on the phone agent, not just merged. Balance untouched at $3.09.
+So it looked exactly like "DELETE-ME at row one". **It is not: escalations have no UI surface.**
+Every `src/` reference is the architecture backend-map drawing the table as a *node*, or a chat
+tool label. No component queries it, no function lists it. Only `tools/escalation.ts` touches it.
+A panel cannot see these rows.
 
-### The shape of the error, since it is one I keep making
+**No task, no cleanup needed.** Recorded because the conclusion is the opposite of the one I
+expected, and the next person will have the same instinct.
 
-I measured the **chat** path, found it unaffected, and wrote a rule covering **both** runtimes.
-Same shape as the `sed` line-number correction and the `head_limit` truncation: the measurement was
-sound, the generalisation from it was not. **Verifying one runtime is not verifying the other.**
+### One residual nuance, and I recommend not acting on it
 
-The system caught this and I did not — the re-provision happened because an agent read the file
-rather than my rule. Following what I wrote, the phone agent would still be saying *"reaches
-Sales"* while `agent/sol.md`, the deliverable, said it does not.
+`sol.md:89` says the row *"reaches the concierge supervisor's queue"*. True at the layer that
+matters — `esc_read` scopes the table to `concierge` and `admin` — but **"queue" implies a screen,
+and no screen renders escalations**. Leave it: the sentence is **not false**, unlike *"reaches
+Sales"* which RLS actively contradicted; and per my iteration-76 correction, any `sol.md` edit
+outside a `voice:exclude` block now costs a **second voice re-provision**.
+
+**Panel answer ready:** *today that queue is the table itself, durable and RLS-scoped; the console
+view is the next build.* **Bundle the clause into any other `sol.md` edit; do not re-provision for
+it alone** — same policy as `chat.ts:146`.
+
+### PR #68 invalidated earlier browser role evidence, and it has been re-verified
+
+`Network.clearBrowserCookies` never signed the harness out — Supabase keeps the session in
+`localStorage` — so earlier browser runs ran as whoever logged in last. Both harnesses now wipe
+origin storage and abort unless the page names the expected role. Role scoping re-verified at four
+layers with real tokens, and PR #55 re-verified on a role-confirmed session. **No open claim is
+left resting on the broken harness.**
 
 ### The plan is accurate and correctly ordered
 
 **Enrique, in order:** the SQL paste · Telnyx top-up · **T21** two rows.
-**Agents, one item:** re-export the Telnyx JSON — **28,678** vs live **29,315**. The gap was 95
-characters and is now **637**: the export is two changes behind (#56, #66), and it is the *native
-export* deliverable, so it should match what a reviewer pulls from Telnyx.
+**Agents, one item:** re-export the Telnyx JSON — 28,678 vs live 29,315.
 **Guardrails 18 of 19**, send-gate RLS path logged BLOCKED pending the migration.
 
 ### The single most important remaining item
 
 **The `drop policy` paste.** It closes a live hole *and* restores `agent/sol.md` §13 exactly as
-written, with no edit to any deliverable. Everything else left is a demo beat, two rows, or a file
-refresh.
+written, with no edit to any deliverable.

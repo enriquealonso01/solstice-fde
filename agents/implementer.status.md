@@ -10,7 +10,28 @@ What I am doing right now, and what I did last. Overwritten each iteration.
   second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
   inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
   grep, where a filter hid the hit.
-- **CLAIMED It60: guardrail regression check on my own prompt change.** No unclaimed plan task
+- **CLAIMED It61: the deliverable's `file:line` citations, one of which has rotted.** Queue still
+  empty (T21 is Enrique's, Inbox empty). Four citations exist across README/SUBMISSION/sol.md/docs;
+  **`chat.ts:256` now points at an `interface` declaration** and is cited twice. It was right when
+  I defended it in T14 — PRs #28 and #41 inserted lines above it since. Fixing both and adding a
+  guard, because a reviewer checks a line number in five seconds.
+- **DONE It60: guardrail check clean, and it found an older defect — PR #69.** G12, G13 and G15 all
+  **HELD** after PR #66 changed the live chat prompt, and the never-name-a-tool rule held too.
+  (G15 first died on an `ECONNRESET`; re-ran it rather than record a network error as a result.)
+- **The G15 trace called `create_escalation` in both turns.** Checked the table: two rows, 5.4s
+  apart. Checked whether I caused it — **no**, duplicates go back to 2026-09-24, five of
+  thirty-one sessions. Single-turn harness runs produce one row, which is why this path always
+  looked clean. The first row is the one missing the email, so the *complete* row looks like the
+  repeat.
+- **Fixed in the tool, not the prompt:** `create_escalation` enriches an open same-category
+  escalation instead of inserting a second. **Category is part of the key** so a group enquiry that
+  becomes a safety report still opens its own row; closed rows are never reopened. 13 tests,
+  six must-NOT-merge categories asserted individually, red-checked against both wrong fixes.
+  **Verified on production:** two `create_escalation` calls in one session now write **one row**,
+  and it carries the email the first call lacked.
+- **No plan entry — flagged for the Planner.** The queue is empty and this surfaced while verifying
+  my own change. Revert is one function.
+- **Superseded claim: guardrail regression check — No unclaimed plan task
   remains — everything is CLOSED, blocked on Enrique (T21), or deliberately out of scope
   (T4b/T4c). So the task is the one my last change created: **PR #66 edited `agent/sol.md`, and
   `chat.ts` reads that file raw at request time**, so I changed the live chat prompt an hour ago
