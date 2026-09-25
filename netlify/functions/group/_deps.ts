@@ -204,8 +204,137 @@ export async function loadProperty(code: string): Promise<Property | null> {
   return all.find((p) => p.property_code === code) ?? null
 }
 
+/* ------------------------------------------------------------------ *
+ * Rehydrating inquiries taken on the phone                             *
+ * ------------------------------------------------------------------ */
+
+/**
+ * `create_inquiry` persists a phoned-in inquiry to the `inquiries` table, but until now nothing
+ * read that table back: every reader returned the generated dataset plus `runtimeInquiries`, a
+ * module-level Map that dies with the lambda. So an inquiry Sol took on a call was visible on the
+ * sales board only while the same warm instance served both the call and the dashboard, and
+ * vanished on the next cold start — which is the normal state of a function between demo beats.
+ *
+ * THE MASK IS THE POINT, not an obstacle. The persisted payload stores the contact masked, because
+ * the screen never needs the real address. Rehydrating therefore yields a contact whose
+ * `email`/`phone` are null and whose masked pair is intact, and that asymmetry is exactly right:
+ * `contactPresent()` counts the masked pair, so the rules still know we can reach this customer,
+ * while `routeFor()` reads only the unmasked pair and routes to `human`. A rehydrated inquiry can
+ * be seen, priced and judged; it cannot be silently emailed to a row of asterisks.
+ */
+export interface PersistedInquiryRow {
+  inquiry_code: string
+  source: string
+  payload: Record<string, unknown> | null
+  missing_fields: string[] | null
+}
+
+/** Per-instance cache. Rehydration is a read of at most a handful of rows, but the inbox, the
+ *  detail view and every tool call would otherwise each pay for it. */
+let rehydrated: Map<string, RehydratedInquiry> | null = null
+
+export interface RehydratedInquiry {
+  inquiry: GroupInquiry
+  context: InquiryContext
+  contact: InquiryContact
+}
+
+function str(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
+function num(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+export function rehydrateInquiryRow(row: PersistedInquiryRow): RehydratedInquiry | null {
+  const payload = row.payload
+  if (!payload) return null
+
+  const source_ = row.source === 'voice' || row.source === 'manual' ? row.source : 'portal'
+
+  const inquiry: GroupInquiry = {
+    inquiry_id: row.inquiry_code,
+    source: source_,
+    company_name: str(payload.company_name) ?? row.inquiry_code,
+    contact_name: str(payload.contact_name) ?? '',
+    // Masked, deliberately. See the note above this block.
+    contact_email: str(payload.contact_email),
+    contact_phone: str(payload.contact_phone),
+    event_type: str(payload.event_type) ?? '',
+    preferred_property_code: str(payload.preferred_property_code) ?? '',
+    alternate_property_ok: payload.alternate_property_ok === true,
+    arrival_date: str(payload.arrival_date),
+    departure_date: str(payload.departure_date),
+    rooms_requested: num(payload.rooms_requested),
+    room_type_preference: str(payload.room_type_preference),
+    requested_discount_pct: num(payload.requested_discount_pct),
+    meeting_capacity_needed: num(payload.meeting_capacity_needed),
+    special_requests: str(payload.special_requests),
+    missing_fields: Array.isArray(row.missing_fields) ? row.missing_fields : [],
+  }
+
+  return {
+    inquiry,
+    context: {
+      date_received: str(payload.date_received) ?? new Date().toISOString().slice(0, 10),
+      nights: num(payload.nights),
+      stated_budget_per_night: num(payload.stated_budget_per_night),
+      meeting_space_needed: payload.meeting_space_needed === true,
+    },
+    contact: {
+      // Null on purpose: the real address was never persisted, and guessing one here would turn a
+      // display fix into a delivery bug.
+      email: null,
+      phone: null,
+      email_masked: str(payload.contact_email) ?? '',
+      phone_masked: str(payload.contact_phone) ?? '',
+    },
+  }
+}
+
+/** Never throws. A database that is not there must degrade to exactly the previous behaviour
+ *  rather than take the whole group inbox down with it. */
+async function rehydratedInquiries(): Promise<Map<string, RehydratedInquiry>> {
+  if (rehydrated) return rehydrated
+  const empty = new Map<string, RehydratedInquiry>()
+  const db = tryGetDb()
+  if (!db) return empty
+  try {
+    const { data, error } = await db
+      .from('inquiries')
+      .select('inquiry_code, source, payload, missing_fields')
+    if (error || !data) return empty
+
+    const next = new Map<string, RehydratedInquiry>()
+    for (const row of data as PersistedInquiryRow[]) {
+      const entry = rehydrateInquiryRow(row)
+      if (entry) next.set(entry.inquiry.inquiry_id, entry)
+    }
+    rehydrated = next
+    return next
+  } catch {
+    return empty
+  }
+}
+
+/** Test seam, and the hook for anything that writes an inquiry and then reads it back. */
+export function resetRehydratedInquiries(): void {
+  rehydrated = null
+}
+
 export async function loadInquiries(): Promise<GroupInquiry[]> {
-  return [...(await source.inquiries()), ...registeredInquiries()]
+  const seeded = await source.inquiries()
+  const runtime = registeredInquiries()
+
+  // Additive by construction: a persisted row is used only when neither the generated dataset nor
+  // this instance's memory already has that code. The inbox can gain a row; it cannot lose one.
+  const known = new Set([...seeded, ...runtime].map((i) => i.inquiry_id))
+  const restored = [...(await rehydratedInquiries()).values()]
+    .filter((entry) => !known.has(entry.inquiry.inquiry_id))
+    .map((entry) => entry.inquiry)
+
+  return [...seeded, ...runtime, ...restored]
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -236,15 +365,18 @@ export async function loadInquiry(id: string): Promise<GroupInquiry | null> {
   const runtime = runtimeInquiries.get(code)
   if (runtime) return runtime.inquiry
   const all = await source.inquiries()
-  return all.find((i) => i.inquiry_id === code) ?? null
+  const seeded = all.find((i) => i.inquiry_id === code)
+  if (seeded) return seeded
+  return (await rehydratedInquiries()).get(code)?.inquiry ?? null
 }
 
 export async function loadInquiryContext(id: string): Promise<InquiryContext | null> {
   const code = await toInquiryCode(id)
   const runtime = runtimeInquiries.get(code)
   if (runtime) return runtime.context
-  if (!source.inquiryContext) return null
-  return (await source.inquiryContext(code)) ?? null
+  const seeded = source.inquiryContext ? await source.inquiryContext(code) : null
+  if (seeded) return seeded
+  return (await rehydratedInquiries()).get(code)?.context ?? null
 }
 
 /** The send path, and the send path only. */
@@ -256,5 +388,7 @@ export async function loadInquiryContact(id: string): Promise<InquiryContact | n
     const contact = await source.contactFor(code)
     if (contact) return contact
   }
-  return null
+  // Masked pair only, so the rules can see we have a way to reach this customer while delivery
+  // still routes to a human. Never a real address: one was never persisted.
+  return (await rehydratedInquiries()).get(code)?.contact ?? null
 }
