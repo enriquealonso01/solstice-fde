@@ -24,8 +24,8 @@
 > **Then:** **Telnyx** $3.09 (beat 3, the live intent check, **G16 on voice**) · **T21** delete
 > `INQ-2012`/`INQ-2013`, keep `INQ-2011` — *"DELETE-ME"* is **row one** of the sales inbox.
 >
-> **Agents:** **T31** `README.md:89` says **443 tests**, the suite is **445** · **re-export**
-> `exports/telnyx-assistant.json`, **28,678** against live's **29,315** · **T32** lowest priority.
+> **Agents:** **re-export** `exports/telnyx-assistant.json`, **28,678** against live's **29,315**
+> · **T32** lowest priority. **T31 CLOSED** — the README reads *"over 400 tests"*.
 >
 > **T30 CLOSED** (PR #73) — the transcript now says the double escalation was a bug, and states
 > exactly what was and was not re-measured.
@@ -37,8 +37,9 @@
 > byte-identical, "reaches Sales" gone. The escalation reaches the concierge supervisor's queue and a human
 > routes it on — verified three ways, all negative: `esc_read` admits concierge and admin only,
 > Sales is in no `ESCALATION_MATRIX` notify list, and `notify` sends nothing. One thread stays
-> open on purpose: `chat.ts:146` still says *"Sales will follow up"*, deferred as assumption 16.
-> **Bundle that fix into any other `chat.ts` deploy; do not deploy for it alone.**
+> **Assumption 16 is RESOLVED** (PR #74, live). I twice advised leaving `chat.ts:146` alone; it was
+> telling guests *"our Sales team … will reach out today with a quote"* in **4 production runs of
+> 4**. The channel note is appended **last** and outranked the `sol.md` correction. See iteration 81.
 >
 > **T20 CLOSED** (PR #64). The warm-up is two `curl`s and **creates no session** — verified, 121
 > before and after. `/api/chat` returning **405** is the point, not a failure; making it a POST
@@ -713,6 +714,106 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 81, 18:48 EST — I was wrong about `chat.ts:146`, twice, and it was telling guests something false
+
+**PR #74 is merged and live** (`ready 22:37:46Z` / `HEAD 22:37:36Z`). It fixes the thing I twice
+said to leave alone.
+
+#### What I advised, and what was actually happening
+
+In iterations 75 and 77 I recommended leaving the chat channel note as assumption 16. I wrote that
+the overstatement was *"one hop, not a fabrication"*, that *"a guest cannot tell the two sentences
+apart"*, and — the part I should have distrusted — *"and not merely because it is the cautious
+option."*
+
+The Implementer measured it against production. **Four runs out of four** told the guest:
+
+> *"I've logged this and it's going to our Sales team today. They'll reach out to dana.reyes@… with
+> a quote."*
+
+**A named destination and a promised day, both false**, while the tool result in the model's own
+context read `Escalation … to agm`. The model was not drifting. **It was obeying the note.**
+
+Both my reasons were wrong on the facts:
+
+- **"One hop, not a fabrication."** It was a fabrication. Sales did not have it, and nobody
+  promised a day.
+- **"A guest cannot tell the two sentences apart."** *"A manager has it"* and *"our Sales team will
+  reach out to you today with a quote"* are not the same sentence. The second is a commitment a
+  guest would wait on and then find broken — the precise failure the `honest-handoff` transcript
+  exists to say this system does not commit.
+
+#### The mechanism I missed, having already read it
+
+`CHAT_CHANNEL_NOTE` is appended **last**:
+
+```ts
+cachedPrompt = `${readPromptFromMarkdown() ?? SOL_SYSTEM_PROMPT}\n${CHAT_CHANNEL_NOTE}`
+```
+
+So it is the most salient instruction in the chat prompt and **outranks the correction above it.**
+PR #66 fixed `agent/sol.md`; the note then overrode it on the live channel.
+
+**I read that exact line in iteration 75** — I quoted `systemPrompt()` while establishing which
+prompt the chat runtime serves — and drew nothing from the concatenation order. I treated the two
+texts as peers making competing claims a reader would weigh. They are not peers. Position decides.
+
+#### The shape of the error, stated so it is useful
+
+Every one of my three reasons was **an assertion about what the model would say to a guest**, and I
+never ran it. One production conversation would have settled it, and the harness to do that has
+existed all day.
+
+I have now been wrong four times with the same instinct, and this time I explicitly told myself it
+was not mere caution before giving three untested reasons. **That is the tell: I dressed an
+untested assumption in the vocabulary of a risk assessment.** A risk assessment prices a measured
+outcome. What I did was decline to measure, then argue from the guess.
+
+The correct move, available at the time and cheap: run it once, read what Sol actually says, then
+decide. "Verify claims against reality" applies to my own recommendations, not only to other
+agents' status files.
+
+#### The fix is well-built, and an hour-old guard paid for itself
+
+The new note keeps the true part — *a group block is priced by Sales rather than by Sol* — and
+forbids the false one: do not say Sales has it, do not name who will make contact, do not promise
+when. `chat-note-sales-promise.test.ts` asserts on the note body **with comments stripped**, because
+the note now quotes the phrases it forbids, and it was red-checked against the old wording.
+
+Three `file:line` citations moved in the edit. **`doc-citations.test.ts` — from PR #70, written
+about twenty minutes earlier — caught them.** The substrings are unchanged, so the guard was not
+weakened to make the change pass.
+
+#### T31 closed
+
+`README.md:89` now reads *"over 400 tests across 32 test files."*
+
+#### T32 re-ranked against this evidence, and it stays lowest
+
+The obvious question is whether T32 — `sol.md`'s present-tense *"concierge supervisor's queue"* —
+is the same mistake again. **It is not, and the difference is the one that mattered here:** that
+sentence is read by a reviewer, not spoken to a guest, and no mechanism turns it into a promise
+anybody waits on.
+
+I checked the analogous risk, since `sol.md:81-99` **is** the voice prompt: the phone agent's own
+line already reads *"call `create_escalation`, and tell them a manager has it and will follow up"*
+— corrected wording, and iteration 76 confirmed `"reaches Sales"` is absent from the live voice
+instructions. **The guest-facing path is clean on both channels.**
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| Telnyx top-up, $3.09 | Enrique | open — gates beat 3 and G16 on voice |
+| T21, delete `INQ-2012`/`INQ-2013`, keep `INQ-2011` | Enrique | open — verified safe |
+| Re-export `exports/telnyx-assistant.json` | Agents | open — 28,678 vs live 29,315 |
+| T32 escalation queue tense | Agents | open — **lowest priority**, mind the 685-char margin |
+| T30, T31, assumption 16 | — | **CLOSED** (PRs #73, #72/#74, #74) |
+
+Inbox empty. No lock held. Deploy current with HEAD.
+
+
 ### Iteration 80, 18:42 EST — T30 closed and improved on the spec again; the voice prompt has 685 characters of margin
 
 **T30 CLOSED, PR #73**, and it is the **fourth** time an agent has shipped better than I specified.
@@ -1010,8 +1111,12 @@ finds there is no consumer.
 
 **But it should not be unclaimed, and the panel answer should be ready:** *today that queue is the
 table itself, durable and RLS-scoped; the supervisor console view is the next build.* If anything
-else gives a reason to edit `sol.md` before 11:00, a clause saying so rides along for free. Same
-policy as `chat.ts:146` — **bundle it, do not re-provision for it alone.**
+else gives a reason to edit `sol.md` before 11:00, a clause saying so rides along for free. Now **T32**.
+
+> **Note added in iteration 81.** The comparison to `chat.ts:146` here was misplaced: **that one I
+> got wrong**, and it was producing a guest-facing false promise. This one differs — it is read by a
+> reviewer, not spoken to a guest, and the phone prompt already says *"a manager has it"*. T32 stays
+> lowest priority, but for that reason, not the one I gave here.
 
 #### PR #68: earlier browser role evidence was unreliable, and has been re-verified
 
@@ -1183,6 +1288,11 @@ being wrong is a named inaccuracy; the cost of a bad `chat.ts` deploy is beat 2.
 
 **But it should not stay unclaimed:** if anything else gives a reason to deploy `chat.ts` before
 11:00, this rides along at no extra risk. Bundle it, do not deploy for it.
+
+> **WRONG, CORRECTED IN ITERATION 81.** Measured on production, this note told guests *"it is going
+> to our Sales team today … they will reach out with a quote"* in **four runs of four** — a
+> fabrication with a named destination and a promised day, not "one hop". The note is appended
+> **last** and outranked the `sol.md` correction. Fixed and deployed in PR #74.
 
 #### State after this iteration
 

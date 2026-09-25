@@ -4,59 +4,73 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 80 — 2026-09-25 ~18:42 EST
+## Iteration 81 — 2026-09-25 ~18:48 EST
 
-### Inbox empty. Lock held by another agent (T31 likely in hand).
+### Inbox empty. No lock held. Deploy current with HEAD. PR #74 live.
 
-### T30 closed, and it improved on my spec for the fourth time
+### I was wrong about `chat.ts:146`, twice, and it was telling guests something false
 
-PR #73. My spec said the note must *"not claim a live re-measurement that nobody ran."* What
-shipped turns that into a named paragraph — **"What was and was not re-measured, precisely"** —
-saying the fix was verified with an *equivalent* two-turn request and by the Tester, and that
-**these two ids were not re-observed as one**. Mine was a prohibition; theirs is a positive account
-of the epistemic state. They re-derived the figures from Postgres rather than copying my plan.
+In iterations 75 and 77 I recommended leaving the chat channel note as assumption 16: *"one hop,
+not a fabrication"*, *"a guest cannot tell the two sentences apart"*, and — the part I should have
+distrusted — *"and not merely because it is the cautious option."*
 
-**They also traced a consequence I missed.** `HUMAN_INTERVENTION.md` offers Enrique the option of
-deleting the test sessions. `escalations.session_id` is **`on delete set null`, not cascade**
-(`schema.sql:65`), so that option leaves both ids resolvable while quietly falsifying the word
-*"bound"* in the transcript they had just written. Flagged for Enrique, correctly **not** as a
-reason to avoid the option.
+PR #74 measured it against production. **Four runs out of four:**
 
-### The architecture diagram is honest, and disagrees with one sentence in `sol.md`
+> *"I've logged this and it's going to our Sales team today. They'll reach out to dana.reyes@… with
+> a quote."*
 
-Checked it against reality — a deliverable I had not verified in many iterations. It holds up:
-**"Escalation queue"** (*"On-call rota and an SLA timer"*) sits inside the band labelled
-**"FUTURE: production hardening, designed but not built."**
+**A named destination and a promised day, both false**, while the tool result in the model's own
+context read `Escalation … to agm`. The model was not drifting — it was obeying the note.
 
-Which is right, and which is why `agent/sol.md:89` reads oddly beside it: present tense, *"the row
-reaches the concierge supervisor's queue"*, when iteration 77 established no screen lists them.
-**T32 filed and marked the lowest-priority open item.**
+Both my reasons were wrong on the facts. It *was* a fabrication. And *"a manager has it"* versus
+*"our Sales team will reach out today with a quote"* are not the same sentence: the second is a
+commitment a guest waits on and finds broken, which is the exact failure the `honest-handoff`
+transcript exists to say this system does not commit.
 
-### The constraint that matters more than T32: 685 characters
+### The mechanism I missed, having already read it
 
-```
-current voice compile : 29,315     MAX_INSTRUCTION_CHARS : 30,000     margin : 685
+```ts
+cachedPrompt = `${readPromptFromMarkdown() ?? SOL_SYSTEM_PROMPT}\n${CHAT_CHANNEL_NOTE}`
 ```
 
-PR #67 had to correct this margin once already. **Anyone editing `agent/sol.md` needs this number.**
+The note is appended **last**, so it is the most salient instruction and **outranked the `sol.md`
+correction above it**. I quoted this exact line in iteration 75 while establishing which prompt the
+chat runtime serves, and drew nothing from the order. I treated the two texts as peers whose
+claims a reader would weigh. They are not peers — position decides.
 
-I tested the way round it instead of asserting one: wrapping a 276-character clarification in
-`voice:exclude` moves the compile to **29,316 — +1 character, not +276.** Human-facing additions to
-that file are essentially free *if wrapped*, and expensive if not.
+### The shape of the error
 
-Honest residue: **+1 is not 0.** Live would drift from compile by one character and the Tester's
-byte-identical check would show it. I did not claim byte-identical when I had measured 29,316.
+All three of my reasons were **assertions about what the model would say to a guest**, and I never
+ran it. One production conversation would have settled it; the harness existed all day.
 
-### T31 still open
+Fourth time wrong with this instinct — and this time I told myself it was not mere caution before
+giving three untested reasons. **That is the tell: I dressed an untested assumption in the
+vocabulary of a risk assessment.** A risk assessment prices a measured outcome. I declined to
+measure and argued from the guess. *"Verify claims against reality"* applies to my own
+recommendations, not only to other agents' status files.
 
-`README.md:89` still reads 443; the suite is 445.
+### The fix is well-built, and an hour-old guard paid for itself
+
+The note keeps the true part — a group block is priced by Sales — and forbids naming who will make
+contact or promising when. Three `file:line` citations moved in the edit and
+**`doc-citations.test.ts`, from PR #70 about twenty minutes earlier, caught them**, with substrings
+unchanged so the guard was not weakened to let the change through.
+
+### T31 closed. T32 re-ranked and stays lowest
+
+`README.md:89` now reads *"over 400 tests across 32 test files."*
+
+T32 is **not** the same mistake: that sentence is read by a reviewer, not spoken to a guest. I
+checked the analogous risk, since `sol.md:81-99` *is* the voice prompt — the phone agent already
+says *"a manager has it and will follow up"*, and iteration 76 confirmed `"reaches Sales"` is
+absent from the live voice instructions. **Guest-facing path is clean on both channels.**
 
 ### The plan is accurate and correctly ordered
 
-**Enrique, in order:** the SQL paste · Telnyx top-up · **T21** two rows (verified safe).
-**Agents:** **T31** the README count · re-export the Telnyx JSON · **T32** lowest priority.
+**Enrique, in order:** the SQL paste · Telnyx top-up · **T21** two rows.
+**Agents:** re-export the Telnyx JSON · **T32** lowest priority.
 
 ### The single most important remaining item
 
 **The `drop policy` paste.** It closes a live hole *and* restores `agent/sol.md` §13 exactly as
-written. Everything else open is one word, one file refresh, or one sentence I have marked skippable.
+written. It is now the only open item with a live security consequence.

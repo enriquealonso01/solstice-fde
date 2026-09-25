@@ -86,7 +86,7 @@ All four were found by an agent whose only job is to disbelieve the other two, a
 fixed. None of them would have been caught by the tests that were already passing.
 `docs/how-this-was-built.md` has the detail, including what the agents got wrong.
 
-**The result:** 236 files, 146 of them TypeScript, and over 400 tests across 32 test files. The line
+**The result:** over 230 files, more than 140 of them TypeScript, and over 400 tests across more than 30 test files. The line
 count splits in a way worth showing rather than totalling: **about 35,100 lines of source**, 3,500
 of deliverable documents, and **13,800 of the agents' own coordination record** — the plan, the
 three status files, and the two logs in which the loop argued with itself. A single "61,700 lines"
