@@ -379,6 +379,36 @@ export function summarize(name: string, result: ToolResult): string {
  * over Supabase Realtime, which is how "everything the agent does is observable"
  * stops being a claim. Never throws: a logging failure must not break a guest.
  */
+/**
+ * Writes the classified intent onto the session, so the supervisor console can label the
+ * conversation.
+ *
+ * Four admin surfaces read `sessions.intent` and nothing wrote it, so every session ever recorded
+ * rendered as "classifying…" — that is what `intentLabel(null)` returns. `classify_intent` had the
+ * answer the whole time; it only ever reached the tool trace. It lives here rather than in either
+ * runtime because BOTH channels call this tool and both need the same row updated: chat through
+ * `chat.ts`, telephony through the `/api/tools` webhook.
+ *
+ * Never throws, and never blocks a turn. A label is not worth failing a conversation for, which is
+ * also why the original omission was silent.
+ */
+export async function recordClassifiedIntent(
+  ctx: ToolContext,
+  name: string,
+  result: ToolResult,
+): Promise<void> {
+  if (name !== 'classify_intent' || !result.ok) return
+  const classified = (result.data as { intent?: unknown } | undefined)?.intent
+  if (typeof classified !== 'string' || !classified) return
+  try {
+    const db = getDatabase()
+    if (!db || !ctx.session_id) return
+    await db.from('sessions').update({ intent: classified }).eq('id', ctx.session_id)
+  } catch {
+    // the conversation matters more than the label
+  }
+}
+
 export async function recordToolInvocation(
   ctx: ToolContext,
   name: string,

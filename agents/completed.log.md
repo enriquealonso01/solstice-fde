@@ -2404,3 +2404,105 @@ answered whether four prompt PRs broke anything.
 388 tests, `tsc -b --force` clean. **No Telnyx spend** — three Anthropic turns.
 
 ---
+## 2026-09-25 — Telephony still had no intent write, and a collision I caused
+
+**No PR.** Lock held at every attempt across two iterations. Work complete: 398 tests,
+`tsc -b --force` clean. Branch reserved `fix/persist-intent-on-telephony`.
+
+### What happened, and the part that is my fault
+
+Last iteration I built a consolidated fix for the missing `sessions.intent` write: one writer in
+the tool layer, serving both chat and telephony. While I was blocked on the lock, another agent
+shipped **PR #41** — the chat-only version, written into `chat.ts`.
+
+**We share one working directory and one git HEAD.** I found myself on *their* branch, with my
+edits to the same files sitting in the same tree they were committing from. That is a collision,
+and I caused it: the lock protects git operations, but the working tree is shared, so editing files
+another agent is actively working on is unsafe even when I never touch git. I knew they had this
+defect — their status file said so and gave the spec — and I edited the same files anyway.
+
+Nothing was lost. Their PR shipped exactly their two files, my changes stayed uncommitted on top,
+and I verified both before touching anything.
+
+### The judgement I changed on new information
+
+My consolidation would now **rewrite code merged eight minutes earlier**. Hours before submission
+that is the wrong trade, so I reverted my `chat.ts` change and kept theirs exactly as shipped.
+
+What I kept is the part that is still genuinely broken: **telephony had no write at all.** Verified
+on main — zero matches for the new writer in `tools/index.ts`. Voice reaches the tools through the
+`/api/tools` webhook, not through `chat.ts`, so a phoned-in session stays labelled `classifying…`
+forever, and beat 3 opens the supervisor screen on a live call.
+
+So: the writer goes in the tool layer beside `recordToolInvocation`, where the webhook already
+runs, and is wired there only. Eight lines are now duplicated between the two runtimes. I am
+choosing that over rewriting a freshly-merged critical path, and the test says so out loud rather
+than pretending it is tidy:
+
+> "One in `chat.ts` (PR #41), one in the tool layer for telephony. If a third appears, or either
+> disappears, this fails and somebody looks."
+
+My earlier test asserted **exactly one** writer. That assertion was correct for my design and wrong
+for the shipped one, so I changed it to a writer per channel rather than leaving a test that
+enforces a refactor I had just decided not to do.
+
+### Also corrected
+
+`docs/role-walkthroughs.md`, which I wrote, said the Intent column "fills in by itself… before it
+settles". It never settled. I wrote that in iteration 3 from one observation and assumed the state
+was transient instead of checking — which is the same mistake the defect itself is made of.
+
+### The lesson, which is mine
+
+**Do not edit files another agent has told you they are working on, even without touching git.**
+The mutex covers `git` and `netlify`; it does not cover the filesystem. Their status file said
+exactly which file and which lines. I read it, took the task, and edited concurrently rather than
+waiting or picking something disjoint.
+
+---
+## 2026-09-25 — Iteration 45: still blocked, and the protocol claims a guarantee it does not have
+
+**No PR.** Lock held at every attempt for three iterations (14.8 min at the last try — fresh, and
+20 is the threshold I wrote myself). Work complete: 398 tests, `tsc -b --force` clean.
+
+### What I added while blocked, and why it is not busywork
+
+`agents/README.md` opens with:
+
+> "Every piece of coordination is a file, and **each file has exactly one writer.** That is the
+> whole protocol, and it is why two agents cannot corrupt each other's work."
+
+**That last clause is false, and I proved it yesterday evening.** Single-writer ownership covers
+the seven coordination files. It says nothing about the source tree, which has no single writer,
+and all three agents share one working directory *and one git HEAD*. An agent reading that opening
+line would reasonably conclude the protocol protects them while editing `chat.ts`. It does not.
+
+So the document now separates the two claims, and carries a new short section — **"The mutex does
+not cover the filesystem"** — saying what is actually unprotected: editing a file another agent is
+midway through, ending up on *their* branch because `git checkout` moves the shared HEAD, and
+having your uncommitted work sit in the tree they commit from. All three happened in one iteration.
+
+It records the collision as fact rather than abstraction: the Tester's status file named the
+defect, the file and the lines; I read it, took the same defect, and edited the same files anyway.
+Nothing was lost, **and that was luck rather than design.**
+
+Two concrete instructions follow, because a warning without an action is decoration:
+
+- **Read the other status files and pick something disjoint before editing.** That is what they are
+  for. If the only useful work overlaps somebody's declared file, do something else and say why —
+  there is another iteration in five minutes.
+- **`git checkout main && git pull` first when the lock frees.** You may be standing on a branch
+  someone else created and already merged. I am, right now.
+
+### Still pending, unchanged
+
+The telephony intent write. PR #41 fixed chat; the `/api/tools` webhook still has no write, so a
+phoned-in session stays `classifying…` forever, on the surface beat 3 opens. Verified on main.
+`chat.ts` stays exactly as PR #41 shipped it.
+
+**This is the fourth protocol fix of the same shape** — T16's unconditional `rmdir`, PR #32's
+always-null deploy field, PR #39's reminder-instead-of-a-step, and now a stated guarantee that does
+not hold. Each time the words were reasonable and the behaviour they described was not what the
+system did.
+
+---
