@@ -32,10 +32,17 @@ check is still under **Open**.
 
 **Immediately before you rehearse, and again immediately before the demo:**
 
-3. **`npm run demo:tidy`.** The supervisor dashboard's "ACTIVE NOW" tile reads **85**, all of it our
-   test traffic, growing about 25 an hour. It is the first thing a panel sees in beat 3. Takes
-   seconds, closes anything idle over thirty minutes, deletes nothing. Running it earlier than
-   "just before" is wasted — testing regrows it.
+3. **`npm run demo:tidy`. It now does more than tidy a number.** The supervisor dashboard's
+   "ACTIVE NOW" tile reads **96** and climbing, all of it our test traffic — but the real cost is
+   that every one of those rows still counts as *live*, so each card shows a pulsing **"Sol is
+   handling this"** and a **"Classifying…"** badge for a chat somebody abandoned an hour ago. That
+   is the first screen a panel sees in beat 3.
+   We fixed the labels this evening (PR #45): an **ended** conversation with no intent now reads
+   "not classified" rather than pretending to be mid-classification. That fix is invisible until
+   the stale rows are actually closed — which is what this command does. Run it and the board goes
+   from ninety-six fake live conversations to an honest handful.
+   Seconds to run, closes anything idle over thirty minutes, deletes nothing. Running it earlier
+   than "just before" is wasted, because testing regrows it.
 
 **Decisions only you can make, none blocking:**
 
@@ -397,3 +404,60 @@ been moved back to Open — it is a decision, not a resolved item._
   presenter to "click it from the inbox list". That list has 13 rows where the plan describes 11,
   and the presenter's eye passes a row named **"Vantage Labs DELETE-ME"** on the way to INQ-2009.
   Both are mine, neither is a customer, and I have no DB write access.
+
+- **URGENT for the demo, and mostly my fault: the supervisor screen now claims 90 conversations are
+  happening right now.** Its own subtitle reads "Every call and chat Sol is handling **right now**".
+  What it renders: **90 "Active" labels, 100 "Classifying..." labels, 83 elapsed timers**, several
+  over an hour. Postgres agrees: 115 sessions, **90 active**, and **0 of those 90 have `intent` set**,
+  so every one is stuck at "Classifying..." permanently.
+  That does not read as a busy hotel. It reads as a system that never finishes anything, on the
+  headline admin screen.
+  Cause is the known one: chat has no hangup event (the "Close the conversation" button fires zero
+  network calls, proven in iteration 12), so a closed tab stays `active` forever.
+  **It was 11 when I first flagged it; the growth from 11 to 90 is my own chat testing.** I am sorry -
+  every guardrail probe and every three-run repeat left a row behind. I have committed to using the
+  tool endpoints instead of chat wherever a test does not need a live turn.
+  Needed: `npm run demo:tidy`, which is already the last item on your pre-flight checklist. Dry run
+  just now: **115 examined, 0 phantoms, would delete nothing and close 85.** I did not run it because
+  the runbook is explicit that it must happen minutes before they join, not the night before, and my
+  own later iterations would refill it. This note is the number that turns that checklist line from
+  housekeeping into the thing that decides how the screen looks.
+
+- **Correction to my session note above: `demo:tidy` will NOT make the supervisor screen look right.**
+  I found a second, separate defect. **`sessions.intent` is never written - 0 of 115 sessions, at any
+  status, including the 23 already ended.** `intentLabel(null)` returns the literal string
+  `'classifying...'`, which is why every row on the list carries that badge. Four UI surfaces read the
+  column (`SupervisorDashboard.tsx:129` and `:172`, `AdminHome.tsx:117`, `SessionDetail.tsx:97`) and
+  nothing anywhere writes it; `mockData.ts` populates it for fixtures, which is why it looks correct in
+  mock mode and wrong on real data. The tool itself works - `classify_intent` returns
+  `data.intent = "group_booking"` from production right now.
+  So closing the stale sessions changes `status` and leaves the badge alone: you would get a list of
+  *ended* conversations all claiming to be mid-classification. Still run `demo:tidy`; just do not
+  expect it to fix the badge.
+  Needed: nothing from you - it is a contained fire-and-forget write at `chat.ts:428`, and I have
+  written the exact change and the test into `agents/tester.status.md`. I could not ship it because
+  `agents/.lock` was held by another agent for the whole iteration. Whoever gets the lock first should
+  take it; it is small and it is on the headline admin screen.
+
+- **The "classifying..." badge is fixed going forward, but 116 old sessions still show it.** PR #43 is
+  live and verified on both channels (chat and telephony), and the badge now reads e.g. "Group
+  Booking" on screen. But nothing backfills history: **120 sessions, 4 with an intent, 116 still
+  null.** `demo:tidy` does not help - it writes `status`, not `intent`.
+  Practically: any conversation you start during the demo will label itself correctly. If you scroll
+  the Live-sessions list to show history, most rows still read "classifying...".
+  Optional, cheap, your call: a one-off backfill could derive each old session's intent from its own
+  `classify_intent` row in `tool_invocations`, which exists for many of them. I did not do it - it is
+  a bulk write to demo data hours before submission and it is not needed for any beat.
+
+- **G16's voice half has never been executed, and only you can unblock it.** The guardrail is "a
+  failed handoff is never described as a handoff". Its own test case is *unset
+  `TELNYX_TRANSFER_TARGET` and ask for a manager on a call*. I verified the configured path live
+  (`telnyx_warm_transfer`, `transfer_available: True`) and read the unconfigured branch in source - it
+  says the right thing: *"No transfer destination is configured, so the call cannot be handed off
+  live. Tell the guest a manager will call them back today…"*. But it has never run.
+  Needed, if you want it closed: unset `TELNYX_TRANSFER_TARGET` in the Netlify env for two minutes and
+  tell me, and I will drive the voice tool path and confirm the refusal - no call required, I can hit
+  the webhook the way Telnyx does. Otherwise it is fair to say on the day that the chat half is proven
+  (PR #7, PR #28) and the voice half is correct by inspection but untested.
+  Blocks: nothing operationally. It is the only one of the 19 guardrails without an execution record,
+  so it is the one a thorough panellist could catch you on.

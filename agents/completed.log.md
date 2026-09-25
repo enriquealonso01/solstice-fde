@@ -2461,3 +2461,98 @@ Both channels now label their sessions. The supervisor dashboard stops saying `c
 forever, on the surface beat 3 opens.
 
 ---
+## 2026-09-25 — Finishing the intent defect: the badge was still lying on 116 of 120 rows
+
+**PR:** https://github.com/enriquealonso01/solstice-fde/pull/45 (squash-merged, deploy **OK**,
+`not classified` confirmed present in the live bundle `index-Bxb5Gbb_.js`)
+
+PRs #41, #43 and #44 fixed the **write**, so sessions recorded from now on carry an intent. They do
+nothing for the sessions that already exist — and that was the symptom originally reported: *every
+row on the supervisor dashboard shows `classifying…` permanently.*
+
+### Measured before deciding what to do
+
+```
+sessions total       120
+already have intent    4     <- the fix, working forward
+null intent          116
+  classify_intent ran in the trace   31
+  never classified at all            85
+```
+
+**Eighty-five of those never ran a classification.** Nothing is in flight and nothing ever will be,
+so the badge asserts work in progress that never started. And after `demo:tidy` closes the stale
+sessions, the board shows *ended* conversations still "classifying…" — on the screen beat 3 opens.
+
+### Fixed the label, not the data
+
+`intentLabel` now takes the session status. A live row still reads `classifying…`, because that is
+true. An ended or taken-over row with no intent reads **`not classified`**, because that is what it
+is. Callers without a status keep the previous behaviour, so the Tester's existing assertion
+`intentLabel(null) === 'classifying…'` still holds unchanged.
+
+That corrects **all 116 rows with no database write at all**, which keeps the position I have held
+since iteration 25: the demo dataset is Enrique's to change, not mine.
+
+**I did not backfill**, although 31 of those sessions do have a recorded `classify_intent` in their
+trace and could legitimately be populated from it. It is a mutation of demo data hours before
+submission, and it would have fixed 31 rows where the label fix fixes 116. The cheaper change is
+also the more correct one — and it is correct in production, not just for the demo, because a real
+abandoned chat would hit exactly the same thing.
+
+### Why this counts as finishing the defect rather than scope creep
+
+The Tester reported a symptom on a screen. Three PRs fixed the cause for future sessions and left
+the screen looking identical. A defect is not closed while the thing that was reported is still
+visible, and nobody would have noticed from the tests — all 402 pass either way.
+
+402 tests, `tsc -b --force` clean, deploy verified `OK`, `/admin/sessions` 200.
+
+---
+## 2026-09-25 — Looked at the supervisor board as a panel will, and learned what my own fix is worth
+
+**PR:** https://github.com/enriquealonso01/solstice-fde/pull/46 (pending in this iteration's ship)
+
+Last iteration I shipped the honest intent badge and verified `not classified` was in the deployed
+bundle. **That is not the same as verifying the screen reads well**, so I drove the dashboard in a
+real browser as `supervisor@` and looked at it.
+
+### The risk I set out to rule out, ruled out
+
+I was worried a board where ~85 rows say "not classified" would look just as broken as one where
+they all say "classifying…". The live table shows a genuine mix — `group booking` where a
+classification exists, `not classified` where none ever ran. The composition works.
+
+### The thing the screenshot showed that the data never would
+
+The cards at the top of the board all read **"Classifying…"** with a pulsing **"Sol is handling
+this"**. My fix changes nothing for them, and that is correct behaviour: all 95 are still
+`status: active`. Both labels are honest *given the status*; `Sol is handling this` is gated on
+`active` exactly as the badge now is.
+
+**So the board looks wrong for a different reason than I fixed.** The stale-status problem —
+abandoned chats never closed, because a browser tab has no hangup event — is what makes ninety-six
+conversations claim to be live. `demo:tidy` is what closes them, and it is Enrique's to run.
+
+The two compose exactly as intended: **tidy closes them, and then my label tells the truth about
+them.** Before PR #45, closing them would have left a board full of *ended* conversations still
+saying "Classifying…". After it, they say "not classified". Verified against real rows: the live
+table already renders `not classified` on ended voice sessions.
+
+### What I changed
+
+Nothing in the product — it is correct. I strengthened the `demo:tidy` entry in
+`HUMAN_INTERVENTION.md`, because its value proposition has changed and the old wording undersold
+it. It used to say the count looks silly. It now says what a panel actually sees: ninety-six cards
+claiming a person is being helped, each with a pulsing dot, for chats abandoned an hour ago — and
+that running the command is what makes last night's label fix visible at all.
+
+### Worth saying
+
+I have verified this fix three ways now — unit tests, the deployed bundle, and the rendered screen
+— and only the third one told me anything I did not already know. The first two would have let me
+report "shipped and verified" while the board still looked like a wall of false activity.
+
+402 tests, `tsc -b --force` clean. **No Telnyx spend** — one signed-in browser session.
+
+---
