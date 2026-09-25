@@ -4781,3 +4781,103 @@ PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon ke
 Three new `active` sessions from the timed turns (140 → 143), which is exactly the growth the runbook
 warns about and the reason `demo:tidy` runs *after* the loop stops. No escalations created — the group
 turn asked for an email before escalating. Open escalations unchanged at **38**.
+
+---
+
+## Iteration 54 — 2026-09-25 23:26–23:35Z — FIXED-PENDING — the voice leg announces a handoff with nothing in writing, and two of us had the wrong premise about which branch is live
+
+Took **PR #83** ("Say what 'today' rests on, and change nothing Sol says"), the newest untested change.
+It verifies four claims, and names the one its conclusion depends on:
+
+> `TELNYX_TRANSFER_TARGET` is absent from the DEPLOYED env, checked with `netlify env:list` rather than
+> read from the local `.env` — which is what makes the fallback branch the live configuration rather
+> than a test condition.
+
+That is the right instinct and the right instrument. It is also, as a conclusion, wrong, because two
+variables decide it:
+```ts
+const target = process.env.TELNYX_TRANSFER_TARGET ?? process.env.DEMO_PHONE ?? null
+const configured = Boolean(target) && Boolean(process.env.TELNYX_API_KEY)
+```
+`netlify env:list` on the deploy, all 26 keys:
+```
+TELNYX_TRANSFER_TARGET   absent
+DEMO_PHONE               SET      <- the ?? fallback
+TELNYX_API_KEY           SET
+  => configured = true.  The ANNOUNCE path is live, not the refusal.
+```
+
+**Confirmed against production rather than inferred from the code:**
+```
+POST /api/tools/transfer_to_human {"channel":"voice","reason":"…asking for a manager now."}
+  ok                 True
+  directive          telnyx_warm_transfer
+  transfer_available True
+  target             <a number is set>
+  fallback           (null)
+  escalation_id      None
+  human_reason       "Announce the handoff before it happens, read the context back to the person
+                      picking up, then step aside."
+```
+
+### Which is a G16 gap on the leg G16 was written for
+A warm transfer is **announced before it connects**. So between the announcement and the pickup the
+guest has been told a manager is coming and **nothing durable exists** — `escalation_id: None`,
+`fallback: null`, and no instruction anywhere in that path to create one. A transfer can fail for
+reasons this branch cannot see, and the obvious one is live: the Telnyx balance is **$3.09**.
+
+The chat branch has refused to do this since my own PR #7 — with no escalation it returns *"nothing
+durable has reached a human. Call create_escalation before you finish this turn"* and *"Never describe a
+handoff that has not happened."* The voice branch only refused when **unconfigured**, which is not the
+deployed state. My PR #7 comment even asserts the opposite — *"The voice branch above already refuses to
+pretend; chat owes the guest the same honesty"* — true of the unconfigured path only, and I wrote it
+without checking which path production takes. Corrected in the file.
+
+### Fixed — PR #85, `68b4107`, deployed
+The configured path now asks the second question too:
+```
+fallback:     configured && !escalationExists
+              -> 'No escalation exists yet, so if this transfer does not connect nothing durable has
+                  reached a human. Call create_escalation before you announce the handoff.'
+human_reason: configured && !escalationExists
+              -> 'Create the escalation first, so there is a written record if the transfer does not
+                  connect. Then announce the handoff, read the context back…'
+```
+With an escalation already in hand the behaviour is byte-for-byte what it was, so this is not a blanket
+refusal — and **no guest-facing wording changed**, which is exactly what PR #83 asked for. Its argument
+about "today" is untouched and I am not disputing it: Policy 15 does specify same-day routing, and I
+verified at iteration 50 that all three complaint runs say "today" as the tool instructs.
+
+Deploy `6ab70468e5651e33904d34d4`, published after `68b4107`. Lock 23:28:23Z → released below.
+
+`voice-transfer-record.test.ts`, 9 cases, pins the shape rather than the prose. **Red-checked twice:**
+restoring the unconditional configured path fails 2 cases; dropping `DEMO_PHONE` from the `??` chain
+fails the both-variables case. Suite **473 / 37 files**, `tsc` clean.
+
+### RETRACTION: my own request to Enrique was based on the same mistake
+`HUMAN_INTERVENTION.md` has said for many iterations:
+
+> **G16's voice half has never executed.** Its test case is *unset `TELNYX_TRANSFER_TARGET` and ask for
+> a manager on a call*. Unset it for two minutes and I can drive the webhook — no call, no spend.
+
+`TELNYX_TRANSFER_TARGET` was **already unset on the deploy the entire time**, so there was nothing for
+him to do, and unsetting it would have changed nothing while `DEMO_PHONE` is set. To reach the
+unconfigured branch you have to unset **both**. I asked a human to do something that was already done,
+for twelve hours, because I read the local `.env` and a variable name instead of the deployed
+environment and the expression. Corrected in `HUMAN_INTERVENTION.md`.
+
+**The rule, and it now has three instances in three iterations:** iteration 51, I measured the working
+tree when the question was what ships; iteration 52, `git grep` without a rev; here, one variable out of
+a two-variable expression. **Read the expression, not the variable you expected to matter — and read it
+where it runs.**
+
+### What is now testable that was not
+The *unconfigured* branch is still unexercised in production, because production is configured. But it
+is no longer blocked on Enrique: it needs `DEMO_PHONE` unset as well, and that is a demo-relevant change
+I am not making unilaterally fifteen hours out. The configured branch — the live one — is now exercised
+above with its real payload.
+
+### Migration 004: fifth consecutive iteration, still not applied
+```
+PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
+```

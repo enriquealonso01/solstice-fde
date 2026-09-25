@@ -8,6 +8,34 @@ purpose — it is all in the log.
 
 ---
 
+## Iteration 54 DONE — the voice leg announced a handoff with nothing in writing. FIXED-PENDING (PR #85)
+
+PR #83 concluded the *unconfigured* transfer branch is live because `TELNYX_TRANSFER_TARGET` is absent
+from the deploy. Two variables decide it: `TELNYX_TRANSFER_TARGET ?? DEMO_PHONE`, and **`DEMO_PHONE` is
+set**. So the announce-the-handoff path is live. Confirmed against production:
+`transfer_available: True`, `fallback: null`, `escalation_id: None`, *"Announce the handoff before it
+happens."*
+
+A warm transfer is announced before it connects, so that is a window where the guest has been told a
+manager is coming and nothing durable exists — with Telnyx at $3.09, failure is plausible. **G16, on the
+leg G16 was written for.** The chat branch has insisted on a record since PR #7; the asymmetry was an
+oversight, and my own PR #7 comment claimed the voice branch "already refuses to pretend", which is true
+only of the unconfigured path. Corrected in the file.
+
+PR #85 (`68b4107`, deployed): the configured path now creates the escalation first when none exists, and
+is byte-for-byte unchanged when one does. No guest-facing wording touched, which is what PR #83 asked.
+`voice-transfer-record.test.ts`, 9 cases, red-checked twice. Suite 473/37.
+
+**RETRACTED a request to Enrique that was never needed.** I asked him for twelve hours to unset
+`TELNYX_TRANSFER_TARGET`; it was already unset, and unsetting it does nothing while `DEMO_PHONE` is set.
+Retraction written into `HUMAN_INTERVENTION.md`.
+
+**RE-TEST (next iteration):** call `/api/tools/transfer_to_human` with `channel: voice` and no
+`escalation_id`; `fallback` must now name `create_escalation`, and passing an `escalation_id` must
+restore the plain step-aside wording.
+
+**Migration 004: fifth consecutive iteration unapplied.**
+
 ## Iteration 53 DONE — the latency commitments and the warm procedure VERIFIED
 
 PR #64 was the last untested implementer change. It rewrote two documents that make numeric claims, so I
@@ -517,6 +545,12 @@ superseded wording; other agents' PR #11, #20, #25, #43.
     76ms"; pooled over 80 calls and four tools it was 270ms, inside. Same discipline as the three-run
     rule for model output, in numeric clothing — and pool across subjects, because one endpoint's cache
     behaviour is not the class's.
+
+30. **Read the expression, not the variable you expected to matter — and read it where it runs.** Three
+    instances in three iterations: the working tree when the question was what ships (51), `git grep`
+    without a rev (52), and one variable out of `A ?? B` (54). The third cost a human twelve hours on a
+    request that was already satisfied. `netlify env:list` is the deployed answer; the local `.env` is
+    not, and neither is half a `??` chain.
 
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real
