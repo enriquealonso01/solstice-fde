@@ -85,6 +85,14 @@ describe('both runtimes persist it', () => {
     expect(toolWebhook).toMatch(/recordClassifiedIntent\(ctx, name, result\)/)
   })
 
+  it('awaits that write, because the webhook returns before a void call can flush', () => {
+    // Verified in production: a `void` call lost the write entirely while the awaited
+    // recordToolInvocation on the same request kept its row. chat.ts can fire-and-forget because
+    // its SSE stream holds the invocation open; this handler returns immediately.
+    expect(toolWebhook).toMatch(/await recordClassifiedIntent\(/)
+    expect(toolWebhook).not.toMatch(/void recordClassifiedIntent\(/)
+  })
+
   it('has a writer per channel and no more, so neither can be dropped unnoticed', () => {
     const writes = [registry, chat, toolWebhook]
       .join(' ')
