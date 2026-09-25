@@ -4051,3 +4051,129 @@ identity it had never checked, and printed `[object Object]` where the answer sh
 in two earlier iterations, without my stopping on it. **An unreadable value in an instrument's output
 is a failure, not noise.** And a guard is only a guard if you have watched it refuse: this one had
 never once aborted a run, which should have been the tell.
+
+---
+
+## Iteration 45 — 2026-09-25 22:18–22:26Z — VERIFIED: PR #69, one conversation cannot file the same escalation twice
+
+G17 was the next item on my standing list, but it is already VERIFIED twice — once early and again at
+iteration 28 across every row in the table with a completeness proof. Re-running it is worth less than
+the newest shipped code with no entry in this log at all. That is **PR #69** (`3d93312`), the escalation
+dedupe, merged eight minutes before I started. `#64`, `#66` and `#67` are also untested and are next.
+
+**It is deployed.** Commit `22:18:32Z`; deploy `6ab6f340598157ea0c6c45e7` created `22:18:40Z`, published
+`22:18:56Z`, state `ready`.
+
+### The defect the PR describes is real, and still sitting in production data
+Baseline before I touched anything: **38 escalation rows, all `open`**;
+categories `other 26, dispute 6, refund 4, safety 2`. Five sessions carry more than one row, exactly as
+the commit says:
+```
+0b6c518d  2 rows -> [('other','open'), ('other','open')]
+347909de  2 rows -> [('safety','open'), ('safety','open')]
+258e7a7c  2 rows -> [('other','open'), ('other','open')]
+de795b28  2 rows -> [('dispute','open'), ('dispute','open')]
+ecccd817  2 rows -> [('refund','open'), ('dispute','open')]   <- two categories, correctly two rows
+```
+And the claim about which copy is worse holds on `0b6c518d`, six seconds apart:
+```
+22:13:48  b265938c  "Prospective group booking: 20 rooms, 3 nights in October, Denver property.
+                      Guest wants ballpark per-night rate and group discount…"
+22:13:54  e5f12761  "Group booking inquiry: 20 rooms, 3 nights in October at Denver property.
+                      Guest wants ballpark rate/discount for budget purposes."
+```
+
+### Test A — same session, same category: MERGES, does not insert
+Called `POST /api/tools/create_escalation` with that session id and `category: other`:
+```
+HTTP 200   ok: True
+escalation_id        : b265938c-afbc-40ac-a38f-bec1bc12a0e1     <- the row that already existed
+merged_into_existing : True
+table count after    : Content-Range: 0-0/38                    <- unchanged
+rows for the session : 2  (b265938c other/open, e5f12761 other/open)
+```
+The summary on `b265938c` was replaced by mine, so the update really executed rather than no-opping.
+
+### Test B — same session, DIFFERENT category: opens its own row
+This is the case the PR calls out as worse than the bug it fixes. Two `other` rows open, asked for
+`safety`:
+```
+ok: True
+escalation_id        : 0e42e50a-94d7-4211-bc3f-8ffd0065e39e     <- new
+merged_into_existing : False
+category             : safety
+severity             : critical                                 <- not 'normal' like the group rows
+notify               : ['General Manager', 'Regional Security']
+rows for the session : 3     table count: 38 -> 39
+```
+So the category is genuinely part of the key, and the routing that justifies it is materially
+different: `critical` and GM + Regional Security, against `normal` for the group enquiry.
+
+### Test C — a closed row is never reopened
+Closed `0e42e50a`, then asked for `safety` again on the same session:
+```
+0e42e50a status now  : closed
+escalation_id        : 6a5bad49-e881-478b-9d9b-238b6a788de1
+merged_into_existing : False
+reopened the closed row? False
+session rows: b265938c other/open · e5f12761 other/open · 0e42e50a safety/closed · 6a5bad49 safety/open
+```
+
+### Their tests bite — I ran the red-check rather than take the commit message for it
+`mergeTargetFor` is exported and pure, so I mutated it and watched:
+```
+as shipped                                  13 passed
+mutant 1: drop the category key               8 failed | 5 passed
+          (the six must-NOT-merge categories, plus "not present" and "matches on the row it was given")
+mutant 2: ignore status, merge into closed    2 failed | 11 passed
+          ("does not reopen an escalation a supervisor has already closed", and the mixed open/closed case)
+restored                                     13 passed
+```
+Both numbers match the claim in the commit exactly. `escalation.ts` restored, `git diff` clean. Full
+suite **443 passed / 32 files**.
+
+### I corrupted a production row while restoring it, and caught it
+Putting `b265938c` back, my first restore wrote the packet's policy citation as
+`Policy 15 â€” Escalation matrix`. Cause: the `python -c` that built the restore body opened the backup
+**without `encoding='utf-8'`**, so Windows decoded it as cp1252 and I PATCHed the mojibake into the
+database. Rule 5 has bitten me seven times as a false positive; this is the first time it was real, and
+it was self-inflicted.
+
+Re-restored with `encoding='utf-8'` and `ensure_ascii=True` so no byte can be reinterpreted in transit,
+then byte-checked the live row rather than trusting the response:
+```
+raw bytes  : b'Policy 15 \xe2\x80\x94 Escalation m'      <- correct UTF-8 em dash
+\xc3\xa2 (the mojibake marker) present: False
+summary / severity / status / packet identical to the original: True
+```
+**New rule: never open a file in a restore path without naming the encoding.** A comparison that says
+"identical" is only as good as the decoder on both sides — my first check reported `packet identical:
+False` and I nearly read that as the tool having changed something.
+
+### Cleanup and two honest observations
+Both control rows are `closed`, and the **open** count is back to the baseline `38`
+(`Content-Range: 0-0/38`). They are `0e42e50a` and `6a5bad49`, summaries labelled
+"TESTER iteration 45 control row … Safe to close or delete."
+
+**1. Which open row a merge lands on is not defined.** The lookup is
+`.from('escalations').select('id,category,status').eq('session_id', …)` with **no `.order()`**, and
+`mergeTargetFor` takes the first match. Test A landed on the older of the two. Their own test
+"matches on the row it was given rather than on order" pins the function but not the query feeding it.
+Low impact — after this fix a session cannot accumulate two open rows of one category, so the ambiguity
+only exists for the five sessions that predate it — and merging into either is defensible. Recording it
+rather than filing it.
+
+**2. The "supervisor's queue" in the rationale is not a screen in this build.** The commit says the
+duplicate means "the supervisor's queue shows one guest twice". Nothing reads that table:
+`grep -rn "escalations" src/` outside mocks and `backendMapModel.ts` returns nothing, and
+`from('escalations')` appears only inside `escalation.ts` itself. So the duplicates were invisible to
+any user, and the five pre-existing ones will not show at the demo. The fix is still correct — a
+duplicate row is wrong data and the packet is the durable record — but the user-visible harm was
+overstated. The backend map is honest about this: it presents `escalations` as a data node holding the
+packet and never claims anything is sent.
+
+**Not executed, read only:** with no `session_id` the merge lookup is skipped entirely
+(`if (ctx.session_id)`), so every such call inserts. Correct — there is no key to dedupe on — but I did
+not exercise it, because doing so would have added a row I could not delete.
+
+**VERIFIED.** No fix needed, no lock taken for the test itself.
