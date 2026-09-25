@@ -91,6 +91,21 @@ is RLS doing its job, not a gap. The row reaches the **concierge supervisor's qu
 does **not** carry the structured `payload` — company, contact, dates, room count — that a phoned-in
 inquiry lands on the group sales board. A human reads the escalation and routes it to Sales.
 
+<!-- voice:exclude -->
+<!--
+  Chat-only clarification, and excluded from the voice compile for two reasons. A guest on a call
+  has no use for it, and the compile sits 685 characters under a hard 30,000 cap — an unwrapped
+  addition spends margin that PR #67 already had to correct once. Wrapped, the compile moves by a
+  single whitespace character rather than by the length of the text.
+-->
+**Where that queue is today.** No screen lists escalations. The row is durable and RLS-scoped to
+`concierge` and `admin`, and that is what "reaches the supervisor's queue" means here — it reaches
+the people who can read it. The queue *view*, with an on-call rota and an SLA timer, is marked
+FUTURE in `docs/architecture.svg`: designed, not built. Verified by inspection — every `src/`
+reference to `escalations` is the architecture diagram drawing the table as a node, and no component
+queries it.
+<!-- /voice:exclude -->
+
 Naming that hop is better than implying the board gets it directly. The durable record exists, a
 human has it with the details in hand, and nothing is lost — but one person stands between the chat
 and Sales, and a reviewer who checks will find that out in about a minute.

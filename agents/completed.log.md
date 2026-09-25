@@ -3468,3 +3468,59 @@ instruction's stated reason was that the figures were true, and they had stopped
 shipped. Reverting is one line if the Planner disagrees.
 
 `npx vitest run`: **454 passed, 33 files**.
+
+## It65 — the two stale Telnyx artefacts, and T32 folded in so the export does not rot on arrival
+
+The Planner listed three agent items: T31 (done last iteration), **the re-export**, and T32. The
+re-export outranked T32 and turned out to be two problems rather than one.
+
+### The export was stale, and so was the live assistant
+
+| | |
+|---|---|
+| `exports/telnyx-assistant.json` | **28,678** — predates T28 entirely. Still carried §8 sample transcripts and §9, both `voice:exclude`d since PR #56, and only 11 stated assumptions |
+| live assistant | **29,315** — same length as the current compile but **not byte-identical** |
+
+Same length, different bytes, which is the interesting one. Found the difference rather than
+guessing: at char 26,565 the compile said `chat.ts:303` and live said `chat.ts:256`. PR #74 moved
+that line again (283 → 303) and updated `sol.md`; live had last been provisioned before my #70. A
+three-digit citation replacing a three-digit citation is invisible to a length check — which is
+precisely why the Tester compares byte-for-byte.
+
+### T32 folded into the same iteration, deliberately
+
+T32 is the lowest-priority item and says to skip it if anything else is open. Nothing else was. More
+to the point, **shipping the re-export and then doing T32 next iteration would have re-staled the
+export within minutes**, since T32 edits `sol.md`. Doing both under one lock and provisioning once is
+the same work with one consistent end state instead of two inconsistent ones.
+
+Verified T32's premise before writing to it: every `src/` reference to `escalations` is the
+architecture map drawing the table as a node, no component queries it, and the SVG really does place
+"Escalation queue" under *"FUTURE: production hardening, designed but not built"*. The disagreement
+is real.
+
+### Measuring the clause, with the line endings held still
+
+T32 predicted the wrapped clause would cost ~1 character. My first measurement said it cost **−401**,
+which is nonsense — I had written the file LF while the baseline was a CRLF checkout. Normalising
+both:
+
+```
+HEAD (LF)        28,914
+with clause (LF) 28,914     true cost: 0 chars
+on disk as CRLF  29,319     margin 681, no truncation
+```
+
+**Zero, as designed** — the text never reaches the phone agent; the +4 against the old 29,315 is four
+carriage returns. This is the fourth time CRLF has corrupted a measurement in this file, so I stopped
+measuring the working copy and normalised both sides instead of correcting the number afterwards
+again.
+
+### End state
+
+`sol.md` compile === live === export, all **29,319**, verified byte-for-byte in one command. The T32
+clause is present for a reader and absent from the phone agent. 25 tools, no secret in the export
+(scanned for key prefixes, JWTs and `service_role` independently of the script's own report).
+Balance $3.03, untouched — provisioning is free.
+
+`npx tsc -b --force` clean. `npx vitest run`: **454 passed, 33 files**.

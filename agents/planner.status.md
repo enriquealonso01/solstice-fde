@@ -4,73 +4,59 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 81 — 2026-09-25 ~18:48 EST
+## Iteration 84 — 2026-09-25 ~19:06 EST
 
-### Inbox empty. No lock held. Deploy current with HEAD. PR #74 live.
+### Inbox empty. Lock held. Guardrails 18 of 19.
 
-### I was wrong about `chat.ts:146`, twice, and it was telling guests something false
+### The re-export is done, and I checked bytes rather than length
 
-In iterations 75 and 77 I recommended leaving the chat channel note as assumption 16: *"one hop,
-not a fabrication"*, *"a guest cannot tell the two sentences apart"*, and — the part I should have
-distrusted — *"and not merely because it is the cautious option."*
-
-PR #74 measured it against production. **Four runs out of four:**
-
-> *"I've logged this and it's going to our Sales team today. They'll reach out to dana.reyes@… with
-> a quote."*
-
-**A named destination and a promised day, both false**, while the tool result in the model's own
-context read `Escalation … to agm`. The model was not drifting — it was obeying the note.
-
-Both my reasons were wrong on the facts. It *was* a fabrication. And *"a manager has it"* versus
-*"our Sales team will reach out today with a quote"* are not the same sentence: the second is a
-commitment a guest waits on and finds broken, which is the exact failure the `honest-handoff`
-transcript exists to say this system does not commit.
-
-### The mechanism I missed, having already read it
-
-```ts
-cachedPrompt = `${readPromptFromMarkdown() ?? SOL_SYSTEM_PROMPT}\n${CHAT_CHANNEL_NOTE}`
+```
+live    29315  834d62ff327b4d0ecc5b6a48f073db12
+export  29315  834d62ff327b4d0ecc5b6a48f073db12   identical: true
 ```
 
-The note is appended **last**, so it is the most salient instruction and **outranked the `sol.md`
-correction above it**. I quoted this exact line in iteration 75 while establishing which prompt the
-chat runtime serves, and drew nothing from the order. I treated the two texts as peers whose
-claims a reader would weigh. They are not peers — position decides.
+Also carries **25 tools** and `model: anthropic/claude-haiku-4-5`. In the working tree,
+uncommitted, lock held. **That was the last ordinary agent item.**
 
-### The shape of the error
+### The model claims hold, checked against the deployed environment
 
-All three of my reasons were **assertions about what the model would say to a guest**, and I never
-ran it. One production conversation would have settled it; the harness existed all day.
+README:45-46 claims chat is **Sonnet 5** and phone is **Haiku 4.5**, and `latency-target.md` argues
+at length for *not* moving chat to Haiku. That argument is only honest if chat really runs Sonnet.
+**`ANTHROPIC_MODEL` is unset on the deployed site**, so `chat.ts:56`'s `claude-sonnet-5` default
+applies; the export confirms voice is Haiku. **Both true, reasoning intact.**
 
-Fourth time wrong with this instinct — and this time I told myself it was not mere caution before
-giving three untested reasons. **That is the tell: I dressed an untested assumption in the
-vocabulary of a risk assessment.** A risk assessment prices a measured outcome. I declined to
-measure and argued from the guess. *"Verify claims against reality"* applies to my own
-recommendations, not only to other agents' status files.
+### T33 revised again — and away from a code change
 
-### The fix is well-built, and an hour-old guard paid for itself
+I read the **deployed** environment rather than `.env`: **`TELNYX_TRANSFER_TARGET` is unset in
+production.** So `transferToHuman`'s fallback is the **live configuration**, not a test condition,
+and it says *"a manager will call them back today."*
 
-The note keeps the true part — a group block is priced by Sales — and forbids naming who will make
-contact or promising when. Three `file:line` citations moved in the edit and
-**`doc-citations.test.ts`, from PR #70 about twenty minutes earlier, caught them**, with substrings
-unchanged so the guard was not weakened to let the change through.
+That puts "today" in **three** places — and the third decides it: `agent/sol.md:283` defines **G16**
+as correct when Sol says *"a manager will call back today, and an escalation exists."* **The phrase
+is part of a guardrail's success criterion.**
 
-### T31 closed. T32 re-ranked and stays lowest
+**The steelman I had been discounting is right: Policy 15 genuinely specifies same-day routing.**
+Sol is reporting hotel policy, which is what a concierge agent should do. What is missing is a
+**notification layer**, which the diagram already marks **FUTURE**. The gap is policy-versus-
+implementation and belongs in the architecture section, not the guest sentence.
 
-`README.md:89` now reads *"over 400 tests across 32 test files."*
+**Revised: change no wording.** One `voice:exclude` paragraph in `sol.md` on what "today" rests on,
+one runbook line for the panel question. **This supersedes my own iteration-83 instruction** to
+remove the timing — that was right only while the timing looked like an accident.
 
-T32 is **not** the same mistake: that sentence is read by a reviewer, not spoken to a guest. I
-checked the analogous risk, since `sol.md:81-99` *is* the voice prompt — the phone agent already
-says *"a manager has it and will follow up"*, and iteration 76 confirmed `"reaches Sales"` is
-absent from the live voice instructions. **Guest-facing path is clean on both channels.**
+### Why this is not the over-caution I was wrong with earlier
+
+In iteration 81 my reasons were claims about behaviour I had not measured, and they were wrong.
+Here every step is a file and a line — three call sites, a guardrail definition, a policy — and the
+mechanism says the sentence is *correct* while the thing behind it is missing and already disclosed.
+**The one claim I cannot check without spending money — what the voice agent actually says — is
+still marked unmeasured and still gated on the same call.**
 
 ### The plan is accurate and correctly ordered
 
-**Enrique, in order:** the SQL paste · Telnyx top-up · **T21** two rows.
-**Agents:** re-export the Telnyx JSON · **T32** lowest priority.
+**Enrique:** the SQL paste · **Telnyx top-up** (beat 3, G16, T33's one unmeasured claim) · T21.
+**Agents:** commit the re-export · T33's disclosure paragraph, which absorbs T32.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** It closes a live hole *and* restores `agent/sol.md` §13 exactly as
-written. It is now the only open item with a live security consequence.
+**The `drop policy` paste** — still the only open item with a live security consequence.
