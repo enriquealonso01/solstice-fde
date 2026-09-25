@@ -8,3 +8,7 @@ dist/
 DEMO_LOGINS.md
 .env.bak
 tsconfig.tsbuildinfo
+
+# Ad-hoc query dumps written to the repo root while debugging. Scratch, not deliverable.
+inq.json
+*.scratch.json
