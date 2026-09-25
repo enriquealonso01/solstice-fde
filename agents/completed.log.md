@@ -3635,3 +3635,52 @@ the panel answer · **no runtime or prompt file touched**, so no guest-facing wo
 row is byte-identical, only its line number moved, and no deliverable cites `sol.md` by line.
 
 `npx tsc -b --force` clean. `npx vitest run`: **462 passed, 35 files**.
+
+## It68 — audited `SUBMISSION.md`, which I had never checked, and it cannot count to three
+
+Queue empty (T21 is Enrique's, Inbox empty). `SUBMISSION.md` is the **first file a reviewer opens**
+and the one deliverable I had never audited, so that is where I went.
+
+### What held up
+
+| Claim | Verdict |
+|---|---|
+| Every referenced path exists | ✅ 13 paths, all present |
+| *"five chat, one real phone call"* | ✅ six files, `voice-call.md` is the phone one |
+| *"the six agents"* | ✅ consistent with `how-this-was-built.md`, which says six |
+| *"Two things are built but not live"* + 2 bullets | ✅ |
+| *"Open INQ-2007 … a suite rate of −395 and a referral to a Boston property"* | ✅ **verified live**: the referral surfaces, the suite rate is quarantined, and −395 never appears as a rate |
+| The transcripts, against PR #74's wording change | ✅ the two that quote a promise quote the *escalation* timing, which T33 deliberately kept. No transcript captures the group/Sales path #74 changed |
+
+That last one is worth noting as a near miss: PR #74 changed what chat says about Sales, and my first
+thought was that it had staled two transcripts the way T30's finding did. It had not — checked instead
+of assumed, and the answer was no work needed.
+
+### What did not hold up
+
+**`SUBMISSION.md:45` said *"Two things they did not ask for"* and listed three.** In the deliverable
+index, in a sentence a reader counts against the list directly beneath it. I have read that file
+several times this session without noticing, and so has everyone else — it was found by sweeping for
+the *pattern*, which is the only reason it was found at all.
+
+**And one of mine: a comment in `sol.md` said the compile sits `685 characters` under the cap.** It is
+681, and it has moved twice. Replaced with "a few hundred characters" rather than corrected to a
+number that will rot again — the same reasoning T31 forced on the README, applied to my own prose
+before someone else has to file it.
+
+### The guard, and why it is narrow on purpose
+
+`list-counts.test.ts` fires on a count word, a colon ending the line, and bullets immediately below.
+My first sweep was looser and flagged *"excluded for two reasons. A guest on a call has no use for it,
+and …"* — prose where both reasons are given inline and the next bullets belong elsewhere. **One false
+positive is enough to teach people to ignore a guard**, so it only fires on the shape it can actually
+judge.
+
+Red-checked both ways, which for this guard means both directions matter:
+
+1. Restored *"Two things"* → fails with `SUBMISSION.md:45 says "Two things" and lists 3`.
+2. The *"two reasons"* prose is still in `sol.md` → stays green.
+
+Compile unchanged at **29,319**; compile === live === export still holds, so no re-provision.
+
+`npx tsc -b --force` clean. `npx vitest run`: **464 passed, 36 files**.

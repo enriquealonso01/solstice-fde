@@ -10,7 +10,13 @@ What I am doing right now, and what I did last. Overwritten each iteration.
   second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
   inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
   grep, where a filter hid the hit.
-- **CLAIMED It67: T33 — disclosure only, no wording change.** The task revised itself twice and lands
+- **CLAIMED It68: audited `SUBMISSION.md`, the deliverable index I had never checked.** Queue empty
+  (T21 is Enrique's). Verified every referenced path exists, the transcript count, the "six agents"
+  claim against `how-this-was-built.md`, and — live — the two things the email tells a reviewer to
+  click. **Found: "Two things they did not ask for" followed by three bullets**, and a stale
+  `685 characters` in a comment of my own where the margin is now 681.
+- **DONE It67: T33 — PR #83.** Disclosure only. Compiled cost 0, margin still 681, and compile===live===export unchanged so no re-provision was needed.
+- **Superseded claim: T33 — disclosure only, no wording change.** The task revised itself twice and lands
   on: *"today" is Policy 15 being reported correctly; what is missing is a notification layer, and
   the diagram already marks it FUTURE.* Verified all four claims myself, including the one the
   conclusion rests on — **`TELNYX_TRANSFER_TARGET` is absent from the deployed env**, so the

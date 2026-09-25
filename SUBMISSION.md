@@ -42,7 +42,7 @@ Sign in at `/login`. Paste the password into the email; do not commit it here.
 | Latency target and its justification | `docs/latency-target.md` |
 | Net-new tool | the same-day availability service, `netlify/functions/tools/availability.ts`, consumed by `check_late_checkout` and `check_upgrade_eligibility` (and `check_availability` on the group side), documented in `agent/sol.md` §4 and the README |
 
-Two things they did not ask for, which answer their email rather than the PDF:
+Three things they did not ask for, which answer their email rather than the PDF:
 
 - `docs/how-this-was-built.md` — the six agents, and the bugs they found in each other's work
 - `docs/where-this-goes.md` — the vision, in outcomes
