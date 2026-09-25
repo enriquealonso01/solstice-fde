@@ -4961,3 +4961,98 @@ accusation.
 ```
 PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
 ```
+
+---
+
+## Iteration 56 — 2026-09-26 23:41–23:50Z — VERIFIED: all ten live proposal PDFs, their arithmetic, and the capability paths that gate them
+
+Nothing was pending re-test and the tree was consistent (37 files / 473 tests, no tracked file missing
+from disk — iteration 55's check, now part of the opening sweep). So I went to the artefact a panel opens
+and I had not read since iteration 38, across which the wording changed in PRs #33, #36, #49, #50, #53,
+#55, #66, #72, #79, #83 and #87.
+
+### Ten PDFs, read from production
+Every proposal row with a `pdf_path`, fetched from its live capability URL to disk and checked to be a
+real PDF rather than an error page:
+```
+PRP-2001   %PDF 2742 B     PRP-2001-2 %PDF 2738 B     PRP-2001-3 %PDF 2710 B
+PRP-2002   %PDF 2705 B     PRP-2005   %PDF 2739 B     PRP-2006   %PDF 2769 B
+PRP-2007   %PDF 2807 B     PRP-2008   %PDF 2757 B     PRP-2009   %PDF 2766 B
+PRP-2011   %PDF 2570 B
+10 of 10 downloaded · 1 page each · 8,704 characters extracted
+```
+**The first attempt downloaded nothing** — HTTP 000, ten files of 0 bytes, because the URLs carried a
+trailing `\r` from the file I wrote them to. I caught it by counting files on disk rather than trusting
+the loop, which is the iteration-36 PDF sweep failure exactly: that sweep reported clean having read
+ZERO files. The counted assertion is why this one could not.
+
+### Nine defect classes, ninety checks, clean — and the sweep can fail
+```
+mojibake · doubled word · undefined/NaN/null · [object Object] · unfilled template
+doubled punctuation · Invalid Date · $NaN/$undefined · bare $0.00 total
+  -> 9 patterns x 10 files = 90 checks, 0 hits
+```
+**Red-checked by injecting a real instance of each into a copy of the extracted text:**
+```
+mojibake ("Policy 15 â€” Escalation matrix")        CAUGHT
+doubled word ("to the the Boston property")         CAUGHT
+undefined ("Total: undefined")                      CAUGHT
+doubled punctuation ("Alumni Assoc.. Reference")    CAUGHT
+unfilled template ("Dear ${company_name},")         CAUGHT
+```
+Three of those five are defects this log has actually found before, in PRs #33, #36 and earlier, so they
+are not hypothetical patterns.
+
+### The substantive check: no PDF prints a number that is not in its own row
+For each PDF, against its `pricing` JSON: is the row's total printed, is the discount printed, is the room
+count printed — and, the strong one, **is every dollar figure in the letter a figure from that row**?
+```
+PRP-2001/-2/-3  $7,095.60  10%  18 rooms   OK
+PRP-2002        $18,258.00 15%  40 rooms   OK
+PRP-2005        $7,245.92   8%  22 rooms   OK
+PRP-2006        $3,625.20   5%  12 rooms   OK
+PRP-2007        $5,724.00  10%  20 rooms   OK
+PRP-2008        $8,517.60  10%  28 rooms   OK
+PRP-2009        $7,994.25  15%  15 rooms   OK
+PRP-2011        $6,444.00  10%  20 rooms   OK
+
+PDFs whose printed numbers disagree with their row: 0 of 10
+stray figures — any dollar amount not derivable from the row: 0
+```
+That last line is what rules out the failure mode this log has seen: a PDF regenerated from stale pricing.
+At iteration 38 PRP-2007's persisted PDF had to be regenerated for exactly that reason.
+
+PRP-2009 in full, and the arithmetic checked by hand rather than trusted:
+```
+Nightly rate      $177.65 (15% off $209.00)      209.00 x 0.85 = 177.65          ok
+Rooms subtotal    $9,405.00                      15 x 3 x 209.00 = 9,405.00      ok
+Group discount    -$1,410.75                     15% of 9,405.00 = 1,410.75      ok
+TOTAL             $7,994.25                      9,405.00 - 1,410.75 = 7,994.25  ok
+"Prepared September 24, 2026 by Sol, Solstice Group Sales, on behalf of Diego Fuentes, General Manager."
+```
+Diego Fuentes is SOL-PHX's GM in `properties.json`, which I verified independently at iteration 43. The
+letter names the right person for the right property.
+
+### Encoding: clean, and the scare was mine again
+The bullets printed as `?` in my terminal. Byte-checked instead of guessing: the extracted text contains
+**U+2022 only**, four times, and no other non-ASCII codepoint at all. `\xe2\x80\xa2` does not appear in
+the raw file because the content stream is `FlateDecode`d. So the PDFs are ASCII plus proper bullets, and
+the replacement characters were Windows stdout. **Eighth instance of this trap; second time the byte check
+settled it in one step.**
+
+### The capability paths gate what they claim to
+```
+the real URL                                   HTTP 200, 2,570 bytes
+one character changed in the capability token   HTTP 400
+the directory with no token (listing attempt)   HTTP 400
+a guessed filename under that directory         HTTP 400
+```
+So a reviewer holding one proposal link cannot walk to another guest's. The bucket is public; the paths
+are the secret, and they behave like it.
+
+### Migration 004: seventh consecutive check, still not applied
+```
+PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
+```
+Roughly eleven hours to submission. It remains the only known live runtime defect and the only item on
+Enrique's list that changes what the system does.
