@@ -16,7 +16,8 @@
     "seed:users": "node scripts/seed-users.mjs",
     "telnyx:export": "node scripts/telnyx/export-assistant.mjs",
     "demo:tidy": "node scripts/cleanup-phantom-sessions.mjs --delete",
-    "verdict": "vite-node scripts/show-verdict.ts --"
+    "verdict": "vite-node scripts/show-verdict.ts --",
+    "email:check": "node scripts/check-email-domain.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
