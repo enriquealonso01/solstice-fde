@@ -24,9 +24,10 @@
 > **Then:** **Telnyx** $3.09 (beat 3, the live intent check, **G16 on voice**) · **T21** delete
 > `INQ-2012`/`INQ-2013`, keep `INQ-2011` — *"DELETE-ME"* is **row one** of the sales inbox.
 >
-> **Agents, two items:** **T30** one dated note on `transcripts/honest-handoff.md` — the
+> **Agents, three items:** **T30** one dated note on `transcripts/honest-handoff.md` — the
 > deliverable shows the duplicate escalation #69 fixed, and points the reviewer at both ids ·
-> **re-export** `exports/telnyx-assistant.json`, **28,678** against live's **29,315**.
+> **T31** `README.md:89` says **443 tests**, the suite is **445** · **re-export**
+> `exports/telnyx-assistant.json`, **28,678** against live's **29,315**.
 >
 > **T19 CLOSED** (PR #66) and **live on both runtimes** — voice re-provisioned, verified 29,315
 > byte-identical, "reaches Sales" gone. The escalation reaches the concierge supervisor's queue and a human
@@ -46,10 +47,11 @@
 *Everything below this section is closed, or evidence.*
 *• **T30** one dated note on `transcripts/honest-handoff.md` — a deliverable linked from
 `SUBMISSION.md` shows the duplicate escalation #69 fixed, and invites the reviewer to check it.*
+*• **T31** `README.md:89` says 443 tests; the suite is 445. One word, and drop the guard's carve-out.*
 *• **T21** two test rows to delete — the only thing a panel sees without reading. Enrique's.*
 *• **Re-export** `exports/telnyx-assistant.json` — 28,678 on disk against live's 29,315.*
 
-*Two items are agents': T30 and the re-export. **Every other remaining item is one an agent is not
+*Three items are agents': T30, T31 and the re-export. **Every other remaining item is one an agent is not
 permitted to take** — an irreversible database mutation, or spending money. The Tester's session
 refused the T21 `DELETE` for the same reason mine refused the approval `PATCH`. That is the
 boundary working, not a stall.*
@@ -107,6 +109,59 @@ with nothing wrong in it.
 **Check when done:** the note names PR #69, does not claim a live re-measurement that nobody ran,
 and `npx vitest run src/lib/rules/__tests__/doc-citations.test.ts` still passes if any `path:NN`
 citation was added.
+
+
+### T31. The README's "443 tests" was stale the moment it merged — one word, and drop the exemption
+
+*Small, and I am flagging it as small. It earns a slot only because it is in the **top-level
+README**, in the paragraph that argues counts rot, and a reviewer running the command that same
+paragraph recommends sees a different number. Documentation plus one test filter. No deploy.*
+
+**For an implementer who has not read this conversation.**
+
+`README.md:89` reads *"236 files, 146 of them TypeScript, and **443 tests** across 32 test files."*
+Verified this iteration:
+
+```
+git ls-files | wc -l          236   ✓
+git ls-files | grep .tsx?$    146   ✓
+npx vitest run                445 passed, 32 files   ✗ README says 443
+```
+
+**The number was already wrong when PR #72 committed it.** #72 wrote "443", then added the two
+`counts stated in the README` tests to `doc-citations.test.ts` in the same commit. It under-counts
+by exactly the two tests that commit added to enforce not stating exact counts.
+
+**The guard exempts this phrase on purpose**, and the reasoning deserves to be addressed rather
+than overridden. `doc-citations.test.ts:145` filters out any claim followed by `across`:
+
+> *"443 tests across 32 test files" is a dated snapshot in a paragraph that says it is one; the
+> failure mode is an exact count offered as the current answer, next to the command.*
+
+**Two things make that premise not hold:**
+
+1. **The paragraph does not say it is a dated snapshot.** It says *"Figures are given as floors or
+   rounded, deliberately."* 443 is neither a floor nor rounded — it is exact, and it is wrong.
+   There is no date on it either.
+2. **It rotted inside the hour**, which is the exact failure the file's own doc comment describes:
+   *"three precise counts went stale inside an hour."* The exemption's reasoning was tested by
+   events within one commit and did not survive.
+
+**Do this:**
+
+- `README.md:89` — *"443 tests across 32 test files"* → **"over 400 tests across 32 test files"**,
+  matching the floor already used at lines 149 and 202. The sentence keeps its force; `npx vitest
+  run` stays the live answer two lines below.
+- `doc-citations.test.ts:145` — delete the `.filter((claim) => !readme.includes(...across...))`
+  line and its comment. With the README fixed, the guard then enforces what #72 said it enforces,
+  with no carve-out.
+
+**Leave `236` and `146` alone.** Both verified correct right now. They share the rot risk, but
+changing accurate figures to floors hours before submission buys nothing and loses precision that
+is currently true.
+
+**Check when done:** `npx vitest run` green, and the README contains no `\d{2,5} tests` outside an
+`over N` construction.
 
 
 ### T29. Enrique's dashboards — CLOSED, 3 of 3. PRs #50, #53 and #54.
@@ -603,6 +658,89 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 79, 18:36 EST — every id a reviewer could check resolves; one README count did not
+
+Following last iteration's lesson — *"no UI surface is not the same as not visible"* — I swept the
+deliverables for **everything a reviewer can independently verify** and checked each against
+reality.
+
+#### Every database id quoted in a deliverable resolves
+
+Four UUIDs appear across three transcripts, and nowhere else:
+
+| Id | Document | Checked |
+|---|---|---|
+| `ea086719…` / `c0cb0a1c…` | `honest-handoff.md` | exist; same session, same category, 9s apart → **T30** |
+| `6152e6be…` | `refund-outside-window.md` | exists, category `refund`, `open` |
+| `701de11f…` | `voice-call.md` | exists, `channel voice`, `status ended`, **53 messages** |
+
+#### T21 is safe, and this is the check that could have caught it being wrong
+
+Deliverables cite **`INQ-2011`** (`README.md:127`, `docs/demo-runbook.md:238`) and **`INQ-2010`**
+(`README.md:139`). T21 deletes **`INQ-2012` and `INQ-2013`** and keeps `INQ-2011`.
+
+**No deliverable depends on a row T21 removes**, and two depend on one it keeps. Had T21 named
+`INQ-2011` — which it nearly did, before the Tester pinned the ids — running it would have broken
+the README and the runbook an hour before the demo.
+
+#### README counts: two verified, one wrong, and it was wrong on arrival
+
+PR #72 corrected every figure in the result paragraph. I re-checked them independently:
+
+```
+git ls-files | wc -l          236   ✓ matches
+git ls-files | grep .tsx?$    146   ✓ matches
+npx vitest run                445 passed, 32 files   ✗ README:89 says 443
+```
+
+**The count was already stale when #72 committed it.** #72 wrote "443", then added the two
+`counts stated in the README` tests in the same commit. It under-counts by **exactly the two tests
+that commit added to enforce not stating exact counts.**
+
+The guard exempts the phrase deliberately — `doc-citations.test.ts:145` filters any claim followed
+by `across`, reasoning that *"443 tests across 32 test files" is a dated snapshot in a paragraph
+that says it is one.* **That premise does not hold**, for two reasons worth stating rather than
+overriding: the paragraph says *"Figures are given as floors or rounded, deliberately"* — 443 is
+neither, and carries no date — and it rotted **inside the hour**, which is the failure the file's
+own doc comment names. The exemption's reasoning was tested by events within one commit.
+
+**T31 filed**: one word (`443` → `over 400`, the floor already used twice) and delete the filter.
+I am flagging it as small. It earns a slot only because it sits in the top-level README, in the
+paragraph arguing that counts rot, and the command it recommends two lines below prints a different
+number.
+
+#### The rest of #72 is right, including the part that needed judgement rather than a bigger number
+
+The line count: **61,710 is true and misleading** — ~35,100 source, 3,500 deliverable documents,
+**13,800 of the agents' own coordination record.** Quoting the total flatters the source figure by
+hiding the third, and on this submission the third is arguably the more interesting number. The
+README now shows the split.
+
+And the guard checks the **shape of the claim, not the number**, because counting tests from inside
+the suite is unreliable — `it.each` expands, and any count includes the counting file. The
+limitation is written into the test file rather than left implied: *"a band that has been outgrown"*
+still passes, verified by restoring `"a test suite in the low 300s"` and watching it go green while
+wrong by 140.
+
+#### Full suite green
+
+**445 passed, 32 files, 1.77s.** `doc-citations.test.ts` passes, including the citation pinning
+from #70.
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| Telnyx top-up, $3.09 | Enrique | open — gates beat 3 and G16 on voice |
+| T21, delete `INQ-2012`/`INQ-2013`, keep `INQ-2011` | Enrique | open — **verified safe this iteration** |
+| **T30** dated note on `honest-handoff.md` | Agents | open |
+| **T31** README test count | Agents | **open — new, small** |
+| Re-export `exports/telnyx-assistant.json` | Agents | open — 28,678 vs live 29,315 |
+
+Inbox empty. No lock held.
+
 
 ### Iteration 78, 18:30 EST — a deliverable transcript shows the bug #69 just fixed, and invites the reviewer to check it
 

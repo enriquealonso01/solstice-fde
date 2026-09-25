@@ -504,6 +504,18 @@ heavily and here is the evidence"* is a better answer to a technical panel than 
 dashboard. Every other limit in this package is handled by saying what is true rather than by
 hiding it, and this screen is the first one they will see.
 
+**One consequence of option 1 I owe you, found after writing the table above.** Deleting the test
+sessions would not destroy the escalation evidence — `escalations.session_id` is
+`on delete set null`, not `cascade` (`supabase/schema.sql:65`), so the rows and their ids survive.
+But `transcripts/honest-handoff.md` is a named deliverable that invites a reviewer to check two
+escalation ids and says they are *"real rows in Postgres, **bound to this session**"*. Both are on
+session `258e7a7c`, and I confirmed just now that both still exist, still bound, at
+`17:44:42.842` and `17:44:51.575`. Delete that session and the ids still resolve while the binding
+does not — the sentence in the transcript would quietly stop being true.
+
+Not a reason to avoid option 1. It is a reason to keep session `258e7a7c` if you take it, or to tell
+me and I will correct the transcript's wording in the same pass.
+
 **Nothing is blocked on you here** — beat 3 works either way. If you say nothing, option 2 is what
 happens by default, and the runbook now carries the sentence for it.
 

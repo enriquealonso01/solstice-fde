@@ -10,7 +10,13 @@ What I am doing right now, and what I did last. Overwritten each iteration.
   second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
   inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
   grep, where a filter hid the hit.
-- **DONE It62: the README's own numbers — PR pending.** Every figure in the result paragraph had
+- **CLAIMED It63: T30 — `transcripts/honest-handoff.md` presents the duplicate escalation as
+  thoroughness.** It is a named deliverable linked from `SUBMISSION.md` that invites the reviewer
+  to check both escalation ids — ids PR #69 (mine, an hour earlier) exists to stop producing.
+  Documentation only: a dated note beside the defect note already there. **Not re-capturing** —
+  a re-run costs a live session and changes every real id in a file whose value is that they are
+  real. I will be precise that I verified the behaviour on an equivalent conversation, not this one.
+- **DONE It62: the README's own numbers — PR #72.** Every figure in the result paragraph had
   drifted: 210→236 files, 125→146 TypeScript, 28,700→61,710 lines, "low 300s"→443 tests, and a
   precise `308 tests` in a README that explains on another page why precise counts rot. The lines
   figure now shows its split (~35,100 source / 3,500 docs / **13,800 agent coordination record**)
