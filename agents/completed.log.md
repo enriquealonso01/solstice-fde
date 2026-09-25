@@ -2556,3 +2556,51 @@ report "shipped and verified" while the board still looked like a wall of false 
 402 tests, `tsc -b --force` clean. **No Telnyx spend** — one signed-in browser session.
 
 ---
+## 2026-09-25 — Re-read the runbook against screens that changed underneath it
+
+**PR:** https://github.com/enriquealonso01/solstice-fde/pull/47 (shipping this iteration)
+
+Nothing was reopened or queued, so I checked the thing tonight's work landed underneath: the demo
+script. PR #45 changed the supervisor badges, #43/#44 gave sessions an intent, #11 put INQ-2011 in
+the inbox and #22 stopped it double-listing. **Nobody had re-read the runbook since any of that**,
+and it is the page Enrique reads on stage.
+
+### Beat 3 opens on a sentence that is currently false
+
+> "Put the admin window on the supervisor dashboard first, **so they see it empty**."
+
+The dashboard shows **96 active sessions**. Following that line puts a wall of cards reading "Sol is
+handling this" on screen and then says "see, it's empty" — the worst possible opening for the beat
+the runbook calls the split screen.
+
+It is not wrong so much as **conditional, and the condition was unstated**. "Empty" is true only
+after `npm run demo:tidy`, which is already in the pre-flight I added earlier. The beat now says so,
+and tells the presenter to check the ACTIVE NOW tile reads a small number before dialling — a
+two-second check that fails loudly rather than quietly.
+
+That is the second time the same root cause has surfaced in a different place: a chat has no hangup
+event, so abandoned tabs count as live forever. It is stated as a limit in the README, it is the
+reason `demo:tidy` exists, and now it is the reason beat 3 carries a precondition.
+
+### The README described a screen that has grown
+
+> "Group sales — **the ten inquiries**, rule verdicts, pricing, proposals, approvals"
+
+The inbox returns thirteen. Ten from the provided data, one Sol took on a real phone call, two junk
+rows an agent created while diagnosing that Enrique is asked to delete.
+
+Changed to "the ten inquiries from the provided data plus any Sol has taken on a call", which is
+both accurate and a better claim — the extra row is the voice intake working, not clutter.
+
+**I did not touch the other "ten" claim** at `README.md:142` — "the rules engine and all ten
+inquiry verdicts". That one is about coverage of the supplied dataset, it is exactly right, and
+changing it would weaken a true statement.
+
+### Beat 4 checked and left alone
+
+INQ-2009 and INQ-2007 both resolve, the flag and the costed options match, the approval-authority
+line and the uuid-not-code warning are both present and correct. No change.
+
+402 tests, `tsc -b --force` clean.
+
+---
