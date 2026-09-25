@@ -24,10 +24,14 @@
 > **Then:** **Telnyx** $3.09 (beat 3, the live intent check, **G16 on voice**) · **T21** delete
 > `INQ-2012`/`INQ-2013`, keep `INQ-2011` — *"DELETE-ME"* is **row one** of the sales inbox.
 >
-> **Agents, three items:** **T30** one dated note on `transcripts/honest-handoff.md` — the
-> deliverable shows the duplicate escalation #69 fixed, and points the reviewer at both ids ·
-> **T31** `README.md:89` says **443 tests**, the suite is **445** · **re-export**
-> `exports/telnyx-assistant.json`, **28,678** against live's **29,315**.
+> **Agents:** **T31** `README.md:89` says **443 tests**, the suite is **445** · **re-export**
+> `exports/telnyx-assistant.json`, **28,678** against live's **29,315** · **T32** lowest priority.
+>
+> **T30 CLOSED** (PR #73) — the transcript now says the double escalation was a bug, and states
+> exactly what was and was not re-measured.
+>
+> **Editing `agent/sol.md`? The voice prompt has 685 characters of margin** (29,315 of 30,000).
+> Wrap human-facing additions in `voice:exclude`: a 276-char clause costs **+1**, not +276.
 >
 > **T19 CLOSED** (PR #66) and **live on both runtimes** — voice re-provisioned, verified 29,315
 > byte-identical, "reaches Sales" gone. The escalation reaches the concierge supervisor's queue and a human
@@ -45,13 +49,13 @@
 # ▶ OPEN WORK — one agent item; the rest is Enrique's
 
 *Everything below this section is closed, or evidence.*
-*• **T30** one dated note on `transcripts/honest-handoff.md` — a deliverable linked from
-`SUBMISSION.md` shows the duplicate escalation #69 fixed, and invites the reviewer to check it.*
 *• **T31** `README.md:89` says 443 tests; the suite is 445. One word, and drop the guard's carve-out.*
+*• **T32** the escalation queue is FUTURE in the diagram and present tense in `sol.md` — **lowest
+priority.** Mind the **685-character** voice-prompt margin: wrap it in `voice:exclude`.*
 *• **T21** two test rows to delete — the only thing a panel sees without reading. Enrique's.*
 *• **Re-export** `exports/telnyx-assistant.json` — 28,678 on disk against live's 29,315.*
 
-*Three items are agents': T30, T31 and the re-export. **Every other remaining item is one an agent is not
+*Three items are agents': T31, T32 and the re-export. **Every other remaining item is one an agent is not
 permitted to take** — an irreversible database mutation, or spending money. The Tester's session
 refused the T21 `DELETE` for the same reason mine refused the approval `PATCH`. That is the
 boundary working, not a stall.*
@@ -162,6 +166,56 @@ is currently true.
 
 **Check when done:** `npx vitest run` green, and the README contains no `\d{2,5} tests` outside an
 `over N` construction.
+
+
+### T32. Two deliverables disagree about whether the escalation queue exists — LOWEST priority, skip it if anything else needs attention
+
+*Earns a slot only because both files are named deliverables a reviewer reads side by side, and the
+disagreement is checkable in under a minute. **It is the least important open item.** If T31, the
+re-export, or anything Enrique raises is still open, do those first.*
+
+**The disagreement.**
+
+- `docs/architecture.svg` places **"Escalation queue"** inside the band labelled
+  **"FUTURE: production hardening, designed but not built"**, described as *"On-call rota and an
+  SLA timer."*
+- `agent/sol.md:89` says, present tense, that the row *"reaches the **concierge supervisor's
+  queue**."*
+
+Verified in iteration 77: **no screen lists escalations.** Every `src/` reference is the
+architecture backend-map drawing the table as a node, or a chat tool label. No component queries
+the table; no function serves it to a UI. Only `netlify/functions/tools/escalation.ts` touches it.
+
+The sentence is not false at the data layer — `esc_read` genuinely scopes the table to `concierge`
+and `admin`, so the row is durable and reaches the right people's reach. But the diagram says the
+queue is not built, and `sol.md` uses it as a place a row arrives.
+
+**Do this, and mind the constraint — it is the part that can bite.**
+
+Put the clarification **inside a `<!-- voice:exclude -->` block.** Measured this iteration:
+
+```
+current voice compile : 29,315      MAX_INSTRUCTION_CHARS : 30,000      margin : 685
+same clause wrapped in voice:exclude → compile 29,316   (+1 char, not +276)
+```
+
+The text itself never reaches the phone agent; only a whitespace artefact does. **A guest on a call
+does not need this paragraph, and the margin is only 685 characters** — an unwrapped addition of any
+length spends margin that PR #67 already had to correct once.
+
+Wording, roughly:
+
+> **Where that queue is today.** No screen lists escalations. The row is durable and RLS-scoped to
+> `concierge` and `admin`; the queue view, with an on-call rota and an SLA timer, is marked FUTURE
+> in `docs/architecture.svg` — designed, not built.
+
+**It still needs a `--refresh`**, because the compile moves by that one character and the Tester
+verifies live against compile byte-for-byte. Placing the block so the surrounding blank lines
+collapse unchanged would make it genuinely free; check the compiled length before and after and say
+which you got.
+
+**Check when done:** compiled length stated in the commit; `--refresh` run or explicitly not needed
+with the byte-identical compile shown; the guest-facing prompt unchanged.
 
 
 ### T29. Enrique's dashboards — CLOSED, 3 of 3. PRs #50, #53 and #54.
@@ -658,6 +712,78 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 80, 18:42 EST — T30 closed and improved on the spec again; the voice prompt has 685 characters of margin
+
+**T30 CLOSED, PR #73**, and it is the **fourth** time an agent has shipped better than I specified.
+
+My spec said the note must *"not claim a live re-measurement that nobody ran."* What shipped makes
+that a named paragraph — **"What was and was not re-measured, precisely"** — stating that the fix
+was verified on the current build with an *equivalent* two-turn group request and independently by
+the Tester, and that **these two ids were not re-observed as one**. Mine was a prohibition; theirs
+is a positive account of the epistemic state. They also re-derived the figures from Postgres rather
+than copying them out of my plan.
+
+**And they traced a consequence I had not.** `HUMAN_INTERVENTION.md` offers Enrique the option of
+deleting the agent test sessions. `escalations.session_id` is **`on delete set null`, not cascade**
+(`schema.sql:65`) — so taking that option leaves the two ids resolvable while quietly falsifying the
+word *"bound"* in the transcript they had just written. Recorded for Enrique with the fix offered,
+and correctly flagged as *not* a reason to avoid option 1. That is second-order reasoning about
+their own artefact, which is the thing this loop is supposed to produce and rarely does.
+
+#### The architecture diagram is honest, and it disagrees with one sentence in `agent/sol.md`
+
+I checked the diagram against reality — a named deliverable I had not verified in many iterations.
+It holds up: the future-state services sit inside a band labelled **"FUTURE: production hardening,
+designed but not built"**, and **"Escalation queue"** — *"On-call rota and an SLA timer"* — is
+**inside that band.**
+
+Which is right, and which is why `agent/sol.md:89` reads oddly beside it: present tense, *"the row
+reaches the concierge supervisor's queue."* Iteration 77 established no screen lists escalations.
+So one deliverable marks the queue not built while another has rows arriving in it. **T32 filed, and
+I have marked it the lowest-priority open item** — it is real and checkable, and it is also the
+smallest thing left.
+
+#### The constraint that matters more than T32 itself: 685 characters
+
+Measured this iteration, and worth pulling out of the task because anyone editing `agent/sol.md`
+needs it:
+
+```
+current voice compile : 29,315      MAX_INSTRUCTION_CHARS : 30,000      margin : 685
+```
+
+**685 characters.** PR #67 already had to correct this margin once. Any addition to `sol.md` outside
+a `voice:exclude` block spends it.
+
+I tested the way round it rather than asserting one. Wrapping a 276-character clarification in
+`voice:exclude` moves the compile from **29,315 to 29,316** — **+1 character, not +276.** The text
+never reaches the phone; only a whitespace artefact does. So a human-facing clarification in that
+file is essentially free **if it is wrapped**, and expensive if it is not.
+
+Note the honest residue: +1 is not 0, so live drifts from compile by one character and the Tester's
+byte-identical check would show it. Placing the block so surrounding blank lines collapse unchanged
+would make it genuinely free. **I did not claim byte-identical when I had measured 29,316.**
+
+#### T31 still open, and a lock is held
+
+`README.md:89` still reads 443; the suite is 445. An agent holds `agents/.lock`, so this is likely
+in hand.
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| Telnyx top-up, $3.09 | Enrique | open — gates beat 3 and G16 on voice |
+| T21, delete `INQ-2012`/`INQ-2013`, keep `INQ-2011` | Enrique | open — verified safe, iteration 79 |
+| **T31** README test count | Agents | open — lock held, likely in hand |
+| Re-export `exports/telnyx-assistant.json` | Agents | open — 28,678 vs live 29,315 |
+| **T32** escalation queue tense | Agents | **open — lowest priority, skip if anything else is live** |
+| T30 | — | **CLOSED**, PR #73 |
+
+Inbox empty.
+
 
 ### Iteration 79, 18:36 EST — every id a reviewer could check resolves; one README count did not
 
