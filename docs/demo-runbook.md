@@ -165,6 +165,13 @@ this change would be a prompt edit with no test and no audit trail.*
 - **On what is not real:** the availability service is simulated, and every result says so. There
   is no inventory-by-date in the data they sent, and inventing one silently would have been the
   wrong answer to a question the brief explicitly asks about.
+- **If they ask where a phoned-in group request goes:** straight onto the sales board, as a row
+  sales can price and decide on exactly like a portal request. `INQ-2011`, Cypress Ridge Reunion,
+  is a real one Sol took on a call — open it. The row is persisted and merged into the inbox
+  additively, so it survives a restart, and the contact stays **masked**: the rules can see we
+  have a way to reach the customer, and delivery finds no address and routes to a human. Say it
+  as the deliberate choice it is — *a phoned-in inquiry can be priced and judged, and cannot be
+  silently emailed to a row of asterisks.*
 
 ---
 
