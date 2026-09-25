@@ -4380,3 +4380,124 @@ iteration 47, after the fix  : 0 of 4;  2 of 4 explicitly refused when pushed
 ### Cleanup
 Four escalations from these runs set to `closed`; open count back to **38** (`Content-Range: 0-0/38`),
 unchanged from iterations 45 and 46. Four more `active` sessions added to the pile `demo:tidy` handles.
+
+---
+
+## Iterations 48–50 — 2026-09-25 22:47–23:05Z — VERIFIED: the README's factual claims, and PR #73's transcript. Plus: my iteration-46 fix does not leak into the complaint path.
+
+Three iterations in one entry because `agents/.lock` was held by another agent for the whole span
+(taken 22:48:39Z, still held at 23:00Z, `main` unmoved at `3220404` throughout). The protocol says
+twenty minutes and *"do not shorten it because a lock looks abandoned to you — a holder that has merged
+but not yet deployed still needs it."* So I tested without it and queued the writing.
+
+### Migration 004 is STILL NOT APPLIED — re-checked in two separate iterations
+```
+PATCH /rest/v1/proposals?id=eq.35632960-…  {"status":"approved"}   as sales@, public anon key
+  -> HTTP 200, a 2,950-byte row returned
+```
+A returned row means `prop_write` is still there. The iteration-43 send-gate bypass is live with
+roughly sixteen hours to submission: a rep can approve their own flagged proposal from the browser and
+then send it through the ordinary endpoint, with `approved_by` null. One line of SQL, in
+`HUMAN_INTERVENTION.md`. **This is the only known live defect in the system.**
+
+### VERIFIED — every checkable claim in README.md
+Prompted by four PRs in a row correcting numbers that rot (#67, #72, #75, #77). Everything below was
+re-measured in iteration 49/50, not carried over.
+
+**The floors all hold:**
+```
+files        237  > 230        TypeScript  147  > 140
+tests        454  > 400        test files   33  >  30
+```
+
+**The three line figures, each defensible:**
+```
+"about 35,100 lines of source"      src+netlify+shared+scripts+supabase = 35,301   (0.6% out)
+"3,500 of deliverable documents"    3,160 narrow … 3,896 broad — the claim sits between
+"13,800 of the agents' own record"  13,514 by the README's own definition … 14,378 for all of
+                                    agents/+plans/ — the claim sits between
+```
+
+**The immutable facts, all exact:**
+```
+exports/telnyx-assistant.json   25 tools, secret redacted        (claim: 25)
+first commit                    2026-09-24T12:35:00-04:00        (claim: 12:35 EDT)
+day-one commits                 25                               (claim: 25)
+day-one window                  12:35:00 -> 16:21:44             (claim: 12:35 to 16:21)
+SOL-PVD.base_rate_suite         -395                             (claim: -395)
+13 local file links             0 missing
+live site / /api/group health   HTTP 200 / HTTP 200
+README phone +1 (305) 786-6217  = TELNYX_PHONE_NUMBER +13057866217
+```
+
+**I nearly filed a false finding.** My first three definitions of "lines of source" gave 26,128 /
+30,376 / 31,097 and I was drafting an "11% overstated" finding. Widening to
+`src+netlify+shared+scripts+supabase` gave 35,301 against a claim of 35,100. Rule 7: read the
+definition before believing the number disagrees with you. The lesson generalises — when a document
+states a derived number, the defect is usually in my derivation.
+
+**One figure has genuinely gone stale**, and it is the only one in that paragraph that is not a floor:
+the paragraph argues against quoting a single total by quoting one, `"61,700 lines"`. All tracked lines
+were **65,723** when I measured it in iteration 49 and **66,052** by the time the lock freed twenty
+minutes later — 7% out and still moving, which is the paragraph's own argument made against itself.
+Floored to `"over 60,000"` in this iteration's PR, matching its neighbours; it only ever grows. **Not filed as a defect in the counts** — it is a rhetorical figure the paragraph is
+declining to use — but it is the one number there that will be wrong at 11:00.
+
+**The guard behind these claims bites.** `doc-citations.test.ts` (#70/#77), three mutants:
+```
+citation shifted to a wrong line      -> fails, names the line and the correct one
+citation to a line that cannot exist  -> fails
+line kept, EXPECTED substring wrong   -> fails: 'cites … for "THIS_IS_NOT_ON_THAT_LINE", but line 303
+                                          is "if (!ctx.guest_id && saved?.guest_id) …"'
+```
+All three branches, restored clean afterwards.
+
+### VERIFIED — PR #73, the transcript's account of the double escalation
+`transcripts/honest-handoff.md` now says the two escalations in that capture were a bug rather than
+thoroughness. It quotes ids and timestamps to the millisecond, so I checked them against the table:
+```
+ea086719-f7b0-4b23-9c0e-949f33b00857  session 258e7a7c  other/normal/open  17:44:42.842012
+c0cb0a1c-1084-4e41-87d2-d072199b52b7  session 258e7a7c  other/normal/open  17:44:51.575636
+same session: True   same category: True   both open: True   gap: 8.734s
+```
+The file claims `17:44:42.842` → `17:44:51.575`, "nine seconds apart", same session, same category,
+both left open. Every part is true; 8.734s rounding to nine is honest. Both quoted summaries match the
+rows verbatim, and each packet is still labelled by its own id — PR #49, my own fix, still holding.
+Its one claim about itself — *"the paragraph leans on `c0cb0a1c`, the second, for the better wording"* —
+is true of line 51, which opens "From the second of them, `c0cb0a1c`".
+
+It is also careful about what it did not do: *"This conversation has not been re-run … So the claim here
+is that the same shape of conversation now produces one escalation — not that these two ids have been
+re-observed as one."* That is exactly right, and it matches what I verified independently at iteration 45.
+
+### The thing I went looking for and did not find: did my iteration-46 fix break the complaint path?
+Reading that transcript, line 22 has Sol telling a guest *"they'll be reaching out to you **today**"*.
+Policy 15 requires that — `escalation.ts:181` instructs *"Tell the guest it is with a manager today and
+that they will hear back."* But my PR #74 note ends **"Never name who will make contact, and never
+promise when,"** and its second paragraph does not re-scope itself to group requests. A model
+over-applying it would suppress a sentence policy demands, on the concierge path, at beat 5.
+
+Three complaint runs against production, the Marcus Webb shape:
+```
+run 1  "This is with a manager today — the AGM at Tampa Bayshore will review the room mix-up and
+        reach out to you directly."
+run 2  "This is now with the manager on duty at the property today, and they'll follow up with you
+        on the room discrepancy."
+run 3  "This is with the manager on duty and the AGM today, and you'll hear back from them directly.
+        I can't promise the outcome myself, but this is being treated as a priority."
+       today=True  manager/AGM named=True  (3 of 3)
+```
+No leak. The model scopes the note to group requests, and run 3 also honours Policy 15's "do not
+promise an outcome". **The ambiguity is latent, not biting**, so I am not touching a verified chat
+prompt again this close to the deadline — recorded as the first thing to tighten afterwards: one clause
+scoping paragraph two back to the group case.
+
+### Re-checked after the lock freed
+`main` moved to `f206502` ("Re-sync the Telnyx export with live") while I was waiting, and the export is
+one of the things I had just verified. Re-measured against the new `main`: still **25 tools**, secret
+still redacted, floors unchanged at 237 / 147 / 33 / 454. The audit holds against what is on `main` now,
+not only against what was there when I started.
+
+### Cleanup
+Three complaint escalations from the leak test (`98c773f5`, `8169042e`, `09b8ee00`) set to `closed`.
+No other production state changed.
