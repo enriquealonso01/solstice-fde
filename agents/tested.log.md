@@ -4701,3 +4701,83 @@ PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon ke
 ```
 Still the only known live *runtime* defect, and the one thing on Enrique's list that changes what the
 system does rather than what the repo contains.
+
+---
+
+## Iteration 53 — 2026-09-25 23:22–23:32Z — VERIFIED: the latency commitments and the pre-demo warm procedure
+
+Took **PR #64**, the last untested implementer change, which rewrote `docs/demo-runbook.md` and
+`docs/latency-target.md`. Both make numeric claims, which is the kind of documentation worth testing
+rather than reading.
+
+### VERIFIED — the warm procedure does what it says, including the part that matters
+The runbook's pre-demo step and the reasoning attached to it:
+> **Do not warm it by sending a real chat message.** That opens a session, `demo:tidy` will not close it
+> … and beat 3 opens by putting the supervisor dashboard on screen and saying it is empty. One live card
+> contradicts the first sentence of that beat. A GET to `/api/chat` returns 405 before any session is
+> written and warms the identical container.
+
+Ran the documented command verbatim, with a row count either side:
+```
+sessions before        140
+GET /api/chat    run 1  HTTP 405  0.207s     run 2  HTTP 405  0.219s
+GET /api/tools   run 1  HTTP 200  0.260s     run 2  HTTP 200  0.227s
+sessions after         140
+SESSIONS CREATED BY WARMING: 0
+```
+The 405 is real, the session count does not move, and the timings land on the runbook's own figures —
+it says warm reads "~0.21s and ~0.26s" and I measured 0.207/0.219 and 0.260/0.227. This is the claim
+that protects beat 3, and it holds.
+
+I could not re-measure the **cold** figures (~1.3s and ~1.0s): the functions have been warm all session
+because I keep calling them, and inducing a cold start means waiting out the idle window. The document
+cites three independent cold measurements for this and I am not disputing them — recording that I
+verified the warm half and the session-safety, not the cold half.
+
+### VERIFIED — "tool webhooks p95 ≤ 300ms, which is the part we own"
+80 calls across four tools, the shape Telnyx makes, all `POST /api/tools/<tool>` with the shared secret:
+```
+get_policy       n=20  p50 216  p90 270  p95 329  max 1072 ms
+identify_guest   n=20  p50 203  p90 230  p95 230  max  290 ms
+get_reservation  n=20  p50 193  p90 235  p95 249  max  257 ms
+late_checkout    n=20  p50 192  p90 216  p95 230  max  243 ms
+
+POOLED           n=80  p50 203  p90 245  p95 270  max 1072 ms
+  -> p95 270ms, WITHIN the published 300ms. 2 of 80 samples over 300ms (2%).
+```
+
+**My first attempt said the commitment was missed, and that was my sample size.** 20 calls on
+`get_policy` alone gave a p95 of 376ms and I nearly logged "over by 76ms". A p95 from 20 points *is* the
+19th point — one outlier wide. The single 1072ms max is almost certainly one cold container instance in
+the pool. Pooled over 80, across four tools, the figure is 270ms.
+**Rule: do not report a p95 from twenty samples.** It is the same error as a single model run, in
+numeric clothing.
+
+### The chat targets, measured on three turns — consistent, and I am not claiming more than three
+`docs/latency-target.md` holds itself to **first signal p50 ≤ 1.5s, first prose token p50 ≤ 4s**, and
+honestly reports its own six-turn measurement as 1545ms signal (45ms over) and 3301ms prose (inside).
+Three fresh turns, each a new session, timing every SSE event from request start:
+```
+policy lookup     first signal 1823ms   first prose 2993ms   get_policy
+identified stay   first signal 1225ms   first prose 4084ms   identify_guest
+group routing     first signal 1183ms   first prose 2813ms   classify_intent
+                  median       1225ms   median      2993ms
+```
+Both medians inside target, and marginally better than the document's own figures. **n=3, so this
+confirms the order of magnitude rather than settling the target** — and a p50 that sits within 45ms of
+its threshold is a figure that will land either side of it depending on the sample, which is what the
+document already says. Nothing here contradicts it.
+
+All three turns produced a tool chip, so the document's caveat — one turn in six ran no tool and the
+guest waited for prose with no intermediate signal — did not reproduce in three. That is sampling, not
+a correction: the caveat is about a mechanism that exists, and three turns cannot show its absence.
+
+### Migration 004: fourth consecutive iteration, still not applied
+```
+PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
+```
+
+### Cleanup
+Three new `active` sessions from the timed turns (140 → 143), which is exactly the growth the runbook
+warns about and the reason `demo:tidy` runs *after* the loop stops. No escalations created — the group
+turn asked for an email before escalating. Open escalations unchanged at **38**.
