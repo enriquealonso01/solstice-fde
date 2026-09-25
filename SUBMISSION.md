@@ -40,7 +40,7 @@ Sign in at `/login`. Paste the password into the email; do not commit it here.
 | Integration recommendation | `docs/integration-recommendation.md` |
 | Native platform export | `exports/telnyx-assistant.json` |
 | Latency target and its justification | `docs/latency-target.md` |
-| Net-new tool | `availability_service`, documented in `agent/sol.md` and the README |
+| Net-new tool | the same-day availability service, `netlify/functions/tools/availability.ts`, consumed by `check_late_checkout` and `check_upgrade_eligibility` (and `check_availability` on the group side), documented in `agent/sol.md` §4 and the README |
 
 Two things they did not ask for, which answer their email rather than the PDF:
 

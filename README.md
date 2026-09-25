@@ -22,7 +22,7 @@ staff console behind three scoped logins. Same agent on both channels, same tool
 | How this was built, and what the agents caught in each other's work | [`docs/how-this-was-built.md`](docs/how-this-was-built.md) |
 | Where this goes next, in business outcomes | [`docs/where-this-goes.md`](docs/where-this-goes.md) |
 | Demo runbook, beat by beat | [`docs/demo-runbook.md`](docs/demo-runbook.md) |
-| At least one net-new tool | `availability_service` — see Assumptions below |
+| At least one net-new tool | `sameDayAvailability()` in [`netlify/functions/tools/availability.ts`](netlify/functions/tools/availability.ts), reached by the `check_late_checkout` and `check_upgrade_eligibility` guest tools and by `check_availability` on the group side — see Assumptions below |
 | Native platform export | [`exports/telnyx-assistant.json`](exports/telnyx-assistant.json) — the live assistant, 25 tools, secret redacted. Provisioned from source by [`scripts/telnyx/provision.mjs`](scripts/telnyx/provision.mjs) |
 
 ## Try it
@@ -63,9 +63,12 @@ the human-readable sentence and all three regenerated options move with it.
 The brief invites assumptions, so these are explicit rather than buried:
 
 1. **No inventory-by-date exists in the exports.** Policies 1 and 6 both hinge on "subject to
-   same-day availability", so `availability_service` is the net-new tool: deterministic, bounded by
-   real room counts, and labelled `provenance: "simulated_inventory_service"` on every result. In
-   production this is where the PMS plugs in.
+   same-day availability", so `netlify/functions/tools/availability.ts` is the net-new service:
+   deterministic, bounded by real room counts, and labelled
+   `provenance: "simulated_inventory_service"` on every result. It is a service rather than a
+   tool the model calls directly — `sameDayAvailability()` is consumed by the
+   `check_late_checkout` and `check_upgrade_eligibility` guest tools, and the group assistant
+   exposes its own `check_availability`. In production this is where the PMS plugs in.
 2. **A guest is identified by caller ID or a confirmation number, never by claiming a name.** Two
    guest pairs in the data share the same last four digits, so lookup returns found / ambiguous /
    not_found and refuses to guess.
