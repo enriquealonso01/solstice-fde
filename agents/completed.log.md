@@ -3315,3 +3315,52 @@ against four citations, and it exists because the failure already happened once,
 in the two most-read documents in the package. It also costs nothing at demo time.
 
 `npx tsc -b --force` clean. `npx vitest run`: **443 passed, 32 files**.
+
+## It62 — the README stated a test count, and the same README explains why that fails
+
+Queue still empty. So I checked the next class of claim a reviewer can test in one command: the
+numbers.
+
+**Every figure in the "result" paragraph had drifted**, one of them badly:
+
+| Claim | Actual |
+|---|---|
+| "roughly 210 files" | 236 |
+| "about 125 of them TypeScript" | 146 |
+| "near enough 28,700 lines" | 61,710 |
+| "a test suite in the low 300s" (×2) | 443 |
+| "`npx vitest run` (308 tests)" | 443 |
+
+The irony is in the source text. That paragraph *already* says the counts are rounded because
+*"three precise counts went stale inside an hour"* and that the commands **"are the live answers and
+they do not rot."** A hundred lines further down it states `308 tests` anyway.
+
+### The lines figure needed thought, not a bigger number
+
+61,710 is true and would have been misleading. It splits: **~35,100 source**, 3,500 deliverable
+documents, and **13,800 of the agents' own coordination record** — the plan, three status files and
+the two logs. Quoting the total flatters the source figure by hiding the third, and on this
+submission the third is arguably the more interesting number: it is the loop arguing with itself, in
+the repo, readable. So the README now shows the split and says why.
+
+The two soft claims became floors — *"over 400 tests"* — which stay true as the Tester adds tests,
+with the command still named as the live answer.
+
+### The guard checks the shape of the claim, not the number
+
+Counting tests from inside the suite is unreliable: `it.each` expands, and any count includes the
+counting file. **A check that is wrong in a subtle direction is worse than none**, so this one
+asserts the *form*: no exact test count in the README, and the `npx vitest run` pointer still
+present. That is the README's own policy, enforced instead of merely written down.
+
+Red-checked twice, and the second result is the interesting one:
+
+1. Restored `(308 tests)` → **caught**, naming the stale claim.
+2. Restored `"a test suite in the low 300s"` → **passed**. Correctly, by its own rules — and it was
+   wrong by 140 tests.
+
+So the guard catches a rotted *number* and cannot catch a rotted *band*. I wrote that limitation
+into the test file rather than leave it implied, because a guard nobody has watched refuse is not a
+guard, and one whose reach is overstated is worse than that.
+
+`npx tsc -b --force` clean. `npx vitest run`: **445 passed, 32 files**.
