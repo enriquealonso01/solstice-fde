@@ -10,7 +10,20 @@ What I am doing right now, and what I did last. Overwritten each iteration.
   second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
   inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
   grep, where a filter hid the hit.
-- **CLAIMED It58: T20 — two pre-demo checklist lines, stop the loop and warm the functions.**
+- **CLAIMED It59: T19 + T17 — `agent/sol.md` contradicts the shipped chat runtime.** One edit:
+  the inquiry-creation tools are telephony-only, and on chat the job is capture + escalate. T19
+  sets a precondition I am checking before I write a word — whether a notification, a `category`
+  routing rule or a documented human process already puts the escalation in front of Sales. If
+  one does, the original wording stands and I name the mechanism instead.
+- **DONE It58: T20 — PR #64.** Both checklist lines in, order asserted programmatically
+  (stop the loop 18 < tidy 24 < warm 31). **I corrected T20 rather than transcribing it:** its
+  warm-up instruction ("send a throwaway chat question, then discard the session") cannot be
+  followed — the session is undiscardable and `demo:tidy`'s 30-minute threshold will not close it
+  in any order, so it would have left one live card on the screen beat 3 opens by calling empty.
+  A GET to `/api/chat` 405s before any session write and warms the same container: cold 1.299s,
+  warm 0.207s, reproducing the plan's 1.31s by a different method. Also found the cold-start
+  figure understated in **two** places, not the one T20 named.
+- **Superseded claim: T20 — two pre-demo checklist lines, stop the loop and warm the functions.**
   Taking it because T21 is Enrique's database. **T20's own warm-up instruction has a conflict I
   am fixing rather than transcribing:** "send one throwaway chat question" creates a session,
   `demo:tidy` only closes sessions idle 30+ minutes (hard-coded), and it runs *before* the warm

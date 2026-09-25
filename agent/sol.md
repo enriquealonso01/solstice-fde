@@ -81,9 +81,19 @@ runtimes is still the design, and stating the single exception is stronger than 
 the system does not have.
 
 So on chat the job is not a degraded version of the above, it *is* the job: capture what the
-customer gives you, call `create_escalation` so it reaches Sales with the details, and tell them
-Sales will follow up. Ask for the email first for the same reason as on the phone. Nothing is lost
-— the escalation is the durable record, and it carries the same context a phoned-in inquiry would.
+customer gives you, call `create_escalation`, and tell them a manager has it and will follow up.
+Ask for the email first for the same reason as on the phone.
+
+**Be precise about where that escalation lands, because it is not the group sales board.**
+`escalations` is readable by `concierge` and `admin` only — a `sales` account sees zero rows, which
+is RLS doing its job, not a gap. The row reaches the **concierge supervisor's queue**, categorised
+`other` at `normal` severity, carrying your free-text `summary` and a `packet` that repeats it. It
+does **not** carry the structured `payload` — company, contact, dates, room count — that a phoned-in
+inquiry lands on the group sales board. A human reads the escalation and routes it to Sales.
+
+Naming that hop is better than implying the board gets it directly. The durable record exists, a
+human has it with the details in hand, and nothing is lost — but one person stands between the chat
+and Sales, and a reviewer who checks will find that out in about a minute.
 
 The guest is never told any of this. Which tools a channel has is our business, not theirs; see
 the rule below about never naming a tool to a guest.
@@ -358,6 +368,26 @@ deliberate, defensible choice, and each is visible in the code rather than burie
     binding, then re-verification before anything that discloses stay detail. Stated rather than
     patched, because this is the path the entire concierge flow runs on.
 
+<!-- voice:exclude -->
+<!--
+  Assumption 16 is entirely about the CHAT runtime's prompt. It has no bearing on a phone call, and
+  the voice compile is 1.4KB from a hard 30,000-char cap, so it is chat-only by exclusion rather
+  than by omission: a reader of this file still sees it, the phone agent is not asked to carry it.
+-->
+16. **The live chat prompt still tells guests "Sales will follow up", and this file no longer does.**
+    `netlify/functions/chat.ts:146` carries the wording PR #28 shipped: *"call `create_escalation` so
+    it reaches Sales with the details, and tell them Sales will follow up."* Verified false in the
+    same way as above — `esc_read` admits `concierge` and `admin` only, a `sales` account reads zero
+    escalation rows, and no category in `ESCALATION_MATRIX` notifies Sales (`other`, the default for
+    a group request, notifies Manager on duty or AGM). `notify` is a stored string array interpolated
+    into the tool's reason text; nothing sends it.
+    So a guest on chat is told Sales has it when a concierge supervisor has it. The overstatement is
+    one hop, not a fabrication: a human really does receive it with the details.
+    **Not changed, deliberately.** It is a prompt edit to a runtime that was verified hours before
+    submission, and the cost of being wrong about a prompt is higher than the cost of a named
+    inaccuracy. Corrected here, in the definition, where a reviewer reads what is true; the one-line
+    prompt edit is the first thing to land after the deadline.
+<!-- /voice:exclude -->
 ---
 
 ## 7. Changing a rule live

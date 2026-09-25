@@ -1,17 +1,14 @@
 # Master plan: the whole picture
 
-> ## 18:00 — **ENRIQUE: the SQL paste is what makes a shipped sentence true. Still #1.**
+> ## 18:04 — **ENRIQUE: the SQL paste is still #1.** Two agent items left, both tiny.
 >
-> `agent/sol.md` **§13** — a numbered assumption in the agent configuration, a named deliverable —
-> says a proposal over the ceiling *"cannot be sent until someone approves it and the override is
-> written to the audit log"*, and that we enforce *"that an approval happened and **is
-> attributable**"*.
->
-> **With `prop_write` in place, all three clauses are false.** A rep PATCHes `status` to
-> `approved` with the public anon key, sends through the ordinary endpoint, `approveProposal` is
-> never called so there is no audit row and no `overrode_rules`, and `approved_by` stays **null** —
-> so the gate credits *"an authorised approver"* who does not exist. Attributability is exactly
-> what fails, and it is the thing §13 elects to defend.
+> **The approval gate reads a column the browser can write.** `agent/sol.md` §13 — a numbered
+> assumption in a named deliverable — says a flagged proposal *"cannot be sent until someone
+> approves it and the override is written to the audit log"*, and that we enforce *"an approval
+> happened and **is attributable**"*. **All three clauses are false while `prop_write` exists:** a
+> rep PATCHes `status` to `approved` with the public anon key, `approveProposal` never runs so
+> there is no audit row, and `approved_by` stays **null** — the gate then credits *"an authorised
+> approver"* who does not exist.
 >
 > **Supabase SQL editor, project `bcrivjgqrxahgxyiqlpr`:**
 >
@@ -21,20 +18,19 @@
 > drop policy if exists fup_write  on follow_ups;
 > ```
 >
-> Safe — nothing in the client writes these tables; server writes use the service role key.
-> Migration `004` carries a rollback block.
+> Safe — nothing in the client writes these tables. **Apply it and change nothing, or apply nothing
+> and weaken §13**, which is the package's best answer on authority.
 >
-> **The choice, put plainly: apply it and change nothing, or apply nothing and weaken §13.** That
-> paragraph handles the GM ambiguity honestly and is the best answer on authority in the package;
-> hedging it to *"the API paths refuse, though the database permits a client write"* is a poor trade
-> for three `drop policy` lines.
+> **Then:** **Telnyx** $3.09 (beat 3, the live intent check, **G16 on voice**) · **T21** delete
+> `INQ-2012`/`INQ-2013`, keep `INQ-2011` — *"DELETE-ME"* is **row one** of the sales inbox.
 >
-> **Then:** **Telnyx** $3.09 (beat 3, the live intent check, **G16 on voice**) · **T21** two rows,
-> `INQ-2012`/`INQ-2013`, keeping `INQ-2011`.
+> **Agents, both small:** **T19** one sentence — `agent/sol.md` still says the escalation *"reaches
+> Sales"*, and `sales` sees **0** escalation rows · **re-export** `exports/telnyx-assistant.json`,
+> **28,678** against live's **28,583**.
 >
-> **Agents:** **T20** two checklist lines — the runbook now promises *"Nothing live right now"*,
-> true only if the loop stops before `demo:tidy` · **T19** one sentence · **re-export**
-> `exports/telnyx-assistant.json` (28,678 vs live 28,583).
+> **T20 CLOSED** (PR #64). The warm-up is two `curl`s and **creates no session** — verified, 121
+> before and after. `/api/chat` returning **405** is the point, not a failure; making it a POST
+> would re-create the session problem.
 
 ---
 
@@ -42,7 +38,6 @@
 
 *Everything below this section is closed, or evidence.*
 *• **T21** two test rows to delete — the only thing a panel sees without reading.*
-*• **T20** two checklist lines: stop the loop, tidy, then warm the functions.*
 *• **T19** one sentence in `agent/sol.md`, shipped wrong.*
 
 ### T29. Enrique's dashboards — CLOSED, 3 of 3. PRs #50, #53 and #54.
@@ -355,7 +350,7 @@ reports nothing outstanding that depends on them.
 
 **Check after:** the inbox reads 11 rows, row 1 is INQ-2011, and nothing else moved.
 
-### T20. Two lines in the pre-demo checklist: stop the loop, then warm the functions
+### T20. Pre-demo checklist — CLOSED, PR #64. Warm-up creates no session; the 405 is the point.
 
 *Earns the top slot because it protects the first thing the panel sees, it costs one line, and the
 failure it prevents is guaranteed rather than possible.*
@@ -539,6 +534,45 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 74, 18:04 EST — T20 closed, and the warm-up fixes a flaw in my own spec
+
+**Inbox checked first. Empty.**
+
+**T20 is closed by PR #64**, both lines, in the right order — stop the loop, tidy, warm — with the
+30-minute threshold and the 25-sessions-an-hour rate written into the reasoning so the order is
+self-explaining.
+
+**And the warm-up shipped better than I specified it.** I wrote: *"open the landing page and send
+one throwaway chat question."* That **creates a session** — precisely what the stop-the-loop line
+above it exists to prevent, and it would land in the very tile the runbook now promises reads
+"Nothing live right now". I placed the warm-up last so it would not be undone, and did not notice
+my own method re-dirtied what tidy had just cleaned.
+
+What shipped is two `curl`s, no browser:
+
+```
+sessions before: 121
+  /api/chat   405   1.202s     <- cold, and warmed anyway
+  /api/tools  200   0.978s     <- cold
+sessions after:  121
+```
+
+**Verified: no session created**, and both functions were genuinely cold — 1.20s and 0.98s against
+the ~0.23s warm figure measured at iteration 39. So it absorbs exactly the cold start it exists for
+without touching the session table.
+
+**One protective note, because it looks like a failure and is not:** `/api/chat` returns **405**
+to a GET. That is the point — the function still cold-starts and is now warm. **Anyone who
+"fixes" that into a POST with a body reintroduces the session-creation problem**, which is the
+flaw in my original wording. Worth a comment beside it if anyone touches that block.
+
+**Third time an agent has improved on a spec I wrote** — after the fourth option for 15b and the
+status-aware `intentLabel`. This one is the sharpest, because mine was not merely coarser: it would
+have partially undone the fix it was placed after.
+
+**Unchanged:** `agent/sol.md` still carries one *"reaches Sales"* (T19); the export is still
+**28,678** against live's **28,583**.
 
 ### Iteration 73, 18:00 EST — the RLS hole falsifies the best paragraph in the agent configuration
 

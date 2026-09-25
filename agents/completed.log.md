@@ -3139,3 +3139,58 @@ That is the third time this run that fixing one instance of a claim has left ano
 grep is now the habit, not the afterthought.
 
 `npx tsc -b --force` clean. `npx vitest run`: **420 passed, 29 files**.
+
+## It59 — T19, with T17 already done, and my own guard stopping me mid-edit
+
+### T17 was already in the file
+
+T17 asks for a note saying the intake tools are telephony-only. `agent/sol.md:77-80` already carries
+it — *"On web chat the intake tools are not there, and that is the one place the two runtimes
+genuinely differ"* — including the "one definition, two runtimes" line T17 hoped for. It was written
+but uncommitted when the plan was drafted, and PR #56 committed it. **No work needed; checked before
+assuming.**
+
+### T19's precondition, answered three ways before I changed a word
+
+T19 says: *"Before editing, check one thing I did not: whether a notification, a `category` routing
+rule or a documented human process already puts that escalation in front of Sales."* All three are
+no:
+
+| Check | Finding |
+|---|---|
+| RLS | `esc_read` admits `concierge` and `admin` only (`schema.sql:171`). A `sales` account reads zero rows — matching the Tester's 0-vs-31 |
+| Category routing | every `notify` list in `ESCALATION_MATRIX` is GM / Regional Security / Manager on duty / AGM. **Sales appears in none.** A group request defaults to `other` → "Manager on duty or AGM" |
+| Is `notify` a delivery mechanism? | No. It is a string array stored on the row and interpolated into the tool's reason text. Nothing sends it — `_delivery/` serves proposals, not escalations |
+
+So the original wording had to go. `agent/sol.md` now says where the escalation actually lands: the
+concierge supervisor's queue, categorised `other`/`normal`, carrying free-text `summary` and a
+`packet` that repeats it — **not** the structured `payload` a phoned-in inquiry lands on the group
+sales board — and a human routes it onward. Naming the hop is a better story than implying the board
+gets it directly, and a reviewer who checks finds it in about a minute.
+
+### The same sentence is live in the chat prompt, and I left it there
+
+`chat.ts:146` still tells guests "Sales will follow up". T19 puts that out of scope and I agree: it
+is a prompt edit to a runtime verified hours before submission, and being wrong about a prompt costs
+more than a named inaccuracy. Recorded as **assumption 16** in §6, with the evidence, the size of the
+overstatement (one hop, not a fabrication — a human really does get it), and the fact that the
+one-line prompt edit is first to land after the deadline.
+
+### My own test from It55 stopped this edit going out broken
+
+`npx vitest run` after the §6 addition: **3 failed**. `voice-prompt-size.test.ts` — compiled 30,033,
+`truncated: true`. The two paragraphs had pushed the voice prompt back over the 30,000 cap, and
+without that test the next provision would have silently dropped the tail of the prompt. It is the
+exact failure T28 existed to fix, caught four iterations later by the guard rather than by a person.
+
+Fixed the way the test's own message says to — exclude rather than raise the cap. Assumption 16 is
+*entirely* about the chat runtime and has no bearing on a phone call, so it is wrapped in
+`voice:exclude`: still there for a human reading the deliverable, not carried by the phone agent.
+Compiled **28,914, margin 1,086**, no truncation. The escalation correction stays in the voice prompt
+because it describes behaviour, not paperwork.
+
+**The margin is now thin enough to say out loud: 1,086 characters.** Two more paragraphs anywhere in
+§1–§7 and this fails again. That is the guard working as designed, and the next agent to add prose to
+this file should expect to wrap something.
+
+`npx tsc -b --force` clean. `npx vitest run`: **428 passed, 30 files**.
