@@ -62,6 +62,17 @@ hangup event, so every chat anyone has opened while testing is still counted as 
 and this screen opens on dozens of cards reading "Sol is handling this", and the first thing you
 say about it is wrong. Check the ACTIVE NOW tile reads a small number before you dial.
 
+**The Archive panel underneath is a different thing, and it will not be empty.** `demo:tidy`
+closes live sessions; it does not delete ended ones. So the top of the screen reads "Nothing live
+right now" and below it sits a table of around a hundred ended conversations, which are ours —
+every chat and call the three of us made building this. If anyone asks, say so:
+
+> *"Those are our own test conversations. This has not been in front of a guest yet — what you're
+> looking at is the evidence we ran it hard."*
+
+That is a better answer than a suspiciously tidy dashboard, and it is the same move this package
+makes everywhere else: say the true thing rather than hide it.
+
 Call **+1 (305) 786-6217** on speaker. Say your confirmation number is **R55004, last name Chen**.
 Ask to keep the room until 2pm.
 
