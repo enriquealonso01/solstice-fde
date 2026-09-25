@@ -24,7 +24,15 @@ import type { Context } from '@netlify/functions'
 import type { Channel } from '../../../shared/types'
 import { getDatabase } from './_deps'
 import type { ToolArgs, ToolContext } from './helpers'
-import { hasTool, recordToolInvocation, runTool, summarize, toolDefinitions, toolSpecs } from './registry'
+import {
+  hasTool,
+  recordClassifiedIntent,
+  recordToolInvocation,
+  runTool,
+  summarize,
+  toolDefinitions,
+  toolSpecs,
+} from './registry'
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' }
 
@@ -90,6 +98,9 @@ export default async function handler(req: Request, _context: Context): Promise<
 
   const result = await runTool(name, args, ctx)
   await recordToolInvocation(ctx, name, args, result)
+  // Telephony reaches the tools here rather than through `chat.ts`, so the intent write has to
+  // happen on this path too or a phoned-in session stays labelled "classifying…" forever.
+  void recordClassifiedIntent(ctx, name, result)
 
   // `summary` is the human line the guest chip and the supervisor trace both render.
   return json({ ...result, summary: summarize(name, result) })
