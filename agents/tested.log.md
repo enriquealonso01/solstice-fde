@@ -4881,3 +4881,83 @@ above with its real payload.
 ```
 PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
 ```
+
+---
+
+## Iteration 55 — 2026-09-25 23:35–23:40Z — VERIFIED: PR #85 (mine) and PR #87. And a guard that had been added minutes earlier was not running.
+
+### VERIFIED — PR #85, the voice transfer record, re-tested fresh
+`git log 68b4107..origin/main -- netlify/functions/tools/escalation.ts` is empty, so nothing has touched
+it since. Four cases against production, both channels crossed with both escalation states:
+```
+voice, NO escalation    avail=True  fallback: "No escalation exists yet, so if this transfer does not
+                                     connect nothing durable has reached a human. Call create_escalation
+                                     before you announce the handoff."
+                                    reason:   "Create the escalation first, so there is a written record
+                                     if the transfer does not connect. Then announce the handoff…"
+voice, WITH escalation  avail=True  fallback: (null)
+                                    reason:   "Announce the handoff before it happens, read the context
+                                     back to the person picking up, then step aside."
+chat,  NO escalation    avail=True  fallback: "…Call create_escalation before you finish this turn…"
+                                    reason:   "Do not tell the guest anyone is joining…"
+chat,  WITH escalation  avail=True  fallback: (null)
+                                    reason:   "A manager has this in writing…"
+```
+The voice gap is closed, the configured-with-a-record path is unchanged, and **PR #7's chat wording has
+not regressed** — which is why all four were run rather than just the one I changed.
+
+### VERIFIED — PR #87, and I could not find a miscount its guard misses
+`SUBMISSION.md:45` now reads *"**Three** things they did not ask for…"* with exactly three bullets
+beneath it, and the `sol.md` comment that quoted "685 characters" of margin now says "a few hundred
+characters". No deliverable quotes an exact voice-prompt margin any more.
+
+**Their guard bites.** Red-checked by extracting its `CLAIM` regex and `bulletsAfter` and running them
+over synthetic input rather than mutating a shared file while another agent held the lock:
+```
+the exact defect they fixed ("Two things…:" + 3 bullets)   CAUGHT IT (claims 2, found 3)
+the corrected version       ("Three things…:" + 3 bullets)  PASS (3=3)
+a bullet that merely contains a number                     no claim line matched
+```
+
+**I tried to find a gap in their pattern and the gap was in mine.** Their `CLAIM` requires the claim to
+end the line with a colon, uses spelled-out numbers, and a nine-noun vocabulary. That looked narrow, so I
+swept all 13 deliverable docs with digits as well as words, thirty nouns, and no colon requirement. It
+reported three mismatches, and **all three were false positives of my own making**:
+```
+SUBMISSION.md:47       "- the six agents, and the bugs they found…"      -> counted the 2 bullets after it
+docs/demo-runbook.md:12 "- [ ] Two windows side by side: guest left…"    -> counted the 9 checklist items after it
+docs/demo-runbook.md:242 "- **On the agents that built this:** six agents…" -> same shape
+```
+Every one is a bullet *item* that happens to contain a number, not a sentence introducing a list. The
+colon-at-end-of-line requirement is exactly what tells those apart, and dropping it is what produced the
+noise. **A narrower pattern with no false positives is worth more than a wider one that cries wolf**, and
+the instinct that "wider is more thorough" was wrong here.
+
+### THE FINDING: the guard was in the commit and not on disk, so it was not running
+```
+in HEAD?        yes          in origin/main? yes          on disk? NO
+git status:     D src/lib/rules/__tests__/list-counts.test.ts
+suite:          36 files / 471 tests        <- should be 37 / 473
+```
+PR #87 added `list-counts.test.ts` and it was **absent from the shared working tree**, so `npx vitest
+run` silently skipped it: the guard protecting the deliverable against miscounts was itself not being
+executed. Restored the tree to match HEAD with `git checkout -- <path>`; the suite is now **37 files /
+473 tests** and the guard passes.
+
+I cannot prove who removed it, and I am not guessing — three agents share this working tree and I did a
+`reset --soft` followed by a mixed `reset` in iteration 54, which is the most likely cause and would be
+mine. Either way the lesson is the same and it is new:
+**a test file existing in the commit does not mean it runs.** `git status` in a shared tree is part of
+the test run, and a file count that drops by one is the only symptom. The suite reported "471 passed" in
+green while a just-added guard sat missing.
+
+### A premise of mine that was wrong, caught in one step
+I opened this iteration intending to challenge PR #87 for **deleting** a test, because `git status` showed
+`D list-counts.test.ts`. The commit stat shows `list-counts.test.ts | 96 ++++++++` — it was **added**. The
+`D` was the working-tree symptom above, not a deletion in the change. Read the stat before writing the
+accusation.
+
+### Migration 004: sixth consecutive iteration, still not applied
+```
+PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
+```

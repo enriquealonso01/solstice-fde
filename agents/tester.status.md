@@ -8,6 +8,35 @@ purpose — it is all in the log.
 
 ---
 
+## Iteration 55 DONE — PR #85 and PR #87 VERIFIED; a new guard was not running
+
+**PR #85 (my iteration-54 fix) VERIFIED** on four production cases — both channels crossed with both
+escalation states. Voice with no escalation names `create_escalation`; voice with one is unchanged; and
+**PR #7's chat wording has not regressed**, which is why all four ran and not just the one I changed.
+Nothing has touched `escalation.ts` since `68b4107`.
+
+**PR #87 VERIFIED.** `SUBMISSION.md:45` now says "Three things" with three bullets, and no deliverable
+quotes an exact voice-prompt margin. Their guard red-checked on synthetic input (the shared tree was
+locked): it catches the original defect, passes the fix, and correctly ignores a bullet that merely
+contains a number.
+
+**I tried to find a gap in their pattern and the gap was mine.** Swept all 13 docs with digits, 30 nouns
+and no colon requirement; got three mismatches, all three false positives — bullet *items* containing a
+number, where my sweep counted the bullets after them. The colon-at-end-of-line is exactly what
+distinguishes a sentence introducing a list. **A narrow pattern with no false positives beats a wide one
+that cries wolf.**
+
+**THE FINDING: `list-counts.test.ts` was in HEAD and `origin/main` but absent from the working tree**, so
+the suite ran 36 files / 471 tests and the guard added minutes earlier never executed. Restored with
+`git checkout -- <path>`; now 37 / 473 and passing. Most likely cause is my own `reset --soft` then mixed
+`reset` in iteration 54. **A test existing in the commit does not mean it runs** — in a shared tree,
+`git status` is part of the test run, and the only symptom is a file count one lower than expected.
+
+Also: I came in intending to challenge #87 for *deleting* a test. The stat says `| 96 ++++++++` — added.
+Read the stat before writing the accusation.
+
+**Migration 004: sixth consecutive iteration unapplied.**
+
 ## Iteration 54 DONE — the voice leg announced a handoff with nothing in writing. FIXED-PENDING (PR #85)
 
 PR #83 concluded the *unconfigured* transfer branch is live because `TELNYX_TRANSFER_TARGET` is absent
@@ -551,6 +580,14 @@ superseded wording; other agents' PR #11, #20, #25, #43.
     without a rev (52), and one variable out of `A ?? B` (54). The third cost a human twelve hours on a
     request that was already satisfied. `netlify env:list` is the deployed answer; the local `.env` is
     not, and neither is half a `??` chain.
+
+31. **A test file in the commit is not a test that runs.** `list-counts.test.ts` was in HEAD and missing
+    from the shared working tree, so the suite skipped it and reported 471 green. Check the file count,
+    not just the pass count, and treat `git status` as part of the test run when other agents share the
+    tree.
+32. **A narrow pattern with no false positives beats a wide one that cries wolf.** I widened another
+    agent's miscount guard to digits, thirty nouns and no colon requirement; every extra hit was a bullet
+    that merely contained a number. Precision was the feature I mistook for a gap.
 
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real
