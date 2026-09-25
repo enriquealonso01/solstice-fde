@@ -23,10 +23,36 @@ Deployed serverless adds roughly 0.3–1s on top.
 | Sonnet 5, disabled, narration on | 1179ms | 2749ms | 1 of 4 |
 | Haiku 4.5 | 679ms | 1235ms | 2 of 4 |
 
-Six real turns captured end to end against the deployed site landed between **2.4s and 4.5s to first
-token**, consistent with the table plus serverless overhead.
-
 We missed the 800ms target. Not by a little.
+
+### Re-measured against production on 2026-09-25
+
+The numbers above were captured while building. Six fresh turns against the deployed site, each a
+new session, four scenario shapes:
+
+| Turn | First signal (tool chip) | First prose token | Tools |
+|---|---|---|---|
+| Policy lookup | 2032ms | 2999ms | `get_policy` |
+| Identified stay | 1545ms | 5040ms | `identify_guest`, `check_late_checkout` |
+| Service recovery | **none** | 870ms | none |
+| Group routing | 927ms | 2850ms | `create_escalation` |
+| Policy lookup 2 | 3132ms | 4664ms | `get_policy` |
+| Identified stay 2 | 1018ms | 3603ms | `identify_guest`, `check_late_checkout` |
+
+**First token p50 3301ms, inside the 4s target. First signal p50 1545ms, 45ms over the 1.5s
+target.** The spread is wider than the 2.4–4.5s we first reported: **870ms to 5040ms**. Fastest and
+slowest both moved, and the fast end is a turn that called no tool at all.
+
+Two things we are stating rather than smoothing over:
+
+- **The signal target is currently missed, narrowly.** 1545ms against 1.5s, on six turns. We are
+  not moving the target to match the measurement; the target was reasoned from turn-taking, not
+  from what we happened to score.
+- **One turn in six ran no tool, so there was no chip to render.** The argument below depends on a
+  tool chip covering the wait, and on that turn there was nothing to cover it with. It did not
+  matter there — prose arrived at 870ms, faster than any chip — but the general claim needs the
+  qualifier: when Sol answers from the conversation alone, the guest waits for prose with no
+  intermediate signal.
 
 ## Why, specifically
 
@@ -49,9 +75,14 @@ We split it, because the two channels have genuinely different budgets.
 
 **Chat: first *signal* p50 ≤ 1.5s, first prose token p50 ≤ 4s.**
 The signal that matters in a chat interface is not the first word, it is visible evidence that work
-is happening. The tool chip renders at ~1.3s saying "Checking the service recovery window", which is
-grounded, specific, and arrives well before prose. A guest watching a named tool run does not
-experience four seconds of silence.
+is happening. On a turn that calls a tool, the chip renders at a p50 of about 1.5s saying something
+grounded and specific such as "Checking the service recovery window", and arrives well before
+prose. A guest watching a named tool run does not experience four seconds of silence.
+
+The caveat, measured rather than assumed: **on a turn that calls no tool there is no chip**, and
+the guest waits for prose. In our sample that turn was also the fastest to first token, so the gap
+did not bite, but the mechanism is not a guarantee and we would rather say so than let the target
+read as covering every turn.
 
 **Voice: tool webhooks p95 ≤ 300ms, which is the part we own.**
 On a call, Telnyx owns speech recognition, turn-taking, barge-in and speech synthesis. Our
