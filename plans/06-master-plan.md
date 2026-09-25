@@ -32,14 +32,22 @@
 > and the diagram already marks that **FUTURE**. Add a `voice:exclude` paragraph saying what
 > "today" rests on, plus one runbook line for the panel question. **Change no guest wording.**
 >
-> **Agents:** **re-export DONE** in the tree, uncommitted — **byte-identical to live**, md5
-> `834d62ff…`, 29,315 chars, 25 tools · **T33** the disclosure paragraph · **T32** folds into it. **T31 CLOSED** (#75, #77) — and my instruction to keep the file counts
+> **T34.** An unredacted SIP transfer target is at **HEAD in two tracked files** — the export *and*
+> `netlify/functions/telnyx/_lib/legs.test.ts` — and in history at **`10b63e8` and `c09f04d`**,
+> while `SUBMISSION.md:13` says *"Nothing secret is in it."* Low severity, not zero: a credential
+> *username*, not a password. **Redaction is in progress and in the right place** (the exporter, so
+> it stays fixed). **Enrique: rotate the SIP connection rather than rewrite history** — rotation
+> makes the published value inert without invalidating commit ids the deliverables cite. Do it
+> **after any rehearsal call, before the email.**
+>
+> **Agents:** **T34** · **T33** the disclosure paragraph, **T32** folds into it · re-export **done**
+> in the tree, uncommitted. **T31 CLOSED** (#75, #77) — and my instruction to keep the file counts
 > was falsified inside the hour. See iteration 82.
 >
 > **T30 CLOSED** (PR #73) — the transcript now says the double escalation was a bug, and states
 > exactly what was and was not re-measured.
 >
-> **Editing `agent/sol.md`? The voice prompt has 685 characters of margin** (29,315 of 30,000).
+> **Editing `agent/sol.md`? The voice prompt has 681 characters of margin** (29,315 of 30,000).
 > Wrap human-facing additions in `voice:exclude`: a 276-char clause costs **+1**, not +276.
 >
 > **T19 CLOSED** (PR #66) and **live on both runtimes** — voice re-provisioned, verified 29,315
@@ -59,9 +67,10 @@
 # ▶ OPEN WORK — one agent item; the rest is Enrique's
 
 *Everything below this section is closed, or evidence.*
+*• **T34** an unredacted SIP target ships in the public export. One line. **Do first.***
 *• **T33** say what "today" rests on — Policy 15, not a pager. Disclosure only, no code change.*
 *• **T32** the escalation queue is FUTURE in the diagram and present tense in `sol.md` — **lowest
-priority.** Mind the **685-character** voice-prompt margin: wrap it in `voice:exclude`.*
+priority.** Mind the **681-character** voice-prompt margin: wrap it in `voice:exclude`.*
 *• **T21** two test rows to delete — the only thing a panel sees without reading. Enrique's.*
 *• **Re-export** `exports/telnyx-assistant.json` — 28,678 on disk against live's 29,315.*
 
@@ -178,6 +187,71 @@ is currently true.
 `over N` construction.
 
 
+### T34. An unredacted SIP transfer target ships in the public export, and `SUBMISSION.md` says nothing secret is in it
+
+*Earns the top agent slot because the repository is **public**, `SUBMISSION.md` makes an explicit
+security claim about this exact file, and the fix is one line using a redaction convention the file
+already uses everywhere else. **Not an emergency — see the assessment — but it should not ship as is.***
+
+**What is there.** `exports/telnyx-assistant.json`, tracked and public, contains at
+`.tools[11].transfer.targets[0].to`:
+
+```
+sip:gencred<49-char generated credential>@sip.telnyx.com     name: "Solstice front desk"
+```
+
+**What `SUBMISSION.md:13-16` claims:** *"It is **public**. Nothing secret is in it: `.env` and
+`DEMO_LOGINS.md` are gitignored, **the Telnyx export has its shared secret redacted**…"*
+
+**What is actually redacted:** the webhook shared secret, 23 times, as
+`REDACTED_INJECTED_FROM_TOOL_WEBHOOK_SECRET`. **The SIP credential username is not.** It is also
+in committed history, in `10b63e8`.
+
+**Honest assessment, because overstating this would be its own error.** A Telnyx SIP *credential
+username* is not a password. Nobody authenticates as that connection without the secret, which is
+not present. The realistic exposure is that a stranger can address SIP traffic at a connection
+labelled "Solstice front desk". That is **low severity and not zero**, and it is the kind of call a
+person should make rather than an agent.
+
+**Do this:**
+
+1. **Redact it in the export using the convention already in the file** —
+   `sip:REDACTED_TRANSFER_TARGET@sip.telnyx.com`, or the same
+   `REDACTED_INJECTED_FROM_*` shape. The export is a deliverable snapshot, not an importable
+   artefact, and a reviewer learns nothing from the credential string that the `name` does not
+   already tell them.
+2. **Then `SUBMISSION.md`'s sentence becomes true as written**, with no wording change needed.
+3. **Raise the history question with Enrique**, do not decide it. **Scope corrected in iteration
+   87 — it is wider than I first reported.** The value is at **HEAD in two tracked files**,
+   `exports/telnyx-assistant.json` **and** `netlify/functions/telnyx/_lib/legs.test.ts`, and in
+   history at **two commits, `10b63e8` and `c09f04d`**. Working-tree redaction fixes neither.
+
+   **The question is bounded — iteration 88 swept the whole tracked tree.** Every live value from
+   `.env` (Anthropic, Supabase service-role, Supabase anon, Telnyx API, Supabase URL) is **absent
+   from every tracked file at HEAD**, and the only `sk-ant-` matches are a validation pattern in
+   `setup.ps1` and a log entry about a prior sweep. **This SIP username is the only credential ever
+   committed.** Decide on one item, not on an unknown number.
+
+   **Recommend rotation over history rewriting, and say why.** Rewriting a public repository's
+   history hours before its link is emailed is the riskier of the two: it invalidates every commit
+   id in the deliverables — and `doc-citations.test.ts`, `SUBMISSION.md` and this plan all cite
+   them — for an exposure that is a credential *username*. Rotating the Telnyx SIP connection makes
+   the published value inert without touching a single commit, and it is the same remedy
+   `SUBMISSION.md` already records for the demo password. **The cost is that it must happen after
+   any rehearsal call and before the email, because it changes the transfer target.**
+   `SUBMISSION.md` already says *"history was scanned for every live credential before the
+   repository was opened"* and that the demo password was rotated because *"history is permanent"* —
+   so the precedent for how he handles this exists, and it is his to apply. Rotating a SIP
+   connection hours before a demo that uses the phone is a decision with a real downside; say so.
+
+**Check when done:** no real `gencred` value in the working tree — the fixture may keep an
+obviously-labelled placeholder, as `legs.test.ts` now does with
+`gencredEXAMPLEfixtureNotARealCredential000000000000`; `grep -c REDACTED` on the export still
+non-zero; the export still byte-identical to live *in its `instructions` field* (the redaction
+touches `tools`, not `instructions`, so the md5 check in iteration 84 must be re-scoped to
+instructions only — do not "fix" that by un-redacting).
+
+
 ### T33. `create_escalation` tells the guest a manager has it *today* — and nothing notifies a manager
 
 *Earns a slot because it is guest-facing, **instructed rather than drift**, and on **both**
@@ -221,7 +295,7 @@ current wording, so each needs the T30 treatment. One inaccuracy fixed, two crea
 
 **B — disclose it precisely, leave the tool alone.** One `voice:exclude`-wrapped line in
 `agent/sol.md`'s escalation section saying no one is paged and the queue view is FUTURE (free
-against the **685-char** margin — see T32), and one line in `docs/demo-runbook.md` so Enrique can
+against the **681-char** margin — see T32), and one line in `docs/demo-runbook.md` so Enrique can
 say it if a panel asks how the manager learns of it.
 
 **My recommendation is B, and this is a priced risk assessment rather than a preference:** A fixes
@@ -285,7 +359,7 @@ diagram already marks it **FUTURE, "designed but not built."** The gap is betwee
 implementation, and the right place to state it is the architecture section, not the guest sentence.
 
 **Revised instruction: change no wording. Add the disclosure, wrapped in `voice:exclude` so it
-costs nothing against the 685-character margin (see T32):**
+costs nothing against the 681-character margin (see T32):**
 
 > **What "today" rests on.** Policy 15 specifies same-day routing, and that is what Sol reports.
 > Nothing in this build *notifies* the manager: `notify` is an inert string array, `_delivery/`
@@ -333,12 +407,12 @@ queue is not built, and `sol.md` uses it as a place a row arrives.
 Put the clarification **inside a `<!-- voice:exclude -->` block.** Measured this iteration:
 
 ```
-current voice compile : 29,315      MAX_INSTRUCTION_CHARS : 30,000      margin : 685
+current voice compile : 29,315      MAX_INSTRUCTION_CHARS : 30,000      margin : 681
 same clause wrapped in voice:exclude → compile 29,316   (+1 char, not +276)
 ```
 
 The text itself never reaches the phone agent; only a whitespace artefact does. **A guest on a call
-does not need this paragraph, and the margin is only 685 characters** — an unwrapped addition of any
+does not need this paragraph, and the margin is only 681 characters** — an unwrapped addition of any
 length spends margin that PR #67 already had to correct once.
 
 Wording, roughly:
@@ -854,6 +928,308 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 88, 19:16 EST — swept every tracked file for secrets; the SIP target was the only one
+
+T34 found one exposure. The lesson from iterations 86 and 87 says that finding one is not the same
+as knowing how many there are, so I swept the whole tracked tree rather than stopping at the file I
+had already opened.
+
+#### Method: compare against the live values, not against a pattern
+
+Pattern matching finds what looks like a secret. It cannot tell a real key from a placeholder, and
+this repository legitimately contains both. So I took each live value out of `.env` and asked
+whether that exact string appears anywhere in `git grep HEAD`:
+
+| Secret | In any tracked file at HEAD |
+|---|---|
+| `ANTHROPIC_API_KEY` (108 chars) | **no** |
+| `SUPABASE_SERVICE_ROLE_KEY` | **no** |
+| `TELNYX_API_KEY` | **no** |
+| `SUPABASE_ANON_KEY` | **no** |
+| `SUPABASE_URL` | **no** |
+
+Then the reverse direction, for credential *shapes* rather than known values. Two tracked files
+match `sk-ant-`, and **both are innocent**:
+
+- `setup.ps1:35-36` — a validation **pattern** and a help string: `Pattern = '^sk-ant-'`.
+- `agents/completed.log.md:2283` — the Implementer's own record of a previous sweep, reporting
+  *"token-shaped strings … → no matches"*.
+
+No JWTs (`eyJhbGciOi`), no `Bearer` tokens, no Telnyx `KEY…` literals anywhere tracked.
+
+#### The result, stated as a bound rather than a reassurance
+
+**The SIP transfer target in T34 is the only real credential that has ever been committed**, and it
+is a credential *username*. Everything else that looks like a secret in this repository is a
+pattern, a placeholder, or a log entry about checking for secrets.
+
+That matters for T34 specifically: it converts *"we found one — are there others?"* into **"we
+checked the set; there is exactly one."** Enrique can make the rotation call on a bounded question,
+which is a different decision from an open-ended one.
+
+#### One observation, not a finding
+
+`TELNYX_WEBHOOK_SECRET` is unset in the local `.env`, while the live assistant clearly has one —
+the export redacts `REDACTED_INJECTED_FROM_TOOL_WEBHOOK_SECRET` 23 times. The secret lives in the
+deployment environment rather than on the developer's machine, which is the right side of that
+line, and it is why the redaction has something to redact. **Not a problem; recorded so the next
+person does not read the empty local variable as a missing secret.**
+
+#### Nothing else moved
+
+T34's redaction is still uncommitted — exporter fixed, fixture fixed, `HUMAN_INTERVENTION.md` being
+written, lock held since 19:08. `SUBMISSION.md:45` still says *"Two things"* above three bullets.
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| T34 rotation decision | Enrique | open — **and now a bounded question: exactly one credential** |
+| Telnyx top-up, $3.09 | Enrique | open |
+| T21, delete `INQ-2012`/`INQ-2013` | Enrique | open — verified safe |
+| T34 redaction | Agents | in progress, uncommitted |
+| `SUBMISSION.md` "Two things" → three | Agents | open — one word |
+
+Inbox empty. **The plan is accurate and correctly ordered.**
+
+
+### Iteration 87, 19:10 EST — T34 is wider than I filed it, and two of my own greps disagreed because the file changed between them
+
+#### The exposure is in two files and two commits, not one
+
+I filed T34 saying the credential was in the export and in `10b63e8`. **Both true and incomplete.**
+Checked properly:
+
+```
+HEAD, tracked : exports/telnyx-assistant.json
+                netlify/functions/telnyx/_lib/legs.test.ts     <- I had not looked here
+history       : 10b63e8, c09f04d
+```
+
+The test fixture had the **real 49-character value** hard-coded. I found it only because the
+`export === live` lesson from iteration 86 — *verifying a pair and concluding about the set* —
+pushed me to grep the whole tree rather than the one file I had already looked at.
+
+#### Two greps of the same file, minutes apart, disagreed. Both were right
+
+My first pass read `gencredNPClth8ogCJL…` in `legs.test.ts`. My second read
+`gencredEXAMPLEfixtureNotARealCredential000000000000`. That is not an error in either: **the
+Implementer edited the file between my two commands.** `git status` now shows it modified, HEAD
+still has the real value, the working tree has an obviously-labelled placeholder.
+
+**Worth writing down because it is a new shape of the same lesson.** I have been saying *a
+point-in-time observation is not a durable property*. Here two honest observations of the same file
+contradicted each other within minutes, and reconciling them needed `git show HEAD:` beside the
+working copy. **In a tree three agents are writing to, "what does this file say" is not a
+well-formed question without a revision attached.**
+
+#### The fix in progress is the right shape
+
+The redaction went into `scripts/telnyx/export-assistant.mjs`, not into the JSON by hand — so the
+next re-export stays redacted instead of re-exposing it. The export now reads
+`sip:REDACTED_TRANSFER_TARGET@sip.telnyx.com` with `name: "Solstice front desk"` preserved, which
+is the part a reviewer actually learns from.
+
+#### My recommendation on history, stated plainly because it is Enrique's call
+
+**Rotate the SIP connection; do not rewrite history.** Rewriting a public repository's history
+hours before its link is emailed invalidates every commit id in the deliverables — and
+`doc-citations.test.ts`, `SUBMISSION.md` and this plan all cite commits — to remove a credential
+*username*, which is not a password and does not authenticate anything on its own.
+
+Rotation makes the published value inert without touching a commit, and it is **the same remedy
+`SUBMISSION.md` already records** for the demo password: *"history is permanent."* The one
+constraint: **it changes the transfer target, so it must happen after any rehearsal call and before
+the email.**
+
+#### Still open in T34, and unchanged since I filed it
+
+`SUBMISSION.md:45` still reads *"Two things they did not ask for"* above **three** bullets.
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| **T34 rotation decision** | Enrique | **open — scope now two files, two commits** |
+| Telnyx top-up, $3.09 | Enrique | open |
+| T21, delete `INQ-2012`/`INQ-2013` | Enrique | open — verified safe |
+| T34 redaction | Agents | **in progress, uncommitted** — exporter fixed, fixture fixed |
+| `SUBMISSION.md` "Two things" → three | Agents | open — one word |
+
+Inbox empty. No lock held at the time of writing.
+
+
+### Iteration 86, 19:22 EST — I nearly filed a false correction from my own reimplementation, and caught it
+
+#### What I almost wrote
+
+PR #79 reports *"compile === live === export, all 29,319, margin 681."* I measured it myself and got
+**compile 28,914, live 28,919, export 28,919 — compile ≠ live.** A five-character disagreement on a
+claim made in a commit message twenty minutes old.
+
+**I did not file it, because my number disagreed with theirs by about four hundred characters**, and
+a discrepancy in the disagreement is more interesting than the disagreement. `agent/sol.md` is
+**CRLF on disk — 532 carriage returns** — and `compileInstructions` at `provision.mjs:222-227`
+**does not normalise line endings.** My version did. With CRLF present, `\n{3,}` → `\n\n` barely
+fires at all, so the collapse rule behaves differently and the difference is not the 532 characters
+you would expect by subtraction.
+
+**My compile was not the compiler.** Measured raw, the way the real code path does it:
+
+```
+live    29319   d29fef7d246945df   CRs: 400
+export  29319   d29fef7d246945df   CRs: 400
+live === export : true        margin to 30000 : 681
+```
+
+**#79's numbers are right and mine were the artefact.** This is the `sed` line-number error from T14
+in a new costume: a correction derived from a method that is not the authority. The difference is
+that this time it was caught **before** it reached the plan, by the same tell as iteration 39 — the
+wrong version was more interesting than the right one.
+
+#### The consequence I do have to fix: I published a margin from that reimplementation
+
+Iteration 80 put **"681 characters of margin"** into the banner as guidance for anyone editing
+`agent/sol.md`, and T32 and T33 repeat it. **That figure came from my approximation, not the
+compiler.** The measured margin is **681**. Corrected everywhere it appears, and now sourced from
+the live assistant rather than from my own compile.
+
+#### The sharper lesson, which supersedes my iteration-84 conclusion
+
+In iteration 84 I verified **export === live**, byte-for-byte with md5, and reported the re-export
+done. That check was correct and it was not sufficient. #79 found that **live itself was stale**:
+the compile said `chat.ts:303`, live said `chat.ts:256`, a difference at character 26,565, because
+live had last been provisioned before PR #70 and PR #74 moved the line again.
+
+> **Two artefacts agreeing proves synchronisation, not currency.** `export === live` cannot detect
+> that both are behind the source. **Three digits replacing three digits is invisible to a length
+> check**, which is why the comparison must be byte-for-byte *and* must include the source.
+
+That generalises the error I have now made in several forms: I keep verifying a **pair** and
+concluding about the **set**.
+
+#### PR #79 is good work, and its reasoning on sequencing is worth keeping
+
+T32 was folded into the re-export **deliberately** — shipping the re-export first would have
+re-staled it within minutes, because T32 edits `sol.md`, which is the compile source. One lock, one
+provision, one consistent end state. They also verified T32's premise independently before writing
+to it rather than taking my word: every `src/` reference is the architecture map, no component
+queries the table, and the SVG does place "Escalation queue" under **FUTURE**.
+
+The clause **costs 0 compiled characters**. Their first measurement said −401 and they traced it to
+LF-versus-CRLF rather than adjusting the number — the **fourth** time line endings have corrupted a
+reading in this file, now fixed by normalising both sides at the point of comparison.
+
+#### T34 is still open and unclaimed
+
+`gencred` is still in `exports/telnyx-assistant.json`, and `SUBMISSION.md:45` still says *"Two
+things"* above three bullets. The re-export in #79 **rewrote that file without redacting the SIP
+target**, which is expected — T34 was filed after the lock was taken — but it does mean the fix
+must be applied to the freshly synced file rather than to the version I read.
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| **T34** unredacted SIP target, public repo | Agents, Enrique on history | **open — do first** |
+| Telnyx top-up, $3.09 | Enrique | open |
+| T21, delete `INQ-2012`/`INQ-2013` | Enrique | open — verified safe |
+| T32 / re-export / escalation-queue disclosure | — | **CLOSED**, PR #79 |
+
+Inbox empty. Lock held since 19:01. **Voice margin: 681.**
+
+
+### Iteration 85, 19:14 EST — auditing `SUBMISSION.md` found an unredacted SIP target, and corrected me on voice transfers
+
+I audited the reviewer's entry document against reality for the first time. Most of it holds; two
+things do not, and one of them is mine.
+
+#### The security claims are true except for one field — T34
+
+`.env` and `DEMO_LOGINS.md` are gitignored **and untracked**; the webhook shared secret is redacted
+**23 times**; and **no value from `.env` appears anywhere in the export**, checked directly against
+the live variables rather than by reading the redaction and believing it.
+
+But `exports/telnyx-assistant.json` — **tracked, public** — carries at
+`.tools[11].transfer.targets[0].to`:
+
+```
+sip:gencred<49-char generated credential>@sip.telnyx.com     name: "Solstice front desk"
+```
+
+while `SUBMISSION.md:13` says *"Nothing secret is in it."* **T34 filed**, with an honest severity
+assessment: a SIP *credential username* is not a password, nobody authenticates without the secret,
+and the realistic exposure is that a stranger can address traffic at a connection labelled
+"Solstice front desk". **Low, not zero.** The fix is one line using the redaction convention the
+file already uses. The history question is Enrique's, and `SUBMISSION.md`'s own precedent — the
+demo password was rotated because *"history is permanent"* — is the right frame for it.
+
+#### The same field corrects my iteration-84 conclusion
+
+Yesterday I wrote that because `TELNYX_TRANSFER_TARGET` is unset on the deployed site,
+`transferToHuman`'s fallback *"is the live configuration, not a test condition"*, and I used that to
+argue about what happens **on a live call**.
+
+**Wrong for voice.** The exported tool list has **no `transfer_to_human` webhook at all**. Voice
+has Telnyx's **native `transfer` tool** (index 11), pointing at a configured, live SIP target. The
+Netlify environment variable governs our webhook tool, which **the voice assistant does not have**.
+
+So:
+
+| | chat | voice |
+|---|---|---|
+| transfer mechanism | `transfer_to_human` webhook | Telnyx native `transfer` tool |
+| destination configured | **no** — env unset | **yes** — `sip:…` "Solstice front desk" |
+| my iteration-84 claim | holds | **does not hold** |
+
+**G16's stated test** — *"unset `TELNYX_TRANSFER_TARGET` and ask for a manager on a call"* —
+therefore does not exercise the voice path it names. It exercises the chat path. That does not make
+G16 wrong; the guardrail is about never describing a failed handoff as a handoff, and the chat half
+is verified. **It means the voice half is even less measured than I recorded**, because the test as
+written would not have measured it either.
+
+#### The error, again, is the same one
+
+I checked one runtime's configuration and stated a conclusion about the other. **Iteration 76 was
+exactly this** — I measured the chat prompt extraction and wrote a re-provision rule for voice. I
+named the lesson then as *"verifying one runtime is not verifying the other"*, wrote it into this
+file, and made the same move nine iterations later.
+
+Noting the difference that matters: both times the error was caught by **looking at an artefact
+rather than reasoning further** — the compile in 76, the exported tool list here. The plan already
+says to prefer measurement. The gap is that I keep reaching for it *second*.
+
+#### Small, and in the entry document: "Two things" introduces three
+
+`SUBMISSION.md:45` reads *"Two things they did not ask for"* and then lists **three** bullets —
+`how-this-was-built.md`, `where-this-goes.md`, `role-walkthroughs.md`. The third was added at 16:58
+and the count was not updated. One word, in the table of contents a reviewer reads first. **Folded
+into T34** rather than given its own task.
+
+#### Everything else in `SUBMISSION.md` checks out
+
+Five chat transcripts and one phone call — `transcripts/` has exactly that. The phone number
+matches `voice-call.md`'s masked capture. The net-new tool, the diagram, the integration
+recommendation, the latency target and the export all point at files that exist.
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| **T34** unredacted SIP target in a public export | Agents, then Enrique on history | **open — new, do first** |
+| Telnyx top-up, $3.09 | Enrique | open — beat 3, G16, T33's unmeasured claim |
+| T21, delete `INQ-2012`/`INQ-2013` | Enrique | open — verified safe |
+| T33 disclosure, absorbing T32 | Agents | open — in progress, `sol.md` is modified in the tree |
+| Re-export the Telnyx JSON | Agents | done in tree, uncommitted |
+
+Inbox empty. Lock held, **10 minutes old — not stale**; I checked rather than inferring it from the
+commit gap, which would have read as 27.
+
+
 ### Iteration 84, 19:06 EST — the export matches live byte-for-byte; T33's "today" is Policy 15, not a slip
 
 #### The re-export is done, and I checked the bytes rather than the length
@@ -1177,7 +1553,7 @@ instructions. **The guest-facing path is clean on both channels.**
 Inbox empty. No lock held. Deploy current with HEAD.
 
 
-### Iteration 80, 18:42 EST — T30 closed and improved on the spec again; the voice prompt has 685 characters of margin
+### Iteration 80, 18:42 EST — T30 closed and improved on the spec again; the voice prompt has 681 characters of margin
 
 **T30 CLOSED, PR #73**, and it is the **fourth** time an agent has shipped better than I specified.
 
@@ -1210,11 +1586,16 @@ smallest thing left.
 
 #### The constraint that matters more than T32 itself: 685 characters
 
+> **Corrected in iteration 86: the margin is 681, and the 685 below came from my own
+> reimplementation of the compile, not from `provision.mjs`. `agent/sol.md` is CRLF and the real
+> compiler does not normalise line endings. Measured raw against the live assistant: 29,319 of
+> 30,000. The reasoning in this section holds; only the number was mine and wrong.**
+
 Measured this iteration, and worth pulling out of the task because anyone editing `agent/sol.md`
 needs it:
 
 ```
-current voice compile : 29,315      MAX_INSTRUCTION_CHARS : 30,000      margin : 685
+current voice compile : 29,315      MAX_INSTRUCTION_CHARS : 30,000      margin : 681
 ```
 
 **685 characters.** PR #67 already had to correct this margin once. Any addition to `sol.md` outside

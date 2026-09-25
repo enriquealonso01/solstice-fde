@@ -608,3 +608,44 @@ and 18:20:46Z (`Vantage Labs DELETE-ME`, id `5cc932a1-e546-47ba-8b25-01ad1cdfe5f
 and two of the inbox at beat 4, and one of them says DELETE-ME on screen.
 
 Afterwards `/admin/inquiries` should show **11 rows**, and the two "1 missing" chips go with them.
+
+---
+
+## Your call: a live SIP credential is in git history, and one sentence in SUBMISSION.md now overstates the scan
+
+**Fixed in the working tree, so nothing further ships with it.** The Telnyx SIP transfer target was
+unredacted in `exports/telnyx-assistant.json`, and the same live credential was hardcoded in a
+tracked test fixture (`netlify/functions/telnyx/_lib/legs.test.ts`) — which T34 did not know about.
+Both are clean now, the export script redacts by pattern rather than by looking up one value, and a
+test refuses any future export that carries an addressable SIP URI.
+
+**What I cannot fix, and am not deciding.** The value is in committed history:
+
+| Commit | Where |
+|---|---|
+| `10b63e8` | the export |
+| `c09f04d` | the test fixture |
+
+**How bad it actually is, stated plainly rather than dramatised.** A SIP *credential username* is not
+a password. Nobody registers as that connection without the secret, which has never been in the
+repository. The realistic exposure is that a stranger can address SIP traffic at a connection
+labelled "Solstice front desk". **Low severity, not zero.**
+
+**The part that is a documentation problem, not a security one.** `SUBMISSION.md` says *"history was
+scanned for every live credential before the repository was opened."* This credential was in history
+at that point. So either the scan did not treat a SIP username as a credential — defensible, it is
+not a password — or it was missed. I cannot tell which from here, and it is your sentence.
+
+**Three options, and the middle one is what I would do:**
+
+1. **Rotate the SIP credential.** Removes the exposure entirely. **It also touches the connection the
+   phone demo runs through, hours before the demo.** I would not do this today.
+2. **Leave the credential, soften the one sentence.** e.g. *"history was scanned for every live
+   secret; a SIP credential username, which is not a password, was found in history after that scan
+   and redacted going forward."* Costs nothing, breaks nothing, and the claim becomes exactly true.
+   Say the word and I will make that edit.
+3. **Leave both.** Defensible if you consider a username not a credential — but the sentence then
+   reads as a stronger guarantee than what was checked.
+
+**Nothing is blocked on you.** The demo and the deliverable work either way; option 2 is a one-line
+edit I can do in a minute whenever you say.
