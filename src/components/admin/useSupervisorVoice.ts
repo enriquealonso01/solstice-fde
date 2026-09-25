@@ -144,8 +144,8 @@ export function useSupervisorVoice(enabled = true): SupervisorVoice {
           setState('unavailable')
           setError(
             res.failure === 'not_deployed'
-              ? 'POST /api/voice/credentials is not deployed, so no SIP client can register.'
-              : (res.error ?? 'Could not reach the credentials endpoint.'),
+              ? 'Supervisor audio is not deployed on this build, so there is no call to join.'
+              : (res.error ?? 'Could not reach the voice service.'),
           )
         }
         return
@@ -154,7 +154,7 @@ export function useSupervisorVoice(enabled = true): SupervisorVoice {
       const loginToken = res.data?.login_token ?? res.data?.token
       if (!loginToken) {
         setState('error')
-        setError('The credentials endpoint returned no login_token.')
+        setError('The voice service did not return a login for this session.')
         return
       }
 
@@ -241,7 +241,7 @@ export function useSupervisorVoice(enabled = true): SupervisorVoice {
       } catch (cause) {
         if (cancelled || !current()) return
         setState('error')
-        setError(messageOf(cause, 'Could not register with Telnyx.'))
+        setError(messageOf(cause, 'Could not connect to the phone system.'))
       }
     })()
 
@@ -290,13 +290,13 @@ export function useSupervisorVoice(enabled = true): SupervisorVoice {
   const unavailableReason = ready
     ? null
     : state === 'unsupported'
-      ? 'This browser cannot open a WebRTC audio leg on a non-secure page.'
+      ? 'This browser cannot open supervisor audio on a page that is not secure.'
       : state === 'forbidden'
         ? 'This account cannot open a supervisor audio leg. Concierge or admin only.'
         : state === 'requesting'
           ? 'Getting supervisor audio credentials…'
           : state === 'connecting'
-            ? 'Registering the supervisor SIP client…'
+            ? 'Connecting this browser to the phone system…'
             : (error ?? 'Supervisor audio is not registered, so a dialled leg would go unanswered.')
 
   // Report every transition to the server.

@@ -461,3 +461,12 @@ been moved back to Open — it is a decision, not a resolved item._
   (PR #7, PR #28) and the voice half is correct by inspection but untested.
   Blocks: nothing operationally. It is the only one of the 19 guardrails without an execution record,
   so it is the one a thorough panellist could catch you on.
+
+- **Correction, sharper than my earlier note: my junk inquiries are rows ONE and TWO of the inbox.**
+  The table sorts newest first, so beat 4's "click it from the inbox list" now opens on
+  **"Vantage Labs DELETE-ME"** at row 1 and "Vantage Labs" at row 2, with INQ-2009 - the row the
+  runbook actually asks for - nine rows further down. I previously described them as "visible at beat
+  4", which understated it. Both also show `1 missing`, so they sit in the same visual class as
+  INQ-2004, the real needs-info example.
+  Needed: delete `INQ-2012` and `INQ-2013`. I have no DB write access. This is the single cheapest
+  thing on this list and it is the first thing a panellist will see on that screen.

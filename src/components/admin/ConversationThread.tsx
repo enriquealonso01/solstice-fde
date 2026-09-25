@@ -86,7 +86,7 @@ export default function ConversationThread({ inquiry }: { inquiry: InquiryRow })
       ) : state.kind === 'absent' ? (
         <EmptyState
           title="No communication history"
-          body="The communications endpoint is not deployed on this build, so nothing is shown rather than guessed."
+          body="This version does not include message history, so nothing is shown rather than guessed."
         />
       ) : state.items.length === 0 ? (
         <EmptyState

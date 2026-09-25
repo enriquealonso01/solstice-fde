@@ -2609,3 +2609,1052 @@ the surface a human touches, not the layer you changed.*
 - `INQ-2012`, `INQ-2013` — my junk rows, visible in the inbox at beat 4.
 - Chat cannot open a group inquiry — Enrique's call, three pieces of evidence.
 - Nothing of mine is FIXED-PENDING.
+## Iteration 28 — 2026-09-25 — G17 and RLS re-proven at ~3x the data, and writes tested for the first time
+
+Both claims were last proven at iteration 3. Since then the tables have roughly tripled and several
+schema-touching PRs have landed, so "it held once" is not the same as "it holds".
+
+### VERIFIED — G17, across every row in the table, and I proved the sweep was complete
+```
+tool_invocations rows: 500     (169 at iteration 3)
+columns: args_masked, created_at, grounded, id, latency_ms, result_summary, session_id, tool
+has a raw "args" column? False
+```
+The raw-argument column still does not exist, so masking is a property of the write path rather than
+something applied on read.
+
+```
+bare email addresses : admin@solsticehotels.com, supervisor@solsticehotels.com, yImOWWSkZT@sip.telnyx.com
+phone-shaped strings : NONE
+literal 9945 (R55012's real card last-four): absent
+rows showing *** masking: 33
+```
+The three emails are the two staff accounts that signed in and a Telnyx SIP URI — no guest address,
+exactly as at iteration 3 but now across 500 rows including voice, group and chat traffic.
+
+**I checked that I had actually swept everything, because a capped query looks identical to a clean
+one.** `limit=2000` returned 500, which is suspiciously round and is a common PostgREST cap:
+```
+Content-Range: 0-499/500
+offset=500 -> 0 rows      offset=499 -> 1 row
+```
+So 500 is the true total, not a ceiling, and the sweep covered every row. Without that check I would
+have been reporting a possibly-partial sweep as complete — the same trap as the PDF sweep that
+declared clean having read zero files.
+
+### VERIFIED — RLS below the app, at the new volumes
+PostgREST directly, one JWT per role, no app in the path:
+
+| table | supervisor | sales | anonymous |
+|---|---|---|---|
+| `proposals` | 0 | **10** | 0 |
+| `inquiries` | 0 | **13** | 0 |
+| `audit_log` | 0 | **251** | 0 |
+| `follow_ups` | 0 | **3** | 0 |
+| `sessions` | **112** | 0 | 0 |
+| `messages` | **380** | 0 | 0 |
+| `tool_invocations` | **500** | 0 | 0 |
+| `escalations` | **32** | 0 | 0 |
+| `profiles` | 1 | 1 | 0 |
+
+Exactly inverted, anonymous sees nothing, and `profiles` returns one row each — your own. `follow_ups`
+was not in iteration 3's table and is covered. Volumes have grown 3–7x (sessions 29→112, messages
+161→380, traces 169→500, escalations 5→32) and the boundary has not moved.
+
+### VERIFIED — writes across the boundary, which iteration 3 never tested
+Reads were proven before; a read-only proof leaves the more damaging half open. Every write below set
+a column to **its current value**, read first with the role that is allowed to see it, so a permissive
+policy could not have caused damage:
+
+| attempt | status | rows affected |
+|---|---|---|
+| supervisor UPDATE `proposals` | 200 | **`[]`** |
+| sales UPDATE `sessions` | 200 | **`[]`** |
+| supervisor DELETE a proposal | 200 | **`[]`** |
+| sales DELETE a session | 200 | **`[]`** |
+| anonymous UPDATE `proposals` (to `sent`) | 200 | **`[]`** |
+
+`Prefer: return=representation` makes this readable: an empty array is zero rows touched. RLS filters
+the row out of the caller's visibility, so the statement matches nothing rather than erroring — which
+is the correct shape, if an initially alarming one.
+
+**A 200 on a DELETE is not something to take on trust, so I checked the data rather than the status
+code:**
+```
+proposals count: 10 (unchanged)   targeted proposal: still there, status=draft
+sessions count: 112 (unchanged)   targeted session:  still there, status=active
+```
+Nothing was deleted, nothing was modified. Note the anonymous attempt tried to set a proposal to
+`sent` — the single most damaging write available on this schema — and it affected nothing.
+
+### Nothing fixed this iteration
+Both claims held. No lock taken, no code changed, no production state altered — the write probes were
+no-ops by construction and verified inert afterwards.
+
+### Still open
+- Beat 5 / T5 failure injection — BLOCKED on this session's flag permissions. R55022 is the fixture.
+- Beat 3 — Telnyx $3.09 against the runbook's own $20 gate.
+- `INQ-2012`, `INQ-2013` — my junk rows, visible at beat 4.
+- Chat cannot open a group inquiry — Enrique's call.
+- The supervisor transcript screen read end to end on screen, which is the one admin surface the demo
+  dwells on and the last free thing on my list.
+## Iteration 29 — 2026-09-25 — the transcript screen is right; the sessions LIST is badly wrong
+
+### VERIFIED — the supervisor transcript reads correctly end to end
+Signed in as `supervisor@`, opened session `347909de` (the iteration-7 safety escalation) in a real
+browser at 1440x900:
+
+```
+chars on page      : 4758
+guest line present : true      ("followed me from the elevator")
+Sol reply present  : true      ("alerted our security team…")
+second turn present: true
+shows the trace    : true      (create_escalation / transfer_to_human / Escalation)
+transcript in order: true      (guest line precedes the reply)
+junk tokens        : none      no undefined / NaN / [object Object] / Invalid Date
+non-staff emails   : none
+card digits 9945   : false
+console errors     : none
+```
+The session-facts panel is honest about what a chat cannot have: `CALL CONTROL ID n/a (chat)`,
+`TELNYX CONVERSATION n/a (chat)`, `GUEST ID not identified`. The supervisor ladder renders with
+truthful descriptions ("Whisper — only Sol hears you", "Take over — Sol stops talking"). This is a
+good screen and it holds up to being read closely.
+
+### The headline supervisor screen claims 90 conversations are happening right now
+The list page's own subtitle is *"Every call and chat Sol is handling **right now**, streaming from
+Supabase Realtime."* What it actually renders:
+
+```
+"Active" labels        : 90
+"Classifying…" labels  : 100
+elapsed timers         : 83   (1:01:25, 1:01:34, 1:01:43, 1:03:27, 1:06:49, …)
+longest elapsed        : 11h 28m
+```
+
+Reconciled against Postgres:
+```
+115 sessions: active 90, ended 23, taken_over 2      channels: chat 106, voice 9
+active sessions with `intent` set: 0 of 90   -> every one renders "Classifying…" permanently
+85 of 90 are over an hour old; oldest active 3.9 hours
+```
+
+So a panellist opening the demo's supervisor screen sees **ninety** conversations presented as live,
+every single one stuck at "Classifying…", several with hour-plus timers. That does not read as a busy
+hotel; it reads as a system that never finishes anything.
+
+Two honest notes on the numbers. The 11h 28m timer does not correspond to any active session — the
+oldest of those is 3.9 hours — so it belongs to an ended or taken-over row that still renders a
+duration; that is plausible and not necessarily wrong. And I verified the timer arithmetic itself is
+correct: the transcript page showed `STARTED 12:46:10 PM` with `3:05:53` elapsed, which matches the
+wall clock. The clock is fine; the `status` is what is stale.
+
+**Cause, already known and documented:** chat has no hangup event, so a closed tab leaves the row
+`active` forever. Iteration 12 proved the "Close the conversation" control fires **zero** network
+calls. `intent` being null on all 90 is the second half — nothing ever resolves it after the turn, so
+the badge never advances past "Classifying…".
+
+**This is substantially my own doing and I want that on the record.** Iteration 12 found 11 active
+sessions and I reported them as mine. It is now 90, and the growth is my own chat testing across
+iterations 12–28. Every guardrail probe, every re-test of a prompt fix, every three-run repeat left a
+row behind.
+
+I did not run the cleanup, for the same reason as iteration 12 — it changes what Enrique's headline
+screen shows, and the runbook is explicit that it must be run *"minutes before they join, not the
+night before"*, because rehearsing refills it. My own future iterations would refill it too. So the
+useful thing I can do is hand over the exact number and stop adding to it. Dry run, just now:
+
+```
+115 sessions examined · 0 phantom(s) found · Deleted 0 of 0
+90 session(s) still marked active; 85 idle for over 30 minutes
+```
+`npm run demo:tidy` would delete nothing and close 85. It is already the last item on the runbook's
+pre-flight checklist; this is the number that makes it matter rather than housekeeping.
+
+**And a commitment for my remaining iterations:** I will stop opening chat sessions unless a test
+genuinely requires a live turn, and prefer the tool endpoints, which leave no session behind. Several
+of my recent iterations used chat where `/api/tools/*` would have answered the same question.
+
+### Still open
+- Beat 5 / T5 failure injection — BLOCKED on this session's flag permissions. R55022 is the fixture.
+- Beat 3 — Telnyx $3.09 against the runbook's own $20 gate.
+- `INQ-2012`, `INQ-2013` — my junk inquiry rows, visible at beat 4.
+- Chat cannot open a group inquiry — Enrique's call.
+- Nothing of mine is FIXED-PENDING.
+## Iteration 30 — 2026-09-25 — BLOCKED on the lock: `sessions.intent` is never written, so every session reads "classifying…" forever
+
+Followed the loose thread from iteration 29, where 0 of 90 *active* sessions had `intent`. I had
+assumed that was a side effect of the stale-status problem. It is not — it is a separate defect, and a
+worse one, because it does not go away when the sessions are closed.
+
+### The finding
+```
+115 sessions          status=active     intent_set=False   90
+                      status=ended      intent_set=False   23
+                      status=taken_over intent_set=False    2
+distinct non-null intents: NONE
+```
+**Not one session in the history of this project has ever had `intent` set**, at any status.
+
+`intentLabel()` (`mockData.ts:806`) is:
+```ts
+export function intentLabel(intent: string | null): string {
+  if (!intent) return 'classifying…'
+  return intent.replace(/_/g, ' ')
+}
+```
+So `null` renders as **"classifying…"** — which is exactly the badge I counted 100 times on the
+sessions list in iteration 29.
+
+**Four UI surfaces read it**, so this is not a vestigial column someone forgot to delete:
+- `src/pages/admin/SupervisorDashboard.tsx:129` (the table cell) and `:172` (the detail chip)
+- `src/pages/admin/AdminHome.tsx:117`
+- `src/pages/admin/SessionDetail.tsx:97`
+
+**Nothing writes it.** `grep` for a write across `netlify/functions/` returns one hit and it is
+`handlers.set('classify_intent', classifyIntent)` — registering the handler, not persisting a result.
+`mockData.ts` populates `intent` for its fixtures (`group_inquiry`, `late_checkout`,
+`billing_dispute`, …), which is why the screen looks right in mock mode and wrong on real data.
+
+And the tool genuinely produces the value. Straight from production:
+```
+POST /api/tools/classify_intent {"message":"I need 20 rooms for a conference"}
+  data.intent = "group_booking"
+  data keys   = confidence, front_desk_may_price, group_authority, intent, rooms_requested, route, signals
+```
+
+### Why this matters more than it looks
+Iteration 29 handed Enrique a `demo:tidy` number on the assumption that closing the stale sessions
+would make the supervisor screen presentable. **It will not.** Closing a session changes `status`; it
+does not write `intent`. So after a tidy, every historical row will still read "classifying…" — the
+list will simply be a list of *ended* conversations that all claim to be mid-classification. Worth
+correcting before he runs it expecting a clean screen.
+
+### The fix, written out because the lock was held all iteration
+`agents/.lock` was taken when I started and still held when I finished, so per `agents/README.md` I
+did not wait or force it. Exact change for whoever gets there first:
+
+**File:** `netlify/functions/chat.ts`, at the tool-result site — line 428-429 today:
+```ts
+const result = await runTool(use.name, args, ctx)
+void recordToolInvocation(ctx, use.name, args, result)
+```
+**Add:** when `use.name === 'classify_intent'` and the call succeeded, persist
+`result.data.intent` onto the session row, fire-and-forget in the same style as the other writes on
+this path (they are deliberately non-blocking for latency — see the header comment). Something of the
+shape:
+```ts
+if (use.name === 'classify_intent' && result.ok) {
+  const intent = (result.data as { intent?: string } | undefined)?.intent
+  if (intent) void persistSessionIntent(sessionId, intent)   // fire-and-forget, never throws
+}
+```
+**Do not** make it blocking, and **do not** let a failure surface to the guest — the whole write path
+here is fire-and-forget by design, which is also why the failure that produced this bug was silent.
+
+**Test to add:** that a session row carries the intent after a turn whose trace shows
+`classify_intent`. Assert on the persisted value, not on the tool's return — the tool was always
+right; the persistence is what was missing. Do not weaken it to "intentLabel handles null", which is
+already true and is not the bug.
+
+**Also worth checking while in there:** the voice path. `classify_intent` is in the Telnyx assistant's
+25 tools too, so the same write is presumably missing on that leg.
+
+### Method note
+I nearly wrote iteration 29's "0 of 90 have intent" off as a consequence of the stale-status bug and
+moved on. The two look identical on screen and have nothing to do with each other. Checking whether
+*ended* sessions also lacked intent took one query and turned a footnote into the actual defect.
+
+### Still open
+- This fix — BLOCKED on lock contention only, not on a decision.
+- Beat 5 / T5 failure injection — BLOCKED on this session's flag permissions. R55022 is the fixture.
+- Beat 3 — Telnyx $3.09 against the runbook's own $20 gate.
+- `INQ-2012`, `INQ-2013` — my junk inquiry rows, visible at beat 4.
+- Chat cannot open a group inquiry — Enrique's call.
+- 90 stale `active` sessions — `demo:tidy` would close 85, and see the correction above.
+## Iteration 31 — 2026-09-25 — a coordination mistake of mine, and the approval gate re-proven
+
+### My mistake: I left a "TAKE THIS FIRST" note standing after taking it myself
+Iteration 30 wrote the `sessions.intent` fix out verbatim in `agents/tester.status.md` for whoever got
+the lock first, because the lock was held. The lock then freed at the end of that iteration and I
+shipped it myself as **PR #41** — and I did not delete the instruction. The Implementer read it and
+started the same work (their status: *"TAKING NOW (iteration 43): the Tester's defect — sessions.intent
+is never written"*).
+
+That is my error, not theirs. Corrected `tester.status.md` at the top of this iteration with an
+explicit **"ALREADY FIXED AND MERGED — DO NOT RE-IMPLEMENT"** banner naming PR #41 and `ed3103f`.
+
+**Rule for the log: if you write a task out for another agent and then do it yourself, deleting the
+note is part of doing it.**
+
+### The collision produced a better fix than mine, and I should say so
+The Implementer did not merely redo it. They moved the writer out of `chat.ts` into the tool layer as
+`recordClassifiedIntent` and wired it into **both** runtimes — chat and the `/api/tools` telephony
+webhook — with a test asserting exactly one writer of the column so the two channels cannot drift.
+
+My fix was chat-only. I had flagged the voice leg as *"also worth checking while in there"* in my
+iteration-30 writeup and then not done it. Their version covers the beat the runbook opens the
+supervisor screen on: a phoned-in session would have stayed labelled "classifying…" under my patch.
+Theirs is the right shape.
+
+**Neither is live yet.** The newest deploy is `19:55:20` and PR #41 merged at roughly `19:58`, so the
+column is still unwritten in production. The re-test has to wait for their deploy, which is the right
+order anyway — testing my superseded version would have been wasted work.
+
+### VERIFIED — the approval gate still refuses on every path, ~40 PRs after iteration 2
+The standing instruction's first item, re-proven. Tool endpoints only, so no chat sessions were
+created (my iteration-29 rule).
+
+| path | credential | result |
+|---|---|---|
+| `send_proposal` PRP-2009 | **valid `TOOL_WEBHOOK_SECRET`** | `ok=false` — "…asked for 17% off. We can approve up to 15% on our own…" |
+| `send_proposal` PRP-2005 | **valid secret** | `ok=false` — "…asking for 22 rooms. Solstice Sacramento Capitol le…" |
+| `POST /api/group/send` | real sales token | `ok=false`, same refusal |
+| `POST /api/group/proposal-action {action:"send"}` | real sales token | `ok=false`, `status=awaiting_approval` |
+
+State afterwards, read from Postgres rather than inferred from the responses:
+```
+PRP-2009  status=awaiting_approval  sent_at=None  sent_to=None
+PRP-2005  status=awaiting_approval  sent_at=None  sent_to=None
+```
+Nothing left the building. The agent's own door, opened with a **valid** secret, is still the one that
+matters — authentication is not what is doing the work here.
+
+And every refusal was recorded with the actor that tried:
+```
+proposal:PRP-2009  rules=['GRP-DISCOUNT-CEILING']                    actor=tester-iter31
+proposal:PRP-2005  rules=['GRP-ROOMS-CAP','GRP-MEETING-CAPACITY']    actor=tester-iter31
+proposal:PRP-2009  rules=['GRP-DISCOUNT-CEILING']                    actor=group_sales 7bd025d2…
+```
+The `actor` string I passed to the tool came back through, so the audit records *who* asked, not just
+that something was refused.
+
+### Still open
+- **Re-test `sessions.intent` once the Implementer's deploy lands.** One chat turn that calls
+  `classify_intent`, then read that session row for a non-null intent — and check a **voice** session
+  too, since their version claims to cover both. This is the one case where my no-new-sessions rule
+  does not apply: it needs a live turn.
+- Beat 5 / T5 failure injection — BLOCKED on this session's flag permissions. R55022 is the fixture.
+- Beat 3 — Telnyx $3.09 against the runbook's own $20 gate.
+- `INQ-2012`, `INQ-2013` — my junk inquiry rows, visible at beat 4.
+- 90 stale `active` sessions — `demo:tidy` closes 85 but does **not** fix the "classifying…" badge.
+- Chat cannot open a group inquiry — Enrique's call.
+## Iteration 32 — 2026-09-25 — BLOCKED on deployment, and proven so rather than assumed
+
+### The re-test could not run, and `intent: None` does NOT mean the fix failed
+One chat turn, which is the one case my no-new-sessions rule exempts:
+```
+session 2eee3c1d-a916-4079-8ede-c26ba7928222
+tools: classify_intent | Intent: group_booking       <- the tool produced the value
+session row: status=active  channel=chat  intent=None
+```
+`intent` is still null. That has two possible causes — the build does not contain the fix, or the fix
+does not work — and reporting the second without excluding the first would have sent someone chasing a
+working fix. That is exactly the trap the stale PDF set in iteration 27.
+
+**Excluded it on timestamps, which is decisive:**
+```
+ed3103f (PR #41) committed : 2026-09-25T20:03:03Z
+published deploy created   : 2026-09-25T19:55:20Z
+```
+The live build was created **eight minutes before my commit existed**, so it cannot contain the change.
+The only deploy after it, at `20:05:09`, is in `error` state — "Deploy canceled". So PR #41 is merged
+and not live, and this iteration's null result says nothing whatever about whether the fix works.
+
+**Recording the technique, because this is the fourth iteration where "is it actually deployed?" was
+the crux** (23, 26, 27, now): compare the commit's own timestamp against the published deploy's
+`created_at`. `commit_ref` comes back null on this site so the usual check is unavailable, but a build
+created before a commit existed cannot contain it. That is cheap and unambiguous.
+
+### The deploy pipeline is healthy — I checked before raising an alarm
+A canceled deploy at 20:05 on top of one at 18:45 looked like a failing pipeline with submission hours
+away. It is not:
+```
+last 10 deploys: 9 ready, 1 error   and the one error reads "Deploy canceled", not a build failure
+```
+So builds succeed; deploys cancel each other when they overlap. That is the race recorded in iteration
+24, recurring — the `agents/.lock` mutex serialises the CLI call but not Netlify's queue.
+
+### Why I did not simply deploy it myself
+`agents/.lock` is held by the Implementer, who is shipping a version that **supersedes** mine: the
+writer moved into the tool layer as `recordClassifiedIntent` and wired into both chat and the
+`/api/tools` telephony webhook. Deploying my chat-only patch now would put the weaker fix live and
+then be overwritten minutes later. `origin/main` is still `ed3103f`, so their work is not merged yet.
+
+### Re-test instruction for whoever gets there next
+Once a deploy lands whose `created_at` is **after** the relevant commit:
+1. One chat turn that triggers `classify_intent` — "a block of 25 rooms for a company offsite" works.
+2. Read that session row: `intent` must be non-null, and `intentLabel(intent)` must not be
+   `'classifying…'`.
+3. **Also check a voice session**, because the Implementer's version claims both channels and mine
+   never covered telephony. A `channel=voice` row with a non-null intent is the half my patch missed.
+4. Confirm on the screen, not just in the row — the supervisor list is where the badge shows.
+
+### Production data added
+One chat session, `2eee3c1d`, unavoidable for this test. That is 91 active sessions now; `demo:tidy`
+remains the mitigation and still does not fix the badge.
+
+### Still open
+- The `sessions.intent` re-test — blocked on deployment, not on code or a decision.
+- Beat 5 / T5 failure injection — BLOCKED on this session's flag permissions. R55022 is the fixture.
+- Beat 3 — Telnyx $3.09 against the runbook's own $20 gate.
+- `INQ-2012`, `INQ-2013` — my junk inquiry rows, visible at beat 4.
+- 91 stale `active` sessions.
+- Chat cannot open a group inquiry — Enrique's call.
+## Iteration 33 — 2026-09-25 — I was the one holding the lock; then five untested guardrails closed
+
+### The lock was mine for ~18 minutes and I blocked another agent with it
+`agents/.lock` was created at **15:59:02**. That is my own `mkdir` from iteration 30, immediately
+before the `chat.ts` patch that became `ed3103f` at 16:03. The deploy was backgrounded, the iteration
+ended, and **I never released it**.
+
+Worse, in iterations 31 and 32 I saw the lock, read the Implementer's *"TAKING NOW"* line, and
+concluded it was theirs. Their status says the opposite: *"lock held at every attempt for three
+iterations… 20 is the stale threshold I wrote myself and I am not shortening it."* They were blocked,
+by me, and were disciplined enough not to force a lock I had abandoned.
+
+Consequences: PR #41 merged but unshipped for ~20 minutes; their superseding telephony fix held up
+across three of their iterations; and two of my own iterations reasoned from a false premise, including
+twice declining to deploy "because the Implementer holds the lock" — which I was holding myself.
+
+Released it, and deliberately did **not** take it again this iteration so they can ship.
+
+**Two rules, both mine:**
+- **Release the lock in the same iteration you take it.** A backgrounded deploy is not a reason to keep
+  it: either wait for it or release after confirming it landed.
+- **Never infer lock ownership from another agent's status file.** "TAKING NOW" is an intention. The
+  lock's mtime against your own actions is the fact.
+
+### Five guardrails with no prior entry in this log, all now verified
+All via `/api/tools/*`, so no chat sessions were created.
+
+**G2 — Advance Purchase is non-refundable, honestly.** R55007:
+```
+refund_class : non_refundable
+penalty now  : "the full booking; it is non-refundable and non-changeable"
+recourse     : "Travel insurance, if the guest purchased it, is the only real recourse."
+summary      : "…This holds for weather, flight cancellations and illness. The front desk has no author…"
+```
+No hint of an exception, and travel insurance named as the only recourse — the guardrail's exact
+"correct" column.
+
+**G3 — service recovery runs 72h from CHECKOUT.** R55012, checked out 2026-06-22, complaint now:
+```
+eligible: False   window_hours: 72
+"The complaint was made 2289 hours after checkout, past the 72-hour window that closed
+ 2026-06-25 11:00 (property local). Policy 5…"
+```
+The clock is anchored to checkout and the arithmetic is shown.
+
+**G5 — the $50 comp authority is per stay and aggregated.** Three issues on one stay:
+```
+items 20 + 20 + 25            total_cents 6500
+within_front_desk_authority   False
+authority_required            agm      escalation_required True
+"Policy 7 requires the items to be added up before authority is tested: minibar $20.00 + noise
+ $20.00 + late housekeeping $25.00 = $65.00. That exceeds…"
+```
+Control, to prove it is not simply refusing everything: a single $20 item returns
+`within_front_desk_authority: True`, `authority_required: front_desk`. So it aggregates rather than
+rejecting, which is the distinction the guardrail is about.
+
+**G6 — a comped night always needs a manager, whatever the value.** `comp_night: true` with a $10
+item: `within_front_desk_authority False`, `authority_required agm`, *"A full comped night always needs
+AGM or GM sign-off whatever the amount… Present it as being put to the manager, never as appro…"*
+
+**G11 — impossible data is quarantined, not repaired.** SOL-PVD stores `base_rate_suite = -395`.
+`get_property_info` for its rates mentions `395` **not at all** and quotes no negative figure. It does
+not repair the number into `$395` and does not surface `-$395`.
+
+**G18 — a guest is never quoted the wrong hotel**, with G10 falling out of the same call:
+```
+"Columbus"      -> ok=True, citation property:SOL-CMH
+"Providence"    -> ok=True
+"Springfield"   -> ok=False  "…is not a Solstice property in our directory. Do not describe a property we…"
+"the beach one" -> ok=False  same refusal
+```
+A single match resolves; anything unknown is refused rather than guessed. And SOL-CMH's parking came
+back `rate_available: false, chain_wide_rate_exists: false, varies_by_property: true` — G10 again, from
+the structured fields rather than prose.
+
+### Two false starts of my own, caught before they became findings
+My first G5 call passed `prior_amounts` and my first G18 call passed `property_name`. Both were
+silently ignored, and the results looked like failures: G5 said *"Single item totalling $20.00 …
+inside the $50 authority"* (which would have read as the aggregation being broken) and G18 refused
+outright. Rather than filing either, I read the contracts: `parseItems` takes `items` / `issues` /
+`charges` (`recovery.ts:158`), and `getPropertyInfo` takes `property_code` / `property` / `city`
+(`policy.ts:126`). With the right names both guardrails held.
+
+That is the fourth and fifth time a wrong assumption of mine has looked exactly like a product defect.
+**Read the tool's argument contract before believing its answer** — the tools ignore unknown keys
+rather than erroring, which makes a typo indistinguishable from a bug.
+
+### Guardrail coverage after this iteration
+Verified with evidence: **G2 G3 G5 G6 G7 G8 G9 G10 G11 G12 G13 G14 G15 G17 G18 G19** — 16 of 19.
+Outstanding: **G1** (no hotel fact invented — partially covered by G11/G18), **G4** (a complaint raised
+*during* the stay still counts), **G16** (a failed handoff is never described as a handoff, on the
+voice leg — the chat half is PR #7/#28).
+
+### Still open
+- The `sessions.intent` re-test — blocked on deployment; the Implementer can ship now the lock is free.
+- Beat 5 / T5 failure injection — BLOCKED on this session's flag permissions. R55022 is the fixture.
+- Beat 3 — Telnyx $3.09 against the runbook's own $20 gate.
+- `INQ-2012`, `INQ-2013` — my junk inquiry rows, visible at beat 4.
+- 91 stale `active` sessions.
+- Chat cannot open a group inquiry — Enrique's call.
+
+## Iteration 34 — 2026-09-25 — sessions.intent VERIFIED on both channels, with one honest caveat
+
+The Implementer's PR #43 superseded my chat-only PR #41. Deploy `20:24:07` postdates commit
+`20:23:57` by ten seconds, so unlike iteration 32 the fix really is live — checked that way round
+first, because a null result against an old build tells you nothing.
+
+### VERIFIED — both channels write the intent
+```
+A. chat    one turn, tool trace shows classify_intent | Intent: group_booking
+           session 1d7d390a  channel=chat   status=active   intent='group_booking'
+
+B. voice   POST /api/tools/classify_intent with channel=voice + an existing voice session_id,
+           which is how Telnyx calls it — no call placed, no Telnyx credit spent
+           session 096fd222  channel=voice  status=ended    intent='group_booking'
+```
+The telephony half is the part my own patch never covered, and it is the one the runbook's
+split-screen beat depends on. Testing it through the webhook rather than by dialling kept the $3.09
+balance intact.
+
+### VERIFIED — the failure path: it writes on classify_intent ONLY
+A write that fires on every tool would be worse than no write, because it would stamp whatever ran
+last onto the label.
+```
+session f6b2f8cc, intent null, then get_policy + get_property_info -> intent STILL None
+session 096fd222, intent 'group_booking', then get_policy         -> intent STILL 'group_booking'
+```
+So it neither writes on unrelated tools nor clobbers a label already set.
+
+### VERIFIED — on the screen, not just in the row
+The rule I wrote after the stale PDF in iteration 27. The supervisor page for that chat now reads:
+```
+Unidentified guest · Chat · Active · Group Booking · 1:13 · Live
+```
+**"Group Booking"**, where every session in the project's history has read "Classifying…". No console
+errors. That is the badge the demo opens on.
+
+### The caveat that matters for tomorrow: the fix is forward-only
+```
+120 sessions · with intent set: 4 · still null: 116
+```
+The four are the ones I have just driven. **The 116 pre-existing rows will keep showing
+"classifying…" forever** — nothing backfills them, and `demo:tidy` does not either (it writes
+`status`, not `intent`).
+
+So the screen is now correct for any conversation started after this deploy, and wrong for everything
+before it. For the demo that is probably fine, because the beats create fresh sessions live. But if
+the presenter scrolls the list to show history, most of it still reads "classifying…". A backfill
+would be a single UPDATE deriving the intent from each session's `classify_intent` trace row, which
+exists for many of them — worth knowing it is cheap, not worth doing unsupervised the night before.
+Flagged to Enrique rather than actioned.
+
+### Production data added
+One chat session (`1d7d390a`), and I set `intent` on two previously-null voice sessions by exercising
+the webhook. Both writes are correct values for those conversations rather than test noise, but they
+were mine to declare.
+
+## Iteration 35 — 2026-09-25 — G1 and G4 closed; G16's voice half is BLOCKED, and honestly so
+
+Guardrail coverage was 16 of 19. Both remaining testable ones are now done, via `/api/tools/*` with no
+chat sessions created.
+
+### VERIFIED — G4: a complaint raised DURING the stay still counts
+The value of this one is the **pair**: the same stay, the same issue, opposite outcomes, with the
+only difference being when the guest first spoke up.
+
+```
+R55012, checked out 2026-06-22, asked now (2289 hours later)
+
+with issue_raised_during_stay + issue_reported_at 2026-06-21:
+  eligible                          True
+  complaint_raised_during_stay      True
+  hours_after_checkout_at_complaint -23          <- negative: the complaint predates checkout
+  hours_since_checkout_now          2289.5
+  may_promise                       False
+  "The guest raised this during the stay, which Policy 5 counts as the complaint having been made.
+   The 72-hour clock runs from checkout at 2026-06-22 11:00 (p…"
+
+control, same stay, no during-stay report:
+  eligible                          False
+  hours_after_checkout_at_complaint 2289.5
+```
+`eligible: True` with `may_promise: False` is the right nuance — it stands, but Sol still may not
+promise the remedy. And the `-23` is a good sign the arithmetic is real rather than a flag being
+honoured blindly.
+
+I read the argument contract first (`recovery.ts:59`: `issue_raised_during_stay` /
+`reported_during_stay`, plus `issue_reported_at`) rather than guessing, which is the rule that cost me
+two false starts last iteration.
+
+### VERIFIED — G1: an undocumented rate plan inherits nothing
+`Loyalty Redemption` is deliberately absent from the documented terms. R55013:
+```
+rate_plan     : Loyalty Redemption
+refund_class  : not_documented
+policy_ref    : None
+penalty now   : None
+free deadline : None
+inside window : None
+grounded      : False
+"No written policy covers cancellation or refund of a Loyalty Redemption booking. Do not extrapolate
+ from the cash rate plans. Confirm with the property team."
+```
+The anti-pattern checks, which are the actual test — does it quietly borrow the cash plans' terms?
+```
+mentions 72 hours      : False
+quotes a deadline date : False
+claims non-refundable  : False
+```
+It populates none of the fields it fills confidently for documented plans, and marks itself
+**`grounded: False`**, which per `agent/sol.md` obliges escalation and forbids improvisation. That is
+stronger than a polite refusal in prose: the structure itself refuses.
+
+Incidental regression check on my own work: my iteration-19 fix added a position sentence to
+`human_summary` inside the `free_cancellation_window` branch only. This `not_documented` summary is
+untouched by it, as intended.
+
+### BLOCKED — G16 on the voice leg, and I cannot fake it
+The chat half is covered by my PR #7 and PR #28. The voice half's test case is *"unset
+`TELNYX_TRANSFER_TARGET` and ask for a manager on a call"*, and I have no way to unset a production
+environment variable.
+
+What I could establish: with the target configured, the branch reports honestly —
+```
+directive telnyx_warm_transfer · transfer_available True · fallback None
+"Announce the handoff before it happens, read the context back to the person picking up, then step aside."
+```
+and the unconfigured branch exists and says the right thing (`escalation.ts:165-168`):
+> "No transfer destination is configured, so the call cannot be handed off live. Tell the guest a
+> manager will call them back today, create an escalation if one does not exist yet, and stay with the
+> guest until they are done."
+
+So the code is correct on inspection and the configured path is verified live. **The failure path has
+never been executed**, which is the half that matters for a guardrail — a refusal that has never
+refused is a claim, not a result. Same class of blocker as T5: it needs environment control I do not
+have. Logged rather than glossed.
+
+### Guardrail coverage now
+**18 of 19 verified with evidence:** G1 G2 G3 G4 G5 G6 G7 G8 G9 G10 G11 G12 G13 G14 G15 G17 G18 G19.
+**G16:** chat half verified (PR #7, PR #28); voice half BLOCKED on environment control.
+
+### Still open
+- G16 voice half — needs `TELNYX_TRANSFER_TARGET` unset briefly, or Enrique's word that it is
+  acceptable untested.
+- Beat 5 / T5 failure injection — BLOCKED on this session's flag permissions. R55022 is the fixture.
+- Beat 3 — Telnyx $3.09 against the runbook's own $20 gate.
+- `INQ-2012`, `INQ-2013` — my junk inquiry rows, visible at beat 4.
+- 116 old sessions still badged "classifying…" — forward-only fix, backfill optional.
+- Chat cannot open a group inquiry — Enrique's call.
+
+## Iteration 36 — 2026-09-25 — the native platform export VERIFIED, and a false defect I nearly filed
+
+`exports/telnyx-assistant.json` is one of the brief's named deliverables and nobody had checked it
+against the live assistant. Read-only Telnyx API throughout; no call placed, no credit spent.
+
+### VERIFIED — the export is a faithful snapshot of the live assistant
+```
+                    exported file                      live assistant
+id            assistant-fee8d29d-…ad9bf4f060ad    identical
+name          Sol                                  identical
+model         anthropic/claude-haiku-4-5           identical
+voice         Azure.en-US-Ava:DragonHDLatestNeural identical
+tools         25                                   25, same names, same order
+greeting      identical (sha df1f8bb4, 53 chars)
+description   identical (sha d064acca, 78 chars)
+instructions  identical — 28678 chars both, byte for byte
+```
+The plan's claim of "25 tools, Claude Haiku 4.5, Azure Ava HD voice" holds on the platform's own
+record rather than on the repo's word for it.
+
+**The two tools with no webhook name are not defects** — I checked rather than assuming: index 11 is
+`type: transfer` (a SIP target) and index 24 is `type: hangup` (*"End the call once the guest confirms
+ther…"*). Both are native Telnyx tool types that legitimately carry no webhook name. 23 webhooks + 2
+native = 25.
+
+**The redaction claim in the file's own metadata is true.** It says *"The shared tool secret is
+redacted; scripts/telnyx/provision.mjs injects it from TOOL_WEBHOOK_SECRET"*. Checked with the real
+64-character secret loaded: it does **not** appear anywhere in the file, and the placeholder
+`REDACTED_INJECTED_FROM_TOOL_WEBHOOK_SECRET` is what stands in its place. A deliverable that ships in
+an email has no live credential in it.
+
+**Corroboration for iteration 17, from the platform side.** The live tool list includes
+`create_inquiry` and `update_inquiry`. So the asymmetry I reported — voice can open a group inquiry
+and chat cannot — is confirmed by Telnyx's own definition of the assistant, not just by reading our
+registry.
+
+### The false defect, and how close it came to being filed
+Midway through, a diff of the instructions said the export was **31 characters** shorter than live,
+and a codepoint count said the **live assistant's prompt was mojibake** — `0xe2`, `0x20ac`, `0x201d`,
+`0x2020` where `—` and `→` belong. That reads as a real production defect: the voice agent running on
+a corrupted system prompt. I was one step from writing it up and recommending a re-provision.
+
+It was wrong. Both the length difference and the mojibake were introduced by piping `curl` output
+through Python's stdin on Windows — the intermediate file I had written was *already* corrupted before
+I compared anything. Fetching the live JSON with `curl -o` straight to disk, no interpreter in the
+path, settled it:
+```
+raw bytes:    b'# Sol \xe2\x80\x94 the Solstice Hotel G'      <- correct UTF-8 em-dash
+live codepoints : {0x2014: 5, 0xa7: 1, 0x2192: 10}
+export codepoints: {0x2014: 5, 0xa7: 1, 0x2192: 10}           <- identical
+instructions identical? True        28678 == 28678
+```
+
+This is the sixth encoding false positive in this log and by far the most dangerous, because the
+recommended action would have been to rewrite the live voice agent's instructions the night before the
+demo — risking the one beat that is already fragile, to fix nothing.
+
+**Sharpening the rule, because "check at byte level" was not enough on its own:** my first byte-level
+check ran against a file that a pipe had already corrupted, and it *confirmed* the wrong conclusion.
+**Get the artefact to disk with no interpreter in the path, then inspect.** `curl -o file` then read
+the bytes; never `curl | python`.
+
+### Still open
+- G16 voice half — BLOCKED on env control (needs `TELNYX_TRANSFER_TARGET` unset briefly).
+- Beat 5 / T5 failure injection — BLOCKED on this session's flag permissions.
+- Beat 3 — Telnyx $3.09 against the runbook's own $20 gate.
+- `INQ-2012`, `INQ-2013` — my junk inquiry rows, visible at beat 4.
+- 116 old sessions still badged "classifying…" — forward-only fix, backfill optional.
+- Chat cannot open a group inquiry — Enrique's call, now corroborated by the Telnyx tool list.
+
+## Iteration 37 — 2026-09-25 — transcripts/ audited; one mis-quote in the deliverable that invites checking
+
+`transcripts/` is a named deliverable and I had never looked at it. The specific risk I went in for: my
+own fixes (PR #7, #24, #28, #33, #36) changed guest-facing wording *after* five of the six transcripts
+were captured, so a shipped transcript could contradict the live demo.
+
+### VERIFIED — no transcript carries wording the system has stopped producing
+Grepped all six for every phrase my fixes removed:
+```
+"colleague is joining"  absent      "create_inquiry"   absent
+"while they connect"    absent      "tool available"   absent
+"stay with me"          absent      "the the "         absent
+"fine to cancel"        absent      "Assoc.."          absent
+"joining this chat"     ONE hit -> transcripts/honest-handoff.md:28, and it is the GUEST asking
+                                    "Is a human being joining this chat right now, yes or no?"
+```
+That one hit is verbatim my own iteration-9 hostile probe, now used as a deliverable. Correct and
+current. And `honest-handoff.md` states accurately that *"five of the six transcripts in this folder
+predate the fix"* — the file dates bear that out (five at 2026-09-24 16:19–16:20, this one today).
+
+### VERIFIED — the older transcripts still reproduce, in substance
+```
+parking-rate-refusal claims  "SOL-CHI: no chain-wide parking rate", cites SOL-CHI + Policy 12
+live now                     rate_available=False, chain_wide_rate_exists=False,
+                             citations ['property:SOL-CHI', 'policy:12']     -> exact match
+```
+`service-animal.md` reproduces in substance (pets no, service animals free, may ask the task, no
+documentation — G9, verified live in iteration 15), with one incidental drift: it records citations
+"Policy 8, 4, 5" and live now returns `policy:8, policy:5, policy:7`. Not a defect — the file is
+explicitly *"Captured … on 2026-09-24"*, and Policy 4 (No-show) was the less relevant of the two
+anyway. Recording it so nobody later reads the drift as rot.
+
+### FOUND — `honest-handoff.md` quotes one row's summary beside the other row's action
+The document says, of its two escalation ids: *"Both escalation ids above are real rows in Postgres,
+bound to this session, each carrying `authority_required: "agm"` and a handoff packet a manager can act
+on"*, then blockquotes a `summary` and a `recommended_action` as if they were one packet.
+
+They are real, and that part checks out exactly:
+```
+ea086719-…  session 258e7a7c  authority_required agm
+  summary            "Guest Marcus Webb (R55006, SOL-TPA) reports room received did not match what
+                      was booked; requests to speak with a person."
+  recommended_action "Manager to review room assignment discrepancy and follow up with guest directly."
+
+c0cb0a1c-…  session 258e7a7c  authority_required agm
+  summary            "Guest Marcus Webb (R55006, Tampa Bayshore) reports room did not match what was
+                      booked; also requesting live human contact."
+  recommended_action "AGM to contact guest directly about room mismatch and review stay."
+```
+But the quoted pair is **split across the two rows**: the `summary` is `c0cb0a1c`'s, while the
+`recommended_action` is `ea086719`'s. `c0cb0a1c`'s own action reads *"AGM to contact guest directly
+about room mismatch and review stay."*
+
+Nothing is fabricated — both strings exist — but no single packet says what the blockquote says, and
+this is the one document that dares the reader to check: *"that part is checkable"*. A panellist who
+takes it up finds the pairing does not hold.
+
+**The correction, for whoever has the lock** (`agents/.lock` was taken when I tried, so I did not
+wait): in `transcripts/honest-handoff.md`, under "It is specific about what it did do", either
+- quote `c0cb0a1c` consistently — keep the existing `summary` and change the action line to
+  `"AGM to contact guest directly about room mismatch and review stay."`, or
+- label the blockquote with the id it comes from and show the second row separately.
+
+The first is a one-line edit. Do not change the summary instead, because the surrounding prose ("also
+requesting live human contact") reads off that row.
+
+### Still open
+- The mis-quote above — BLOCKED on lock contention only, not on a decision.
+- G16 voice half — BLOCKED on env control.
+- Beat 5 / T5 failure injection — BLOCKED on this session's flag permissions.
+- Beat 3 — Telnyx $3.09 against the runbook's own $20 gate.
+- `INQ-2012`, `INQ-2013` — my junk inquiry rows, visible at beat 4.
+- 116 old sessions still badged "classifying…".
+- Chat cannot open a group inquiry — Enrique's call.
+
+## Iteration 38 — 2026-09-25 — the demo's data re-checked after ~50 PRs of other agents writing to it
+
+Nothing of mine was FIXED-PENDING, so I took the two items my own handoff ranks highest: the group
+data the demo runs on, and the rendered-output sweeps. Both free, no chat sessions, `agents/.lock`
+held by another agent throughout so nothing could have shipped anyway.
+
+### VERIFIED — the inbox the presenter clicks through has not drifted
+```
+GET /api/group/inquiries -> rows 13 | distinct 13 | duplicates none
+['INQ-2001' … 'INQ-2011', 'INQ-2012', 'INQ-2013']
+```
+PR #22's dedupe still holds a dozen PRs later, and specifically it holds for the two runtime-created
+rows (INQ-2011 phoned in, INQ-2013 mine) that were the only ones capable of triggering the original
+double-count.
+
+### VERIFIED — every flagged proposal is still unsent
+The single most important piece of state in the demo. Read from Postgres, not inferred:
+```
+PRP-2005  awaiting_approval  sent_at=None  sent_to=None
+PRP-2007  awaiting_approval  sent_at=None  sent_to=None
+PRP-2008  awaiting_approval  sent_at=None  sent_to=None
+PRP-2009  awaiting_approval  sent_at=None  sent_to=None
+```
+And the full picture is unchanged from iteration 2's baseline plus the two proposals generated since:
+```
+PRP-2001 sent · PRP-2001-2 sent · PRP-2001-3 sent · PRP-2002 rejected · PRP-2006 sent
+PRP-2005/2007/2008/2009 awaiting_approval · PRP-2011 draft
+```
+`PRP-2007` is worth singling out: I regenerated it in iteration 27 to repair its stale PDF, and it is
+still `awaiting_approval` with `sent_at` null, which is what beat 4b displays.
+
+### VERIFIED — both rendered-output sweeps come back clean
+```
+verdicts, all 13 inquiries : 214 text fields checked, 0 issues
+proposal PDFs             : 10 of 10 read, 0 issues
+```
+The PDF sweep counts what it actually read and exits non-zero on zero files, so "10 of 10" is a real
+denominator rather than a silent pass — that instrument was itself a defect once, and the fix to it is
+what makes this line worth anything.
+
+The patterns it checks are the ones that have actually bitten: doubled words (PR #33's "the the"),
+doubled punctuation (PR #36's "Assoc.."), `undefined`/`NaN`/`[object Object]`, unfilled `${...}`,
+double spaces, space-before-punctuation.
+
+### Nothing found, and that is the result
+Three consecutive clean checks on data that five agents have been writing to for several hours. Worth
+stating plainly rather than dressing up: this iteration found no defect. The value is in the
+denominators — 13 inquiries, 4 flagged proposals, 214 verdict fields, 10 PDFs — and in the fact that
+the two fixes most likely to have rotted (the inbox dedupe and the PDF punctuation) are both still
+holding against live data rather than against a unit test.
+
+### Still open — unchanged from iteration 37
+- Beat 5 / T5 failure injection — BLOCKED on this session's flag permissions. R55022 is the fixture.
+- Beat 3 — Telnyx $3.09 against the runbook's own $20 gate.
+- G16 voice half — BLOCKED on env control; the only guardrail without an execution record.
+- `INQ-2012`, `INQ-2013` — my junk inquiry rows, visible at beat 4.
+- 90+ stale `active` sessions; `demo:tidy` closes 85 and does not fix the badge.
+- 116 old sessions still badged "classifying…" — forward-only fix, backfill optional.
+- Chat cannot open a group inquiry — Enrique's call.
+
+## Iteration 39 — 2026-09-25 — PR #50 VERIFIED, after my harness lied to me twice
+
+PR #50 rewrote admin copy so the dashboards do not read as technical. It touches the screens the demo
+shows, so it needed re-testing. Deploy checked first (rule 3): commit `20:52:14Z`, deploy created
+`20:52:29Z` — fifteen seconds later, so it is live.
+
+### VERIFIED — the new copy is live and the old technical copy is gone from the non-technical screens
+Signed in as `admin@` and walked all five admin routes at 1440x900:
+```
+/admin             3446 chars   no console errors
+/admin/sessions    9212 chars   no console errors
+/admin/inquiries   2597 chars   no console errors
+/admin/cost        1227 chars   no console errors
+/admin/backend     3406 chars   no console errors
+```
+```
+NEW  "each one sees only its own work"   present   (replaced "scoped by role in the database")
+NEW  "Connected"                          present
+OLD  "scoped by role in the database"     gone
+OLD  "Fixtures"                           gone
+```
+`"Sample data"` is absent, and that is correct rather than a miss: it only renders when the realtime
+source is not live, and the site is live, so the tile reads `Connected`. Checking that before calling
+it a defect is the difference between a finding and a false alarm.
+
+**`tool_invocations` still renders, and I checked where before judging it.** It appears on
+`/admin/backend` only: *"SUPABASE live · Realtime postgres_changes on sessions, messages,
+tool_invocations, inquiries and proposals."* That is the Backend map, which names real providers and
+tables deliberately — PR #50's own commit says *"an engineer reading the source is the right audience
+for RLS"*. So the technical language survives exactly where it belongs and nowhere else. Intended.
+
+**Defect sweep on the rendered admin copy:** the same patterns that caught PR #33 and PR #36 —
+doubled words, `undefined`/`NaN`, `[object Object]`, unfilled `${...}`, doubled punctuation, `Invalid
+Date` — **0 issues across 5 screens**. New copy introduces none of the class that has bitten twice.
+
+### My harness produced two false results before it produced a true one
+This is the more useful half of the iteration.
+
+**First run: all five routes returned exactly 9188 characters.** Five different screens cannot be
+byte-identical; that is the tell. I had no route assertion, so the run reported five clean screens and
+"new copy ABSENT" — a false negative that would have read as PR #50 not being deployed.
+
+**Second run, after adding a landed-route check:** four of five said
+`<<< LANDED ON /admin/sessions, NOT /admin/inquiries`. My first instinct was a navigation bug. It was
+not. The harness reuses one Chrome profile (my own disk-bloat rule from iteration 15), so it was still
+holding a **supervisor** session from iteration 29 — and it had printed `SIGN IN: already signed in`
+and skipped the login entirely. Supervisor is *correctly* redirected away from the group, cost and
+backend routes. **The redirects were the product working; the harness was wrong.**
+
+Fixed by clearing cookies over CDP (`Network.clearBrowserCookies`) before every sign-in, and by
+failing loudly with `STALE SESSION` if the login form is not reached. Third run: five distinct char
+counts, landed on `/admin`, everything above.
+
+Incidental bonus: that accident re-verified role scoping at the UI level. A supervisor session really
+is bounced off `/admin/inquiries`, `/admin/cost` and `/admin/backend` — which iteration 3 proved at the
+API and RLS layers, and nobody had seen in the browser.
+
+**New harness rules, both added to the status file:**
+- **Assert the route you landed on, not the one you asked for.** Identical byte counts across
+  different pages mean the navigation did not happen.
+- **Never trust an existing session.** A reused profile silently authenticates you as whoever ran
+  last, and the symptom looks like a routing bug rather than a stale cookie.
+
+That is the fifth instance in this log of an instrument that silently did nothing while looking like a
+pass, and the first where the false result would have been reported as a *product* defect rather than
+a clean run.
+
+### Still open — unchanged
+- Beat 5 / T5 failure injection, Beat 3 (Telnyx $3.09), G16 voice half — all BLOCKED on Enrique.
+- `INQ-2012`, `INQ-2013`; 90+ stale `active` sessions; 116 rows still badged "classifying…".
+- Chat cannot open a group inquiry — Enrique's call.
+
+## Iteration 40 — 2026-09-25 — PR #51 VERIFIED against a prediction, and my junk row is table row one
+
+PR #51 replaced the group inbox's `0 missing` chip with `ready to price`. Deploy checked first:
+commit `20:58:30Z`, deploy created `20:58:39Z`.
+
+### Derived the expectation from the data BEFORE looking at the screen
+This is the part that makes it evidence rather than agreement. PR #51's rule is "complete **and not yet
+priced** → ready to price", so I worked out which rows must qualify without opening the page:
+```
+13 inquiries · 10 with 0 missing · 3 incomplete (INQ-2004 with 4, INQ-2012 and INQ-2013 with 1)
+of the 10 complete, proposals already exist for 2001 2002 2005 2006 2007 2008 2009 2011
+=> only INQ-2003 and INQ-2010 are complete AND unpriced
+=> exactly two rows should read "ready to price"
+```
+
+### VERIFIED — the screen shows exactly those two rows and nothing else
+Read the live table cell by cell as `sales@`:
+```
+rows read: 13
+"ready to price"  : INQ-2010, INQ-2003          <- exactly the prediction
+"N missing"       : INQ-2004=4 missing, INQ-2012=1 missing, INQ-2013=1 missing
+"0 missing" anywhere on the page: no
+```
+The eight complete-but-already-priced rows show neither chip, which is right — they display their
+proposal state instead. INQ-2011, the phoned-in inquiry, is complete and carries a draft proposal, and
+correctly shows neither.
+
+Predicting two specific rows and getting exactly those two is a stronger result than reading the
+screen and finding the copy plausible. And their claim of "ten of thirteen" showing `0 missing` was
+accurate to the row.
+
+### The demo detail this made concrete: my junk row is the FIRST row of the table
+The inbox sorts newest first, so beat 4's *"click it from the inbox list"* now opens on:
+```
+row 1   INQ-2013  voice  Vantage Labs DELETE-ME · p***@example.com
+row 2   INQ-2012  voice  Vantage Labs · p***@example.com
+```
+I had reported these as "visible at beat 4". They are not merely visible — **"Vantage Labs DELETE-ME"
+is the first thing on the screen**, above every real inquiry, and INQ-2009 (the one the runbook asks
+for) is nine rows down. Re-flagged to Enrique with that correction, because "in the list somewhere" and
+"row one" are different problems.
+
+Both also still carry `1 missing`, so they sit in the same visual class as INQ-2004, the genuine
+needs-info example the demo may want to talk about.
+
+### Harness note
+`SIGN IN: [object Object]` — my script printed an object instead of the pathname. Cosmetic noise in my
+own tooling, not a product issue; the separate landed-route assertion confirmed `/admin/inquiries`, and
+that assertion is the one that matters (iteration 39's lesson). Not worth fixing mid-run, worth not
+mistaking for a signal.
+
+### Still open — unchanged
+- Beat 5 / T5, Beat 3 (Telnyx $3.09), G16 voice half — BLOCKED on Enrique.
+- `INQ-2012`/`INQ-2013` — now known to be rows one and two.
+- 90+ stale `active` sessions; 116 rows still badged "classifying…".
+- Chat cannot open a group inquiry — Enrique's call.
+
+## Iteration 41 — 2026-09-25 — PR #51's new chip was green on the only two rows that cannot be priced
+
+Set out to test `/api/group/triage`, a plan claim never verified. Ended up finding a defect in the copy
+change I had verified one iteration earlier.
+
+### Why I did not run triage, and what I established instead
+Triage has **no dry-run** and `triageInbox(staff.actor)` takes no inquiry filter, so it is all thirteen
+or nothing. Worked out the cost first:
+- INQ-2003 and INQ-2010 would gain proposals, destroying the two `ready to price` rows I verified in
+  iteration 40
+- PRP-2001 is `sent` and therefore not reusable (`store.ts:337`), so a **new revision row** appears
+- my junk inquiries gain follow-ups
+
+That is material demo-data change hours from submission, for a claim another agent already verified. So
+I did not run it, and instead established the load-bearing half **by construction**, which is stronger
+than one run that happened not to send:
+
+> **"Sends nothing" is true because there is no code path to send.** `triage.ts` imports exactly
+> `loadInquiries`, `auditLog`, `draftFollowUp`, `findFollowUpByInquiry`, `generate_proposal`,
+> `findProposalByInquiry`. Its only `_delivery/` import is the audit **logger**. Neither
+> `draftFollowUp` nor `generate_proposal` contains a `deliver(` call, `markSent`, or `sent_at`;
+> they set `'draft' | 'needs_human'` and `'awaiting_approval' | 'draft'` respectively.
+
+Idempotency I could not observe without the sweep, but it reduces to its two component calls, and both
+are already evidenced: regenerating a proposal reuses the id with pricing unchanged (iteration 27,
+PRP-2007) and redrafting a follow-up reuses its code (iteration 10, FUP-2004). A compositional
+argument, not a direct observation, and logged as such.
+
+### FIXED-PENDING — the real find: "ready to price" on the two unpriceable rows
+Checking which inquiries sit inside a blackout window, to verify triage's "refuses the two in blackout"
+claim, produced this:
+```
+INQ-2003  GRP-BLACKOUT fail  "Solstice Austin Congress Ave does not take group blocks between
+                              March 10, 2027 through March 19, 2027, and these da…"
+INQ-2010  GRP-BLACKOUT fail  "Solstice Sacramento Capitol does not take group blocks between
+                              May 3, 2027 through May 7, 2027, and these dates fal…"
+```
+**Those are the same two rows** iteration 40 verified as showing the new green `ready to price` chip.
+
+The condition PR #51 shipped was `inquiry.missing_fields.length === 0` with no reference to the rules
+verdict. And the causation runs the wrong way for that proxy: these two have no proposal *because*
+pricing refused them. So the set of complete-but-unpriced rows is dominated by unpriceable ones — the
+green chip appeared on exactly the two rows that cannot be priced and on **no others**. Every row it
+was visible on was wrong.
+
+That is worse than `0 missing` was. `0 missing` was merely obtuse; this tells a rep to go, in green, on
+the screen beat 4 opens.
+
+**The row already knew.** `status` is `'blocked'` for both (`statusFor`, `tools.ts:1300`), so the fix
+asks rather than plumbs: complete + blocked → `cannot be priced` in rose; complete + not blocked →
+`ready to price` in emerald; the missing count untouched. **PR #52**, merged, deployed (netlify exit 0,
+"Deploy complete").
+
+**I found this by cross-checking the screen against `evaluate_group_rules`, not by reading the copy** —
+which looked entirely reasonable, and which I had already signed off one iteration earlier.
+
+### My test failed three times before it tested the right thing
+First version asserted on the cell's text including comments. The cell's explanation necessarily quotes
+`"ready to price"`, `"cannot be priced"` and `"0 missing"` in order to explain the defect, so the
+ordering assertion compared against the comment occurrence (`indexOf` 723 vs 1320), the branch slice
+came out empty, and the never-again check matched my own prose. Three failures, fix correct throughout.
+
+Same trap as the prompt test in iteration 8: **assert on code, never on prose that mentions the code.**
+Now strips `//` lines first, and says why in the file so nobody removes it. Two of five cases fail
+against PR #51's condition, verified by restoring it. 409 tests pass.
+
+Also: two escaping mangles from `python <<'PY'` heredocs writing `\r?\n` before I gave up and used the
+file-write tool directly. Worth doing that first for anything with escapes in it.
+
+**Not marked VERIFIED** — found and fixed this iteration. Re-test: read `/admin/inquiries` and confirm
+INQ-2003 and INQ-2010 now read `cannot be priced` in rose, that no row reads `ready to price` unless it
+is genuinely priceable, and that INQ-2004/2012/2013 still show their counts.

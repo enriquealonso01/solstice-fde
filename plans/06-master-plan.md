@@ -1,38 +1,289 @@
 # Master plan: the whole picture
 
-> ## 15:42 — T22 first: most of this night's record has never been committed.
+> ## 17:12 — **TESTER: `/api/group/triage` has no dry-run. Here is what running it costs.**
 >
-> **T22 — ~7,000 lines of coordination record exist in one working directory.** `plans/06-master-
-> plan.md` is committed at **123** lines against **2,381** on disk; `tested.log.md` 6 vs 2,611;
-> `completed.log.md` 6 vs 2,241. `HUMAN_INTERVENTION.md` was the same until PR #37 rescued it **by
-> accident** — 342 lines swept along with a 40-line edit.
+> You asked before acting, which is right. From the code, not a probe:
 >
-> **Deliverables are safe** — everything going to phData is committed and deployed. The **record**
-> is not: the verification trail and the raw material for `docs/how-this-was-built.md`.
+> - **No dry-run.** `index.ts:765` calls `triageInbox(staff.actor)` with no preview flag.
+> - **Idempotent by construction** — `triage.ts:57` skips anything with an existing proposal or
+>   follow-up (`skipped_existing`), and everything it makes is a **draft**; nothing sends.
+> - **So it would only touch inquiries with neither.** Per your own iteration 40, that is
+>   **INQ-2003 and INQ-2010 — the exact two rows that read "ready to price"**, which PR #51 was
+>   shipped to produce and which you verified by predicting them. Triage would draft proposals for
+>   both and those rows would stop saying it.
 >
-> **One commit, next time anyone holds the lock, before other work.** Then two lines in
-> `agents/README.md`: the ownership table says who *writes* each file and is silent on who *ships*
-> it — and the **Planner cannot commit at all**, by its own brief, so the two files it owns have no
-> path to a commit. Same class as T16.
+> **My read: do not run it tonight.** Both claims — idempotent, drafts only — are readable in the
+> source, and the endpoint has audit rows from when it was built. Verifying by reading costs
+> nothing; verifying by running costs a demo surface. If you disagree, log it as verified **by
+> construction** rather than by execution — the same standard we accepted for the telephony intent
+> write that needed Telnyx credit nobody has.
 >
-> **T21** two junk inquiry rows (Enrique's database). **T20** two checklist lines: stop the loop,
-> tidy, warm. **T19** one sentence in `agent/sol.md`.
+> **T21 — "DELETE-ME" is row ONE of the group sales inbox** (`created_at` desc). Deleting
+> INQ-2012/2013 promotes **Cypress Ridge Reunion**, the real phoned-in inquiry, to the top. Two
+> rows, Enrique's database.
 >
-> **Enrique's queue is `HUMAN_INTERVENTION.md`**, now opening with the three that matter. The one
-> number worth repeating: **Telnyx $3.09** against the runbook's own $20 pre-flight — beat 3,
-> 4 of ~18 minutes, cannot run as written.
+> **T28 remains the only open item that makes a shipped deliverable untrue.** Compile **2,831 over**
+> the 30,000 cap.
+>
+> **Open:** T28 · **T27** two protocol lines · **T26** beat 3's test conversations (Enrique) ·
+> **T24** Planner commit path · **T21** two rows (Enrique) · **T20** two checklist lines · **T19**
+> one sentence. **Guardrails 18/19.** **Enrique's: Telnyx $3.09.**
 
 ---
 
 # ▶ OPEN WORK — three items, none of them large
 
 *Everything below this section is closed, or evidence.*
-*• **T22** commit the coordination record — ~7,000 lines exist only in one working directory.*
+*• **T28** the voice prompt is 2,831 chars over its cap, which is why it is stale.*
+*• **T27** two lines: the protocol covers one lock failure and tonight's was the other one.*
+*• **T26** beat 3 opens on 100 of our own test conversations — Enrique's call, my read is "say so".*
+*• **T24** one line so the Planner's two files can ever be committed — PR #39 covered everyone else.*
 *• **T21** two test rows to delete — the only thing a panel sees without reading.*
 *• **T20** two checklist lines: stop the loop, tidy, then warm the functions.*
 *• **T19** one sentence in `agent/sol.md`, shipped wrong.*
 
-### T22. Commit the coordination record — ~7,000 lines exist in one working directory
+### T29. Enrique's dashboards — CLOSED at 2 of 3, PR #50. The third is dead copy.
+
+*Earns the top slot because it came from Enrique, it sat untriaged in the Inbox while I worked on
+things nobody asked for, and it is on the demo path.*
+
+His words, verbatim: *"The admin dashboards (supervisor, sales rep, admin) should not feel
+technical: intuitive, with a touch of full coverage."*
+
+**Reading, stated so it can be argued with:** remove engineering vocabulary a hotel manager would
+not use, **without removing the substance or the candour underneath it**. Not a redesign — these
+are the demo screens and it is under nineteen hours. The Implementer reached the same reading
+independently, which is some evidence it is the obvious one.
+
+**Status at 16:53: two fixed, one remaining.** `SupervisorDashboard.tsx:63` and
+`SessionDetail.tsx:75` are done, and the second kept its admission intact — *"That is decided in
+the database, not on this page"* — which was the thing I was worried would be lost.
+
+**Remaining: `ConversationThread.tsx:89`.** Still reads *"The communications **endpoint** is not
+deployed on this **build**, so nothing is shown rather than guessed."* Suggested: *"This version
+does not include message history, so nothing is shown rather than guessed."* A sweep of every
+`title=`, `body=` and `hint=` in both admin directories finds **no fourth instance**, so this
+closes it.
+
+**The original three, for reference:**
+
+| Where | String |
+|---|---|
+| `SupervisorDashboard.tsx:63` | `sessions · messages · tool_invocations` — raw Postgres table names, on a concierge supervisor's board |
+| `SessionDetail.tsx:75` | *"It may have been purged, or your role cannot read it. **RLS** decides that, not this page."* |
+| `ConversationThread.tsx:89` | *"The communications **endpoint** is not deployed on this **build**, so nothing is shown rather than guessed."* |
+
+**The important part, and the thing to get wrong is easy:** two of the three are *honesty*
+messages. They exist because this system says what it cannot do instead of guessing — which is the
+single best thing about it. **"Should not feel technical" must not become "should sound
+confident".** Change the vocabulary, keep the admission:
+
+- RLS → *"Your role cannot open this conversation. That is enforced in the database, not by this
+  screen."* Same claim, same precision, no acronym.
+- endpoint/build → *"This version does not include message history, so nothing is shown rather
+  than guessed."*
+- the table names → what the tiles actually count, in hotel words: conversations, messages,
+  tool calls.
+
+**Do not** touch layout, colour or information architecture. Vocabulary only. If a fourth instance
+turns up, fix it; do not go looking for a fifth.
+
+### T28. The voice prompt is 2,831 chars over the cap, which is why it is four hours stale
+
+*Earns the top slot because `agent/sol.md` calls itself "the single agent definition" while the
+live phone agent has not carried its last four hours of edits, and the reason turns out to be a
+measurable overflow rather than a judgement call.*
+
+**Measured 16:44:**
+
+```
+raw agent/sol.md       32,882
+compiled as it stands  32,831
+MAX_INSTRUCTION_CHARS  30,000      (provision.mjs:208)
+over by                 2,831
+voice:exclude blocks:       0      <- the facility exists and has never been used
+```
+
+Live assistant instructions are **28,678** chars, unchanged since 12:59. PR #26's
+never-name-a-tool rule, PR #34's channel note and T1c's "named approver" wording are all absent
+from it. The export matches live exactly (Tester, iteration 36), so **both deliverables agree with
+each other and disagree with `agent/sol.md`.**
+
+**My earlier objection was wrong and is withdrawn.** I said re-provisioning would push chat-only
+text to voice. `provision.mjs:202-235` compiles rather than copies and strips
+`<!-- voice:exclude -->` blocks precisely so the shared file can carry chat-only material. The
+mechanism for the problem I raised was already there.
+
+**The sequence:**
+
+1. Wrap documentation-rather-than-instruction in `<!-- voice:exclude -->`. Start with T17's
+   chat-only channel note; then §8 sample transcripts and §9's architecture table. **None of that
+   steers a live call** — it is there for a human reading the deliverable.
+2. **Re-measure.** The compile must come in under 30,000 or it truncates at the cap and drops the
+   tail, with a `[truncated at 30000 characters]` marker.
+3. Re-provision, then diff live instructions against the compile output to confirm it took.
+
+**If it cannot get under the cap tonight, do not force it** — say in `agent/sol.md` §9 that the
+voice assistant was last provisioned at ~12:59 on 2026-09-25 and which edits are therefore chat-only.
+A stale prompt that is documented beats a truncated one that is not.
+
+### T27. The protocol covers one lock failure. Tonight's was the other one.
+
+*Earns a slot because it has now cost twenty minutes and three blocked iterations, the fix is two
+lines in the file that already fixed the sibling failure, and the Tester's rule for it currently
+lives only in a status file nobody else reads as protocol.*
+
+`agents/README.md` protects against **releasing a lock you do not hold** (T16). It says nothing
+about **holding a lock you never release**, which is what happened at 15:59: `mkdir` succeeded, the
+deploy was backgrounded, the iteration ended, and `rmdir` never ran. Only the 20-minute stale rule
+caught it, and it took the full twenty.
+
+Grep the file: **zero** mentions of backgrounding, detaching or long-running commands.
+
+Add, beside the existing snippet:
+
+> **Do not background anything inside the lock.** If the deploy takes minutes, wait for it. The
+> `rmdir` must run in the same iteration as the `mkdir` — a backgrounded command that outlives your
+> iteration leaves the lock held with nobody holding it, and the 20-minute stale rule is the only
+> thing that will free it.
+>
+> **If you see a held lock, do not infer the holder from another agent's status file.** On
+> 2026-09-25 an agent read a "TAKING NOW" line, concluded the lock was that agent's, and twice
+> declined to act on a lock it was holding itself. Check your own previous iteration first.
+
+The second paragraph matters as much as the first: the twenty-minute cost came less from the
+orphaned lock than from **two iterations of confident reasoning about who held it.**
+
+### T26. Beat 3 opens on 100 of our own test conversations, and `demo:tidy` will not clear them
+
+*Earns the top slot because it is the first screen of the demo, neither code fix in flight touches
+it, and the script everyone is relying on does not cover it.*
+
+```
+useAdminData.ts:222   .from('sessions').select('*').order('started_at', desc).limit(100)
+```
+
+**No status filter.** 115 sessions exist, essentially all agent test traffic.
+`cleanup-phantom-sessions.mjs` deletes only **phantoms** — our own number *and* zero messages — and
+merely **closes** stale active ones. The chat test sessions have messages, so they survive `tidy`
+and stay in the list.
+
+So after the intent write lands, after the label fix, and after `demo:tidy`, **the supervisor
+dashboard still opens on 100 rows of conversations we had with ourselves.**
+
+**This is a data decision on Enrique's database, exactly like T21**, and the same rule applies: do
+not invent replacements. Options, for him:
+
+1. **Delete the agent test sessions** and their messages and tool invocations. Cleanest screen.
+   Costs the G17/RLS evidence base the Tester has been re-proving at 500 rows — so if this is
+   chosen, do it **after** any remaining verification, not before.
+2. **Leave them and say so.** Beat 3's narration already explains that the traffic is ours; one
+   honest sentence — *"these are our own test conversations, the system has not been in front of
+   guests yet"* — costs nothing and is consistent with how everything else in this package handles
+   a limit.
+3. **Delete only the oldest**, so the list shows a plausible handful.
+
+**My read: option 2.** It is free, it is true, it needs no database write hours before submission,
+and "we tested it heavily and here is the evidence" is a better answer to a technical panel than a
+suspiciously tidy dashboard. But it is his call, and option 1 is legitimate if he wants the screen
+clean.
+
+### T25. `sessions.intent` — CLOSED. PRs #41, #43, #44 (writes) and #45 (honest label)
+
+**Superseded, left visible.** T25 originally said: change the label, do **not** persist intent
+tonight. That was wrong on two counts I had not checked — `docs/role-walkthroughs.md` already
+claims the column fills in, so a dash leaves a shipped sentence false; and the write is a column on
+a row the turn already writes, not new infrastructure. The Implementer is doing the write fix and
+correcting its own doc line in the same PR, which is the right call.
+
+**Both are still wanted**, because they fix different rows: persisting `intent` serves new
+sessions, and an honest `intentLabel` fallback serves the 100 historical ones that will never have
+it. Neither cleans the demo screen — that is T26.
+
+*Earns the top slot because it is on beat 3's first screen, it reads as a system stuck mid-work,
+and it is a false progress claim, which is the one thing this package has refused all evening.*
+
+`sessions.intent` is **null for all 115 rows — not one has ever been set** — and
+`mockData.ts:806` returns `'classifying…'` for null. It renders in four places:
+`AdminHome.tsx:117`, `SupervisorDashboard.tsx:129` and `:172`, `SessionDetail.tsx:97`. So a
+progress indicator that never completes is the **only** state the UI has ever shown.
+
+**Change the fallback to something honest.** `'—'`, or `'not classified'`. One line in
+`intentLabel`. A dash reads as "we do not fill this in"; "classifying…" reads as "we are stuck".
+
+**Do NOT make `classify_intent` persist to the session row tonight.** The classification genuinely
+exists at runtime — the agent returns `Intent: group_booking` and the Tester has seen it many
+times — so persisting it is the *right* fix and a small one on a normal day. It is a write on the
+chat path hours before submission, and that path has already had two fixes tonight (PR #20, #28).
+Put it in the roadmap instead.
+
+**While in there, one sentence for the honest-limits register:** the agent classifies every turn
+and the result reaches the trace, but it is not persisted onto the session, so the supervisor list
+cannot filter or group by intent yet. Naming it is stronger than a dash with no explanation, and it
+is the same move as the session-identity and Active-now limits already in the README.
+
+### T24. One line so the Planner's two files have a path to a commit
+
+*Earns the top slot because PR #39 fixed this for everyone who can run the ship sequence, and the
+Planner cannot run it — so the largest record in the repo is the one still orphaned, already 66
+lines out.*
+
+PR #39 made staging your own log and status the first line of the `git add`. That works for the
+Implementer and the Tester. **The Planner has no lock and no git by its own brief**, so
+`plans/06-master-plan.md` and `agents/planner.status.md` are not covered by it.
+
+Measured at 15:51: plan **+66** uncommitted, planner status **−10** (it is overwritten, not
+appended, so the committed copy is a *different, older* status with nothing marking it stale).
+
+**Add to the `git add` line in the ship sequence**, so it reads as one habit rather than two:
+
+```
+git add <the files your task touched>  agents/<you>.status.md  agents/<your log>.md         plans/06-master-plan.md  agents/planner.status.md  BACKLOG.md
+```
+
+and one sentence under it: *the Planner cannot take the lock or run git, so whoever ships carries
+its two files and BACKLOG too.*
+
+**Or decide the other way** — say in the table that the Planner's files are scratch and not meant
+to survive the session. That is a legitimate answer and it costs nothing to state. **What is not
+an answer is silence**, which is what produced 2,258 unsaved lines and is currently producing 66
+more per iteration.
+
+**Do not** build a hook or a script for this. Same reasoning as T23: tooling is a larger change
+than the problem, hours before submission.
+
+### T23. Make committing your own log part of shipping — CLOSED for the shipping agents, PR #39 — two lines, and the drift has restarted
+
+*Earns the top slot because T22 rescued 7,000 lines by luck, the cause is untouched, and the
+record has already drifted 56 lines out of git in the two minutes since.*
+
+`agents/README.md` names the **sole writer** of each file and **the word "commit" does not appear
+anywhere in it**. So nothing makes shipping the record anyone's job, which is exactly why it was
+never anyone's commit.
+
+Two lines:
+
+1. **In the mutex section:** *whoever takes the lock commits the coordination files along with
+   their work — both logs, all three status files, the plan and BACKLOG.* One sentence, and it
+   turns "nobody's task" into "always somebody's task".
+2. **In the ownership table**, for the two Planner-owned rows: the Planner **cannot** take the lock
+   or run git by its own brief, so `plans/06-master-plan.md` and `agents/planner.status.md` have no
+   path to a commit by their owner. Either say the lock-holder carries them, or say plainly that
+   they are scratch and not meant to survive. **Either answer is fine. Silence is what produced
+   2,258 unsaved lines.**
+
+Evidence it is needed rather than tidy, measured at 15:46 — two minutes after PR #38 committed
+everything:
+
+```
+agents/completed.log.md   committed 2241   working 2297
+```
+
+**Do not** build tooling for this. A hook or a script is a bigger change than the problem, hours
+before submission. Two sentences in the file that everyone reads at the start of an iteration is
+the whole fix.
+
+### T22. Commit the coordination record — RESCUED, PR #38 (7,496 insertions); cause reopened as T23
 
 *Earns the top slot because it has been true for five hours, it was found by luck rather than by
 anyone looking, and it is one commit.*
@@ -70,37 +321,36 @@ each file and is silent on who *ships* it:
 Same class as T16, where a shared file had no declared writer until it caused an incident. **A file
 with no owner gets appended to, not looked after.**
 
-### T21. Remove the test rows from the group inbox — the panel sees one called DELETE-ME
+### T21. "DELETE-ME" is ROW ONE of the group sales inbox — Enrique's database, and it improves the demo
 
-*Earns the top slot because it is the only open defect a panel notices without reading anything,
-and it sits on a scripted beat.*
+*Earns its place because it is the first thing on screen when beat 4 opens, and because removing it
+promotes the best row in that table to the top.*
 
-Confirmed on production at 15:22: the sales inbox has 13 rows, and two are test residue from
-dedupe testing:
+Verified 17:07. The UI orders `created_at` **descending** (`useAdminData.ts:351`), and the
+runtime-created rows are newest:
 
 ```
-INQ-2012 voice | Vantage Labs
-INQ-2013 voice | Vantage Labs DELETE-ME
+row 1: INQ-2013  Vantage Labs DELETE-ME
+row 2: INQ-2012  Vantage Labs
+row 3: INQ-2011  Cypress Ridge Reunion      <- created by a real phone call
 ```
 
-Runbook beat 4 has the presenter **click INQ-2009 from that list**, so the list is on screen.
+Beat 4: *"Switch to Group sales. Open **INQ-2009**… Click it from the inbox list."* The presenter
+opens that list in front of the panel and scrolls past two rows of test junk, the first named
+DELETE-ME, to reach the inquiry the beat is about.
 
-**Remove INQ-2012 and INQ-2013.** **Keep INQ-2011** — Cypress Ridge Reunion is the genuine
-artefact of a real phone call, it is the evidence that voice intake works end to end, and this plan
-has said twice not to delete it.
+**Delete `INQ-2012` and `INQ-2013`. Keep `INQ-2011`.** Then **row 1 becomes Cypress Ridge Reunion**
+— the inquiry a real phone call created, the evidence voice intake works end to end, and the
+strongest single row in that table. This is not tidying; it puts the best artefact first.
 
-This is a production data change, not a code change, and `npm run demo:tidy` does not cover it —
-that clears stale **sessions**, not inquiries. Two routes, and whoever takes it should say which
-they used:
+**Do not rename them to plausible company names.** Inventing data to look clean is the one thing
+this package has refused all night, and a reviewer who spots it discards every other claim.
 
-1. A small one-off delete against the `inquiries` table for those two `inquiry_code`s, run once
-   and not committed as a script.
-2. Enrique does it, since it is his database and two rows.
+**Sequence, if the Tester's evidence base matters:** it has been re-proving G17 and RLS against
+these tables, so delete **after** any remaining verification rather than before. As of now it
+reports nothing outstanding that depends on them.
 
-**Do not** rename them to plausible company names. Inventing data to look tidy is the one thing
-this package has refused to do all day, and a reviewer who spots it loses every other claim.
-
-**Check after:** the inbox reads 11 rows, INQ-2011 still present, and nothing else moved.
+**Check after:** the inbox reads 11 rows, row 1 is INQ-2011, and nothing else moved.
 
 ### T20. Two lines in the pre-demo checklist: stop the loop, then warm the functions
 
@@ -206,6 +456,34 @@ than implying symmetry the system does not have.
 
 ---
 
+## Guardrail coverage: 16 of 19 verified against production
+
+`agent/sol.md:269-287` defines G1–G19 — each with the rule, where it is enforced, the test that
+proves it and what failure looks like. The Tester has driven them against the deployed system, not
+against fixtures; evidence for each is in `agents/tested.log.md`.
+
+**Verified with evidence (16):** G2 · G3 · G5 · G6 · G7 · G8 · G9 · G10 · G11 · G12 · G13 · G14 ·
+G15 · G17 · G18 · G19.
+
+Highlights worth having ready in the room: **G13** refused card digits under a direct prompt
+injection from a *correctly identified* guest, and refused **without calling the tool** — so the
+prompt-level rule held before the masking layer was reached. **G17** was re-proved at 500 trace
+rows with no raw `args` column at all. **G12** and **G15** were re-run after four prompt-touching
+PRs and still held.
+
+**Outstanding (3), stated plainly because a panel will ask:**
+
+| | Why it is open | Cost to close |
+|---|---|---|
+| **G1** no hotel fact invented | the broadest rule; partially covered by G11 (quarantined data) and G18 (wrong-hotel), never tested as itself | one tool call on an uncovered policy question |
+| **G4** a complaint raised *during* the stay still counts | the `issue_raised_during_stay` branch has never been exercised | **one tool call**, free, no session |
+| **G16 on the voice leg** | the chat half is verified (PR #7, #28, 0 leaks in 4 runs); the voice half needs a live call | Telnyx balance — currently $3.09 |
+
+**G4 is the cheapest open item in the project** and the only one of the three that needs neither
+money nor a judgement call.
+
+---
+
 ## Everything else, closed — one line each
 
 Full detail for each is further down; this index exists so nobody has to scroll to find out
@@ -258,6 +536,788 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 64, 17:17 EST — nothing moved, demo state intact. A quiet iteration.
+
+**Inbox checked first. Empty.** Both agents are mid-iteration on the same tasks as last pass; no
+commits since PR #51. Lock taken 17:10, six minutes old, not stale.
+
+**Checked the state I flagged one iteration ago** — whether `/api/group/triage` had been run
+against production:
+
+```
+proposals 10 · follow_ups 3 · inquiries 13
+statuses: awaiting_approval 4 · sent 4 · draft 1 · rejected 1
+any sent_at on an awaiting_approval proposal: False
+```
+
+**Triage has not run.** It would have drafted proposals for INQ-2003 and INQ-2010, taking
+proposals to 12; it is 10, which matches iteration 8's nine plus the PRP-2007 the Tester
+regenerated at its iteration 27. So the two "ready to price" rows PR #51 was shipped to produce are
+still there.
+
+**And the invariant that matters most holds:** four proposals sit `awaiting_approval` and **not one
+of them carries a `sent_at`**. That is the approval gate's central claim, re-checked now rather
+than inherited from iteration 2.
+
+**Nothing to correct and nothing to add. The plan is accurate and correctly ordered.**
+
+Recording that plainly rather than finding something to say: I have filed a task or a correction
+every iteration for hours, and the discipline that makes those worth reading is being willing to
+report a pass where nothing was wrong.
+
+### Iteration 63, 17:12 EST — answering the Tester's open question before it experiments
+
+**Inbox checked first. Empty.**
+
+The Tester is mid-iteration on `/api/group/triage` and asking the right question first:
+*"Checking for a dry-run before mutating 13 inquiries' worth of demo state hours before
+submission."* It holds the lock, so this is time-sensitive. Read from the code rather than probed,
+because the probe here is the destructive act:
+
+**There is no dry-run.** `index.ts:765` is `await triageInbox(staff.actor)` — no preview flag, no
+parameter.
+
+**But it is idempotent by construction**, not by luck. `triage.ts:57`: *"Already worked. Leave it
+alone rather than producing a second artifact."* Anything with an existing proposal or follow-up
+returns `skipped_existing`. And everything it produces is a **draft**; nothing sends.
+
+**So what actually changes if it runs now** is only inquiries holding neither a proposal nor a
+follow-up. Cross-referencing the Tester's own iteration-40 result:
+
+| Inquiry | Current state | Triage would |
+|---|---|---|
+| **INQ-2003, INQ-2010** | complete, no proposal — the two rows that read **"ready to price"** | **draft a proposal**, so those rows stop saying it |
+| INQ-2004, INQ-2012, INQ-2013 | incomplete | draft a follow-up, unless one exists already |
+
+**That is the specific cost: it would undo the state PR #51 was shipped to produce**, which the
+Tester verified forty minutes ago by predicting exactly those two rows before opening the screen.
+Beat 4 uses INQ-2009 and INQ-2007, so the scripted path is untouched — but the inbox the panel
+looks at would lose the two rows that demonstrate the new copy.
+
+**My read: do not run it against production tonight.** The two claims at issue — idempotent, and
+drafts only — are **structural and readable** (`triage.ts:24` action enum, `:57` skip branch, `:40`
+"everything produced is a draft"), and the endpoint already has audit rows from when it was built.
+Verifying by reading costs nothing; verifying by running costs a demo surface for a claim that the
+code states plainly.
+
+If it must be exercised, the honest version is to say in the log that it was verified by
+construction rather than by execution — which is the same standard we accepted for the telephony
+intent write that could not be confirmed without Telnyx spend.
+
+### Iteration 62, 17:07 EST — "DELETE-ME" is row ONE of the group sales inbox, not merely in it
+
+**Inbox checked first. Empty.**
+
+The Tester sharpened T21: *"my junk rows are rows ONE and TWO of the inbox, not merely visible."*
+I verified it, because it changes the severity of an item I have twice described too mildly.
+
+`useAdminData.ts:351` orders inquiries `created_at` **descending**, and the runtime-created rows
+are the newest. Live, as the UI renders it:
+
+```
+row 1: INQ-2013  Vantage Labs DELETE-ME          2026-09-25T18:20
+row 2: INQ-2012  Vantage Labs                    2026-09-25T18:04
+row 3: INQ-2011  Cypress Ridge Reunion           2026-09-24T20:06
+row 4: INQ-2003  Longhorn Analytics Summit       2026-09-24T17:15
+```
+
+Beat 4 says *"Switch to Group sales. Open **INQ-2009**… Click it from the inbox list."* So the
+presenter opens that list in front of the panel and **the first row is named DELETE-ME**, with a
+duplicate of it second, before scrolling past both to reach the inquiry the demo is about.
+
+**I have understated this twice** — once as *"is in the inbox"*, once as *"13 rows where beat 4
+says ten"*. Neither conveys that it is the first thing on screen.
+
+**And deleting them does more than remove an embarrassment.** With INQ-2012 and INQ-2013 gone,
+**row 1 becomes INQ-2011, Cypress Ridge Reunion** — the inquiry a real phone call created, which is
+the evidence that voice intake works end to end and the best single artefact in that table. The
+cleanup promotes the strongest row to the top rather than merely hiding the worst.
+
+That reframes T21 from housekeeping to a demo improvement, and it is still Enrique's database and
+Enrique's call.
+
+### Iteration 61, 17:02 EST — my closure holds on wider evidence, and I was still right to be overruled
+
+**Inbox checked first. Empty.**
+
+At iteration 60 I closed T29 at 2 of 3, arguing the third string is unreachable. **That rested on a
+single sample** — one inquiry code — which is precisely the "right answer from a check too narrow
+to guarantee it" I named at iteration 35. So I widened it:
+
+```
+INQ-2001  200    INQ-2009  200    INQ-2011  200
+INQ-2013  200    INQ-9999  200   <- a nonexistent id still returns 200
+```
+
+**The endpoint never 404s on this build**, not even for an id that does not exist. The `absent`
+branch is genuinely unreachable except on a network failure. My conclusion was correct; my evidence
+for it was not, until now.
+
+**And the Implementer is fixing it anyway, which is the better call.** My "does not earn a PR" was
+a judgement about *priority*, not correctness — and Enrique asked for this. *"We did two of the
+three things you mentioned"* is a weaker answer than *"done"*, the change is one line with no
+runtime risk, and nothing more valuable is queued. **I am recording that as an overruling I agree
+with rather than defending the closure.**
+
+#### The lesson underneath it, which is the strongest cross-cutting one of the night
+
+Its account of why both its own sweeps missed the string:
+
+> *"My first sweep grepped a list of words I predicted… and 'endpoint'/'build' were not on it. My
+> second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
+> inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
+> grep, where a filter hid the hit."*
+
+**That is the same failure all three of us have now made, in three different tools:**
+
+| | Failure | Iteration |
+|---|---|---|
+| Implementer | grep scoped to a predicted word list, then to predicted JSX attributes | this one, and T8 |
+| Planner | `head_limit` truncated a search; a `sed` range counted lines it never printed | 47 and 26 |
+| Tester | five encoding "defects" that were its own cp1252 pipeline | 3, 4, and others |
+
+Every one is the checking instrument agreeing with the checker's expectation. It is worth one
+paragraph in `docs/how-this-was-built.md` if anyone has an iteration spare, because *"three agents
+independently built probes that could only confirm what they already believed, and each was caught
+by one of the other two"* is a more honest answer to "how did the loop help?" than any of the
+defect counts.
+
+### Iteration 60, 16:58 EST — T29's last string is unreachable on this build. Closing it.
+
+**Inbox checked first. Empty.**
+
+The Implementer reports T29 *"DONE and DEPLOYED"*. Its verification was accurate about what it
+shipped — the new wording is live, the table names are gone, `/admin/sessions` returns 200 — but
+`ConversationThread.tsx:89` is **unchanged**, and it was item 3 of the three I handed over. Same
+shape as several things tonight: *"I shipped X and X works"* is not *"the task is closed"*.
+
+**Rather than push it, I checked whether the string can appear at all.**
+
+```
+GET /api/group/communications?inquiry_id=INQ-2009   ->  200
+absent state renders on: 404, any non-ok, or a fetch failure   (lines 51, 55, 59)
+```
+
+**The endpoint is deployed.** The `absent` branch is a fallback for a build that does not have it,
+and this build does. On the demo it renders only if the network drops or a function errors mid-call
+— and in that scenario the wording of an empty state is nobody's problem.
+
+**So T29 closes at 2 of 3, deliberately.** The remaining string is dead copy on the current build:
+fix it if someone is already in that file, otherwise leave it. **It does not earn a PR at this
+hour**, and I have already spent four iterations of this project pushing a label that mattered less
+than I claimed — the `availability_service` badge — so the pattern is one I should recognise in
+myself rather than repeat.
+
+**What Enrique actually asked for is done:** the two strings a hotel manager would actually
+encounter are now in their words, and the one that carried the load — *"your role is not allowed to
+see it. That is decided in the database, not on this page"* — kept its admission while losing the
+acronym.
+
+### Iteration 59, 16:53 EST — T29 is 2 of 3, and the honesty survived exactly as asked
+
+**Inbox checked first this iteration**, per the commitment I made last time rather than when I
+remember. Empty.
+
+PR #50 landed Enrique's dashboards change. I checked the specific risk I flagged — that
+*"should not feel technical"* would quietly become *"should sound confident"*:
+
+| | Before | Now |
+|---|---|---|
+| `SupervisorDashboard.tsx:63` | `sessions · messages · tool_invocations` | **fixed** — same three streams in hotel words, with a code comment preserving *why* the evidence mattered ("this page is subscribed, not polling") |
+| `SessionDetail.tsx:75` | *"…**RLS** decides that, not this page."* | **fixed, and the admission is intact**: *"It may have been removed, or your role is not allowed to see it. **That is decided in the database, not on this page.**"* |
+| `ConversationThread.tsx:89` | *"…**endpoint** is not deployed on this **build**…"* | **unchanged** |
+
+**The second row is the one that mattered and it was done right.** The acronym is gone and the
+claim is not: it still says the restriction is enforced in the database rather than by the screen,
+which is the whole reason that sentence exists. That was the failure mode I named and it did not
+happen.
+
+**One string left.** A full sweep of every `title=`, `body=` and `hint=` across both admin
+directories returns exactly one remaining hit — `ConversationThread.tsx:89` — so there is no fourth
+instance to hunt. Suggested wording is already in T29: *"This version does not include message
+history, so nothing is shown rather than guessed."*
+
+**Production is current:** HEAD `20:52:14Z`, ready deploy `20:52:29Z`, fifteen seconds later.
+
+### Iteration 58, 16:48 EST — Enrique put an item in the Inbox and I left it there
+
+The Implementer flagged it: *"Enrique's new BACKLOG item… his own words, still in the Inbox and
+**untriaged by the Planner**."* It was right. Draining the Inbox is step 4 of my own brief, I
+checked it at iteration 55 and found it empty, and I have not looked since while filing T26, T27
+and T28 — none of which he asked for.
+
+**Triaged now**, removed from the Inbox, moved to In progress with the reading written down:
+*"The admin dashboards (supervisor, sales rep, admin) should not feel technical: intuitive, with a
+touch of full coverage."*
+
+**Swept both admin directories for user-visible engineering vocabulary. Three instances:**
+
+| Where | String |
+|---|---|
+| `SupervisorDashboard.tsx:63` | `sessions · messages · tool_invocations` — raw Postgres table names |
+| `SessionDetail.tsx:75` | *"…your role cannot read it. **RLS** decides that, not this page."* |
+| `ConversationThread.tsx:89` | *"The communications **endpoint** is not deployed on this **build**…"* |
+
+**The part worth planning rather than just listing:** two of the three are *honesty* messages. They
+exist because this system says what it cannot do instead of guessing, which is the best thing about
+it. **"Should not feel technical" must not become "should sound confident."** The fix is
+vocabulary, not candour — say the same true thing without the acronym. Written into T29 with
+suggested wording for each.
+
+**One observation about my own iteration-picking**, since this is the second time tonight my file
+has been the problem: I have been choosing my own findings over the one input channel Enrique
+actually has. The plan's step 4 exists precisely because a planner left to itself will keep
+following its own thread. I checked once, found it empty, and stopped checking — which is the same
+shape as a stale cache, and I should read it every iteration rather than when I remember.
+
+### Iteration 57, 16:44 EST — my T28 objection was wrong, and the real blocker is a 2,831-char overflow
+
+One iteration ago I wrote that re-provisioning would be unsafe because it would push T17's
+chat-conditional text to the voice assistant. **I checked the provisioning script before anyone
+acted on that, and I was wrong.**
+
+`scripts/telnyx/provision.mjs:202-235` **compiles** rather than copies, and its own comment states
+the exact purpose: *"Compiling rather than copying means the file can carry chat-only material
+without it bloating the voice prompt: anything between `<!-- voice:exclude -->` and
+`<!-- /voice:exclude -->` is dropped."* The facility for the problem I raised already exists.
+
+**The real blocker is different, and nobody has hit it yet:**
+
+```
+raw agent/sol.md          32,882 chars
+compiled as it stands     32,831
+MAX_INSTRUCTION_CHARS     30,000
+over by                    2,831
+voice:exclude blocks in sol.md:  0     <- the facility has never once been used
+```
+
+**A re-provision today would truncate the voice prompt at 30,000 characters**, appending
+`[truncated at 30000 characters]` and cutting the last ~2,800 — which is §9's "Where this runs"
+architecture table. The script reports `truncated: true`, so it is not silent, but the phone agent
+would be running a prompt with its tail removed.
+
+That is very likely **why the assistant is four hours stale**: either someone hit this and stopped,
+or nobody has re-run provisioning since `sol.md` grew past the cap.
+
+**Corrected task, and it is now a real fix rather than a documentation note.** The sequence:
+
+1. Wrap the material that is documentation rather than instruction in `<!-- voice:exclude -->` —
+   T17's chat-only channel note first, then the obvious candidates, §8 sample transcripts and §9's
+   architecture table. None of that steers a live call.
+2. Re-measure the compiled length. It must come in under 30,000.
+3. Only then re-provision, and diff the live instructions against the compile afterwards.
+
+**Third time tonight I have been wrong in the conservative direction** — INQ-2011, T25, and now
+this. The difference is that I caught this one myself, before it cost anyone an iteration, by
+checking the basis of my own objection rather than restating it. That is the habit I asked the
+other agents for at iteration 26 and it works on me too.
+
+### Iteration 56, 16:39 EST — the live phone agent has not been re-provisioned since 12:59
+
+**First, my probe was broken and I nearly filed a catastrophe.** My check reported
+`live instructions length: 0`, which would mean the phone agent has no system prompt at all. I
+inspected the raw response before writing anything: I had used `.get('data', {})` where iteration
+10 used `.get('data', d)`, and the Telnyx response is not wrapped in `data`. **Sixth time tonight
+the checking method was at fault**, and the first where believing it would have produced an
+emergency out of nothing.
+
+**Re-run correctly, the real finding:**
+
+```
+live assistant instructions   28,678 chars   <- identical to my measurement at 12:59
+agent/sol.md                  32,882 chars   <- +4,204 since
+identical: False
+```
+
+| Change | In `agent/sol.md` | In the live phone agent |
+|---|---|---|
+| PR #26 "never name a tool to a guest" | yes | **ABSENT** |
+| PR #34 channel note, `telephony-only` | yes | **ABSENT** |
+| T1c "named approver" wording | yes | **ABSENT** |
+
+**The Telnyx assistant has not been re-provisioned in nearly four hours.** The phone agent is
+running the pre-T1c, pre-#26, pre-#34 prompt.
+
+**What this does and does not break.** Behaviourally, little: those edits are almost entirely
+chat-targeted, and T1c's refusal wording lives in the tool layer's `human_reason` strings, which
+both runtimes call — so the phone agent still says the right thing about approvals. **What it
+breaks is a deliverable claim.** `agent/sol.md` opens *"This file is the single agent definition"*,
+and the package ships it alongside `exports/telnyx-assistant.json`. Those two documents now
+disagree about what the agent is, and the export matches the **stale** side.
+
+At iteration 10 I verified export == live and called the export fresh. That was true then and is
+still true — **and both are now stale against `agent/sol.md`**, which is the axis nobody was
+checking. The Tester is verifying export against live this iteration and will find them matching.
+
+#### The interesting part: the shared definition stopped being shareable
+
+**Do not simply re-provision from `agent/sol.md`.** It now contains channel-conditional text — *"On
+web chat the intake tools are not there… on chat the job is capture-and-escalate"* — added by T17.
+Pushing that wholesale to the **voice** assistant would tell the phone agent, which *does* have
+`create_inquiry`, about a limitation that is not its own.
+
+That is the real story: **"one definition, two runtimes" held until the definition needed to say
+something different per channel.** PR #28 solved it for chat by appending a channel note *in the
+chat runtime*, leaving the shared file clean — then T17 wrote the same distinction back into the
+shared file. The chat side is fine because its note is appended at runtime; the voice side has no
+equivalent and cannot take the file as-is.
+
+**See T28.** It is a documentation task, and this time the reason is technical rather than
+cautious.
+
+### Iteration 55, 16:34 EST — reconciliation. T25 closes, and the fix is better than I specified.
+
+Checked every open task against the tree and production rather than against the status files:
+
+| Task | State at 16:34 |
+|---|---|
+| **T25** label fallback | **CLOSED**, PR #45 |
+| T19 `agent/sol.md` "reaches Sales" | **open** — still 1 occurrence |
+| T20 runbook stop-loop + warm-up | **open** — 0 and 0 |
+| T21 junk inquiry rows | **open** — `INQ-2013` still live, 13 rows |
+| T24 Planner commit path | **open** — the README names the files in the ownership table and still never says who ships them |
+| T27 backgrounding inside the lock | **open** — 0 mentions |
+| T26 beat 3's test conversations | **open**, Enrique's judgement |
+
+**T25's fix is better than the task asked for, and that is worth saying plainly.** I specified a
+flat `—` or `not classified`. What shipped is status-aware:
+
+```ts
+export function intentLabel(intent: string | null, status?: string | null): string {
+  if (intent) return intent.replace(/_/g, ' ')
+  return status && status !== 'active' ? 'not classified' : 'classifying…'
+}
+```
+
+An **active** session genuinely might be mid-classification, so `classifying…` is honest there. A
+**closed** one never will be, so `not classified` is honest there. My flat dash would have been
+honest in one direction and lost information in the other. **Second time tonight an agent improved
+on a spec I wrote** — the first was the fourth option for 15b, fixing the symptom without touching
+the tool-reaching instruction.
+
+**And the Implementer is now testing the effect of its own fix rather than its presence**, which is
+the discipline that has made tonight work. Its stated worry is exactly the right one: *"~85 rows
+will now say `not classified`. A board that is uniformly 'not classified' may look just as broken
+as one uniformly 'classifying…'. If it does, the fix traded one bad impression for another and I
+should know before Enrique finds out on stage."* It verified the string was in the deployed bundle
+and then said that is **not** the same as verifying the screen reads well. That distinction is the
+whole lesson of PR #43, applied one iteration later without being told.
+
+**Note this does not close T26.** A uniformly-`not classified` board is still a board showing 100
+of our own test conversations. The label is now honest about what it does not know; the data
+decision is untouched.
+
+### Iteration 54, 16:29 EST — both channels write intent, and a gap in my own file
+
+**Confirmed independently, and it is now four sessions across both channels:**
+
+```
+total with intent: 4     by channel: {chat: 2, voice: 2}
+  20:26:36 chat  group_booking
+  20:22:27 chat  group_booking
+  17:32:40 voice group_booking   4a8cc297   <- the row the Implementer cited
+  15:28:56 voice group_booking   096fd222
+HEAD 20:25:48Z   ready 20:25:56Z   OK
+```
+
+**One precision that matters and that nobody should lose:** the two voice rows are *older* than the
+fix. The Tester verified telephony by calling the `/api/tools` webhook with an existing voice
+`session_id` — clever, free, and no Telnyx spend. That proves **the write works from the tool layer
+on a voice session**. It does **not** prove a live Telnyx call flows through that path end to end.
+Both agents know this; I am recording it so a later reader cannot turn it into "verified on a live
+call", which is a claim nobody has earned.
+
+**PR #43 shipped broken and only production found it**, which is the sharpest illustration tonight
+of why "the tests pass" is not "it works". The Implementer wrote the write as `void`, matching the
+fire-and-forget style of the file; the row stayed null while the **awaited** `recordToolInvocation`
+directly above persisted fine from the same request. Same DB, same session id, same deploy — the
+only difference was the `await`, because the handler returns and the container can freeze.
+**399 unit tests passed either way.** The test now pins `await` and forbids `void`.
+
+#### The gap, and it is in the file I own
+
+`agent/sol.md:269-287` defines **G1–G19**, each with the rule, its implementation, the test to run
+and what failure looks like. The Tester has **16 of 19 verified against production with evidence**
+in a 2,700-line log. **This plan tracks none of it** — zero mentions of coverage.
+
+For a submission whose central claim is that the guardrails are enforced below the model, *"how do
+you know?"* is the first question the technical conversation asks, and the answer is currently only
+reconstructible by reading the log end to end. Added as a section below.
+
+### Iteration 53, 16:24 EST — `sessions.intent` VERIFIED working in production, all three claims
+
+Merged, deployed and working are three separate claims and this project has produced a distinct
+failure between each pair tonight. All three now hold for the chat path:
+
+```
+deploy carrying PR #41   ready  2026-09-25T20:19:45Z
+session 20:22:27  chat   intent = 'group_booking'     <- first session ever to carry one
+session 20:21:21  chat   intent = None
+session 20:17:36  chat   intent = None                 (pre-deploy)
+```
+
+**The 20:22:27 row is the proof.** It was created after the deploy, and it carries a real
+classification. Before tonight, **zero of 115 sessions had ever had an intent** — four admin
+surfaces read that column and nothing wrote it, so every row rendered `classifying…` forever. That
+is now fixed on chat and confirmed against production rather than against a test.
+
+**The 20:21:21 null is not a regression and should not be read as one.** `intent` is written when
+a turn actually runs `classify_intent`; a session whose turns never trigger classification has
+nothing to write. I am recording it because a later reader scanning that list will see a
+post-deploy null and could reasonably mistake it for a partial failure.
+
+**PR #43, the telephony half, merged at 20:23:57Z** — five seconds before this check — and the
+lock is held, so its deploy is presumably in flight. It is the half that matters most for the demo,
+because beat 3 opens the supervisor screen on a **live call**, and it is the half that cannot be
+confirmed without spending Telnyx balance we do not have. It will likely ship verified by test
+only, which the Implementer stated plainly rather than implying coverage it lacks.
+
+**What this does not fix, and T25/T26 still stand:** the ~115 historical sessions will never have
+an intent, and `useAdminData.ts:222` shows the 100 most recent regardless of status. So beat 3
+still opens on a list dominated by old rows reading `classifying…`. The write fix serves new
+sessions; the honest label and the data decision serve the rest.
+
+### Iteration 52, 16:19 EST — the deadlock is diagnosed, and it is a SECOND lock failure the protocol does not cover
+
+**Resolved, and the Tester found it in its own behaviour.** Its disclosure is exact and worth
+quoting because the honesty is the useful part: *"I ran `mkdir agents/.lock` in iteration 30 and
+never released it — the deploy was backgrounded and the iteration ended. Then in iterations 31 and
+32 I saw the lock, read the Implementer's 'TAKING NOW' line, and concluded it was theirs. It was
+not… So I blocked them, and I twice declined to deploy PR #41 on the grounds that someone else held
+the lock I was holding myself."*
+
+At iteration 51 I inferred *"each agent believes the other holds it"*. That was right about the
+symptom and had no idea about the cause. The Tester found the cause by auditing itself.
+
+**Measured consequences:** PR #41 merged but unshipped ~20 minutes, the Implementer's superseding
+telephony fix held across three of its iterations, two Tester iterations reasoning from a false
+premise. The lock is now released and the Implementer is shipping both changes together.
+
+#### The finding that outlives tonight: there are two lock failures, and we have fixed one
+
+```bash
+if mkdir agents/.lock 2>/dev/null; then
+  ( ...work, including deploy... )
+  rmdir agents/.lock      # release ONLY here
+else
+  echo "lock held by another agent"
+fi
+```
+
+| Failure | What happens | Covered by the protocol? |
+|---|---|---|
+| **Release without acquire** — 14:28 | your `rmdir` deletes the *holder's* lock | **Yes.** Fixed by T16 / PR #27, and it has since stopped a repeat |
+| **Acquire without release** — 15:59→16:18 | work is backgrounded, the iteration ends, `rmdir` never runs | **No.** Only the 20-minute stale rule catches it, and tonight it took the full twenty |
+
+`agents/README.md` contains **zero** mentions of backgrounding, detaching or long-running
+commands. The conditional shape is correct and complete against the first failure and silent about
+the second.
+
+The Tester has already written itself the right rule — *"release the lock in the same iteration you
+take it, before the iteration can end"* — but it lives in a status file, which is working state,
+not the protocol. The next agent to read `agents/README.md` will not see it. **See T27**, which is
+two lines in the same file T16 fixed, for the same reason: a failure that has now actually
+happened is not in the document that is supposed to prevent it.
+
+### Iteration 51, 16:15 EST — orphaned lock, a second failed deploy, and both agents think the other holds it
+
+Three facts, measured, that together explain why nothing has moved for fifteen minutes.
+
+**1. The deploy did not just fail to happen — it failed.**
+
+```
+error  2026-09-25T20:05:09Z     "Deploy canceled"   <- PR #41's deploy
+ready  2026-09-25T19:55:20Z
+ready  2026-09-25T19:47:43Z
+
+HEAD   2026-09-25T20:02:35Z  →  BEHIND
+```
+
+That is the **second** cancelled deploy tonight; the first was 18:45:59Z. The Tester has the root
+cause and it is worth keeping: **our mutex serialises our CLI invocation, not Netlify's build
+queue** — a second build entering that queue can cancel the one ahead of it. The lock cannot
+protect against that, which is why `state: ready` is the thing to assert and not "the command
+exited 0".
+
+**2. The lock is orphaned, and each agent believes the other holds it.**
+
+- `agents/.lock` mtime: **15.8 minutes old**, taken 15:59.
+- The Tester's status: *"The Implementer holds the lock."*
+- The Implementer's status: blocked at every attempt for **three iterations**, 14.8 min at its last try.
+
+Both are being scrupulous about the 20-minute threshold — the Implementer notes it wrote that rule
+itself and will not shorten it — and that is the right instinct. But the lock belongs to neither
+current iteration. This is exactly the *"stale from a crashed iteration"* case `agents/README.md`
+anticipates.
+
+**3. Clearable at ~16:19.** Not before, and nobody should argue it forward.
+
+#### The sequence for whoever moves first, in order
+
+1. **Remove the stale lock**, noting it in your status as the protocol requires.
+2. **Deploy.** The fix everyone has been discussing for four iterations is merged and running
+   nowhere.
+3. **Assert `state: ready`, not exit code.** Two of tonight's deploys reported success at the shell
+   and were cancelled by Netlify. Use the check from PR #32.
+4. **Then one live chat turn** — *"a block of 25 rooms for a company offsite"* triggers
+   `classify_intent` — and confirm `sessions.intent` is populated. That is the Tester's blocked
+   re-test, and it is one turn, which its own standing rule permits because the test genuinely
+   needs a live one.
+
+**Nothing here is anyone's mistake.** A cancelled deploy is invisible unless you look, and both
+agents refused to shorten a rule for their own convenience — which is the behaviour you want, and
+it cost fifteen minutes. That trade is the right one and worth saying plainly rather than framing
+the delay as a failure.
+
+### Iteration 50, 16:10 EST — still BEHIND, and the pending extension may leave two writers, not one
+
+**Production is still behind, unchanged from 16:05:**
+
+```
+HEAD        2026-09-25T20:02:35Z
+last ready  2026-09-25T19:55:20Z     BEHIND
+```
+
+PR #41 has now been merged and undeployed for at least seven minutes, and `agents/.lock` has been
+held since **15:59 — ten minutes** — by an agent that has already merged. Not stale until 16:19
+under the documented rule, and nobody should shorten that rule to suit themselves. But the effect
+is that the fix everyone is discussing is not running anywhere.
+
+**The collision risk I went looking for is not there, and that is worth saying first.** The
+Implementer's uncommitted work touches only `tools/index.ts` and `tools/registry.ts` —
+**`chat.ts` is not in the diff**, so PR #41's `bindSessionIntent` is intact and committed. Nothing
+is being clobbered.
+
+**But the design it describes and the tree it has do not match.** Its status says the writer
+*"moved into the tool layer beside `recordToolInvocation` … **one writer, both channels**"*. In the
+working tree:
+
+| Where | State |
+|---|---|
+| `chat.ts:660` `bindSessionIntent` → `sessions.update({ intent })` | **still present**, committed in PR #41 |
+| `tools/registry.ts` (+30 lines, uncommitted) | a second writer |
+
+That is **two writers, not one** — the chat path would write via `chat.ts` *and* via the tool
+layer. The update is idempotent so nothing breaks, but "one writer, both channels" is the whole
+justification for the extension, and duplicated logic in two files is precisely the drift the test
+is meant to prevent.
+
+Its status lists `chat.ts` among its uncommitted files while `git diff` shows it unmodified, so the
+most likely explanation is simply that **removing the `chat.ts` writer is part of the work and has
+not been staged yet.** This is a "check before shipping" note, not a defect claim.
+
+**Two things to confirm before that PR merges:**
+
+1. **Exactly one writer ends up in the tree.** If the tool-layer writer lands, `chat.ts`'s should
+   go, or the claim in the commit message should change to match reality.
+2. **The voice leg actually writes.** The extension's real value is that telephony had *no* write
+   at all — which the Implementer verified — and beat 3 opens the supervisor screen on a live call.
+   That is the half PR #41 did not cover and the half that cannot be checked without a call, which
+   costs Telnyx balance we do not have. **It may have to ship verified by test only, and said so.**
+
+### Iteration 49, 16:05 EST — PR #41 is merged and NOT deployed. The deploy check caught it in anger.
+
+The Tester shipped the `sessions.intent` fix as **PR #41** and posted a loud warning so nobody
+re-implements it. Neither agent has verified it independently — the Tester wrote it, the
+Implementer has been blocked on the lock — so I did.
+
+**It is not live.** Two measurements at 16:05:
+
+```
+sessions with intent NOT NULL : 0     <- the fix is not observable
+
+HEAD        2026-09-25T20:02:35Z
+last ready  2026-09-25T19:55:20Z
+            BEHIND — the merge is newer than the newest successful deploy
+```
+
+**The zero is explained by the BEHIND.** PR #41 changed a Netlify function; merged code that has
+not been deployed cannot write anything. The Tester's warning is true of the repository and not
+yet true of production, and the difference is exactly the distinction this project learned the
+hard way at 13:00 when a G16 fix sat stranded in git for nine minutes.
+
+**Fair reading of the situation, not an accusation:** the Tester still holds the lock as of 15:59,
+so it may be mid-deploy as I write. The measurement is a timestamp, not a verdict on anyone.
+
+**What is worth recording is that the check fired.** The pre-send deploy step has a history: added
+after a silent failure (PR #29), found to compare an always-null field and therefore unable to fail
+(T18), corrected to compute OK/BEHIND from timestamps (PR #32), verified by me running it verbatim
+(iteration 37) — and **this is the first time it has reported BEHIND on a real merge.** A check
+that has never fired is a guess; this one is now evidence.
+
+**For whoever holds the lock next:** PR #41 is merged, **do not re-implement it** — and it needs
+deploying, then one live turn to confirm `sessions.intent` is populated. The Implementer's status
+still reads "TAKING NOW: the Tester's defect", written before #41 landed; that is staleness, not
+duplication, but it becomes duplication if it is acted on.
+
+### Iteration 48, 16:01 EST — my T25 guidance was wrong, and neither code fix cleans beat 3's screen
+
+T25 said: change the label, **do not** make `classify_intent` persist tonight. The Implementer and
+Tester both went for the write fix instead. **They are right and I was wrong**, and one further
+fact means neither fix actually solves the demo problem.
+
+**Why my guidance was wrong.** I weighed regression risk on the chat write path without checking
+two things:
+
+1. **A shipped deliverable already claims the column fills in.** `docs/role-walkthroughs.md` says
+   the Intent column *"fills in by itself, and on a live call you may catch it reading
+   `classifying…` before it settles."* It never settles. So a dash does not make us honest — it
+   leaves that sentence false and adds a second edit. Persisting intent makes the existing doc
+   **true**. The Implementer found this in its own text and is fixing both in one PR.
+2. **The write is not new infrastructure.** The turn already writes messages and tool invocations
+   to that session; adding a column on an existing row is marginal, not novel. I priced it as
+   riskier than it is — the same mistake I made about the INQ-2011 rehydration at iteration 31.
+
+**Now the fact neither of them has, which I checked this iteration:**
+
+```
+useAdminData.ts:222   supabase.from('sessions').select('*')
+                        .order('started_at', desc).limit(100)      <- NO status filter
+```
+
+Beat 3's list shows **the 100 most recent sessions regardless of status**. There are 115, and
+essentially all are agent test traffic with `intent` null. And `demo:tidy` will not remove them:
+`cleanup-phantom-sessions.mjs` **deletes only phantoms** — attributed to our own number *and* zero
+messages — and merely **closes** stale active ones. The chat test sessions have messages, so they
+stay in the list, closed.
+
+**So on demo morning, after every fix currently in flight and after `demo:tidy`, beat 3 opens on
+100 rows of our own test conversations.** The write fix reaches only new sessions; the 100 on
+screen are historical and will read `classifying…` forever regardless.
+
+**Corrected recommendation — all three, and they are complementary, not alternatives:**
+
+| | What it fixes |
+|---|---|
+| **Persist `intent`** (in flight) | new sessions carry it; makes `role-walkthroughs.md` true |
+| **Honest `intentLabel` fallback** | the 100 historical rows read `—` instead of a stuck spinner |
+| **Remove the test sessions** | the only thing that actually cleans the screen — and `demo:tidy` does not cover it |
+
+The third is a data decision on Enrique's database, exactly like T21. **See T26.**
+
+### Iteration 47, 15:56 EST — every session in the admin UI says "classifying…", and always will
+
+The Tester reported the sessions list showing 90 Active and 100 "Classifying…". I chased it to the
+source and it is **not a stale subset — it is every row, permanently.**
+
+```
+sessions with intent IS NULL      115
+sessions with intent NOT NULL       0     <- not one, ever
+sessions status = active           90
+```
+
+`src/components/admin/mockData.ts:806`:
+
+```ts
+export function intentLabel(intent: string | null): string {
+  if (!intent) return 'classifying…'
+  return intent.replace(/_/g, ' ')
+}
+```
+
+**Nothing ever writes `sessions.intent`**, so `intentLabel` takes the null branch for 100% of rows,
+and it is rendered in four places — `AdminHome.tsx:117`, `SupervisorDashboard.tsx:129` and `:172`,
+`SessionDetail.tsx:97`.
+
+**The agent does classify.** `classify_intent` runs and returns real values — the Tester has
+observed `Intent: group_booking` in tool output repeatedly. The classification exists at runtime
+and is simply never persisted to the session row.
+
+**Why this matters on beat 3:** the supervisor dashboard is the first screen of that beat, and
+every row on it reads *"classifying…"* — a **progress indicator that never completes**. To a panel
+that reads as a system stuck mid-work, not as a field we chose not to populate. It is a false
+progress claim, which is the one category this package has refused all evening.
+
+**See T25.** The one-line fix is the label, not the write path.
+
+**A checking-method note on myself, the fifth tonight:** my first grep for `[Cc]lassif` across
+`src/` returned ten matches and I concluded the string did not exist. It did — `classifying…`,
+lowercase with a Unicode ellipsis, ranked below the limit I had set. **A `head_limit` that
+truncates a search is indistinguishable from an empty result unless you look at whether you hit
+the limit.** I nearly wrote "the label is not in the source" into this plan.
+
+#### Credit where it is due
+
+The Tester adopted a standing rule this iteration without being asked: *"do not open a chat session
+unless the test genuinely needs a live turn — use `/api/tools/*` and `/api/group/tool`, which leave
+no session row behind."* That is precisely the wind-down I raised at iteration 43, reached
+independently and acted on rather than debated. It also re-proved G17 and RLS at **3× the earlier
+data volume** (500 trace rows, still no raw `args`, `9945` absent) and proved the sweep was
+complete rather than capped — `Content-Range 0-499/500`, offset 500 returning zero.
+
+### Iteration 46, 15:51 EST — T23 part 1 landed and works. Part 2 did not, and it is my two files.
+
+**PR #39 is a good fix and the right shape.** The ship sequence in `agents/README.md` now stages
+`agents/<you>.status.md` and `agents/<your log>.md` as the **first line of the `git add`**, with
+the reasoning inline: *"a file that is never anyone's task otherwise becomes a file that is never
+anyone's commit."* The commit follows the rule it adds. That converts a reminder into a step,
+which is the third time tonight the fix has been to change what the procedure *permits* rather
+than to ask people to be more careful — after T16's unconditional `rmdir` and PR #32's always-null
+deploy check.
+
+**Part 2 of T23 was not carried.** The ownership table still reads
+`plans/06-master-plan.md | Planner | reads` with nothing about who ships it, and the new rule says
+*"your own log and status file"* — which only helps an agent that can run the sequence. **The
+Planner cannot: no lock, no git, by its own brief.**
+
+Measured at 15:51, one iteration after PR #38 committed everything:
+
+| File | Committed | Working | Drift | Covered by PR #39? |
+|---|---|---|---|---|
+| `agents/tested.log.md` | 2611 | 2700 | **+89** | yes — its owner ships |
+| `agents/completed.log.md` | 2297 | 2348 | **+51** | yes — its owner ships |
+| **`plans/06-master-plan.md`** | 2469 | 2535 | **+66** | **no** |
+| **`agents/planner.status.md`** | 66 | 56 | **−10** | **no** |
+| `BACKLOG.md` | 63 | 63 | 0 | no, but currently clean |
+
+The logs will be swept by their owners' next commits. **The two Planner-owned files will not be
+swept by anyone**, and the largest record in the repository is already 66 lines out.
+
+**The `−10` is worth a sentence on its own.** My status file is *overwritten* each iteration rather
+than appended, so the committed copy is not merely behind — it is a **different, older status**,
+longer than the current one, with nothing marking it stale. Anyone reading the committed repo gets
+a planner status from several iterations ago and no way to tell.
+
+**The fix is one row, and it is the same choice as before:** either the lock-holder stages the
+Planner's files alongside their own, or the table says plainly that they are scratch and not meant
+to survive. **Either answer is fine.** See **T24**.
+
+### Iteration 45, 15:46 EST — the record is saved. Nothing stops it drifting back out, and it already has.
+
+**T22's rescue landed and it was substantial:** PR #38, **7,496 insertions**, the whole
+coordination record committed in one go with credentials scanned *before* staging rather than
+after — the right order for a public repo full of captured API output. My own file went from 123
+committed against 2,381 to **2,469 = 2,469**.
+
+The Implementer's account of the miss is the honest one and worth keeping: *"` M
+agents/completed.log.md` has been in `git status` in front of me every time and I read past it,
+because it was never the file I was shipping. A file that is never anyone's task is never anyone's
+commit."*
+
+**But the durable half did not land, and the Implementer said so itself:** *"the loop has no step
+that commits them — otherwise they drift back out."* I checked `agents/README.md`:
+
+- The ownership table still names only the **sole writer** of each file.
+- **The word "commit" does not appear anywhere in the file.**
+
+**And the drift has already restarted, two minutes after the commit:**
+
+```
+agents/completed.log.md   committed 2241   working 2297    <- +56 lines, already
+```
+
+That is not a prediction, it is a measurement. The loop reproduces this condition continuously,
+and the only thing that fixed it tonight was one agent noticing by accident.
+
+**So T22 is half closed.** The rescue is done and verified; the mechanism that caused it is
+untouched. Reopened as **T23**, which is two lines, not a rethink.
+
+**The Planner case stays special and should be written down as such:** I cannot take the lock and
+cannot run git, correctly per my brief, so `plans/06-master-plan.md` and `agents/planner.status.md`
+have no path to a commit **by their own owner, ever**. Whoever holds the lock has to carry them, or
+the table should say plainly that they are scratch and not meant to survive. Either answer is fine;
+silence is what produced 2,258 unsaved lines.
 
 ### Iteration 44, 15:42 EST — ~7,000 lines of the coordination record exist only in one working directory
 

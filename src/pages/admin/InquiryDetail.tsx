@@ -90,7 +90,7 @@ export default function InquiryDetail() {
     return (
       <AdminShell title="Inquiry not found">
         <Panel>
-          <EmptyState title="No such inquiry" body="It may have been deleted, or your role cannot read this table." />
+          <EmptyState title="No such inquiry" body="It may have been deleted, or your role may not be allowed to see it." />
         </Panel>
         <Link to="/admin/inquiries" className="btn-ghost mt-4 inline-flex">
           Back to the inbox
@@ -286,7 +286,7 @@ export default function InquiryDetail() {
                       <span className="text-solstice-stone">
                         {' '}
                         · {new Date(e.at).toLocaleTimeString('en-US')}
-                        {e.simulated ? ' · recorded locally, /api/group/proposal-action not deployed' : ' · written to audit_log'}
+                        {e.simulated ? ' · recorded on this device only, not sent' : ' · written to the audit trail'}
                       </span>
                     </li>
                   ))}

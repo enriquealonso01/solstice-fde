@@ -157,8 +157,8 @@ export default function SupervisorLadder({
             <p className="font-medium">Supervisor audio is not registered.</p>
             <p className="mt-0.5 text-xs leading-relaxed">{voice.unavailableReason}</p>
             <p className="mt-1.5 text-xs leading-relaxed">
-              The rungs stay disabled until this browser is registered. Telnyx would dial a leg at
-              your SIP address and nobody would be there to answer it.
+              The rungs stay disabled until this browser is connected. The call would be sent to
+              this desk and nobody would be here to answer it.
             </p>
             {voice.state === 'unavailable' || voice.state === 'error' ? (
               <button type="button" className="btn-ghost mt-2 !py-1 text-xs" onClick={voice.retry}>

@@ -14,11 +14,16 @@ If something is urgent or you want it done next, put `!!` at the front of the li
 
 <!-- add lines below this comment -->
 
-_(empty — both items triaged into `plans/06-master-plan.md` on 2026-09-25 12:0x)_
+_(empty — all items triaged into `plans/06-master-plan.md`)_
 
 ---
 
 ## In progress
+
+- **Dashboards should not feel technical** (Enrique, 2026-09-25) → master plan **T29**. Triaged
+  16:48. Read as: remove engineering vocabulary a hotel manager would not use, **without removing
+  the substance or the honesty underneath it**. Three user-visible instances found, listed in T29.
+  The Implementer is on it and reached the same reading independently.
 
 - **Click-by-click tutorial per admin role, spotlight the relevant area, grey the rest** → master
   plan **T4a / T4b / T4c**. Split deliberately: T4a writes the three walkthroughs as text

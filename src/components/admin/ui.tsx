@@ -23,12 +23,12 @@ export function PanelHeader({ title, right }: { title: ReactNode; right?: ReactN
 /** Tells the operator whether they are looking at the database or at fixtures. */
 export function SourceChip({ source }: { source: DataSource }) {
   return source === 'live' ? (
-    <span className="chip bg-emerald-50 text-emerald-800" title="Reading the Supabase tables">
+    <span className="chip bg-emerald-50 text-emerald-800" title="Reading real records from the database">
       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
       Live
     </span>
   ) : (
-    <span className="chip bg-amber-50 text-amber-800" title="Backend not seeded yet; showing demo fixtures">
+    <span className="chip bg-amber-50 text-amber-800" title="The database has nothing in it yet, so this is sample data">
       <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
       Demo data
     </span>
@@ -137,7 +137,7 @@ export function ErrorNote({ message }: { message: string | null }) {
   if (!message) return null
   return (
     <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-      Live read failed, showing demo fixtures. {message}
+      Could not read the database, so this is sample data. {message}
     </p>
   )
 }
@@ -155,7 +155,7 @@ export function AccessNotice({ problem }: { problem: AccessProblem }) {
       </h2>
       <p className="mt-1 max-w-2xl text-sm leading-relaxed text-rose-900">{ACCESS_MESSAGE[problem]}</p>
       <p className="mt-2 max-w-2xl text-xs leading-relaxed text-rose-800">
-        Demo fixtures are suppressed on this screen on purpose. Showing you numbers that are not
+        Sample data is suppressed on this screen on purpose. Showing you numbers that are not
         this hotel's would be worse than showing you nothing.
       </p>
       {problem === 'expired' ? (
