@@ -1,35 +1,46 @@
 # Master plan: the whole picture
 
-> ## 17:40 — nothing open larger than a paragraph. Enrique's Telnyx top-up is the only real item.
+> ## 18:00 — **ENRIQUE: the SQL paste is what makes a shipped sentence true. Still #1.**
 >
-> **T28 CLOSED** (PR #56): compiled `agent/sol.md` **28,194** under a 30,000 cap, assistant
-> re-provisioned, PR #26's rule now live after four hours of drift. **Re-export
-> `exports/telnyx-assistant.json`** — it matches the *old* prompt and is now the stale side.
-> **Headroom is ~1,417 chars, not ~1,806**: the 389-char gap is CRLF, which a normal text read hides.
+> `agent/sol.md` **§13** — a numbered assumption in the agent configuration, a named deliverable —
+> says a proposal over the ceiling *"cannot be sent until someone approves it and the override is
+> written to the audit log"*, and that we enforce *"that an approval happened and **is
+> attributable**"*.
 >
-> **The inbox chip (PR #55) checked for its real risk — client/server divergence — and there is
-> none.** `inboxRulesChip.ts` and the server tool import the **same** `src/lib/rules` engine, so
-> the chip computes exactly what the API reports. Its self-declared GRP-DATA-QUALITY gap can only
-> mislead via a green "ready to price", and **no row shows one** — five unpriced rows resolve to
-> two `cannot be priced` and three `missing` counts.
+> **With `prop_write` in place, all three clauses are false.** A rep PATCHes `status` to
+> `approved` with the public anon key, sends through the ordinary endpoint, `approveProposal` is
+> never called so there is no audit row and no `overrode_rules`, and `approved_by` stays **null** —
+> so the gate credits *"an authorised approver"* who does not exist. Attributability is exactly
+> what fails, and it is the thing §13 elects to defend.
 >
-> **Open, all small:** re-export the Telnyx JSON · **T27** two protocol lines · **T26** beat 3's
-> test conversations (Enrique) · **T24** Planner commit path · **T21** two rows (Enrique) ·
-> **T20** two checklist lines · **T19** one sentence. **Guardrails 18/19.**
+> **Supabase SQL editor, project `bcrivjgqrxahgxyiqlpr`:**
 >
-> **ENRIQUE — the only item with real consequence: top up Telnyx.** $3.09 gates beat 3 (**4 of ~18
-> minutes**, the phone and split-screen moment), the live end-to-end intent check, and **G16 on
-> voice**, the last open guardrail. Then **T21**, two rows, which promotes the real phoned-in
-> inquiry to the top of the inbox.
+> ```sql
+> drop policy if exists prop_write on proposals;
+> drop policy if exists inq_write  on inquiries;
+> drop policy if exists fup_write  on follow_ups;
+> ```
+>
+> Safe — nothing in the client writes these tables; server writes use the service role key.
+> Migration `004` carries a rollback block.
+>
+> **The choice, put plainly: apply it and change nothing, or apply nothing and weaken §13.** That
+> paragraph handles the GM ambiguity honestly and is the best answer on authority in the package;
+> hedging it to *"the API paths refuse, though the database permits a client write"* is a poor trade
+> for three `drop policy` lines.
+>
+> **Then:** **Telnyx** $3.09 (beat 3, the live intent check, **G16 on voice**) · **T21** two rows,
+> `INQ-2012`/`INQ-2013`, keeping `INQ-2011`.
+>
+> **Agents:** **T20** two checklist lines — the runbook now promises *"Nothing live right now"*,
+> true only if the loop stops before `demo:tidy` · **T19** one sentence · **re-export**
+> `exports/telnyx-assistant.json` (28,678 vs live 28,583).
 
 ---
 
 # ▶ OPEN WORK — three items, none of them large
 
 *Everything below this section is closed, or evidence.*
-*• **T27** two lines: the protocol covers one lock failure and tonight's was the other one.*
-*• **T26** beat 3 opens on 100 of our own test conversations — Enrique's call, my read is "say so".*
-*• **T24** one line so the Planner's two files can ever be committed — PR #39 covered everyone else.*
 *• **T21** two test rows to delete — the only thing a panel sees without reading.*
 *• **T20** two checklist lines: stop the loop, tidy, then warm the functions.*
 *• **T19** one sentence in `agent/sol.md`, shipped wrong.*
@@ -119,7 +130,7 @@ mechanism for the problem I raised was already there.
 voice assistant was last provisioned at ~12:59 on 2026-09-25 and which edits are therefore chat-only.
 A stale prompt that is documented beats a truncated one that is not.
 
-### T27. The protocol covers one lock failure. Tonight's was the other one.
+### T27. The second lock failure — CLOSED, PR #60. Also answers *how old*, not *whose*.
 
 *Earns a slot because it has now cost twenty minutes and three blocked iterations, the fix is two
 lines in the file that already fixed the sibling failure, and the Tester's rule for it currently
@@ -146,7 +157,7 @@ Add, beside the existing snippet:
 The second paragraph matters as much as the first: the twenty-minute cost came less from the
 orphaned lock than from **two iterations of confident reasoning about who held it.**
 
-### T26. Beat 3 opens on 100 of our own test conversations, and `demo:tidy` will not clear them
+### T26. Beat 3's test conversations — CLOSED, PR #61. It is the Archive panel, not the live tile.
 
 *Earns the top slot because it is the first screen of the demo, neither code fix in flight touches
 it, and the script everyone is relying on does not cover it.*
@@ -214,7 +225,7 @@ and the result reaches the trace, but it is not persisted onto the session, so t
 cannot filter or group by intent yet. Naming it is stronger than a dash with no explanation, and it
 is the same move as the session-identity and Active-now limits already in the README.
 
-### T24. One line so the Planner's two files have a path to a commit
+### T24. The Planner's files had no path to a commit — CLOSED, PR #60. Drift now +0.
 
 *Earns the top slot because PR #39 fixed this for everyone who can run the ship sequence, and the
 Planner cannot run it — so the largest record in the repo is the one still orphaned, already 66
@@ -528,6 +539,203 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 73, 18:00 EST — the RLS hole falsifies the best paragraph in the agent configuration
+
+**Inbox checked first. Empty.**
+
+I went looking for whether last iteration's finding makes any *shipped* claim untrue. It does, and
+it is not a minor one. `agent/sol.md` **§13** — a numbered stated assumption in the agent
+configuration, which is a named brief deliverable:
+
+> *"**Approval authority is a named human, not a role tier.** A proposal over the discount ceiling
+> **cannot be sent until someone approves it and the override is written to the audit log with the
+> rules it overrode**… We chose to enforce **that an approval happened and is attributable** rather
+> than to invent an org chart the sample data does not contain."*
+
+**While `prop_write` exists, all three clauses are false:**
+
+| The claim | With the hole open |
+|---|---|
+| "cannot be sent until someone approves it" | PATCH `status` to `approved`, then send through the ordinary endpoint |
+| "the override is written to the audit log with the rules it overrode" | `approveProposal` was never called, so **no `proposal.approved` row and no `overrode_rules`** |
+| "an approval happened and **is attributable**" | `approved_by` stays **null**, and the gate then credits *"an authorised approver"* |
+
+**Attributability is precisely what fails**, and it is the thing that paragraph elects to defend
+after declining to model a GM tier. This is the most load-bearing sentence in the document that
+documents the guardrails, and the hole empties it.
+
+#### What that changes about the priority
+
+The SQL paste is not only a hardening task — **it is what makes a shipped sentence true again.**
+Three `drop policy` statements restore §13 exactly as written, with no edit to any deliverable.
+
+**The alternative, if it is not applied before submission, is worse than it looks:** §13 would have
+to be hedged, and it is a genuinely good paragraph — it handles the GM ambiguity honestly, names
+Renee Okafor as a real out-of-band human, and explains what was deliberately not modelled. Hedging
+it to *"the API paths refuse, though the database currently permits a client write"* costs the
+package its best answer on authority in exchange for a footnote about RLS.
+
+So: **apply the migration and change nothing, or apply nothing and weaken the strongest paragraph.**
+That framing belongs in `HUMAN_INTERVENTION.md` beside the SQL, and it is the honest way to put the
+choice.
+
+#### Coordination note
+
+`agents/.lock` has read **17:50 through three of my iterations** — ten minutes, not stale under the
+twenty-minute rule, and per PR #60 the answer is to check the age and wait rather than reason about
+who holds it. Separately, the Implementer's status header has said *"TAKING NOW (iteration 54)"*
+while PRs #59 through #62 shipped underneath it; its iteration list updates but that first line
+does not. Not a defect — worth knowing before anyone reads the header as current.
+
+### Iteration 72, 17:55 EST — the approval gate reads state the browser can write. Live, now.
+
+**Inbox checked first. Empty.**
+
+PR #62 is the most serious finding of the project. `canSend` (`store.ts:464`) short-circuits on the
+proposal's **own status column**:
+
+```
+if (proposal.status === 'approved') return { allowed: true, human_reason: `… ${proposal.approved_by ?? 'an authorised approver'} approved it` }
+```
+
+and RLS granted `group_sales` **FOR ALL** on `proposals`. So a signed-in rep could, from the
+browser with the public anon key:
+
+```
+PATCH /rest/v1/proposals?id=eq.<row>  {"status":"approved"}            -> HTTP 200, row returned
+PATCH /rest/v1/proposals?id=eq.<row>  {"status":"sent","sent_at":"…"}  -> HTTP 200
+```
+
+**Confirmed live against production** by the Implementer as `sales@solsticehotels.com`; both rows
+restored immediately. `approved_by` stays null, so the gate then tells the next human that *"an
+authorised approver"* approved it **when nobody did**.
+
+**I could not independently reproduce it.** My session refuses the write — *"Permission for this
+action was denied… [Modify Shared Resources]"* — the same class of block the Tester hit on flag
+writes. I did not route around it. So the live confirmation rests on the Implementer's test, and I
+verified the rest by reading: the migration, its rollback block, and the escalation entry all say
+what the commit says.
+
+#### Why this outranks everything else, including Telnyx
+
+The approval gate is the centrepiece of the group workflow and the claim this package leads with.
+The Tester verified **four send paths refuse** — all true, all still true. **The state those paths
+read was writable by the client.** That is the sharpest instance yet of the night's recurring
+lesson: *verifying an implementation is not verifying a claim.* Four correct verifications of the
+doors, none of the floor.
+
+And the reproduction path is not hypothetical for this audience: the **anon key ships in the
+browser bundle**, the repo is public, and the staff credentials go in the submission email. A
+technical reviewer who signs in as group sales can demonstrate it.
+
+**Demo risk is genuinely low** — no screen offers the action and all four API paths refuse — but
+**credibility risk is high**, and that is the one that matters in a technical conversation.
+
+#### The fix is one paste and it is Enrique's
+
+`supabase/migrations/004_client_read_only_on_group_tables.sql`, into the Supabase SQL editor for
+project `bcrivjgqrxahgxyiqlpr`:
+
+```sql
+drop policy if exists prop_write on proposals;
+drop policy if exists inq_write  on inquiries;
+drop policy if exists fup_write  on follow_ups;
+```
+
+**Safe because nothing in the client writes these tables:** `useAdminData.ts` only ever `.select`s,
+`patchProposal` is local React state, and the only client-side writes anywhere are `invites` and
+`profiles`. Server writes use the service role key and bypass RLS. The migration carries a rollback
+block. The test pins both halves and was checked to fail with the policy restored.
+
+### Iteration 71, 17:50 EST — T26 closed well, and its new promise depends on a line that does not exist
+
+**Inbox checked first. Empty.**
+
+**T26 is closed by PR #61**, by the documentation route I recommended, and with a factual
+correction to my own framing that makes it better. The runbook now says:
+
+> *"`demo:tidy` closes live sessions; it does not delete ended ones. So the top of the screen reads
+> **'Nothing live right now'** and below it sits a table of around a hundred ended conversations,
+> which are ours… If anyone asks, say so: 'Those are our own test conversations. This has not been
+> in front of a guest yet — what you're looking at is the evidence we ran it hard.'"*
+
+**My framing was wrong in a way that mattered.** I kept saying *"beat 3 opens on 100 of our own
+test conversations"*. It does not: after tidy the **Active now** tile reads zero and the hundred sit
+in the **Archive** panel below. Two different panels, and the honest sentence targets the right one.
+I had read `cleanup-phantom-sessions.mjs` myself and still described the wrong surface.
+
+#### The coupling nobody has stated
+
+```
+sessions right now:   active 96 · ended 23
+```
+
+The runbook now **promises** the top will read "Nothing live right now". That is true only if
+`demo:tidy` can close all 96 — and it closes sessions **idle over 30 minutes**
+(`cleanup-phantom-sessions.mjs:84`). **The Tester is still generating chat sessions.** If the loop
+is running at demo time, whatever it created in the preceding half hour survives the tidy and the
+tile is not zero.
+
+**So beat 3's new sentence is conditional on T20's first line — stop the agent loop — which is
+still unwritten.** The runbook makes a promise; the checklist that would make it true does not yet
+contain the step. Either T20 lands, or the sentence should hedge. **T20 just became the item that
+protects a claim rather than merely a nicety**, and it is two lines.
+
+#### Correction of my own attribution
+
+At iteration 70 I credited T24's closure to PR #60. It was **PR #61** — `git log -- agents/README.md`
+shows #61 added the Planner's files to the `git add`. That is the second attribution slip tonight
+after "(PR #52/#55 working)". The measurements were right both times; the credit was not, and in a
+record whose whole value is traceability that is not a trivial distinction.
+
+**Unchanged:** `agent/sol.md` still carries one *"reaches Sales"* (T19); the runbook still has zero
+stop-the-loop and zero warm-up lines (T20).
+
+### Iteration 70, 17:45 EST — T27 and T24 both CLOSED, and both shipped better than I wrote them
+
+**Inbox checked first. Empty.**
+
+**T27 — the second lock failure — is closed by PR #60, with both halves and a third I did not
+think of.** The README now says *"Do not background anything inside the lock"* with the 15:59
+incident and its twenty-minute cost, and *"do not infer the holder from another agent's status
+file"*. Its formulation is sharper than mine:
+
+> *"The lock directory carries no owner, so it cannot tell you whose it is — and a status file
+> records what an agent **intended**, which is not evidence about what it **did**."*
+
+And the part I missed entirely: it redirects from the unanswerable question to an answerable one —
+`stat -c %Y agents/.lock` gives the age, and *"under twenty minutes, someone is mid-ship and the
+answer is to wait and retry, not to reason about identity."* I framed the problem as identification;
+the fix is to stop asking.
+
+**T24 — the Planner's files having no path to a commit — is closed in the same work, and thoroughly.**
+The `git add` line now carries all three with the reason inline (*"and so do the Planner's, because
+nobody else can commit them"*), there is a section saying whoever ships carries them, and it picked
+up the note I had put at the top of my own status file: `planner.status.md` is **overwritten rather
+than appended**, so a stale committed copy is misleading rather than merely old.
+
+**Proof it works, measured now:**
+
+```
+plans/06-master-plan.md    committed 3736   working 3736   drift +0
+agents/planner.status.md   committed   61   working   61   drift +0
+```
+
+For the first time tonight the two files I own are current in git.
+
+#### The export re-check, now with a number
+
+```
+exports/telnyx-assistant.json   28,678 chars
+live assistant                  28,583 chars
+```
+
+**28,678 is exactly the pre-PR-#56 live length**, so the export is a snapshot of the old prompt —
+confirmed stale rather than assumed. It is a `--refresh`-style re-export, not a rewrite.
+
+**Still open and unchanged:** `agent/sol.md` carries **one** *"reaches Sales"* (T19); the runbook
+has **no** stop-the-loop line and **no** warm-up line (T20).
 
 ### Iteration 69, 17:40 EST — the chip's real risk was client/server divergence. There is none.
 

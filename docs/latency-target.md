@@ -14,7 +14,8 @@ exactly the kind of target that survives a planning document and dies in product
 ## What we actually measured
 
 Medians across four scenarios per configuration, chat channel, run against the live API.
-Deployed serverless adds roughly 0.3–1s on top.
+Deployed serverless adds roughly 0.2s on a warm function and **1.0–1.9s on a cold one** — measured,
+not estimated; see the cold-start note below. The figures in this table are warm.
 
 | Configuration | First event (tool chip) | First prose token | Behavioural violations |
 |---|---|---|---|
@@ -113,8 +114,13 @@ In rough order of expected return:
 1. **Keep the first signal, spend the prose.** Narration before a tool call cuts first token to
    2749ms, but it is a stock phrase, a perception trick rather than a real gain. It is one env var
    (`SOL_NARRATION=on`) if a room turns out to be unforgiving.
-2. **Warm compute.** Serverless cold starts contribute the 0.3–1s gap between local and deployed.
-   A container with a warm pool removes it.
+2. **Warm compute.** Serverless cold starts contribute the gap between local and deployed, and it
+   is larger than this document first claimed. Three independent measurements of the first request
+   after an idle period: **1.31s** (24-call run), **1.86s**, and **1.299s** on `/api/chat`. Warm
+   requests immediately after: 0.285s, 0.229s, 0.207s. So a cold start is roughly **6× the warm
+   figure and 6× the ≤300ms p95 published above** — not the 0.3–1s originally written here.
+   A container with a warm pool removes it. Until then it is a checklist line: the pre-demo
+   checklist in `docs/demo-runbook.md` warms both functions with a `curl` that writes no session.
 3. **Route by difficulty.** A fast model for identification and simple lookups, Sonnet for anything
    touching policy authority. The tool layer makes this safe because the rules do not live in the
    model.

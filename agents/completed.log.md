@@ -3087,3 +3087,55 @@ panel than a tidy screen. **I wrote that claim into `HUMAN_INTERVENTION.md` befo
 existed**, so I went and made it true rather than leaving Enrique a promise the repo did not keep.
 
 `npx tsc -b --force` clean. `npx vitest run`: **420 passed, 29 files**.
+
+## It58 — T20, and a conflict inside T20 itself
+
+T21 is a decision on Enrique's database, so I took T20: two lines in the pre-demo checklist, plus the
+cold-start figure in `docs/latency-target.md`.
+
+### T20's own warm-up instruction would have broken the beat it protects
+
+The task says: *"Open the landing page and send one throwaway chat question, then discard the
+session."* **You cannot discard the session.** A chat session is opened on the first message, nothing
+on the web closes it, and `demo:tidy` only closes sessions idle over **30 minutes**
+(`STALE_MINUTES = 30`, `cleanup-phantom-sessions.mjs:84` — checked, the plan's citation is right).
+The warm step is positioned *last*, after tidy, so the order does not help either: in any order, a
+warm-up chat leaves one session marked `active` minutes before the panel arrives.
+
+And beat 3 opens by putting the supervisor dashboard on screen **and saying it is empty**. One live
+card contradicts the first sentence of that beat. So the instruction as written would have traded a
+slow first answer for a false first claim.
+
+**The fix warms the identical container and writes nothing.** `chat.ts` returns 405 for a non-POST at
+line 199, *before* any session logic runs. So a bare GET boots the function without touching the
+database. Measured on production, twice each:
+
+```
+/api/chat    cold 1.299s -> warm 0.207s     (405, no session written)
+/api/tools   cold 1.010s -> warm 0.258s     (200, catalogue)
+```
+
+The cold figure reproduces the plan's 1.31s measurement almost exactly, from a different method,
+which is the best evidence either of us has that the number is real. The checklist now carries the
+two `curl` lines and says **why it is a curl and not a click**, because "just send a chat message" is
+the obvious shortcut and the reason not to is not obvious.
+
+### The other line, and the order that makes it work
+
+**Stop the agent loop** now sits *before* `demo:tidy`, with the reason: tidy's 30-minute threshold
+means agent traffic created at 10:56 survives a tidy run at 10:55. I also corrected the tidy bullet,
+which said *"run this last"* — it is no longer last, warming is, and a checklist that tells you two
+different things are last is a checklist you stop trusting.
+
+### The figure was understated in two places, not one
+
+T20 pointed at `docs/latency-target.md:116`. Fixing it and grepping for the same claim elsewhere
+found **a second copy at line 17**: *"Deployed serverless adds roughly 0.3–1s on top."* Same
+understatement, in the sentence that introduces the results table. Both now say what was measured —
+~0.2s warm, 1.0–1.9s cold, about 6× the ≤300ms p95 the same document publishes — and the table is
+labelled as warm figures.
+
+That is the third time this run that fixing one instance of a claim has left another standing. The
+grep is now the habit, not the afterthought.
+
+`npx tsc -b --force` clean. `npx vitest run`: **420 passed, 29 files**.

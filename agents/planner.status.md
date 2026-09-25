@@ -4,58 +4,58 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 69 — 2026-09-25 ~17:40 EST
+## Iteration 73 — 2026-09-25 ~18:00 EST
 
 ### Inbox checked first. Empty.
 
-### I went looking for the chip's real risk and it is not there
+### The RLS hole falsifies the best paragraph in the agent configuration
 
-The Tester revealed PR #52 **never worked at all** — it tested `inquiry.status === 'blocked'`, and
-that column only holds `new`, `needs_info`, `needs_review`, `auto_approvable`. Dead branch, shipped
-verbatim, screen stayed wrong, source-shape test green throughout. PR #55 replaces it with a real
-call to the rules engine.
+I went looking for whether last iteration's finding makes any **shipped** claim untrue. It does.
+`agent/sol.md` §13 — a numbered stated assumption in the agent configuration, a named brief
+deliverable:
 
-**The risk that mattered in that design:** `inboxRulesChip.ts` evaluates rules **in the browser**,
-while the ground truth I measured at iteration 67 came from the **server** tool endpoint. Different
-rule sources would mean a chip that confidently contradicts the engine which actually refuses a
-booking — and the chip sits on beat 4's screen.
+> *"A proposal over the discount ceiling **cannot be sent until someone approves it and the
+> override is written to the audit log with the rules it overrode**… We chose to enforce **that an
+> approval happened and is attributable**."*
 
-```
-src/pages/admin/inboxRulesChip.ts   from '@/lib/rules/engine'
-netlify/functions/group/tools.ts    from '../../../src/lib/rules'
-```
+**With `prop_write` in place, all three clauses fail:** it can be sent without an approval;
+`approveProposal` is never called so there is no audit row and no `overrode_rules`; and
+`approved_by` stays null, so the gate credits *"an authorised approver"* who does not exist.
 
-**Same module, both sides.** So my iteration-67 table is not an independent estimate of the chip —
-it is the chip's own arithmetic, measured through a different door.
+**Attributability is exactly what fails** — and it is the thing that paragraph deliberately elects
+to defend after declining to invent a GM tier. The hole does not dent a side claim; it empties the
+load-bearing sentence of the document that documents the guardrails.
 
-### The module declares its own gap, and I sized it
+### Why that changes how the fix should be described
 
-> *"GRP-DATA-QUALITY blocks pricing only when the engine is handed the property master record, and
-> the inbox does not load properties. A row this calls 'ready to price' can therefore still be
-> refused later over a bad rate."*
+The SQL paste is not only hardening. **It is what makes a shipped sentence true again**, with no
+edit to any deliverable.
 
-**Blast radius today: zero.** That gap can only mislead through a green "ready to price", and no
-row shows one — the five unpriced rows resolve to two `cannot be priced` and three `missing`
-counts, proposals still 10, unchanged since 17:31. So it is a latent caveat, not a live defect, and
-the honest answer if a panel asks is the one the module already gives about itself.
+And the alternative is worse than it first looks: if the migration is not applied, §13 has to be
+hedged — and it is a genuinely good paragraph, handling the GM ambiguity honestly, naming Renee
+Okafor as a real out-of-band human, and stating what was deliberately not modelled. Trading that
+for a footnote about RLS is a bad exchange for three `drop policy` lines.
 
-Sizing a self-declared limitation is worth more than repeating it. "There is a known gap" invites
-worry; "there is a known gap and it currently affects nothing, here is why" closes the question.
+So I framed the choice in the plan as: **apply it and change nothing, or apply nothing and weaken
+the strongest paragraph.** That is the honest way to put it, and it belongs beside the SQL in
+`HUMAN_INTERVENTION.md`.
 
-### One correction of mine
+### Coordination notes, neither of them defects
 
-At iteration 67 I wrote *"(PR #52/#55 working)"*. PR #52 never worked. The derived table was right;
-the attribution was not.
+`agents/.lock` has read **17:50 across three of my iterations** — ten minutes, not stale, and per
+PR #60 the correct response is to check the age and wait rather than reason about who holds it. I
+am following the rule I asked for.
+
+The Implementer's status header still reads *"TAKING NOW (iteration 54)"* while PRs #59–#62 shipped
+underneath it; its iteration list updates, that first line does not. Worth knowing before someone
+reads the header as current — I nearly did.
 
 ### The plan is accurate and correctly ordered
 
-Six open plus the re-export, none larger than a paragraph: re-export the Telnyx JSON · **T27** two
-protocol lines · **T26** beat 3's test conversations (Enrique) · **T24** Planner commit path ·
-**T21** two rows (Enrique) · **T20** two checklist lines · **T19** one sentence.
-**Guardrails 18 of 19.**
+**Enrique, in order:** the SQL paste · Telnyx top-up · **T21** two rows.
+**Agents:** **T20** two checklist lines (protecting the runbook's own "Nothing live right now"
+promise) · **T19** one sentence · re-export the Telnyx JSON.
 
 ### The single most important remaining item
 
-**Enrique's: top up Telnyx.** $3.09 gates beat 3 — 4 of ~18 minutes and the split-screen moment —
-the live end-to-end intent check, and **G16 on voice**, the last open guardrail. Then **T21**, two
-rows, which puts the real phoned-in inquiry at the top of the inbox.
+**The `drop policy` paste.** It closes a live hole *and* restores §13 exactly as written.
