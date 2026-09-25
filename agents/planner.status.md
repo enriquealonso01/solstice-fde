@@ -4,49 +4,61 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 88 — 2026-09-25 ~19:16 EST
+## Iteration 89 — 2026-09-25 ~19:20 EST
 
-### Inbox empty. Lock held since 19:08. T34's redaction still uncommitted.
+### Inbox empty. Lock held since 19:16. T34's redaction CLOSED at HEAD (PR #81).
 
-### I swept every tracked file for secrets. The SIP target is the only one
+### My iteration-88 sweep had the exact flaw #81 names
 
-T34 found one exposure; iterations 86 and 87 taught that finding one is not knowing how many. So I
-swept the whole tree instead of stopping at the file I had already opened.
+PR #81 says of its own earlier scan: *"The scan looked for a list of things I predicted, and a SIP
+URI is none of them."*
 
-**Method: compare against live values, not against patterns.** A pattern cannot tell a real key
-from a placeholder, and this repo legitimately has both. I took each value out of `.env` and asked
-whether that exact string appears anywhere in `git grep HEAD`:
+**That is what I did one iteration ago, and I presented the result as a bound.** I compared tracked
+files against **five `.env` variables I chose by hand**, then wrote into T34 that this was *"the
+only credential ever committed — decide on one item, not on an unknown number."*
 
-```
-ANTHROPIC_API_KEY (108 chars)   not tracked
-SUPABASE_SERVICE_ROLE_KEY       not tracked
-TELNYX_API_KEY                  not tracked
-SUPABASE_ANON_KEY               not tracked
-SUPABASE_URL                    not tracked
-```
+**`TELNYX_SIP_USERNAME` was not among my five.** My sweep could not have seen the class of value it
+was claiming to bound. The conclusion was right only because #81 had already found the thing I was
+implicitly ruling out.
 
-Then the reverse, for credential *shapes*. Two tracked files match `sk-ant-` and **both are
-innocent**: `setup.ps1:35-36` is a validation pattern (`Pattern = '^sk-ant-'`), and
-`completed.log.md:2283` is the Implementer's own record of an earlier sweep finding nothing. No
-JWTs, no `Bearer` tokens, no Telnyx `KEY…` literals anywhere tracked.
+### Redone properly: every variable, not a chosen list
 
-### Why this matters for T34 specifically
+Parsed `.env` programmatically — **23 variables with values of 12+ characters** — and checked each
+against `git grep HEAD`.
 
-It converts *"we found one — are there others?"* into **"we checked the set; there is exactly
-one."** Enrique gets to make the rotation call on a **bounded** question, which is a materially
-different decision from an open-ended one. Added to T34.
+**Every actual secret is absent from HEAD:** `TELNYX_SIP_PASSWORD`, `TOOL_WEBHOOK_SECRET`,
+`PROPOSAL_LINK_SECRET`, `DEMO_PASSWORD`, `TELNYX_PUBLIC_KEY`, `TELNYX_SIP_USERNAME`,
+`TELNYX_SIP_URI`, `TELNYX_TELEPHONY_CREDENTIAL_ID`, and the four API keys.
 
-### One observation, not a finding
+**Seven do appear, all identifiers or deliberately public:** phone number (published on purpose),
+base URL, model name, voice name, and three resource ids (`TELNYX_ASSISTANT_ID`,
+`TELNYX_CALL_CONTROL_APP_ID`, `TELNYX_SIP_CONNECTION_ID`).
 
-`TELNYX_WEBHOOK_SECRET` is unset locally while the live assistant clearly has one — the export
-redacts `REDACTED_INJECTED_FROM_TOOL_WEBHOOK_SECRET` 23 times. The secret lives in the deployment
-environment rather than on the developer's machine, which is the right side of that line.
-**Recorded so nobody reads the empty local variable as a missing secret.**
+**T34's bound stands, and now rests on a method that could have falsified it.** The answer did not
+change; the reason it can be trusted did. Re-sourced in the task text.
+
+### One note for whoever finishes `no-committed-credentials.test.ts`
+
+It is untracked in the working tree. Two **resource identifiers** are tracked and I am not
+proposing they be removed — but the guard's authors should **decide explicitly whether identifiers
+are in scope and write the answer down**, because the next person to add one will read the test,
+not the plan.
+
+### PR #81 is the right shape
+
+The fix is a rule in the export script, not a value in the artefact: every
+`sip:<user>@sip.telnyx.com` loses its local part and the script **refuses to write a file where one
+survives**. Red-checked twice, including against *a different credential under a brand-new key* — a
+test that only knew the one string would have been theatre.
+
+### Still open
+
+`SUBMISSION.md:45` reads *"Two things they did not ask for"* above **three** bullets.
 
 ### The plan is accurate and correctly ordered
 
 **Enrique:** the SQL paste · T34 rotation decision · Telnyx top-up · T21.
-**Agents:** finish and commit the T34 redaction · the one-word `SUBMISSION.md` fix.
+**Agents:** the one-word `SUBMISSION.md` fix · finish `no-committed-credentials.test.ts`.
 
 ### The single most important remaining item
 

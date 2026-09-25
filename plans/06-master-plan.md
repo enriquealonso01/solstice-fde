@@ -32,7 +32,10 @@
 > and the diagram already marks that **FUTURE**. Add a `voice:exclude` paragraph saying what
 > "today" rests on, plus one runbook line for the panel question. **Change no guest wording.**
 >
-> **T34.** An unredacted SIP transfer target is at **HEAD in two tracked files** — the export *and*
+> **T34 REDACTION CLOSED** (PR #81) — gone from HEAD, and the fix is a **rule in the export
+> script** that refuses to write a file with a live SIP local part, so the next export cannot undo
+> it. *What follows is the history question, which remains Enrique's.* The credential was at
+> **HEAD in two tracked files** — the export *and*
 > `netlify/functions/telnyx/_lib/legs.test.ts` — and in history at **`10b63e8` and `c09f04d`**,
 > while `SUBMISSION.md:13` says *"Nothing secret is in it."* Low severity, not zero: a credential
 > *username*, not a password. **Redaction is in progress and in the right place** (the exporter, so
@@ -226,11 +229,15 @@ person should make rather than an agent.
    `exports/telnyx-assistant.json` **and** `netlify/functions/telnyx/_lib/legs.test.ts`, and in
    history at **two commits, `10b63e8` and `c09f04d`**. Working-tree redaction fixes neither.
 
-   **The question is bounded — iteration 88 swept the whole tracked tree.** Every live value from
-   `.env` (Anthropic, Supabase service-role, Supabase anon, Telnyx API, Supabase URL) is **absent
-   from every tracked file at HEAD**, and the only `sk-ant-` matches are a validation pattern in
-   `setup.ps1` and a log entry about a prior sweep. **This SIP username is the only credential ever
-   committed.** Decide on one item, not on an unknown number.
+   **The question is bounded, on a method that could have falsified it (iteration 89).** All **23**
+   variables in `.env` with values of 12+ characters were parsed programmatically — not a chosen
+   list — and checked against `git grep HEAD`. **Every actual secret is absent**, including
+   `TELNYX_SIP_PASSWORD`, `TOOL_WEBHOOK_SECRET`, `PROPOSAL_LINK_SECRET`, `DEMO_PASSWORD` and the
+   four API keys. Seven variables do appear and all seven are identifiers or deliberately public
+   values (phone number, base URL, model, voice, three resource ids). **This SIP username is the
+   only credential ever committed.** Decide on one item, not on an unknown number.
+   *(Iteration 88 asserted this bound from five hand-picked variables that did not include
+   `TELNYX_SIP_USERNAME` — right answer, method that could not have seen it. Redone.)*
 
    **Recommend rotation over history rewriting, and say why.** Rewriting a public repository's
    history hours before its link is emailed is the riskier of the two: it invalidates every commit
@@ -927,6 +934,89 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 89, 19:20 EST — my own secret sweep had the flaw #81 names; redone properly, the conclusion holds
+
+**T34 is closed at HEAD.** PR #81 removed the credential from both files, and the value no longer
+appears anywhere tracked. The fix is **a rule in the export script, not a value in the artefact** —
+every `sip:<user>@sip.telnyx.com` loses its local part, and the script **refuses to write a file
+where one survives**, so the next `telnyx:export` cannot undo it. `export-redaction.test.ts`
+guards the committed artefact, red-checked twice, including against *a different credential under a
+brand-new key* — a test that only knew the one string would have been theatre.
+
+#### The part of #81 that indicts my iteration-88 work
+
+Their commit message says of their own earlier sweep:
+
+> *"The scan looked for a list of things I predicted, and a SIP URI is none of them — the same
+> mistake as three earlier sweeps in this run."*
+
+**That is exactly what I did one iteration ago**, and I presented the result as a bound. I compared
+tracked files against **five `.env` variables I chose by hand** and wrote into T34 that *"this SIP
+username is the only credential ever committed — decide on one item, not on an unknown number."*
+
+`TELNYX_SIP_USERNAME` **was not among my five.** My sweep could not have seen the class of value it
+was claiming to bound. The conclusion happened to be right only because #81 had already found the
+thing I was implicitly claiming to have ruled out.
+
+#### Redone the way it should have been: every variable, not a chosen list
+
+Parsed `.env` programmatically — **23 variables with values of 12 characters or more** — and
+checked each against `git grep HEAD`:
+
+```
+names checked: TELNYX_API_KEY, ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY,
+SUPABASE_SERVICE_ROLE_KEY, DEMO_EMAIL, DEMO_PHONE, TELNYX_PUBLIC_KEY, TELNYX_ASSISTANT_ID,
+TELNYX_PHONE_NUMBER, TELNYX_SIP_USERNAME, TELNYX_SIP_PASSWORD, PUBLIC_BASE_URL,
+TELNYX_ASSISTANT_MODEL, TELNYX_CALL_CONTROL_APP_ID, TELNYX_SIP_CONNECTION_ID,
+TELNYX_TELEPHONY_CREDENTIAL_ID, TELNYX_SIP_URI, TELNYX_ASSISTANT_VOICE, TOOL_WEBHOOK_SECRET,
+PROPOSAL_LINK_SECRET, TELNYX_EMAIL_FROM, DEMO_PASSWORD
+```
+
+**Seven appear in tracked files, and all seven are identifiers or deliberately public values:**
+
+| Variable | Why it is fine |
+|---|---|
+| `TELNYX_PHONE_NUMBER` | `SUBMISSION.md` publishes it on purpose |
+| `PUBLIC_BASE_URL` | the site everyone is invited to |
+| `TELNYX_ASSISTANT_MODEL` | `anthropic/claude-haiku-4-5`, a model name |
+| `TELNYX_ASSISTANT_VOICE` | a voice name |
+| `TELNYX_ASSISTANT_ID` | a resource id, in the export |
+| `TELNYX_CALL_CONTROL_APP_ID` | a resource id, in `legs.test.ts` |
+| `TELNYX_SIP_CONNECTION_ID` | a resource id, in `scripts/telnyx/README.md` |
+
+**Every actual secret is absent from HEAD:** `TELNYX_SIP_PASSWORD`, `TOOL_WEBHOOK_SECRET`,
+`PROPOSAL_LINK_SECRET`, `DEMO_PASSWORD`, `TELNYX_PUBLIC_KEY`, `TELNYX_SIP_USERNAME`,
+`TELNYX_SIP_URI`, `TELNYX_TELEPHONY_CREDENTIAL_ID`, and the four API keys.
+
+**So T34's bound stands, and now it rests on a method that could have falsified it.** That is the
+difference worth recording: the answer did not change, the reason it can be trusted did.
+
+#### One thing for whoever finishes `no-committed-credentials.test.ts`
+
+That guard is untracked in the working tree right now. **Two resource identifiers are tracked** —
+`TELNYX_CALL_CONTROL_APP_ID` and `TELNYX_SIP_CONNECTION_ID`. They are not credentials and I am not
+proposing they be removed. But the new guard's authors should **decide explicitly whether
+identifiers are in scope and write the answer down**, because the next person to add one will read
+the test, not this entry.
+
+#### Still open
+
+`SUBMISSION.md:45` reads *"Two things they did not ask for"* above **three** bullets.
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| T34 rotation decision | Enrique | open — **bound now properly established** |
+| Telnyx top-up, $3.09 | Enrique | open |
+| T21, delete `INQ-2012`/`INQ-2013` | Enrique | open — verified safe |
+| T34 redaction | — | **CLOSED**, PR #81, gone from HEAD |
+| `SUBMISSION.md` "Two things" → three | Agents | open — one word |
+
+Inbox empty. Lock held since 19:16.
+
 
 ### Iteration 88, 19:16 EST — swept every tracked file for secrets; the SIP target was the only one
 

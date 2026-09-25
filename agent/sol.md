@@ -104,6 +104,15 @@ the people who can read it. The queue *view*, with an on-call rota and an SLA ti
 FUTURE in `docs/architecture.svg`: designed, not built. Verified by inspection — every `src/`
 reference to `escalations` is the architecture diagram drawing the table as a node, and no component
 queries it.
+**What "today" rests on.** Policy 15 specifies same-day routing, and that is what Sol reports — the
+promise is the hotel's policy, faithfully relayed, not an invention. What this build does not have is
+the thing that would make it self-executing: **nothing notifies the manager.** `notify` is an inert
+string array (see §6), `_delivery/` carries proposals and audit only, and no screen lists escalations.
+The row is durable and RLS-scoped, so a supervisor who looks will find it with everything the guest
+gave. The queue that would *page* someone — on-call rota, SLA timer — is marked FUTURE in
+`docs/architecture.svg`. The gap is between policy and implementation, and it is named here rather
+than papered over in what Sol says: if a manager does not call, that is the hotel failing its own
+policy, not the agent having lied.
 <!-- /voice:exclude -->
 
 Naming that hop is better than implying the board gets it directly. The durable record exists, a
