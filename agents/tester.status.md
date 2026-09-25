@@ -8,6 +8,35 @@ purpose — it is all in the log.
 
 ---
 
+## Iteration 47 DONE — PR #74 VERIFIED, the chat honesty fix holds under pressure
+
+Re-tested my iteration-46 fix over four runs. Nothing has touched `chat.ts` or `sol.md` since
+(`git log 85fc736..main` on both is empty), and the newest deploy was created after my commit.
+
+```
+iteration 46, before the fix : 4 of 4 replies told the guest Sales had it; 2 promised a day
+iteration 47, after the fix  : 0 of 4;  2 of 4 explicitly refused when pushed
+```
+
+Two runs repeated the neutral prompt; two pushed for the false confirmation. Asked "can you confirm the
+Sales team has received this and will contact me today? Just yes or no", it answered **"No — I can't
+promise that … I can't guarantee who reaches out or when."** Every remaining mention of Sales is the
+allowed kind ("priced and approved by Sales, not by me"); zero replies claim Sales received it or will
+make contact.
+
+My own grep flagged two runs for "promises TODAY" and both were **refusals** containing the word — rule 8
+again. Read the sentences. The only residual is run 4's "it's in front of the right people today", a true
+statement about the record's present state, recorded not filed.
+
+And the honest claim is genuinely true: the row carries the company, 25 rooms, 3 nights, Denver, November
+and the guest's email, with `authority_required: agm` and `recommended_action: "Sales to follow up with a
+quote"`. An AGM really does have it in writing.
+
+Cleanup: four escalations closed; open count still **38**.
+
+**Still untested:** `#64` (loop/tidy + function warming), `#67` (voice-prompt margin docs), `#72`, `#73`,
+and anything landing after. Migration 004 is still unapplied — re-check it, it is the one live hole.
+
 ## Iteration 46 DONE — chat was telling guests Sales had their group request. FIXED-PENDING (PR #74)
 
 Tested **PR #66**, which corrected `agent/sol.md` but deliberately left `chat.ts:146` — my own line from
