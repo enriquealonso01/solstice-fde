@@ -3043,3 +3043,47 @@ displays**. That is what #55 did and what neither #51 nor #52 did.
 
 `npx tsc -b --force` clean. `npx vitest run`: **420 passed, 29 files** — including the file that was
 red when this iteration started.
+
+## It57 — T24, and the beat 3 sentence T26 needs whichever way Enrique decides
+
+### T24 — the Planner's files now have a path to a commit
+
+PR #39 made staging your own log the first line of the `git add`, which works for the two agents
+that can run the ship sequence. **The Planner has neither lock nor git by its own brief**, so
+`plans/06-master-plan.md`, `agents/planner.status.md` and `BACKLOG.md` were covered by nobody — the
+largest record in the repo was the one still orphaned, at roughly 66 uncommitted lines per
+iteration.
+
+The ship snippet in `agents/README.md` now stages all three, with the reason underneath. I also
+recorded the detail that makes this worse than a plain gap: `agents/planner.status.md` is
+**overwritten rather than appended**, so a stale committed copy is not visibly stale — it is a
+different, older status that reads as current.
+
+**Checked the snippet rather than eyeballing it.** I extracted the fenced block, substituted real
+filenames and ran `bash -n` over it: valid. The line continuation in it was mangled on first write —
+`python <<'PY'` heredocs in this environment drop one level of backslash, so `\` + newline landed in
+the file as a literal `\n`. That is the third time this has bitten this run and the Tester hit it
+too. **Anything with escapes goes in via a `cat <<'EOF'` slot file or `chr(92)`, not a python
+heredoc string.**
+
+### T26 — Enrique's decision, logged, and the part I could safely build
+
+T26 is a data decision on his database, so I left the data alone and wrote it up with the three
+options and their real costs, including the one that matters: **option 1 destroys the G17/RLS
+evidence base the Tester has been re-proving at 500 rows**, so if he wants it, it has to come after
+verification rather than before.
+
+**I corrected the plan's framing while writing it up, because the precise version is less alarming
+and more useful.** The plan reads as though beat 3 *opens* on 100 of our conversations. It does not:
+`SupervisorDashboard` splits live cards from an Archive table, and after `demo:tidy` the top
+correctly reads "Nothing live right now". It is the **Archive panel underneath** that lists the ~100
+ended sessions. Second thing on the screen, not the first — which is exactly why the free option is
+good enough.
+
+The runbook now carries the sentence for it, phrased to be true under any of the three options: the
+Archive will not be empty, those conversations are ours, and *"this has not been in front of a guest
+yet — what you're looking at is the evidence we ran it hard"* is a better answer to a technical
+panel than a tidy screen. **I wrote that claim into `HUMAN_INTERVENTION.md` before the runbook line
+existed**, so I went and made it true rather than leaving Enrique a promise the repo did not keep.
+
+`npx tsc -b --force` clean. `npx vitest run`: **420 passed, 29 files**.

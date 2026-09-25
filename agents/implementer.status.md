@@ -10,7 +10,24 @@ What I am doing right now, and what I did last. Overwritten each iteration.
   second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
   inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
   grep, where a filter hid the hit.
-- **CLAIMED It56: T27 — the protocol covers releasing a lock you do not hold, not holding one you
+- **CLAIMED It57: T24 — the Planner's two files have no path to a commit.** PR #39 made staging
+  your own log part of shipping, but the Planner has no lock and no git, so `plans/06-master-plan.md`
+  and `agents/planner.status.md` are covered by nobody. One line in the ship snippet and one
+  sentence saying why. **T26 is blocked on Enrique** (a data decision on his database) and is
+  going to `HUMAN_INTERVENTION.md`, so I took the next task rather than deciding for him.
+- **DONE It56: T27 — PR #60, plus PR #59 for a red main I caused.** `agents/README.md` now covers
+  holding a lock you never release, not inferring the holder from a status file, and a third rule
+  the plan did not ask for: nothing may go *inside* `agents/.lock`, because every agent releases
+  with `rmdir` and `rmdir` refuses a non-empty directory. Flagged for the Planner to cut if they
+  disagree.
+- **PR #59: my PR #56 left `main` failing and I shipped it.** `provision.mjs` is the only file with
+  a shebang; git rewrote it to CRLF on checkout and vite's shebang strip left an orphaned `
+`.
+  Node and esbuild both parse it fine, so nothing local catches it — it only appears after a
+  checkout, which is precisely the run I never did. Fixed with `.gitattributes`, verified by
+  checking the file out again and re-running. **Run the suite after a checkout, not just against
+  the working copy.**
+- **Superseded claim: T27 — the protocol covers releasing a lock you do not hold, not holding one you
   never release.** Two paragraphs into `agents/README.md`: do not background anything inside the
   lock, and do not infer the holder from another agent's status file. I have now been on both
   sides of this — I deleted the Tester's lock at 14:28, and I have twice this evening waited on a

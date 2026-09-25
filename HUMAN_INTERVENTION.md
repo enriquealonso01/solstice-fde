@@ -470,3 +470,39 @@ been moved back to Open — it is a decision, not a resolved item._
   INQ-2004, the real needs-info example.
   Needed: delete `INQ-2012` and `INQ-2013`. I have no DB write access. This is the single cheapest
   thing on this list and it is the first thing a panellist will see on that screen.
+
+---
+
+## Beat 3 opens on ~100 conversations we had with ourselves, and `demo:tidy` will not clear them
+
+**This is a data decision on your database, so I have not touched it.** Same as the `INQ-2012` /
+`INQ-2013` item above.
+
+The supervisor dashboard reads the 100 most recent sessions with **no status filter**
+(`useAdminData.ts:222`). There are ~115, essentially all agent test traffic.
+
+**To be precise about what shows, because it changes how much this matters:** after `demo:tidy` the
+*live* area at the top correctly reads "Nothing live right now". It is the **Archive** panel
+underneath that lists the ~100 ended conversations. So this is not the first thing on the screen,
+it is the second — which is why option 2 costs so little.
+
+**Why `npm run demo:tidy` does not fix it:** `cleanup-phantom-sessions.mjs` deletes only *phantoms*
+— our own number **and** zero messages — and merely **closes** stale `active` ones. The chat test
+sessions have messages, so they survive the script and stay in the list. Running tidy is still
+worth doing; it just will not empty this screen.
+
+Three options, and the third column is the part that matters:
+
+| | What it costs | What it costs you if it goes wrong |
+|---|---|---|
+| **1. Delete the test sessions** and their messages and tool invocations | cleanest screen | destroys the G17/RLS evidence base the Tester has been re-proving at 500 rows. If you want this, do it **after** verification finishes, not before |
+| **2. Leave them and say so** — *"these are our own test conversations; the system has not been in front of guests yet"* | one sentence of narration | nothing. It is true, and it needs no database write hours before submission |
+| **3. Delete only the oldest**, leaving a plausible handful | a judgement call about which | you are choosing what the panel sees, without a rule for it |
+
+**The Planner's read is option 2 and I agree**, for a reason worth stating plainly: *"we tested it
+heavily and here is the evidence"* is a better answer to a technical panel than a suspiciously tidy
+dashboard. Every other limit in this package is handled by saying what is true rather than by
+hiding it, and this screen is the first one they will see.
+
+**Nothing is blocked on you here** — beat 3 works either way. If you say nothing, option 2 is what
+happens by default, and the runbook now carries the sentence for it.

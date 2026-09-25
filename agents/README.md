@@ -46,8 +46,10 @@ an agent must take the lock:
 ```bash
 if mkdir agents/.lock 2>/dev/null; then
   (
-    # Your own log and status file go in the SAME commit as the work.
-    git add <the files your task touched>             agents/<you>.status.md agents/<your log>.md
+    # Your own log and status file go in the SAME commit as the work,
+    # and so do the Planner's, because nobody else can commit them.
+    git add <the files your task touched>  agents/<you>.status.md  agents/<your log>.md \
+            plans/06-master-plan.md  agents/planner.status.md  BACKLOG.md
     # ...commit, push, PR, merge, deploy...
   )
   rmdir agents/.lock      # release ONLY here: this branch is the one where you acquired it
@@ -81,6 +83,17 @@ agent releases with `rmdir`, and `rmdir` removes only *empty* directories. One o
 release into a silent failure and the mutex into a permanent block on all three agents. If the lock
 ever needs an owner, it needs a different release verb first, agreed with the other two agents —
 not a file added by whoever thought of it.
+
+**Whoever ships carries the Planner's files too.** The Planner has no lock and no git by its own
+brief, so `plans/06-master-plan.md`, `agents/planner.status.md` and `BACKLOG.md` are not covered
+by the rule below — and the largest record in the repo was therefore the one still orphaned,
+running about 66 uncommitted lines per iteration. Committing someone else's file is already
+sanctioned here: ownership governs who **writes** a file, not who commits it, and preserving
+text verbatim is not authorship.
+
+`agents/planner.status.md` is **overwritten rather than appended**, so a stale committed copy is
+not obviously stale — it is simply a different, older status with nothing marking it as old.
+That is worse than a gap, because it reads as current.
 
 **Stage your own log and status file every time you ship.** They are the first line of the `git
 add`, not an afterthought, because a file that is never anyone's *task* otherwise becomes a file

@@ -1,28 +1,26 @@
 # Master plan: the whole picture
 
-> ## 17:36 — **T28 CLOSED.** The last item that made a shipped deliverable untrue is fixed.
+> ## 17:40 — nothing open larger than a paragraph. Enrique's Telnyx top-up is the only real item.
 >
-> ```
-> compiled agent/sol.md   28,194   cap 30,000   no truncation   voice:exclude blocks: 1
-> live assistant          28,583   was 28,678 for four hours
-> PR #26 "never name a tool to a guest"   PRESENT  (was ABSENT)
-> ```
+> **T28 CLOSED** (PR #56): compiled `agent/sol.md` **28,194** under a 30,000 cap, assistant
+> re-provisioned, PR #26's rule now live after four hours of drift. **Re-export
+> `exports/telnyx-assistant.json`** — it matches the *old* prompt and is now the stale side.
+> **Headroom is ~1,417 chars, not ~1,806**: the 389-char gap is CRLF, which a normal text read hides.
 >
-> The assistant is re-provisioned, the drift is gone, and `agent/sol.md` can call itself *"the
-> single agent definition"* truthfully again. **Re-export `exports/telnyx-assistant.json`** — the
-> Tester verified it byte-identical to the *old* prompt, so it is now the stale side of the pair.
+> **The inbox chip (PR #55) checked for its real risk — client/server divergence — and there is
+> none.** `inboxRulesChip.ts` and the server tool import the **same** `src/lib/rules` engine, so
+> the chip computes exactly what the API reports. Its self-declared GRP-DATA-QUALITY gap can only
+> mislead via a green "ready to price", and **no row shows one** — five unpriced rows resolve to
+> two `cannot be priced` and three `missing` counts.
 >
-> **T1c's "named approver" is still absent from the prompt and that is correct** — it lives in the
-> tool layer's `human_reason`, which both runtimes call. Do not re-raise it.
+> **Open, all small:** re-export the Telnyx JSON · **T27** two protocol lines · **T26** beat 3's
+> test conversations (Enrique) · **T24** Planner commit path · **T21** two rows (Enrique) ·
+> **T20** two checklist lines · **T19** one sentence. **Guardrails 18/19.**
 >
-> **Headroom warning:** real margin under the cap is **~1,417 chars, not ~1,806**. The 389-char gap
-> is **CRLF** — Windows line endings reach the platform and Python's universal newlines hide them.
-> Anyone sizing an addition from a normal text read will think they have 27% more room.
->
-> **Open:** **T27** two protocol lines · **T26** beat 3's test conversations (Enrique) · **T24**
-> Planner commit path · **T21** two rows (Enrique) · **T20** two checklist lines · **T19** one
-> sentence · plus **re-export the Telnyx JSON** per above. **Guardrails 18/19.**
-> **Enrique's: Telnyx $3.09.**
+> **ENRIQUE — the only item with real consequence: top up Telnyx.** $3.09 gates beat 3 (**4 of ~18
+> minutes**, the phone and split-screen moment), the live end-to-end intent check, and **G16 on
+> voice**, the last open guardrail. Then **T21**, two rows, which promotes the real phoned-in
+> inquiry to the top of the inbox.
 
 ---
 
@@ -530,6 +528,46 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 69, 17:40 EST — the chip's real risk was client/server divergence. There is none.
+
+**Inbox checked first. Empty.**
+
+The Tester revealed PR #52 **never worked at all**: it tested `inquiry.status === 'blocked'`, and
+that column only ever holds `new`, `needs_info`, `needs_review`, `auto_approvable`. Dead branch,
+shipped verbatim, screen stayed wrong, and its source-shape test passed throughout. PR #55 replaces
+it with a real call to the rules engine.
+
+**Small correction of mine:** at iteration 67 I wrote *"rose `cannot be priced` … (PR #52/#55
+working)"*. PR #52 was never working. My derived chip table was right; the credit was wrong.
+
+**The risk I went looking for in PR #55 — and it is not there.** `inboxRulesChip.ts` evaluates
+rules **in the browser**, while the ground truth I measured came from the **server** tool endpoint.
+If those two used different rule sources the chip could confidently contradict the engine that
+actually refuses a booking. They do not:
+
+```
+src/pages/admin/inboxRulesChip.ts   import { evaluateGroupRules, isPriceable } from '@/lib/rules/engine'
+netlify/functions/group/tools.ts    import { … } from '../../../src/lib/rules'
+```
+
+**Same module, both sides.** The chip performs the identical computation I measured through the
+API, so my iteration-67 table is the chip's own arithmetic rather than an independent estimate of
+it.
+
+**The module declares its own gap, which is the right behaviour and worth knowing the size of:**
+
+> *"One known gap, stated rather than hidden: GRP-DATA-QUALITY blocks pricing only when the engine
+> is handed the property master record, and the inbox does not load properties. A row this calls
+> 'ready to price' can therefore still be refused later over a bad rate on the property."*
+
+**Blast radius today: zero.** That gap can only mislead through a green "ready to price" chip, and
+re-checked just now, **no row shows one** — the five rows without proposals resolve to two `cannot
+be priced` and three `missing` counts. Proposals still 10, table unchanged since 17:31.
+
+So it is a latent caveat, not a live defect, and the honest answer if a panel asks whether that
+chip guarantees pricing is: it reflects completeness and the blocking rules, and does not yet see
+property data-quality — which is exactly what the module says about itself.
 
 ### Iteration 68, 17:36 EST — T28 VERIFIED and closed. Plus a headroom number that will bite later.
 
