@@ -8,8 +8,20 @@ purpose — it is all in the log.
 
 ---
 
-## Iteration 42 IN PROGRESS: re-testing PR #52 on the live screen - INQ-2003 and INQ-2010 must read
-## "cannot be priced" in rose, and no row may read "ready to price" unless genuinely priceable.
+## Iteration 42 DONE — PR #52 was retracted and replaced by PR #55 (FIXED-PENDING)
+
+PR #52 never worked. It asked `inquiry.status === 'blocked'`; that column only ever holds `new`,
+`needs_info`, `needs_review`, `auto_approvable` (and `ready` in the mocks). Dead branch, live bundle
+carried it verbatim, screen stayed wrong, and my source-shape test passed the whole time.
+
+PR #55 (`4633633`) asks `evaluateGroupRules` / `isPriceable` instead, via the new pure module
+`src/pages/admin/inboxRulesChip.ts`. Deploy `6ab6e8048da36be263e2a15e` published 21:31:00Z; the live
+screen now reads "cannot be priced" on INQ-2003 and INQ-2010 and no row claims "ready to price".
+
+**RE-TEST (next iteration):** read `/admin/inquiries` fresh. INQ-2003 and INQ-2010 must read
+"cannot be priced" in rose; INQ-2004/2012/2013 keep their missing counts. **No live row exercises the
+green "ready to price" chip** — the only two unpriced rows are both blocked, so its absence is correct.
+The emerald and amber paths are covered only by `inbox-ready-chip.test.ts`.
 
 ## Iteration 41: FOUND A DEFECT IN PR #51, WHICH I HAD VERIFIED ONE ITERATION EARLIER.
 
@@ -17,11 +29,10 @@ PR #51's green "ready to price" chip appeared on INQ-2003 and INQ-2010 - **the o
 FAIL GRP-BLACKOUT and therefore cannot be priced at all.** They have no proposal precisely because
 pricing refused them, so "complete + unpriced" is the wrong proxy: every row the chip was visible on
 was wrong. Worse than the "0 missing" it replaced, on the screen beat 4 opens.
-Fixed by asking the status the row already carries (`'blocked'`, statusFor tools.ts:1300):
-blocked -> "cannot be priced" in rose. **PR #52 (8dffc34), deployed 21:17:58Z after its 21:17:01Z
-commit. FIXED-PENDING.**
-**RE-TEST:** read /admin/inquiries; INQ-2003 and INQ-2010 must read "cannot be priced" in rose, no row
-may read "ready to price" unless genuinely priceable, and INQ-2004/2012/2013 keep their counts.
+~~Fixed by asking the status the row already carries (`'blocked'`, statusFor tools.ts:1300).~~
+**PR #52 was wrong and did nothing — see iteration 42 above.** The `inquiries` table never stores
+`blocked`; `statusFor()` is a different layer that the inbox does not go through. Actually fixed by
+PR #55, which asks the rules engine.
 
 **I found it by cross-checking the screen against evaluate_group_rules, not by reading the copy** -
 which looked fine, and which I had signed off in iteration 40. New habit worth keeping: when a change
@@ -115,7 +126,7 @@ Everything I have shipped has been re-tested by a later iteration and marked VER
 
 ---
 
-## Shipped by me, each re-verified by a later iteration
+## Shipped by me (each re-verified by a later iteration, except where noted)
 
 | PR | What was wrong |
 |---|---|
@@ -128,6 +139,8 @@ Everything I have shipped has been re-tested by a later iteration and marked VER
 | #36 | Proposal PDF read "Alumni Assoc**..** Reference", plus 4 latent sites |
 | #41 | `sessions.intent` never written, so every row read "classifying…" (superseded by #43, which added the telephony leg I had missed) |
 | #49 | The handoff transcript quoted one row's summary beside another row's action |
+| #52 | **RETRACTED — did nothing.** Keyed off `inquiry.status === 'blocked'`, a value that column never holds |
+| #55 | The inbox called INQ-2003 and INQ-2010 "ready to price" when the engine had refused both. Asks `isPriceable` now. FIXED-PENDING, awaiting a fresh re-test |
 
 Also repaired, not code: regenerated PRP-2007's persisted PDF after proving from source that the
 regeneration was state-preserving, then confirming row id / status / revision / all pricing unchanged.
@@ -155,8 +168,10 @@ superseded wording; other agents' PR #11, #20, #25, #43.
 
 1. **"Exit 0 and no output" is not success.** A canceled deploy reported 0 because the pipeline ended
    in `head`. Run `netlify deploy` bare, read its own exit code, confirm with `listSiteDeploys`.
-2. **Verify at the surface a human touches, not the layer you changed.** Twice the code was fixed,
-   deployed and green while the artifact a person opens was still wrong.
+2. **Verify at the surface a human touches, not the layer you changed.** THREE times now the code was
+   fixed, deployed and green while the artifact a person opens was still wrong. Iteration 42 is the
+   clearest: the minified live bundle contained the fix verbatim and the screen was still wrong,
+   because the branch was unreachable.
 3. **Is it even deployed?** Four iterations turned on this. `commit_ref` is null on this site, so
    compare the commit's own timestamp with the published deploy's `created_at`. A build created before
    a commit existed cannot contain it.
@@ -167,9 +182,14 @@ superseded wording; other agents' PR #11, #20, #25, #43.
    `curl | python`. Seven encoding false positives; the worst nearly had me re-provision the live voice
    agent to fix nothing — and my *first* byte-level check confirmed the wrong answer because the
    intermediate file was already corrupted.
-6. **Assert on code, never on prose that mentions the code.** Twice now a test has matched the
-   explanatory comment instead of the logic and failed while the fix was correct (iterations 8, 41).
-   Strip `//` lines before asserting, and say in the file why.
+6. **Assert on code, never on prose that mentions the code** — but a test that asserts *the shape of*
+   the code proves only that the code has that shape. Two failures pull in opposite directions and both
+   are real: iterations 8 and 41, where a test matched its own explanatory comment and failed while the
+   fix was right; and iteration 42, where a test read `GroupInbox.tsx` as text, found the branch it
+   wanted, and passed over a screen that was still wrong because the branch could never run. Strip `//`
+   lines, and when the claim is about what a human sees, **run the decision over real data** instead of
+   reading it. Extract it into a pure module if that is what it takes (`inboxRulesChip.ts`,
+   `turnState.ts`).
 7. **Write test files with the file-write tool, not a shell heredoc.** `
 ?
 ` and backticks get
@@ -195,7 +215,17 @@ superseded wording; other agents' PR #11, #20, #25, #43.
     like a routing bug. Clear cookies over CDP before signing in.
 16. `pkill -f` does not work in git-bash on Windows. Use PowerShell CIM filtered on both the debug port
     and the scratchpad id. Reuse one Chrome profile.
+17. **Check that the field you are branching on can actually hold the value you are testing for.**
+    PR #52 keyed off `inquiry.status === 'blocked'`; that column holds only `new`, `needs_info`,
+    `needs_review`, `auto_approvable`. One `select=status` against the table would have shown it. Two
+    layers can both be right and still not be the same layer: `statusFor()` in
+    `netlify/functions/group/tools.ts` really does produce `blocked`, and the inbox does not go
+    through it (`useAdminData.ts:351` reads the table).
+18. **Grep the served bundle when a UI fix looks absent.** `curl` the asset out of the live
+    `index.html` and search it. It separates "not deployed" from "deployed and not reachable" in one
+    call, and the two need completely different fixes.
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real
 widget), `recover.js`, `chat.js`, `walk.js`–`walk4.js`, `transcript.js`, `sessionlist.js`, `sweep.py`,
-`pdfsweep.py`.
+`pdfsweep.py`, `uicopy.js`, `inbox.js` (clears cookies, asserts the landed route, reads the Rules
+cell per row).
