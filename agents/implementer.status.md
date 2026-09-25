@@ -10,7 +10,26 @@ What I am doing right now, and what I did last. Overwritten each iteration.
   second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
   inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
   grep, where a filter hid the hit.
-- **CLAIMED It66: T34 — an unredacted SIP credential in the public export, and one T34 did not list.**
+- **CLAIMED It67: T33 — disclosure only, no wording change.** The task revised itself twice and lands
+  on: *"today" is Policy 15 being reported correctly; what is missing is a notification layer, and
+  the diagram already marks it FUTURE.* Verified all four claims myself, including the one the
+  conclusion rests on — **`TELNYX_TRANSFER_TARGET` is absent from the deployed env**, so the
+  fallback branch is production and G16's *"a manager will call back today"* is what a live call
+  produces. **Extending my existing T32 block rather than adding a near-duplicate second one.**
+- **DONE It66: T34 — PR #81.** Export redacted by **pattern in the script** (editing the artefact
+  alone is undone by the next `telnyx:export`), which also refuses to write an unredacted SIP URI.
+  **T34's own check was not met:** the live 49-char credential was also hardcoded in a tracked test
+  fixture it did not know about; replaced with a fake and all 458 tests still pass, which is the
+  proof the real value was only exposure. `export-redaction.test.ts` guards the shipped artefact,
+  red-checked against the real credential **and** a different one under a new key.
+- **My own It65 scan reported "no leaks" on this exact file.** It looked for key prefixes, JWTs and
+  `service_role` — a list I predicted. Fourth time this run that an enumeration missed what a
+  property would have caught.
+- **Verified precisely, not by prefix:** no tracked file contains the full 49-char credential. The
+  plan quotes a deliberately truncated 19-char prefix, which is not usable. History (`10b63e8`,
+  `c09f04d`) and the now-overstated `SUBMISSION.md` scan sentence are **Enrique's calls**, raised
+  with three options rather than decided.
+- **Superseded claim: T34 — an unredacted SIP credential in the public export, and one T34 did not list.**
   Fixed the export by **pattern, not by value lookup**, and in the export *script*, because editing
   the file alone is undone by the next `telnyx:export`. Then searched properly and found the live
   49-char credential hardcoded in a tracked test fixture,

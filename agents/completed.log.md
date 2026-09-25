@@ -3584,3 +3584,54 @@ Instructions parity held throughout: **compile === live === export, 29,319**, 25
 touches `tools`, not `instructions`, exactly as T34 predicted.
 
 `npx tsc -b --force` clean. `npx vitest run`: **458 passed, 34 files**.
+
+## It67 — T33: the task argued itself out of a code change, and it was right to
+
+T33 revised its own instruction twice, ending at: **change no guest-facing wording.** The reasoning
+is worth restating because it inverts the obvious reading.
+
+*"A manager will call back today"* looks like an unsupportable promise, and the first instinct is to
+soften it. But **Policy 15 genuinely specifies same-day routing**, so Sol is reporting the hotel's
+policy rather than inventing a commitment. If no manager calls, that is the hotel failing its own
+policy — not the agent lying. What is missing is not honesty in the sentence, it is a **notification
+layer**, and `docs/architecture.svg` already marks that FUTURE.
+
+And the phrase is load-bearing: `sol.md`'s **G16** defines success as *"a manager will call back
+today, and an escalation exists."* Changing the wording would have changed what a guardrail means,
+hours before a panel reads the table.
+
+### I verified all four claims, including the one the conclusion depends on
+
+| Claim | How checked |
+|---|---|
+| `notify` is inert | string array stored on the row, interpolated into reason text; no sender |
+| `_delivery/` carries no escalation path | `audit.ts`, `config.ts`, `index.ts`, `telnyx.ts` — that is the whole directory |
+| No screen lists escalations | every `src/` reference is the architecture map drawing the table as a node |
+| **`TELNYX_TRANSFER_TARGET` unset in production** | **`netlify env:list` against the deployed site, not the local `.env`** — absent |
+
+The last one is the load-bearing one: if that variable *were* set, the fallback branch would be a
+test condition rather than the live configuration, and G16's wording would not be what a real call
+produces. It is absent, so the Planner's iteration-84 finding holds and the "no code change"
+conclusion rests on something measured.
+
+### Folded into the existing block rather than added beside it
+
+T32's disclosure (PR #79) already said the queue view is FUTURE and no screen lists escalations.
+T33's disclosure needs the *other* half — what "today" rests on. Two near-duplicate paragraphs eight
+lines apart would read worse than one, so it extends the existing `voice:exclude` block.
+
+**Cost: 0 characters compiled**, measured with line endings normalised on both sides rather than
+comparing an LF working copy against a CRLF baseline. Margin unchanged at **681**.
+
+### The runbook now has the answer instead of improvising it
+
+> *"Today, a supervisor reads the table. The queue that pages them is in the diagram as next-build —
+> we didn't want to claim a pager we hadn't written."*
+
+A panel will ask how the manager finds out, because Sol says "today" out loud during beat 3.
+
+**Acceptance, checked rather than asserted:** `sol.md` states what "today" rests on · runbook carries
+the panel answer · **no runtime or prompt file touched**, so no guest-facing wording changed · G16's
+row is byte-identical, only its line number moved, and no deliverable cites `sol.md` by line.
+
+`npx tsc -b --force` clean. `npx vitest run`: **462 passed, 35 files**.

@@ -105,6 +105,17 @@ Ask to keep the room until 2pm.
 - The transcript streams in.
 - Sol grants 2pm as *guaranteed*, because Platinum is the one tier the policy guarantees.
 
+**If they ask how the manager actually finds out — and they will, because Sol says "today":**
+
+> *"Today, a supervisor reads the table. The queue that pages them is in the diagram as next-build —
+> we didn't want to claim a pager we hadn't written."*
+
+That is the true answer and a good one. Policy 15 specifies same-day routing, so "today" is Sol
+reporting the hotel's policy rather than inventing a commitment; the escalation row is durable and
+carries everything the guest gave. What does not exist yet is the notification layer: nothing pages
+anyone, and `docs/architecture.svg` marks the on-call rota and SLA timer as FUTURE. Naming that seam
+is stronger than hoping the question does not come.
+
 Say: *same agent, same tools, same rules. The phone is a different door into one system, not a
 second product.*
 
