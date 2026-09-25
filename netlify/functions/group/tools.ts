@@ -49,6 +49,7 @@ import {
   propertyCitation,
   ungrounded,
 } from './_deps'
+import { endSentence } from '../../../shared/text'
 import {
   buildProposalDocument,
   EDITABLE_PROSE_FIELDS,
@@ -537,7 +538,7 @@ export async function draft_clarifying_questions(args: { inquiry_id?: string; in
     ? [
         `Hello ${inquiry.contact_name || 'there'},`,
         '',
-        `Thank you for getting in touch about ${inquiry.company_name}. I would love to put a proposal together for you, and there are just a few things I need before I can quote properly and hold the rooms:`,
+        `${endSentence(`Thank you for getting in touch about ${inquiry.company_name}`)} I would love to put a proposal together for you, and there are just a few things I need before I can quote properly and hold the rooms:`,
         '',
         numbered,
         '',
