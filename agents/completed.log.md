@@ -2910,3 +2910,44 @@ red, then green again on the fix.
 aborted on a 754KB single-line bundle and every line printed `MISSING` or `gone` from a crashed
 process. `gone` from a grep that aborted looks identical to `gone` from a grep that ran. Redone in
 Python, which is where all ten new strings were confirmed live.
+
+## It55 — T28: the voice prompt fits again, and now cannot silently stop fitting
+
+**Confirmed the Planner's measurement independently before acting on it:** raw 32,882, compiled
+32,831, cap 30,000, over by 2,831, zero `voice:exclude` blocks. Identical to their figures.
+
+**The fix is the one T28 specified.** Sections 8 (sample transcripts) and 9 (where this runs) are
+wrapped in `<!-- voice:exclude -->`. Compiled is now **28,194 with 1,806 to spare**, no truncation,
+and the compile ends cleanly at section 7 rather than mid-table.
+
+The wrapper carries its reason inline, because the argument for it is not obvious: over the cap
+`compileInstructions` truncates and drops the tail — **which is these two sections anyway**, silently
+and mid-sentence. Excluding them deliberately is the same content loss, made visible.
+
+`chat.ts` reads `agent/sol.md` raw at request time, so this removes nothing from chat. That is the
+property that lets one definition serve two runtimes, and the test asserts it in both directions.
+
+**The durable part: `voice-prompt-size.test.ts`.** T28 exists because a size ceiling had no test, so
+the deliverable quietly stopped describing the thing it defines for four hours. Two properties, not
+one:
+
+1. the compile fits under `MAX_INSTRUCTION_CHARS`;
+2. **the parts that must steer a live call survive the compile.** A size test alone is satisfied by
+   deleting the guardrails, which is the cheapest way under a limit and the worst. Guardrails,
+   routing, verification and escalation are asserted present in the *output*.
+
+Both red-checked. Removing the wrapper fails with `compiles to 30033 chars against a cap of 30000`;
+deleting section 5 to get under the cap fails on the guardrail assertion.
+
+**`provision.mjs` needed one structural change to be testable.** `main()` ran at import, so importing
+the compile would have run the whole provisioning flow against the live Telnyx API — which is
+precisely why the one function that knows the cap had never been measured by a test. It is now
+guarded by an entry-point check and exports `compileInstructions` and `MAX_INSTRUCTION_CHARS`.
+Verified `--check` and `--dry-run` still behave.
+
+**On the 30,033 that did not add up:** the red-check reported 30,033 where arithmetic said ~32,800.
+That is 30,000 plus the 33-character `[truncated at 30000 characters]` marker — the test correctly
+reporting truncation, not a miscount. Checked rather than assumed, because a number that does not
+reconcile is the shape of a real bug.
+
+`npx tsc -b --force` clean. `npx vitest run`: **419 passed, 29 files**.

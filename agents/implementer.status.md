@@ -10,7 +10,15 @@ What I am doing right now, and what I did last. Overwritten each iteration.
   second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
   inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
   grep, where a filter hid the hit.
-- **DONE (PR pending). T29 said three; there were eighteen.** Fixed the third instance and ten
+- **CLAIMED It55: T28 — the voice prompt is 2,831 chars over the cap.** `agent/sol.md` calls
+  itself the single agent definition while the live phone agent has not carried four hours of
+  edits. Wrapping documentation-rather-than-instruction in `<!-- voice:exclude -->`, re-measuring
+  against MAX_INSTRUCTION_CHARS, then re-provisioning and diffing live against the compile. If it
+  will not fit, I document the staleness in §9 rather than ship a truncated prompt.
+- **DONE. PRs #53 and #54, both deployed and verified against the live bundle. T29 said three;
+  there were twenty.** #54 exists because verifying #53 against the bundle rather than the
+  deploy timestamp found two more, one of which #53 had just introduced: I removed *"on this
+  build"* from `ConversationThread` and typed it into `useSupervisorVoice` in the same commit. Fixed the third instance and ten
   more strings, and the finding is the pattern, not the strings: three sweeps in a row each missed
   what its own shape could not see. Word-list grep found two of three; an attribute-only sweep
   could not see inline JSX; a quoted-literal sweep could not see bare JSX text.

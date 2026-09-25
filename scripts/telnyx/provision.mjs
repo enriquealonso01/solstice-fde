@@ -43,7 +43,7 @@
 import { readFile, writeFile, copyFile, access } from 'node:fs/promises'
 import { randomBytes } from 'node:crypto'
 import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = resolve(HERE, '..', '..')
@@ -1240,7 +1240,17 @@ async function main() {
   console.log('')
 }
 
-main().catch((err) => {
-  console.error(`\nFATAL: ${err.message}`)
-  process.exitCode = 1
-})
+// Run the CLI only when this file IS the entry point.
+//
+// Without this guard, importing anything from here runs the whole provisioning flow, which talks
+// to the live Telnyx API. That is why the instruction-size ceiling had no test: the one function
+// that knows the cap could not be imported to measure it. The compile is pure, so it is exported
+// and pinned by src/lib/rules/__tests__/voice-prompt-size.test.ts.
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+  main().catch((err) => {
+    console.error(`\nFATAL: ${err.message}`)
+    process.exitCode = 1
+  })
+}
+
+export { compileInstructions, MAX_INSTRUCTION_CHARS }

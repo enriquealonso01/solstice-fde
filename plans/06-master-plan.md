@@ -1,29 +1,24 @@
 # Master plan: the whole picture
 
-> ## 17:12 — **TESTER: `/api/group/triage` has no dry-run. Here is what running it costs.**
+> ## 17:26 — Enrique's dashboards item is fully closed. Seven open, all small.
 >
-> You asked before acting, which is right. From the code, not a probe:
+> **T29 CLOSED, 3 of 3** (PRs #50, #53, #54). The last string now reads *"This version does not
+> include message history, so nothing is shown rather than guessed"* — no "endpoint", no "build",
+> and the *rather than guessed* clause that gives the sentence its point is intact.
 >
-> - **No dry-run.** `index.ts:765` calls `triageInbox(staff.actor)` with no preview flag.
-> - **Idempotent by construction** — `triage.ts:57` skips anything with an existing proposal or
->   follow-up (`skipped_existing`), and everything it makes is a **draft**; nothing sends.
-> - **So it would only touch inquiries with neither.** Per your own iteration 40, that is
->   **INQ-2003 and INQ-2010 — the exact two rows that read "ready to price"**, which PR #51 was
->   shipped to produce and which you verified by predicting them. Triage would draft proposals for
->   both and those rows would stop saying it.
+> **Swept again with a different method** — all user-visible text, six attribute kinds **and**
+> inline JSX, rather than a predicted word list. Two hits:
+> • `SupervisorLadder.tsx:233` shows `POST /api/voice/supervisor`, but **only in the simulated
+> failure state**, which should not appear on the demo path. One line if you are already in the
+> file: *"the supervisor audio service is not responding yet…"*. Not worth its own PR.
+> • `CostPage.tsx:158` *"Live from the Telnyx API, not an estimate"* — **checked and deliberately
+> left**. Beat 6 shows Cost to the product owner and that sentence is a credibility claim; the
+> technical word earns its place.
 >
-> **My read: do not run it tonight.** Both claims — idempotent, drafts only — are readable in the
-> source, and the endpoint has audit rows from when it was built. Verifying by reading costs
-> nothing; verifying by running costs a demo surface. If you disagree, log it as verified **by
-> construction** rather than by execution — the same standard we accepted for the telephony intent
-> write that needed Telnyx credit nobody has.
->
-> **T21 — "DELETE-ME" is row ONE of the group sales inbox** (`created_at` desc). Deleting
-> INQ-2012/2013 promotes **Cypress Ridge Reunion**, the real phoned-in inquiry, to the top. Two
-> rows, Enrique's database.
->
-> **T28 remains the only open item that makes a shipped deliverable untrue.** Compile **2,831 over**
-> the 30,000 cap.
+> **T28 is the only open item that makes a shipped deliverable untrue.** `agent/sol.md` calls
+> itself *"the single agent definition"* while the live phone agent is four hours behind it;
+> compile is **2,831 over** the 30,000 cap. Wrap documentation in `voice:exclude`, re-measure,
+> provision, diff — or document the provisioning timestamp if it will not fit tonight.
 >
 > **Open:** T28 · **T27** two protocol lines · **T26** beat 3's test conversations (Enrique) ·
 > **T24** Planner commit path · **T21** two rows (Enrique) · **T20** two checklist lines · **T19**
@@ -42,7 +37,7 @@
 *• **T20** two checklist lines: stop the loop, tidy, then warm the functions.*
 *• **T19** one sentence in `agent/sol.md`, shipped wrong.*
 
-### T29. Enrique's dashboards — CLOSED at 2 of 3, PR #50. The third is dead copy.
+### T29. Enrique's dashboards — CLOSED, 3 of 3. PRs #50, #53 and #54.
 
 *Earns the top slot because it came from Enrique, it sat untriaged in the Inbox while I worked on
 things nobody asked for, and it is on the demo path.*
@@ -536,6 +531,91 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 66, 17:26 EST — T29 closes 3 of 3. One more instance, and one deliberate non-finding.
+
+**Inbox checked first. Empty.**
+
+**PR #54 fixed the third string**, and the admission survived exactly as specified:
+
+> *"This version does not include message history, so nothing is shown rather than guessed."*
+
+No "endpoint", no "build", and the *"rather than guessed"* clause — the reason that sentence exists
+— is intact. **T29 is closed at 3 of 3.**
+
+**I swept again with a deliberately different method**, because the night's lesson is that a sweep
+shaped by expectation misses things: this one pulled *all* user-visible text — six attribute kinds
+**and** inline JSX between tags — rather than a predicted word list or a predicted attribute set.
+Two hits, and they want different answers:
+
+**1. `SupervisorLadder.tsx:233` — worth a line if someone is already in that file.**
+
+> *"Simulated: `POST /api/voice/supervisor` is not responding yet, so the rung advanced in the UI
+> only. No Telnyx leg was created."*
+
+A raw HTTP method and path in the UI, on a screen beat 3 uses. **But it renders only when
+`simulated` is true** — the supervisor-audio failure state — and Enrique verified the ladder
+working live at 11:32, so on the demo path it should not appear. It is also an *honesty* message of
+exactly the kind T29 protects. Suggested: *"the supervisor audio service is not responding yet, so
+the rung advanced on screen only. No call leg was created."* Same admission, no path. **Not worth a
+dedicated PR; worth one line if the file is already open.**
+
+**2. `CostPage.tsx:158` — checked, and it should stay.**
+
+> *"Live from the Telnyx API, not an estimate."*
+
+"API" is technical vocabulary, and I am flagging it as a **deliberate non-finding**. Beat 6 shows
+the Cost page to the non-technical product owner, and naming the provider while asserting the
+figure is fetched rather than estimated is a **credibility claim** — the sentence earns its
+technical word. Stripping it would weaken the page to satisfy a rule.
+
+Recording the non-finding on purpose: a sweep that only ever reports hits teaches its reader that
+every match is a defect, and this one is not.
+
+### Iteration 65, 17:21 EST — the Tester falsified its own verification, and my triage advice with it
+
+**Inbox checked first. Empty.**
+
+**It found a defect in PR #51 one iteration after verifying PR #51.** The green "ready to price"
+chip appeared on INQ-2003 and INQ-2010 — which are exactly the two rows that **cannot** be priced.
+Verified myself:
+
+```
+INQ-2003  decision: blocked   GRP-BLACKOUT fail (Mar 14–17 2027) · GRP-MEETING-CAPACITY fail (250)
+INQ-2010  decision: blocked   GRP-BLACKOUT fail (May 4–6 2027)  · GRP-DISCOUNT-CEILING flag (10)
+```
+
+They have no proposal **because pricing refused them**, so "complete and unpriced" was the wrong
+proxy for "ready to price". PR #52 fixes it.
+
+#### That falsifies what I told the Tester one iteration ago
+
+At iteration 63 I warned that running `/api/group/triage` would *"draft proposals for INQ-2003 and
+INQ-2010, so those rows stop saying ready to price"*. **Wrong.** Those two are `blocked`, so triage
+would have returned **`skipped_blocked`** for both — an enum value I **quoted from `triage.ts:24`
+in that very entry** and then reasoned straight past.
+
+The conclusion survives on weaker grounds: triage still drafts follow-ups for genuinely incomplete
+rows, and reading the source costs nothing while running it mutates demo state. But the specific
+cost I named was not real, and the Tester may have weighed it. **I had the disconfirming evidence
+in my own paragraph.**
+
+#### The distinction underneath, which is the useful part
+
+The Tester verified PR #51, then falsified it. Both were honest because they asked different
+questions:
+
+| Pass | Question | Answer |
+|---|---|---|
+| iteration 40 | does the chip appear exactly where the code says it should? | yes — predicted two rows, got those two |
+| iteration 41 | **is what the chip says true?** | no — those rows cannot be priced at all |
+
+**Verifying an implementation is not verifying a claim.** Its iteration-40 method was strong — it
+predicted the output before looking — and still could not catch this, because a correct prediction
+about *which rows light up* says nothing about whether *lighting up* is the right thing for them to
+do. That is a better articulation of the night's recurring failure than "the instrument agrees with
+its operator", and it belongs with the `docs/how-this-was-built.md` paragraph suggested at
+iteration 61.
 
 ### Iteration 64, 17:17 EST — nothing moved, demo state intact. A quiet iteration.
 

@@ -387,6 +387,18 @@ unless noted, and takes effect on the next tool call.
 
 ---
 
+<!-- voice:exclude -->
+<!--
+  Sections 8 and 9 are for a human reading this deliverable, not for a live call. The transcripts
+  are abbreviated illustrations of behaviour defined above, and section 9 is a file-location
+  table; neither steers a phone conversation. They are excluded from the VOICE compile only.
+  The chat runtime reads this file raw (chat.ts), so chat still sees both in full.
+
+  This is not a preference. The compile measured 32,831 against MAX_INSTRUCTION_CHARS of 30,000
+  (provision.mjs), and over the cap it truncates and drops the tail -- which is these two
+  sections anyway, silently and mid-sentence. Excluding them deliberately is the same content
+  loss, made visible and put where a reader can see the reason.
+-->
 ## 8. Sample transcripts
 
 Abbreviated, with the tool trace the supervisor sees on the right-hand side of the demo.
@@ -459,3 +471,5 @@ Abbreviated, with the tool trace the supervisor sees on the right-hand side of t
 | Business rules as data | `netlify/functions/tools/rules.ts` |
 | Net-new availability service | `netlify/functions/tools/availability.ts` |
 | Conversation and trace storage | Supabase `sessions`, `messages`, `tool_invocations`, `escalations` |
+
+<!-- /voice:exclude -->
