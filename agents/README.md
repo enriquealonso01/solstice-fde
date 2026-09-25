@@ -21,13 +21,30 @@ an agent must take the lock:
 
 ```bash
 if mkdir agents/.lock 2>/dev/null; then
-  ( ...do the git/deploy work... )
+  (
+    # Your own log and status file go in the SAME commit as the work.
+    git add <the files your task touched>             agents/<you>.status.md agents/<your log>.md
+    # ...commit, push, PR, merge, deploy...
+  )
   rmdir agents/.lock      # release ONLY here: this branch is the one where you acquired it
 else
   # Losing the race is normal. It is the mutex working, not an error.
   echo "lock held by another agent - not shipping this iteration"
 fi
 ```
+
+**Stage your own log and status file every time you ship.** They are the first line of the `git
+add`, not an afterthought, because a file that is never anyone's *task* otherwise becomes a file
+that is never anyone's *commit*. That is not hypothetical: on 2026-09-25 the entire coordination
+record — both logs, the plan, all three status files, `BACKLOG.md` and `HUMAN_INTERVENTION.md`,
+about **7,000 lines** — was found living only in one working directory, weeks of reasoning a single
+`git checkout .` from gone. `completed.log.md` was 6 lines committed against 2,241 in the tree. It
+had been sitting in `git status` as ` M` in front of every agent, every iteration, and ` M` reads
+like a normal working state rather than "has never been saved".
+
+Committing someone else's file is fine when it needs rescuing: single-writer ownership governs who
+**writes** a file, not who commits it, and preserving text verbatim is not authorship. But do not
+rely on that — it only happens when somebody notices, and for thirty-nine iterations nobody did.
 
 **Release only what you acquired.** The release must live inside the success branch. If it sits
 after the whole sequence — `mkdir ... ; rmdir ...`, or bolted onto the end of an `&&` chain — then
