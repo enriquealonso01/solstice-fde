@@ -158,6 +158,20 @@ describe('counts stated in the README', () => {
     ).toEqual([])
   })
 
+  it('never states an exact file count either, for the same reason', () => {
+    // T31 said to leave "236 files, 146 of them TypeScript" alone because both were verified correct.
+    // They were. PR #74 added one test file about an hour later and all three numbers in that sentence
+    // were off by one. The instruction to keep accurate figures was falsified the same way the
+    // exemption above was, and by the same mechanism: three agents merging into one tree.
+    const exact = [...readme.matchAll(/(?<!over\s)(?<!than\s)\b\d{2,5}\s+(?:files|test files)\b/gi)].map((m) => m[0])
+
+    expect(
+      exact,
+      `README states an exact file count: ${exact.join(', ')}. Use "over N" or "more than N" — ` +
+        `\`git ls-files | wc -l\` is the live answer and the same paragraph already says so.`,
+    ).toEqual([])
+  })
+
   it('still points the reader at the command that gives the live number', () => {
     expect(readme).toContain('npx vitest run')
   })
