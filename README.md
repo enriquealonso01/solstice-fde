@@ -72,15 +72,20 @@ The brief invites assumptions, so these are explicit rather than buried:
 2. **A guest is identified by caller ID or a confirmation number, never by claiming a name.** Two
    guest pairs in the data share the same last four digits, so lookup returns found / ambiguous /
    not_found and refuses to guess.
-3. **Payment data is last-four only** in the export; a real PMS would hold a token. Card digits are
+3. **Approval authority is a named human, not a role tier.** An over-ceiling proposal cannot be
+   sent until someone approves it and the override is recorded in the audit log with the rules it
+   overrode. Which *role* may approve is deliberately not modelled — a general-manager tier is a
+   one-value enum addition in phase two. What is enforced is that an approval happened and is
+   attributable, which is the part that matters for an audit.
+4. **Payment data is last-four only** in the export; a real PMS would hold a token. Card digits are
    never returned to the model and never spoken.
-4. **`SOL-PVD.base_rate_suite = -395` is a data error, not a price.** It is quarantined at the
+5. **`SOL-PVD.base_rate_suite = -395` is a data error, not a price.** It is quarantined at the
    access layer, visible in the admin UI, and never used for pricing.
-5. **Providence's "Boston-area sister property" does not exist in the directory.** The agent surfaces
+6. **Providence's "Boston-area sister property" does not exist in the directory.** The agent surfaces
    the referral and states plainly that it cannot quote there.
-6. **The `notes` column of the inquiries CSV is the challenge author's answer key.** It is stripped
+7. **The `notes` column of the inquiries CSV is the challenge author's answer key.** It is stripped
    before anything reaches the database or the model.
-7. **INQ-2010 is also inside a blackout**, not only over the seasonal discount cap, which the sample
+8. **INQ-2010 is also inside a blackout**, not only over the seasonal discount cap, which the sample
    data's own note does not mention. Both are reported.
 
 ## What is real, and what is not

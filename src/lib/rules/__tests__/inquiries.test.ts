@@ -89,6 +89,21 @@ describe('INQ-2002 Ridgeline Sports Club, SOL-TPA', () => {
     expect(verdict(result, 'GRP-ROOMS-CAP')?.human_reason).toContain('40 rooms')
     expect(verdict(result, 'GRP-DISCOUNT-CEILING')?.human_reason).toContain('22%')
   })
+
+  // The refusal used to say approval needed "the general manager". There is no GM: `staff_role`
+  // is ('concierge', 'group_sales', 'admin') and `approveProposal` applies no test beyond
+  // group_sales|admin, so the sentence promised an authority nothing enforced. Say what is
+  // actually enforced — an approval happens and is attributable — and keep it that way.
+  it('does not promise an approver role the system does not have', async () => {
+    const result = await evaluate('INQ-2002')
+    const reason = verdict(result, 'GRP-DISCOUNT-CEILING')?.human_reason ?? ''
+
+    expect(reason.toLowerCase()).not.toContain('general manager')
+    // Word boundaries, not a substring: 'judgment' and 'segment' both contain "gm".
+    expect(reason).not.toMatch(/GM/i)
+    // Still has to say a human must sign it off, or the refusal stops being actionable.
+    expect(reason.toLowerCase()).toContain('approver')
+  })
 })
 
 // ============================================================================ INQ-2003

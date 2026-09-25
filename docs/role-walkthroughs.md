@@ -158,7 +158,13 @@ On a flagged proposal the Decision panel shows an amber **Locked** banner with a
 operational reason. Not "validation failed" — something closer to:
 
 > "The customer asked for 17% off. We can approve up to 15% on our own, so this is 2 points over
-> what we are allowed to give away without the general manager signing it off."
+> what we can authorise ourselves, and it needs a named approver to sign it off before it goes
+> out."
+
+**If a panel asks who that approver is, the honest answer is a stated assumption, not a gap.**
+Approval authority is a named human rather than a role tier: the system enforces that an approval
+happened and is attributable in the audit log, and deliberately does not model a GM login. It is
+assumption 3 in the README and assumption 13 in `agent/sol.md`.
 
 The buttons are:
 

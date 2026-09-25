@@ -193,7 +193,7 @@ export function evaluateGroupRules(options: EvaluateOptions): EvaluationResult {
         requestedDiscount,
         applied.pct,
         over
-          ? `The customer asked for ${requestedDiscount}% off.${seasonalClause} We can approve up to ${applied.pct}% on our own, so this is ${round1(requestedDiscount - applied.pct)} points over what we are allowed to give away without the general manager signing it off.`
+          ? `The customer asked for ${requestedDiscount}% off.${seasonalClause} We can approve up to ${applied.pct}% on our own, so this is ${round1(requestedDiscount - applied.pct)} points over what we can authorise ourselves, and it needs a named approver to sign it off before it goes out.`
           : `${requestedDiscount}% off is within the ${applied.pct}% we can approve ourselves.${seasonalClause}`,
       ),
     )

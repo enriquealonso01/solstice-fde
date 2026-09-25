@@ -73,8 +73,11 @@ that is stronger than being caught by it.
 Switch to Group sales. Open **INQ-2009**, the Phoenix retreat.
 
 - One flag: they asked 17%, the property's ceiling is 15%.
-- Three costed options: approve at 15% for $7,994.25, escalate to the GM for 17%, or counter at
-  16% with a value-add tied to their yoga request.
+- Three costed options: approve at 15% for $7,994.25, escalate for a sign-off at 17%, or counter
+  at 16% with a value-add tied to their yoga request.
+- If asked who signs off: approval authority is a named human, not a role tier. The system
+  enforces that an approval happened and is attributable in the audit log; a GM tier is a
+  one-value enum addition in phase two. Stated as assumption 3 in the README.
 - **The send button is locked**, with the reason printed next to it.
 
 Then open **INQ-2007**, Providence. Two things their own sample data contains and most candidates
