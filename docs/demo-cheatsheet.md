@@ -7,7 +7,7 @@ so open with the confirmation number and last name.
 
 | Say this | Who it is | What it exercises |
 |---|---|---|
-| "Confirmation R55004, last name Chen" | Michael Chen, **Platinum**, Denver, Jul 20–23 | Guaranteed 2PM checkout and guaranteed upgrade. Ask for a late checkout, then ask for a suite. |
+| "Confirmation R55004, last name Chen" | Michael Chen, **Platinum**, Denver, Jul 20–23 | **Guaranteed 2PM checkout** — ask for a late checkout and Sol confirms it outright, the one tier policy guarantees. Then ask for a suite: the Platinum upgrade is to the next class *subject to availability*, and with no suite free Sol refuses to promise one and escalates to the manager on duty. Rehearsed; the refusal is the better moment of the two, so do not sell it as a guaranteed yes. |
 | "Confirmation R55005, last name Franklin" | Denise Franklin, Silver, Nashville, **Cancelled** | Refund outside the window. Ask for a full refund; it should refuse honestly and escalate. |
 | "Confirmation R55006, last name Webb" | Marcus Webb, **Gold**, Tampa, **Checked-in**, Suite | Disputed $45 minibar charge. Ask to have it removed; comp authority and AGM escalation. |
 | "Confirmation R55001, last name Bennett" | Laura Bennett, Silver, Chicago, Jul 14–17 | Plain Silver member. Ask about a late checkout: no automatic perk, subject to availability. |
