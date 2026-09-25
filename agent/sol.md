@@ -328,6 +328,17 @@ deliberate, defensible choice, and each is visible in the code rather than burie
     and judged; it cannot be silently emailed to a row of asterisks. Restoring the real address on
     the send path belongs to whatever holds identity in production, and is deliberately not
     papered over here.
+15. **A verified identity survives the whole session, with no expiry.** `identify_guest` binds the
+    guest to the session row, and every later turn restores it (`chat.ts:256`) rather than asking
+    again. That is deliberate: the transcript records what Sol *said*, not what it *knows*, so
+    without the binding it would re-verify the same guest on every message and the conversation
+    would be unusable. The limit is that the binding has no TTL, and the lookup is by session id
+    alone — it is not checked against whether the session is still open — so holding the id is
+    holding that identity indefinitely.
+    The id is a server-minted uuid and is never accepted from the caller, so the exposure is a
+    *leaked* id staying useful rather than an open door. In production the order is: a TTL on the
+    binding, then re-verification before anything that discloses stay detail. Stated rather than
+    patched, because this is the path the entire concierge flow runs on.
 
 ---
 

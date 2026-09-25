@@ -139,8 +139,8 @@ Worth being precise about, because a demo that overstates itself is worse than a
 
 **Real:** the deployed site and API; Postgres with row-level security enforcing role scoping;
 Sol answering on chat and on a real phone number; live transcripts streaming to the supervisor
-console; the rules engine and all ten inquiry verdicts; proposal generation with PDFs, and a proposal email that has actually been delivered; 308 passing
-tests.
+console; the rules engine and all ten inquiry verdicts; proposal generation with PDFs, and a proposal email that has actually been delivered; a test
+suite in the low 300s (`npx vitest run` for the live number).
 
 **Partly working, and stated precisely because it matters:** the supervisor ladder. Verified on a
 live call, a supervisor can attach to an in-progress assistant call, hears the GUEST, and
@@ -150,6 +150,20 @@ appears to inject its speech rather than stream it. The live transcript shows bo
 regardless, so the supervisor is never blind. The documented fix is to run the call in a
 conference and have the supervisor join it; that is written up and not built, because it would
 rework the inbound flow that currently answers the phone reliably.
+
+**A stated limit, not a bug: a verified identity has no expiry.** Once `identify_guest` verifies a
+guest, the id is bound to the session row and restored on every later turn
+(`netlify/functions/chat.ts:256`). It is deliberate — without it Sol re-verifies the same person on
+every message, because the transcript records what it *said*, not what it *knows* — but the bound
+identity has no TTL, and the lookup is by session id alone, so it is not checked against whether
+the session is still open either. Possession of the session id is therefore possession of that
+guest's verified identity, indefinitely.
+
+The id is a server-minted uuid that is never accepted from the caller, so this is not an open door;
+the exposure is that a *leaked* id stays useful rather than going stale. Two things come first in
+production, in this order: a TTL on the binding, and re-verification before anything that discloses
+stay detail. Neither is built, and neither should be attempted the night before a submission on the
+one path the whole concierge demo runs through.
 
 **Email:** proven end to end. Telnyx's shared sending domain is a sandbox that only delivers to the
 account's own verified address, so every send is routed there; verifying a real domain removes that
