@@ -496,7 +496,7 @@
       "transfer": {
         "targets": [
           {
-            "to": "sip:gencredNPClth8ogCJLToFnI7bChjFBKym8YkP4yImOWWSkZT@sip.telnyx.com",
+            "to": "sip:REDACTED_TRANSFER_TARGET@sip.telnyx.com",
             "name": "Solstice front desk"
           }
         ],
@@ -1417,7 +1417,7 @@
   "conversation_flow": null,
   "tags": [],
   "_export": {
-    "exported_at": "2026-09-25T22:59:06.273Z",
+    "exported_at": "2026-09-25T23:04:42.484Z",
     "source": "GET /v2/ai/assistants/{id}",
     "note": "Native Telnyx export. Regenerate with scripts/telnyx/export-assistant.mjs. The shared tool secret is redacted; scripts/telnyx/provision.mjs injects it from TOOL_WEBHOOK_SECRET."
   }

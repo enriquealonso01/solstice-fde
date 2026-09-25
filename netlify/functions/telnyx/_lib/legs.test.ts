@@ -10,10 +10,14 @@
 import { describe, expect, it } from 'vitest'
 import { classifyLeg, isGuestCall, phoneDigits, type LegConfig } from './legs'
 
+// The SIP username here is a FIXTURE, not the live credential. It used to be the real one, copied
+// in from `.env`, which put an addressable SIP credential into a tracked file in a public
+// repository. `classifyLeg` only ever compares these strings, so their content is irrelevant to
+// what is being tested — the only thing the real value added was exposure.
 const CFG: LegConfig = {
-  sipConnectionId: '3056182478436828555',
-  sipUsername: 'gencredNPClth8ogCJLToFnI7bChjFBKym8YkP4yImOWWSkZT',
-  sipUri: 'sip:gencredNPClth8ogCJLToFnI7bChjFBKym8YkP4yImOWWSkZT@sip.telnyx.com',
+  sipConnectionId: '1234567890123456789',
+  sipUsername: 'gencredEXAMPLEfixtureNotARealCredential000000000000',
+  sipUri: 'sip:gencredEXAMPLEfixtureNotARealCredential000000000000@sip.telnyx.com',
   phoneNumber: '+13057866217',
 }
 

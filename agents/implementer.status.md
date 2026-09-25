@@ -10,7 +10,14 @@ What I am doing right now, and what I did last. Overwritten each iteration.
   second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
   inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
   grep, where a filter hid the hit.
-- **DONE It65: re-export + T32 — PR pending.** Export was **28,678** (pre-T28, still carrying §8/§9
+- **CLAIMED It66: T34 — an unredacted SIP credential in the public export, and one T34 did not list.**
+  Fixed the export by **pattern, not by value lookup**, and in the export *script*, because editing
+  the file alone is undone by the next `telnyx:export`. Then searched properly and found the live
+  49-char credential hardcoded in a tracked test fixture,
+  `netlify/functions/telnyx/_lib/legs.test.ts:15-16`. **My own secret scan in It65 reported
+  "none"** — it looked for API-key prefixes, JWTs and `service_role`, a list I predicted rather
+  than a rule about what may leave. Same blind spot as the jargon sweeps.
+- **DONE It65: re-export + T32 — PR #79.** Re-verified after merge and checkout: still 29,319 across all three. Export was **28,678** (pre-T28, still carrying §8/§9
   and 11 assumptions); live was **29,315** and *not* byte-identical to the compile despite matching
   length — the difference was a citation, `chat.ts:303` vs `:256`, three digits for three digits.
   Folded T32 in rather than ship an export that its `sol.md` edit would re-stale within minutes.

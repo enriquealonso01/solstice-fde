@@ -3524,3 +3524,63 @@ clause is present for a reader and absent from the phone agent. 25 tools, no sec
 Balance $3.03, untouched — provisioning is free.
 
 `npx tsc -b --force` clean. `npx vitest run`: **454 passed, 33 files**.
+
+## It66 — T34: a credential in the public export, and a second copy T34 did not know about
+
+### My own scan, one iteration earlier, reported "no leaks"
+
+In It65 I regenerated this exact file and wrote: *"scanned for key prefixes, JWTs and `service_role`:
+none."* The export contained `sip:gencred<42 chars>@sip.telnyx.com` the whole time. My scan looked for
+**a list of things I predicted**. A SIP URI is none of them.
+
+That is the fourth time this run the same mistake has cost something: predicted-word jargon sweeps,
+an attribute-only sweep, a quoted-literal-only sweep, and now a predicted-secret scan. The fix each
+time is the same — assert the **property**, not the enumeration.
+
+### Fixed by rule, in the script, not by hand in the artefact
+
+The export script redacted one **value** it was told about (`TOOL_WEBHOOK_SECRET`, 23 times). Editing
+the JSON by hand would have been undone by the next `npm run telnyx:export`, so the redaction now
+matches the **shape**: every `sip:<user>@sip.telnyx.com` loses its local part, and the script
+**refuses to write** a file where one survives. A reviewer learns nothing from that string which the
+adjacent `name: "Solstice front desk"` does not already say.
+
+### Then I searched properly, and T34's own check was not met
+
+T34 said *"no `gencred` string in the working tree"*. There were five, and one mattered:
+**`netlify/functions/telnyx/_lib/legs.test.ts:15-16` hardcoded the live 49-character credential** —
+tracked, public, and not in T34's write-up. Confirmed identical to the `.env` value before touching
+it. The other three were the bare word `gencred` in prose, which is harmless.
+
+It is now an obvious fixture, and **all 458 tests pass with the fake** — which is the proof the real
+value was never doing anything except being exposed. `classifyLeg` only ever compares those strings.
+
+### The guard asserts a property, and I watched it refuse twice
+
+`export-redaction.test.ts` checks the **committed artefact**, because that is what ships and a
+regenerated file must pass too. Red-checked:
+
+1. Put the real credential back → fails, naming it.
+2. Added a **different** credential under a brand-new key nobody would think to check → fails too.
+
+The second is the one that matters. A test that only knew `gencred` would have passed it.
+
+### Honest about severity, and the part that is not mine to decide
+
+A SIP credential username is **not a password** — registering as that connection needs a secret that
+has never been in the repository. The exposure is that a stranger can address traffic at a named
+connection: low, not zero, and not something to ship knowingly.
+
+The value is in history (`10b63e8`, `c09f04d`), and `SUBMISSION.md` says *"history was scanned for
+every live credential before the repository was opened."* That sentence is now overstated, and it is
+**his sentence about a check he ran**, so I raised it rather than editing it: rotate (touches the
+connection the phone demo runs on, hours before the demo — I would not), soften the sentence to
+exactly what is true (what I would do, one line, offered), or leave it.
+
+`SUBMISSION.md`'s *"the Telnyx export has its shared secret redacted"* is now true as written, with no
+wording change, which was T34's point 2.
+
+Instructions parity held throughout: **compile === live === export, 29,319**, 25 tools. The redaction
+touches `tools`, not `instructions`, exactly as T34 predicted.
+
+`npx tsc -b --force` clean. `npx vitest run`: **458 passed, 34 files**.
