@@ -176,16 +176,36 @@ export async function transferToHuman(args: ToolArgs, ctx: ToolContext): Promise
   // Chat: the supervisor console owns takeover. The tool raises the hand; it does
   // not flip the session itself, because a session is only "taken_over" once a
   // human has actually joined it.
+  //
+  // WHICH MEANS NOBODY IS GUARANTEED TO BE WATCHING. There is no supervisor presence
+  // signal anywhere in this system, and nothing consumes `request_supervisor_takeover`:
+  // takeover happens when a human sitting at the console chooses to join. So this branch
+  // must not tell the guest that a colleague is joining *now*, or ask them to hold while
+  // someone "connects" — that is G16's failure ("I'm transferring you now" into silence)
+  // wearing a different channel. The voice branch above already refuses to pretend; chat
+  // owes the guest the same honesty.
+  //
+  // The durable record is the escalation, not this call. If one does not exist yet, the
+  // hand has not actually been raised anywhere a human will see it, and saying so is the
+  // whole point of `fallback`.
+  const escalationExists = Boolean(escalationId)
   return toolOk(
     {
       directive: 'request_supervisor_takeover',
+      // A supervisor *can* join a chat, so the route exists. What is not true is that one
+      // is on their way, so the two facts are reported separately rather than as one flag.
       transfer_available: true,
+      live_handoff_guaranteed: false,
       session_id: ctx.session_id ?? null,
       context_readback: readback,
       escalation_id: escalationId,
       authority_required: route.authority,
-      human_reason:
-        'A supervisor has been flagged into this conversation. Tell the guest a colleague is joining the chat, keep them company until that happens, and do not close the conversation yourself.',
+      fallback: escalationExists
+        ? null
+        : 'No escalation exists yet, so nothing durable has reached a human. Call create_escalation before you finish this turn, then tell the guest a manager has it.',
+      human_reason: escalationExists
+        ? 'A manager has this in writing. Tell the guest a manager is taking it and will pick it up here, stay with them, and do not close the conversation yourself. Do not say a colleague is joining now, do not ask them to hold while someone connects, and do not promise how long it will take.'
+        : 'Do not tell the guest anyone is joining. Create the escalation first, then say a manager is taking it and will come back to them here. Never describe a handoff that has not happened.',
     },
     { citations: [policyCitation(15)] },
   )
