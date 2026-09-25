@@ -8,6 +8,34 @@ purpose — it is all in the log.
 
 ---
 
+## Iteration 45 DONE — PR #69 (escalation dedupe) VERIFIED
+
+G17 was next on the standing list but is already VERIFIED twice, including iteration 28 across the whole
+table with a completeness proof. Took the newest untested shipped code instead: **PR #69** (`3d93312`,
+deployed `22:18:56Z`).
+
+Three guarantees, all exercised live on session `0b6c518d`, which really does carry two `other` rows six
+seconds apart: **same session + same category merges** (`merged_into_existing: True`, returns the
+existing id, table count unchanged at 38) · **different category opens its own row** (`safety`, severity
+`critical`, notify `['General Manager','Regional Security']` against `normal` for the group rows) ·
+**a closed row is never reopened**. I also red-checked their tests myself rather than trust the commit:
+dropping the category key fails 8, ignoring status fails 2 — both numbers as claimed. Suite 443/32.
+
+Two observations recorded, neither filed as a defect: the merge lookup has **no `.order()`**, so which
+open row it lands on is undefined (only matters for the five pre-fix duplicate sessions); and the
+"supervisor's queue" the commit cites **is not a screen in this build** — nothing outside
+`escalation.ts` reads that table, so the duplicates were invisible and the pre-existing five will not
+show at the demo.
+
+**I corrupted a production row while restoring it** and caught it: a restore body built by a `python -c`
+that opened the backup without `encoding='utf-8'` PATCHed `Policy 15 â€” Escalation matrix` into the
+packet. Re-restored with explicit utf-8 + `ensure_ascii`, then byte-checked the live row
+(`b'Policy 15 â'`, no `Ã¢`). Both control rows left `closed`; open count back to
+the baseline 38.
+
+**Still untested from the implementer:** `#64` (loop/tidy + function warming), `#66` (where a chat
+escalation lands), `#67` (voice-prompt margin docs). Those are next.
+
 ## Iteration 44 DONE — role scoping VERIFIED at four layers; PR #55 closed; my harness had been lying
 
 **A harness defect first, because it taints earlier entries.** `Network.clearBrowserCookies` is not
@@ -301,6 +329,12 @@ superseded wording; other agents' PR #11, #20, #25, #43.
 22. **Verify identity from the artefact, not from the credentials you sent.** Sending the right
     password proves nothing if the app was already authenticated as someone else. Make the page name
     the role, poll for it, and abort the run otherwise.
+
+23. **Never open a file in a restore path without naming the encoding.** A restore body built by
+    `python -c open(...)` on Windows decodes as cp1252 and writes mojibake straight into production;
+    I did exactly that to an escalation packet at iteration 45. Use `encoding='utf-8'` on the read and
+    `ensure_ascii=True` on the write, then byte-check the live row. And note which way the error points:
+    my first comparison said "packet identical: False" and the corruption was **mine**, not the code's.
 
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real
