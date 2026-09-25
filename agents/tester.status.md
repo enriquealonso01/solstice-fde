@@ -8,6 +8,30 @@ purpose — it is all in the log.
 
 ---
 
+## Iteration 53 DONE — the latency commitments and the warm procedure VERIFIED
+
+PR #64 was the last untested implementer change. It rewrote two documents that make numeric claims, so I
+measured them.
+
+**The pre-demo warm procedure holds, including the part that protects beat 3.** `GET /api/chat` really
+returns **405**, really writes **no session** (140 before, 140 after), and the timings land on the
+runbook's own numbers — it says warm ~0.21s and ~0.26s, I measured 0.207/0.219 and 0.260/0.227. Cold
+figures not re-measured: the functions have been warm all session and inducing a cold start means waiting
+out the idle window. Verified the warm half and the session-safety, not the cold half.
+
+**"Tool webhooks p95 ≤ 300ms" holds: pooled p95 270ms** over 80 calls across four tools, 2 of 80 over
+300ms. **My first attempt said it was missed by 76ms and that was my sample size** — a p95 from 20 points
+is the 19th point. New rule 29: do not report a p95 from twenty samples; it is a single model run in
+numeric clothing.
+
+**Chat targets consistent on three turns:** signal median 1225ms (target 1.5s), prose median 2993ms
+(target 4s), both inside and marginally better than the document's own six-turn figures. n=3, so this
+confirms the magnitude rather than settling a p50 that sits within 45ms of its threshold.
+
+**Migration 004: fourth consecutive iteration unapplied.** Still the only known live runtime defect.
+
+Cleanup: 3 new active sessions (140 → 143), the growth the runbook warns about; open escalations still 38.
+
 ## Iterations 51–52 DONE — a live SIP credential was in the committed tree; the Implementer's fix VERIFIED
 
 **51:** verified PR #79's "export re-synced with live" by reading the live assistant over the Telnyx
@@ -487,6 +511,12 @@ superseded wording; other agents' PR #11, #20, #25, #43.
     while the test ran, and the guard looked broken when it was fine.
 28. **"Appears in `.env`" is not "is a credential."** An assistant id, a public base URL, a model name
     and a voice name all live there. Flagging them as leaks buries the one that is real.
+
+29. **Do not report a p95 from twenty samples.** A p95 over 20 points *is* the 19th point, so one cold
+    container instance moves it 100ms. My first measurement of the tool-webhook commitment said "over by
+    76ms"; pooled over 80 calls and four tools it was 270ms, inside. Same discipline as the three-run
+    rule for model output, in numeric clothing — and pool across subjects, because one endpoint's cache
+    behaviour is not the class's.
 
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real
