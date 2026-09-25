@@ -119,9 +119,36 @@ const GUEST_SAFE_FAILURE =
 
 let cachedPrompt: string | null = null
 
+/**
+ * What this channel actually has, appended to the shared agent definition.
+ *
+ * `agent/sol.md` is one definition compiled to two runtimes, and it tells Sol to call
+ * `create_inquiry` the moment it has an email. The telephony runtime has that tool; this one does
+ * not — `toolDefinitions()` is twelve concierge tools and `create_inquiry` is not among them. So
+ * on chat the model was being instructed to reach for something that is not there, and when the
+ * call failed it did the honest thing and explained itself to the guest: "I don't have a
+ * create_inquiry tool available to me directly." Observed 3 times out of 3.
+ *
+ * A prompt rule forbidding that sentence (PR #26) cut it to 1 in 3 but could not remove it, which
+ * is what you would expect: the model is not misbehaving, it is reporting a real contradiction.
+ * Telling it the truth about this channel removes the contradiction instead of suppressing the
+ * symptom.
+ *
+ * This does NOT decide whether chat should be able to open inquiries — that is a capability
+ * question, it is with Enrique, and mounting the group tool layer here would pull it into this
+ * function's bundle on the demo's main path. It only stops the prompt asking for something the
+ * channel cannot do.
+ */
+const CHAT_CHANNEL_NOTE = `
+ON THIS CHANNEL
+You are on web chat, which has no inquiry-creation tool. Do not try to open a group inquiry here
+and do not refer to one. For a group request: capture what the customer gives you, call
+create_escalation so it reaches Sales with the details, and tell them Sales will follow up. That
+is the whole of your job on a group request here, not a fallback from a failed attempt.`
+
 function systemPrompt(): string {
   if (cachedPrompt) return cachedPrompt
-  cachedPrompt = readPromptFromMarkdown() ?? SOL_SYSTEM_PROMPT
+  cachedPrompt = `${readPromptFromMarkdown() ?? SOL_SYSTEM_PROMPT}\n${CHAT_CHANNEL_NOTE}`
   return cachedPrompt
 }
 
