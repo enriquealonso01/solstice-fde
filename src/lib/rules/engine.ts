@@ -267,7 +267,7 @@ export function evaluateGroupRules(options: EvaluateOptions): EvaluationResult {
         'flag',
         `${rooms} rooms`,
         `over ${routing.over_rooms} rooms routes to ${routing.refer_to}`,
-        `${rules.property_name} is our smallest hotel, and anything over ${routing.over_rooms} rooms is meant to go to ${routing.refer_to} instead. That hotel is not in the system we can see, so we are not able to quote a rate or confirm rooms there ourselves. The honest answer to the customer is that we are passing this to the ${routing.refer_to} team, who will come back with availability and pricing. We can also hold ${routing.over_rooms} rooms here in the meantime if that helps.`,
+        `${rules.property_name} is our smallest hotel, and anything over ${routing.over_rooms} rooms is meant to go to ${routing.refer_to} instead. That hotel is not in the system we can see, so we are not able to quote a rate or confirm rooms there ourselves. The honest answer to the customer is that we are passing this to ${routing.refer_to}, and they will come back with availability and pricing. We can also hold ${routing.over_rooms} rooms here in the meantime if that helps.`,
       ),
     )
   }
