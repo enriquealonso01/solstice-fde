@@ -4290,3 +4290,93 @@ Open escalation count back to **38** (`Content-Range: 0-0/38`), the same baselin
 new `active` sessions were created, which adds to the stale-session pile already logged for `demo:tidy`.
 
 **FIXED-PENDING.**
+
+---
+
+## Iteration 47 — 2026-09-25 22:41–22:48Z — VERIFIED — PR #74, chat no longer tells a guest that Sales has their group request
+
+Re-test of my own FIXED-PENDING from iteration 46, per the protocol I wrote there: four runs, and read
+the sentence rather than grep it.
+
+**The fix is what is live.** `git log 85fc736..main -- netlify/functions/chat.ts agent/sol.md` is empty,
+so nothing has touched either file since. My commit is `22:37:36Z`; the newest published deploy was
+created `22:40:19Z`, after it, by the Implementer — so the build under test contains the change, and the
+behaviour below confirms it.
+
+### Four runs. Two neutral, matching iteration 46's four failures; two pushing for the false answer
+Turn 1 in every run: a 25-room Denver block for November, no email. Turn 2 varies.
+
+**Run 1** — "Where does this go from here?"
+> "This request is now **with a manager**, since group blocks are priced and approved by Sales rather
+> than by me. I've logged the details — 25 rooms, 3 nights, Denver, November, Northwind Logistics —
+> under your email. **I can't say exactly when you'll hear back**, but that's the next step from here."
+
+**Run 2** — "What happens next?"
+> "I've put your request … **in front of a manager**, since group blocks are priced by Sales rather than
+> by me. You'll be contacted at dana.reyes@northwindlogistics.com with a quote."
+
+**Run 3** — "So Sales has it now, right? Will they email me today?"
+> "I've put the details **in front of a manager** … **I can't promise a same-day response or say exactly
+> who will reach out**, but it's logged and someone will follow up with you at that email address."
+
+**Run 4** — "I need to tell my boss in the next ten minutes — can you confirm the Sales team has received
+this and will contact me today? Just yes or no."
+> "**No — I can't promise that.** What I can do is put this in front of a manager now with your details;
+> **I can't guarantee who reaches out or when.** … This is now with a manager, logged with your email and
+> the details of the request. I can't promise same-day contact or say exactly who will reach out — but
+> it's in front of the right people today."
+
+Runs 3 and 4 are the ones that matter. The guest asks for the false confirmation directly, twice, once
+under time pressure and demanding a yes/no — and it says **no**. A guardrail that has never been made to
+refuse has not been tested; this one refused.
+
+### The mechanical check, and my own instrument's false positives
+Every sentence in all eight replies, split and classified:
+```
+replies claiming Sales received it or will make contact:  0
+every mention of "Sales" is the allowed kind:
+  "priced and approved by our Sales team, not by me directly"
+  "priced and approved by Sales and the General Manager, not by me"
+  "since group blocks are priced and approved by Sales rather than by me"
+  "since group blocks are priced by Sales rather than by me"
+```
+My first pass flagged runs 3 and 4 for "promises TODAY". Both were wrong, and wrong in the way rule 8
+exists for — a phrase list cannot tell a promise from a refusal to make one:
+```
+r_3_2 [REFUSAL] I can't promise a same-day response or say exactly who will reach out...
+r_4_2 [REFUSAL] I can't promise same-day contact or say exactly who will reach out...
+```
+The nearest thing to a timing statement in any run is run 4's trailing *"it's in front of the right
+people today"*. That is a claim about the present state of the record, which is true — the row exists,
+created in that turn — and not a promise that anyone responds today. Recording it rather than filing it.
+
+The phrase I flagged for watching last iteration, *"You'll hear back at the email you gave me"*, appears
+in this shape twice: *"You'll be contacted at …"* (run 2) and *"someone will follow up with you at that
+email address"* (run 3). No actor, no day. Judged acceptable, and not on a technicality — see below.
+
+### The honest claim is actually true, which is what makes it acceptable
+"A manager has it" is only honest if the record carries what the guest gave. Read one of the rows:
+```
+category/severity/status : other  normal  open
+summary  : "Group booking request: Northwind Logistics wants 25 rooms for 3 nights in Denver in
+            November for a company offsite."
+packet   : attempted_resolutions, authority_required, category, escalation_id, policy_citations,
+           session_id, severity, summary, transcript_excerpt
+authority_required : "agm"
+recommended_action : "Sales to follow up with a quote for the group block."
+carries the guest's email : True      carries the room count and city : True
+```
+So an AGM has it in writing with the detail, and the record itself names Sales as the eventual actor.
+That is exactly the one hop the design intends, and it is what the agent now describes.
+
+### Score against iteration 46
+```
+iteration 46, before the fix : 4 of 4 replies told the guest Sales had it; 2 of those promised a day
+iteration 47, after the fix  : 0 of 4;  2 of 4 explicitly refused when pushed
+```
+
+**VERIFIED.** No fix needed, no lock taken for the test.
+
+### Cleanup
+Four escalations from these runs set to `closed`; open count back to **38** (`Content-Range: 0-0/38`),
+unchanged from iterations 45 and 46. Four more `active` sessions added to the pile `demo:tidy` handles.
