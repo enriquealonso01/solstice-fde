@@ -2604,3 +2604,60 @@ line and the uuid-not-code warning are both present and correct. No change.
 402 tests, `tsc -b --force` clean.
 
 ---
+## 2026-09-25 — Verified the last unchecked deliverable, and found the phantom GM had one more home
+
+**PR:** https://github.com/enriquealonso01/solstice-fde/pull/48 (shipping this iteration)
+
+Going through the brief's deliverable list, `docs/where-this-goes.md` was the only one nobody had
+checked. Written early as M2 and untouched since, while the system it describes moved a long way
+underneath it.
+
+### It holds, and it is good
+
+The judgement is not checkable and I did not touch a word of it. Everything it asserts about *this*
+system does check out:
+
+| Claim | Result |
+|---|---|
+| a human gets a handoff with the full context attached | true — the escalation packet, verified in `transcripts/honest-handoff.md` |
+| anything outside the rules is visibly locked until a person decides | true — the gate, four attack paths |
+| every answer is traceable: which tool ran, whether it was grounded | true — `args_masked`, `grounded`, `latency_ms` |
+| the tool layer speaks in `getReservation` / `getPropertyRate`, so it is an adapter not a rewrite | true — verified in the integration-doc pass |
+| voice and chat already run different models for different latency budgets | true — Haiku on voice, Sonnet on chat |
+| nothing reaches a customer without a person | true |
+| every refusal is logged with the reason | true — `send_blocked` rows naming the blocking rules |
+
+### The one defect: the general manager, again
+
+> "Every override **a GM records** is a data point…"
+
+T1c established there is no GM. `staff_role` is `('concierge','group_sales','admin')`, and the
+README and `agent/sol.md` both now carry a stated assumption that approval authority is a named
+human rather than a role tier. A reviewer who reads that assumption and then reads this sentence
+sees the package contradicting itself.
+
+This document was never in T1c's scope because it does not quote the refusal — which is exactly how
+a phantom survives a sweep aimed at one string.
+
+**Rewritten to point at what the system actually records**, which is stronger than the original:
+
+> "Every override is already written to the audit log with the rules it overrode and the person who
+> approved it — `overrode_rules: ["GRP-DISCOUNT-CEILING"]` and an actor, today, on every one."
+
+The roadmap item now rests on a mechanism a reviewer can go and look at, rather than on a role that
+does not exist.
+
+### Swept the rest properly, using match-only output
+
+`grep -rnoiE "\bGM\b|general manager"` across `docs/`, `README.md`, `SUBMISSION.md` and `agent/` —
+**match-only, so no line filter could hide one**, which is the mistake that let two occurrences
+survive T1b. Eleven hits, ten of them legitimate: Policy 13 and Policy 15 language about real
+humans at the property, the safety-escalation matrix, and my own T1c wording explaining that a GM
+is deliberately not a login. Only the one above asserted a GM inside our system. `where-this-goes.md`
+now contains no `GM` at all.
+
+**Every named deliverable has now been verified against reality by someone.**
+
+402 tests, `tsc -b --force` clean.
+
+---

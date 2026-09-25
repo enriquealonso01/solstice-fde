@@ -42,8 +42,10 @@ contract and the rooming list.
 
 ## Six to twelve months: the compounding part
 
-**The agent learns the estate's own exceptions.** Every override a GM records is a data point
-about where the written policy and the real one disagree. Surfacing that is a product in itself:
+**The agent learns the estate's own exceptions.** Every override is already written to the audit
+log with the rules it overrode and the person who approved it — `overrode_rules:
+["GRP-DISCOUNT-CEILING"]` and an actor, today, on every one. That is a data point about where the
+written policy and the real one disagree, and surfacing it is a product in itself:
 *here are the eleven rules your managers override most often, and what it costs you.*
 *Outcome: policy improves from evidence rather than from anecdote.*
 
