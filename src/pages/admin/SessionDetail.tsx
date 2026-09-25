@@ -94,7 +94,7 @@ export default function SessionDetail() {
         <span className="flex flex-wrap items-center gap-2">
           <ChannelChip channel={session.channel} />
           <SessionStatusChip status={session.status} />
-          <span className="chip bg-solstice-sand/60 capitalize text-solstice-slate">{intentLabel(session.intent)}</span>
+          <span className="chip bg-solstice-sand/60 capitalize text-solstice-slate">{intentLabel(session.intent, session.status)}</span>
           <span className="tabular-nums text-solstice-stone">{elapsed}</span>
           {session.phone_masked ? <span className="text-solstice-stone">· {session.phone_masked}</span> : null}
         </span>

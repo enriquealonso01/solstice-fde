@@ -2404,3 +2404,60 @@ answered whether four prompt PRs broke anything.
 388 tests, `tsc -b --force` clean. **No Telnyx spend** — three Anthropic turns.
 
 ---
+## 2026-09-25 — Telephony intent write: shipped, found broken, fixed, verified
+
+**PRs:** #43 (the write) and #44 (awaiting it). Both merged and deployed; production reads
+**OK - serving your latest commit**.
+
+```
+voice session 4a8cc297  before: intent null   ->   after: intent "group_booking"
+```
+
+### Three things went wrong in this iteration and all three are worth recording
+
+**1. I branched from a stale HEAD and opened a PR that could not merge.** My ship sequence began
+`git checkout main 2>&1 | tail -1`. The checkout failed — the tree was dirty — but piping into
+`tail` replaced git's exit code with `tail`'s, so `set -e` saw success and carried on. I branched
+from the other agent's stale commit, and PR #42 diverged from main.
+
+That is the same class of bug as the unconditional `rmdir`: **a pipeline silently discards the exit
+code of the command that matters.** Closed #42 with an explanation, rebuilt the change on a clean
+branch off current main with identical content, and shipped it as #43.
+
+**2. I nearly reported a working fix as broken.** Twice after PR #41 landed I read `intent: null`
+and could have concluded the chat fix did not work. Both readings were explained by checking rather
+than assuming: the first turn ran at 20:17:38 against a deploy that only landed at 20:19:45, and
+the second never fired `classify_intent` at all. A clean post-deploy turn that *did* fire it wrote
+`intent: "group_booking"`. **PR #41 works.** Timestamps and the tool trace are what stopped a false
+accusation.
+
+**3. My own fix shipped broken, and only production showed it.** I wrote the telephony write as
+`void recordClassifiedIntent(...)`, matching the fire-and-forget style of every other write on that
+path. The tool returned `intent: group_booking`; the session row stayed null.
+
+The `recordToolInvocation` call immediately above it — **awaited** — kept its row from the very
+same request. So the database, `ctx.session_id` and the deploy were all fine, and the single
+difference was the `await`. The handler returns immediately and a serverless container can freeze
+the moment it does. `chat.ts` gets away with fire-and-forget because its SSE stream holds the
+invocation open; the webhook has no such luxury.
+
+**399 unit tests passed both before and after that fix**, which is exactly the point: nothing short
+of calling the deployed endpoint and reading the row back could have found it. The test now pins
+`await` and forbids `void`, with the reason written next to it.
+
+### What shipped
+
+- The writer lives in the tool layer beside `recordToolInvocation`, where the telephony webhook
+  already runs. `chat.ts` is untouched — rewriting a freshly merged critical path to remove eight
+  lines of duplication is the worse trade this close in, and the test asserts a writer per channel
+  so neither can be dropped unnoticed.
+- `docs/role-walkthroughs.md` corrected: I wrote that the Intent badge "settles by itself". It
+  never did.
+- `agents/README.md` corrected: it claimed single-writer ownership means two agents cannot corrupt
+  each other's work. True of the seven coordination files, false of the source tree, which all
+  three agents share along with one git HEAD.
+
+Both channels now label their sessions. The supervisor dashboard stops saying `classifying…`
+forever, on the surface beat 3 opens.
+
+---
