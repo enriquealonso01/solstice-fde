@@ -228,7 +228,14 @@ function InboxRow({
         {proposal ? (
           <SeverityChip severity={severity} />
         ) : (
-          <span className="chip bg-sky-50 text-sky-800">{inquiry.missing_fields.length} missing</span>
+          // "0 missing" was a blue chip announcing an absence of problems, on ten of thirteen
+          // rows. A rep reading it has to translate "zero of what, missing from where" before
+          // learning the only useful thing: this one is complete and nobody has priced it yet.
+          inquiry.missing_fields.length === 0 ? (
+            <span className="chip bg-emerald-50 text-emerald-800">ready to price</span>
+          ) : (
+            <span className="chip bg-sky-50 text-sky-800">{inquiry.missing_fields.length} missing</span>
+          )
         )}
       </td>
       <td className="px-4 py-3">{proposal ? <ProposalStatusChip status={proposal.status} /> : <span className="text-xs text-solstice-stone">none yet</span>}</td>
