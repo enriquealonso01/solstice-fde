@@ -48,10 +48,16 @@ guarantees one is watching, so the guest is never told one is on the way.
 
 **It is specific about what it did do, and that part is checkable.** Both escalation ids above are
 real rows in Postgres, bound to this session, each carrying `authority_required: "agm"` and a
-handoff packet a manager can act on:
+handoff packet a manager can act on. From the second of them, `c0cb0a1c`:
 
 > `summary`: "Guest Marcus Webb (R55006, Tampa Bayshore) reports room did not match what was
 > booked; also requesting live human contact."
+> `recommended_action`: "AGM to contact guest directly about room mismatch and review stay."
+
+and from the first, `ea086719`, raised on the opening turn:
+
+> `summary`: "Guest Marcus Webb (R55006, SOL-TPA) reports room received did not match what was
+> booked; requests to speak with a person."
 > `recommended_action`: "Manager to review room assignment discrepancy and follow up with guest
 > directly."
 
