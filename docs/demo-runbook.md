@@ -57,6 +57,11 @@ read. Nothing here is the model remembering something._
 
 Put the admin window on the supervisor dashboard first, so they see it empty.
 
+**"Empty" depends on having run `npm run demo:tidy` in the pre-flight above.** A web chat has no
+hangup event, so every chat anyone has opened while testing is still counted as live: skip the tidy
+and this screen opens on dozens of cards reading "Sol is handling this", and the first thing you
+say about it is wrong. Check the ACTIVE NOW tile reads a small number before you dial.
+
 Call **+1 (305) 786-6217** on speaker. Say your confirmation number is **R55004, last name Chen**.
 Ask to keep the room until 2pm.
 

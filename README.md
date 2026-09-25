@@ -35,7 +35,8 @@ which is deliberately not committed.
 
 - **Concierge supervisor** — live sessions, streaming transcripts, the tool trace, and the
   supervisor ladder (listen → whisper → barge → take over)
-- **Group sales** — the ten inquiries, rule verdicts, pricing, proposals, approvals
+- **Group sales** — the ten inquiries from the provided data plus any Sol has taken on a call,
+  rule verdicts, pricing, proposals, approvals
 - **Super admin** — both, plus member invites and the **Backend** map used to present the system
 
 ## How it is built
