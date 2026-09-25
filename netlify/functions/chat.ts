@@ -185,8 +185,7 @@ export default async function handler(req: Request, _context: Context): Promise<
     return new Response(JSON.stringify({ error: 'Missing "message".' }), { status: 400, headers: { 'content-type': 'application/json' } })
   }
 
-  const sessionId = str(body.session_id) ?? newUuid()
-  const isNewSession = !str(body.session_id)
+  const { sessionId, isNewSession } = resolveSessionId(str(body.session_id))
   // No guest_id and no `now` from the body, deliberately. See the note at the top of the file.
   const ctx: ToolContext = { session_id: sessionId, channel: 'chat' }
 
@@ -690,6 +689,32 @@ async function recordTurnMetrics(sessionId: string, metrics: Record<string, unkn
 
 function str(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined
+}
+
+/** The column is `uuid`; anything else is rejected by Postgres, not coerced. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * A caller-supplied session id is only usable if Postgres will accept it.
+ *
+ * Every write on this path is fire-and-forget so a turn is never held up by the database. That is
+ * the right trade for latency and the wrong one for trust: a non-uuid id is rejected with `22P02`
+ * and the rejection is swallowed, so the caller gets a fully working conversation that writes no
+ * session, no messages and **no `tool_invocations` at all**. The agent answers, the tools run, and
+ * nothing is recorded — which contradicts the guarantee that every tool call is traced, the thing
+ * the supervisor screen and the audit story both rest on.
+ *
+ * So a malformed id is treated exactly as an absent one: mint a fresh session rather than trust it.
+ * A client that sends rubbish loses continuity, which is its own fault and is visible to it in the
+ * `session` event; it does not get to opt out of being recorded. This also stops that event
+ * echoing caller-controlled text straight back.
+ */
+export function resolveSessionId(raw: string | null | undefined): {
+  sessionId: string
+  isNewSession: boolean
+} {
+  if (raw && UUID_RE.test(raw)) return { sessionId: raw, isNewSession: false }
+  return { sessionId: newUuid(), isNewSession: true }
 }
 
 function newUuid(): string {
