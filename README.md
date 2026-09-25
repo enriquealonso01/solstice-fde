@@ -165,6 +165,15 @@ going stale. Two things come first in production, in this order: a TTL on the bi
 re-verification before anything that discloses stay detail. Neither is built, and neither should be
 attempted the night before a submission on the one path the whole concierge demo runs through.
 
+**A stated limit: "Active now" has no idle bound.** A web chat has no hangup event — a guest simply
+closes the tab — so a session stays `active` until something closes it. The supervisor dashboard
+counts exactly that, which is correct for a live call and wrong for an abandoned browser tab: in
+production every abandoned chat would count as live forever. `npm run demo:tidy` closes anything
+idle over thirty minutes and is what we run before a demo. The production fix is a server-side idle
+timeout that ends the session and writes the same `ended` state a hangup does, so the dashboard and
+the transcript agree without anyone running a script. Not built, because it changes the state
+machine behind the headline supervisor surface.
+
 **Email:** proven end to end. Telnyx's shared sending domain is a sandbox that only delivers to the
 account's own verified address, so every send is routed there; verifying a real domain removes that
 limit and is a DNS change, not a code change.
