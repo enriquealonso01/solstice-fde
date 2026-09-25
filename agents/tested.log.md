@@ -4501,3 +4501,203 @@ not only against what was there when I started.
 ### Cleanup
 Three complaint escalations from the leak test (`98c773f5`, `8169042e`, `09b8ee00`) set to `closed`.
 No other production state changed.
+
+---
+
+## Iteration 51 — 2026-09-25 23:05–23:14Z — VERIFIED (the export matches live) + a credential in the committed tree + a correction to my own method
+
+Took the newest untested change, **PR #79** ("Re-sync the Telnyx export with live, and say where the
+escalation queue is"), per my own rule that re-testing the last change beats opening a new area.
+
+### VERIFIED — the committed export really is the live assistant
+Read the live assistant over the management API — a `GET`, no telephony spend:
+```
+GET https://api.telnyx.com/v2/ai/assistants/assistant-fee8d29d-…  -> HTTP 200, 59,665 bytes
+live name Sol · model anthropic/claude-haiku-4-5 · 25 tools · voice Azure.en-US-Ava:DragonHDLatestNeural
+```
+The assistant id in `.env` matches the one in the export. Structural diff, live against committed:
+```
+keys only in live: []      keys only in export: []
+fields differing : 3  — interruption_settings, voice_settings, tools
+```
+And every difference is accounted for:
+- `interruption_settings` / `voice_settings` differ **only** by `0.0` vs `0` and `1.0` vs `1` — JSON
+  number formatting from whatever wrote the file, not drift.
+- `tools`: all 25 present in both, same names, same order. 24 differ, each by exactly one deliberate
+  redaction — 23 webhook tools replace `x-solstice-tool-key` with
+  `REDACTED_INJECTED_FROM_TOOL_WEBHOOK_SECRET`, and the one `transfer` tool replaces its SIP target.
+  The 25th is byte-identical.
+
+So the "re-synced with live" claim holds, and the `_export` note tells a reviewer how to regenerate
+(`scripts/telnyx/export-assistant.mjs`) and how the secret gets back in
+(`scripts/telnyx/provision.mjs` injects it from `TOOL_WEBHOOK_SECRET`). Both scripts exist — 108 and
+1,256 lines — so it is not a dead reference.
+
+### THE FINDING: a real SIP credential is in the committed tree
+Scanning the tracked tree by value for each secret in `.env`:
+```
+TOOL_WEBHOOK_SECRET        absent from every tracked file; 0 commits ever introduced it
+TELNYX_API_KEY             absent      TELNYX_SIP_PASSWORD        absent
+SUPABASE_SERVICE_ROLE_KEY  absent      DEMO_PASSWORD              absent
+TELNYX_SIP_USERNAME        PRESENT  -> netlify/functions/telnyx/_lib/legs.test.ts:15,16
+```
+`legs.test.ts` hard-codes the live Telnyx SIP credential username and URI, and the live SIP connection
+id, as test fixtures — copied in from the real supervisor-leg outage this file exists to regress. The
+same SIP target is **deliberately redacted in `exports/telnyx-assistant.json`** as
+`REDACTED_TRANSFER_TARGET`, so the repo was redacting a value in the deliverable and committing it one
+directory away. And `exports/telnyx-assistant.json` **as committed on `origin/main`** still carries one
+addressable `sip:gencred…@sip.telnyx.com`.
+
+Not a password: registering as that connection needs `TELNYX_SIP_PASSWORD`, which is not committed and
+never has been. The exposure is that a stranger can address traffic at a named connection. Low, not
+zero, and not something to ship knowingly.
+
+### I MEASURED THE WRONG ARTEFACT, AND SAID SO BEFORE BELIEVING MYSELF
+My first scan reported **"real credentials committed to the repo: 0"** and I nearly logged that. It was
+wrong, because I copied `exports/telnyx-assistant.json` **out of the working tree**, where the
+Implementer had an uncommitted fix in progress. Re-running against `git show origin/main:` — what
+actually ships — found the SIP URI still there.
+
+**New rule: when the question is "what is committed", read it out of `origin/main`, never off disk.**
+`git grep` and `readFileSync` both see the working tree, and in a repository three agents share, the
+working tree is somebody's draft. This is the same family as iteration 42 (the fix was in the bundle and
+the branch was unreachable) and iteration 44 (the harness reported an identity it never checked): the
+instrument answered a slightly different question than the one I asked.
+
+My scan also flagged four "leaks" that were not secrets at all — `TELNYX_ASSISTANT_ID`,
+`PUBLIC_BASE_URL`, `TELNYX_ASSISTANT_MODEL`, `TELNYX_ASSISTANT_VOICE`. "Appears in `.env`" is not the
+same as "is a credential", and reporting those as leaks would have buried the one that mattered.
+
+### I collided with the Implementer and backed off
+While I was mid-fix, a second explanatory comment appeared in `legs.test.ts` that I had not written:
+they found the same thing in the same minute and were fixing it in the shared working tree, along with
+`scripts/telnyx/export-assistant.mjs`, the export artefact, and a new
+`src/lib/rules/__tests__/export-redaction.test.ts`.
+
+Their test is better than mine for this: it asserts the *property* — no `sip:` URI in the export may
+have a local part other than the marker — rather than a list of secret shapes, and their own comment
+makes the point I would have made, that their earlier scan "looked for API key prefixes, JWTs and
+`service_role` — things I predicted. A SIP URI is none of them."
+
+It also explains why my red-check of my own guard appeared to pass a mutant it should have caught: by
+the time the test ran, they had already replaced my synthetic value with their fixture. **A red-check is
+only valid if nothing else is editing the file.**
+
+So I reverted my edit to `legs.test.ts` to leave their version standing alone, parked my own tree-wide
+shape guard in the scratchpad rather than ship a competing test mid-collision, and **released the lock
+at 23:13:05Z so they could ship a security fix fifteen hours before submission.** Holding it to write
+my own log would have been the wrong trade.
+
+**Worth adding after their fix lands:** the guard I parked scans *every tracked file* by credential
+shape, not just the export, which is the half their test does not cover — `legs.test.ts` is the file
+that proves the export-only check is not enough.
+
+### Migration 004 is still not applied — third consecutive iteration
+```
+PATCH /rest/v1/proposals {"status":"approved"} as sales@, public anon key -> HTTP 200, row returned
+```
+Still the only known live *runtime* defect. One line of SQL, in `HUMAN_INTERVENTION.md`.
+
+**Status: VERIFIED for the export-versus-live claim. The committed credential is FIXED-PENDING in the
+Implementer's hands, not mine — confirm it landed next iteration, against `origin/main` and not the
+working tree.**
+
+---
+
+## Iteration 52 — 2026-09-25 23:15–23:20Z — VERIFIED: the credential is out of the committed tree. And it is still in git history.
+
+Re-tested the Implementer's `1cc7836` ("Redact the SIP transfer target, and the copy of it in a test
+fixture", #81), which fixes what I found in iteration 51. Everything below reads `origin/main` through
+`git show` and `git grep <rev>`, not the working tree — the rule I wrote one iteration ago after
+measuring their uncommitted draft by mistake.
+
+### VERIFIED — the fix is complete for the tree that ships
+Eleven secrets from `.env`, checked by value against the committed revision:
+```
+TOOL_WEBHOOK_SECRET · TELNYX_API_KEY · TELNYX_SIP_USERNAME · TELNYX_SIP_PASSWORD · TELNYX_SIP_URI
+TELNYX_TELEPHONY_CREDENTIAL_ID · TELNYX_PUBLIC_KEY · SUPABASE_SERVICE_ROLE_KEY · SUPABASE_ANON_KEY
+DEMO_PASSWORD · ANTHROPIC_API_KEY
+  -> all eleven: absent from origin/main
+```
+And specifically in the two files that were wrong:
+```
+exports/telnyx-assistant.json   addressable SIP URIs: 0   shared secret redacted: 23x
+                                transfer target redacted: True
+legs.test.ts                    sipUsername  'gencredEXAMPLEfixtureNotARealCredential000000000000'
+                                sipConnection '1234567890123456789'
+```
+Both fixtures announce themselves as fake, and all 14 `legs.test.ts` cases still pass, because every
+assertion referenced `CFG.*` rather than a literal.
+
+**Their guard is real.** I red-checked `export-redaction.test.ts`'s regex in isolation rather than
+mutating a file in a tree another agent was editing:
+```
+sip:REDACTED_TRANSFER_TARGET@sip.telnyx.com          no match   (correct)
+sip:gencred<EXAMPLE 30 chars>@sip.telnyx.com          MATCHES    (correct)
+sip:bob@sip.telnyx.com                               MATCHES    (correct)
+sip:gencredAbc@sip.example.com                       no match   (correct — different host)
+```
+(The second case is written with a placeholder rather than a literal string of that shape, because the
+tree-wide guard below reads this log too and is right to: a reader cannot tell a synthetic credential
+from a real one. My own guard failed on this entry's first draft, which is the best evidence I have that
+it works.)
+
+One theoretical gap, recorded and **not** filed: the lookahead `(?!REDACTED_TRANSFER_TARGET)` tests a
+prefix, so `sip:REDACTED_TRANSFER_TARGETsomething@sip.telnyx.com` would slip through. Anchoring it with
+`@` would close it. The export script writes exactly the marker, so the shape cannot occur; mentioning
+it because a guard's precision is worth knowing, not because it needs changing today.
+
+### THE PART THE FIX CANNOT REACH: the username is permanent in git history
+```
+git log --all -S<sip username> :
+  1cc7836  2026-09-25T19:14:27  Redact the SIP transfer target…        <- the removal
+  89b7dab  2026-09-25T19:14:21  Redact the SIP transfer target…        <- the removal
+  10b63e8  2026-09-24T16:21:44  Voice transcript export, fix transfer target and timeout
+  c09f04d  2026-09-24T15:11:57  Fix supervisor leg classification…     <- where it entered, with legs.test.ts
+```
+Two commits added it on day one, two removed it tonight. `git log -p` recovers it from any clone.
+
+**What decides how much this matters:** the password never leaked.
+```
+commits ever containing TELNYX_SIP_PASSWORD : 0
+commits ever containing TELNYX_API_KEY      : 0
+commits ever containing TOOL_WEBHOOK_SECRET : 0
+commits ever containing SUPABASE_SERVICE_ROLE_KEY : 0
+```
+Registering as that SIP connection needs the password. So the residual exposure is that a reader of the
+history can *address* traffic at a named connection, not authenticate as it. Low, non-zero, and now
+permanent unless the credential is rotated. Escalated to Enrique with the three options and a
+recommendation rather than fixed: a history rewrite would break every PR reference and the README's own
+commit counts, and re-provisioning the live assistant fourteen hours before the demo is the larger risk.
+
+### Added: a tree-wide guard, which is the half their test does not cover
+`no-committed-credentials.test.ts` scans **every tracked file** for credential *shapes* — Telnyx
+`gencred…` usernames, `KEY…` API keys, JWT-shaped keys, `sk-ant-…` — exempting any line that announces
+itself with EXAMPLE / FIXTURE / REDACTED / NotAReal / PLACEHOLDER. Shape-based rather than value-based
+on purpose: `vitest.setup.ts` strips every credential before tests load, so a test cannot compare
+against `.env` even if it wanted to.
+
+This exists because `legs.test.ts` is itself the proof that an export-only check is not enough — the
+Implementer's own comment makes the same point about their earlier scan: *"It looked for API key
+prefixes, JWTs and `service_role` — things I predicted. A SIP URI is none of them."* Two agents predicted
+two different lists and each missed what the other caught, which is the argument for scanning by shape
+over the whole tree.
+
+**Red-checked, with a clean tree this time:**
+```
+synthetic gencred value, no fake marker  -> 1 failed: "legs.test.ts:19 looks like a Telnyx SIP
+                                            credential username"
+git ls-files stubbed to ''               -> 1 failed: "is actually looking at the repo"
+as committed                             -> 4 passed
+```
+That second case matters: the iteration-51 red-check of this same guard *appeared* to pass a mutant it
+should have caught, because the Implementer replaced my synthetic value while the test was running.
+**A red-check is only valid if nothing else is editing the file** — take the lock, or check the tree is
+clean, before believing a mutant.
+
+### Migration 004: third consecutive iteration, still not applied
+```
+PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
+```
+Still the only known live *runtime* defect, and the one thing on Enrique's list that changes what the
+system does rather than what the repo contains.
