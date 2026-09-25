@@ -8,6 +8,31 @@ purpose — it is all in the log.
 
 ---
 
+## Iteration 57 DONE — PR #90 VERIFIED, and it shows my PR #85 hardened a branch a real call never reaches
+
+PR #90 landed on the file I fixed in 54 and verified in 55, so it took priority. **VERIFIED:** the live
+assistant carries 23 webhooks + 1 transfer + 1 hangup, and **`transfer_to_human` is not among the
+webhooks** — on a real call the model cannot call it. The native transfer's `warm_transfer_instructions`
+now require `create_escalation` first and forbid describing a handoff that did not happen, containing every
+phrase of G16's success criterion. Their re-export did not undo the redaction (0 addressable SIP URIs, 23
+secret redactions, both credential guards green) — the first time a regeneration has actually been tested.
+
+**So my PR #85 fixed a branch Telnyx never reaches.** My iteration-55 verification reached it only because
+I POSTed `channel: voice` to the tool endpoint directly. The defect was real in the code and misattributed
+to the channel; the live voice gap was in `warm_transfer_instructions`. Third instance of the same shape
+(42, 54, and a near-miss at 51) — and each time I read the right file and never asked which caller reaches
+it. **New rule 33: before fixing a branch, find its caller in production; for a tool that means the
+registration, not the handler.**
+
+**Found, written, and deliberately reverted:** G16's own row names `transferToHuman` and a test case that
+cannot reach the fallback — both wrong for voice now. The corrected row is +44 chars and the cap guard
+stays green, but that row is compiled into the live voice prompt (29,319 chars, contains it verbatim), so
+shipping it without re-provisioning would create repo-versus-live drift, and re-provisioning the voice
+agent eleven hours out for one documentation cell is a bad trade. **The exact replacement row is in
+`tested.log.md` under iteration 57, ready to paste for whoever next re-provisions.**
+
+**Migration 004: eighth consecutive check, still unapplied.**
+
 ## Iteration 56 DONE — all ten live proposal PDFs VERIFIED, with their arithmetic and their capability paths
 
 Nothing pending, tree consistent (37/473, no tracked file missing from disk — iteration 55's check is now
@@ -20,7 +45,8 @@ of which this log has genuinely found before. **No PDF prints a dollar figure th
 its own `pricing` row**, which is the stale-PDF failure mode that bit PRP-2007 at iteration 38. PRP-2009's
 arithmetic checked by hand, and it names Diego Fuentes, who really is SOL-PHX's GM.
 
-**The first download attempt got nothing** — HTTP 000, ten 0-byte files, trailing `` on the URLs. Caught
+**The first download attempt got nothing** — HTTP 000, ten 0-byte files, trailing `
+` on the URLs. Caught
 by counting files on disk, which is the only reason it was not a clean-looking sweep over zero files.
 
 Capability paths gate correctly: real URL 200, one character changed in the token 400, directory listing
@@ -611,6 +637,16 @@ superseded wording; other agents' PR #11, #20, #25, #43.
 32. **A narrow pattern with no false positives beats a wide one that cries wolf.** I widened another
     agent's miscount guard to digits, thirty nouns and no colon requirement; every extra hit was a bullet
     that merely contained a number. Precision was the feature I mistook for a gap.
+
+33. **Before fixing a branch, find its caller in production — for a tool, that is the registration, not
+    the handler.** Three times I have hardened code that the live path does not execute: a dead
+    `status === 'blocked'` branch (42), `escalation.ts`'s voice branch when voice uses a native Telnyx
+    transfer instead (54), and a near-miss at 51. Reading the right file is not the same as knowing what
+    calls it. `GET /v2/ai/assistants/<id>` lists what the phone agent can actually invoke.
+34. **Do not create repo-versus-live drift to fix a document.** `agent/sol.md` compiles into the
+    provisioned voice prompt, so editing the guardrail table changes a deliverable AND desynchronises the
+    live assistant until someone re-provisions. When the fix is cosmetic and the shipping is risky, write
+    the replacement into the log and leave the tree alone.
 
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real
