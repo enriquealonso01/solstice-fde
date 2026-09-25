@@ -15,6 +15,7 @@ If something is urgent or you want it done next, put `!!` at the front of the li
 <!-- add lines below this comment -->
 
 - 
+- !! The 'Talk to Sol' feature in the landing page chat does not work and says: "An unexpected error occurred"
 
 ---
 

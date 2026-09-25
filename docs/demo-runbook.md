@@ -1,0 +1,160 @@
+# Demo runbook
+
+The order to show things in, what to say, and what to do when something breaks. Written for two
+audiences in one room: a director of engineering and a non-technical product owner.
+
+**Total: about 18 minutes of demo, leaving the rest for their questions.** Do not fill the hour.
+
+---
+
+## Before they join
+
+- [ ] Two windows side by side: guest site left, admin right. Both signed in already.
+- [ ] Signed in as `admin@solsticehotels.com` (sees everything, including Backend and Cost).
+- [ ] Phone in hand, on the desk, ringer up.
+- [ ] Telnyx balance above $20. Below that, do not attempt live calls.
+- [ ] Failure injection panel showing **all healthy**. Check this; a switch left on from rehearsal
+      makes a working system look broken.
+- [ ] `docs/demo-cheatsheet.md` open in a tab you can glance at for confirmation numbers.
+- [ ] Close every other tab. Especially this repository.
+
+---
+
+## The arc
+
+The story is one sentence: **the front desk is drowning in repetitive questions and group quotes
+take two days, so we built an agent that handles the routine and hands humans the rest with
+everything they need.** Everything below serves that sentence.
+
+### 1. The problem, in their words (1 min, no screen)
+
+Do not open with architecture. Open with their brief: 140 properties, a front desk buried in
+repetitive requests, and group quotes taking two days that should take twenty minutes. Say that
+what you built handles both, and that you are going to show the guest side first because that is
+where the value is.
+
+### 2. Guest chat (3 min)
+
+Open the landing page. Click the bubble.
+
+- **"What time is checkout?"** — answers immediately, cites Policy 1.
+- **"Can I bring my dog?"** — no pets, service animals always, and it may not ask for papers.
+  Say out loud: *that ADA nuance is in their policy document, and a general-purpose chatbot gets
+  it wrong.*
+- **"How much is parking at the Chicago Riverwalk?"** — **it refuses to quote a number.** This is
+  the single most important moment in the demo. Policy 12 says there is no chain-wide parking
+  rate, so the agent says it does not have one instead of inventing a plausible figure.
+
+Point at the tool chips as they appear. *Every answer names the tool it used and the policy it
+read. Nothing here is the model remembering something._
+
+### 3. The phone, and the split screen (4 min)
+
+Put the admin window on the supervisor dashboard first, so they see it empty.
+
+Call **+1 (305) 786-6217** on speaker. Say your confirmation number is **R55004, last name Chen**.
+Ask to keep the room until 2pm.
+
+- The session appears on the dashboard **while you are still talking**.
+- The transcript streams in.
+- Sol grants 2pm as *guaranteed*, because Platinum is the one tier the policy guarantees.
+
+Say: *same agent, same tools, same rules. The phone is a different door into one system, not a
+second product.*
+
+### 4. Group booking (4 min)
+
+Switch to Group sales. Open **INQ-2009**, the Phoenix retreat.
+
+- One flag: they asked 17%, the property's ceiling is 15%.
+- Three costed options: approve at 15% for $7,994.25, escalate to the GM for 17%, or counter at
+  16% with a value-add tied to their yoga request.
+- **The send button is locked**, with the reason printed next to it.
+
+Then open **INQ-2007**, Providence. Two things their own sample data contains and most candidates
+will miss:
+- A suite rate of **−395**, quarantined rather than priced against.
+- A referral to a "Boston-area sister property" that **does not exist** in the directory, so the
+  agent passes the referral on and states plainly it cannot quote there.
+
+Say: *these are in the data you sent us. We did not add them.*
+
+### 5. Failure injection (2 min) — the moment they will remember
+
+Backend page, Failure injection, take the **property management system** offline.
+
+Go back to the chat and ask for a late checkout. It now says it cannot confirm availability and
+offers a human. Then ask a policy question: **it still works**.
+
+Say: *the outage is scoped. In production the PMS goes down and the policy reference does not, so
+the agent should lose exactly the answers that depend on the thing that broke, and no others.*
+
+Bring it back online.
+
+### 6. Cost, for the product owner (2 min)
+
+Admin, Cost. Two numbers:
+- **Cost per conversation**, measured, not modelled.
+- **The monthly projection at 140 properties**, with inputs they can argue with.
+
+Point out that **telephony is the majority of the bill, not the AI**. It reframes the whole
+conversation and it is the opposite of what most people assume.
+
+### 7. Architecture, for the engineer (2 min)
+
+Backend map. Do not narrate all seven tabs. Show the whole-system view, then one tab.
+
+The line that matters: **business logic lives in typed tools, not in the prompt.** Discount
+ceilings, comp authority and cancellation windows are code with tests. The model decides what to
+say and which tool to call; it never decides what the policy is.
+
+---
+
+## When they ask you to change something live
+
+They will. Have this one ready:
+
+> "Change Phoenix's discount ceiling from 15% to 12%."
+
+1. Open `src/lib/rules/thresholds.ts`.
+2. One line: `SOL-PHX` max discount 15 to 12.
+3. Re-run INQ-2009. The verdict, the sentence a rep reads, and all three costed options move
+   together.
+
+Say while doing it: *the reason this is one line is that no threshold lives in a prompt. If it did,
+this change would be a prompt edit with no test and no audit trail.*
+
+---
+
+## If something breaks
+
+| What breaks | What to do |
+|---|---|
+| The phone call fails | Use the mic in the chat bubble. Same agent, same tools. Say so and move on. |
+| The site is slow to answer | Point at the tool chips: *it is working, and it is showing you what it is doing.* Do not apologise twice. |
+| A screen errors | The error boundary shows the real message. Read it aloud, say what you would check, move on. Handling it calmly is worth more than not hitting it. |
+| Supervisor takeover fails | It is the least-tested path. Say so plainly, show the transcript streaming instead, and move to the group workflow. |
+| Something is genuinely wrong | Say "that is a bug, here is what I would look at" and keep going. They are evaluating how you handle it. |
+
+---
+
+## Things to say once, and not repeat
+
+- **On honesty:** "SMS is built but not live, because US carrier registration takes days and I
+  started it late. The delivery layer picks the channel from config, so it is a switch, not a
+  rewrite."
+- **On the agents that built this:** six agents with file-ownership boundaries built most of this
+  in a day, and the most valuable thing they produced was the bugs they found in each other's
+  work. `docs/how-this-was-built.md` if they want it.
+- **On what is not real:** the availability service is simulated, and every result says so. There
+  is no inventory-by-date in the data they sent, and inventing one silently would have been the
+  wrong answer to a question the brief explicitly asks about.
+
+---
+
+## Do not
+
+- Do not open the repository unless asked. It reads as hiding behind code.
+- Do not demo more than one thing at a time on screen.
+- Do not claim the supervisor takeover works until it has been verified on a live call.
+- Do not fill silence after a question. Answer it, then stop.

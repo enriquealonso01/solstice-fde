@@ -78,15 +78,23 @@ audit rows are from real conversations.
 
 | # | Item | Value | Est. |
 |---|---|---|---|
-| M1 | Live failure-injection toggle | The strongest unbuilt "surprise and delight": flip the PMS off mid-demo, watch it degrade honestly | 1-2h |
-| M2 | Future-capabilities roadmap in business outcomes | Katie's email asks for the vision, not just the MVP | 45m |
-| M3 | Demo runbook: the exact narrative, beat by beat | D1 and D3 both hinge on a rehearsed story | 1h |
+| ~~M1~~ | ~~Live failure-injection toggle~~ | **DONE.** Postgres-backed switches, ~3s to take effect, scoped outages. Verified: PMS offline refuses late checkout, policy still answers |
+| ~~M2~~ | ~~Future-capabilities roadmap~~ | **DONE.** `docs/where-this-goes.md`, outcomes not features, including what we would not do |
+| ~~M3~~ | ~~Demo runbook~~ | **DONE.** `docs/demo-runbook.md`: 18 minutes, 7 beats, what to say, what to do when something breaks |
 | M4 | Rehearsable live modification, documented | They will ask you to change something on the spot | 30m |
 | M5 | Make live-service tests hermetic | A flaky run during a technical deep-dive undercuts everything | 45m |
 | M6 | Clean phantom sessions from the supervisor grid | Old supervisor-leg bug left empty sessions that look like junk on screen | 20m |
 | M7 | Submission package: what actually gets sent, and how | Nobody has decided whether this is a repo link, a zip, or both | 30m |
 
 ---
+
+## 2b. Also done since this plan was written
+
+- Inbox auto-triage (`/api/group/triage`): sweeps every inquiry, drafts a follow-up when data is
+  missing and a proposal when it is complete, sends nothing, idempotent, audited. Verified across
+  all 10 inquiries; it correctly refuses the two inside blackout windows.
+- Spelling regression swept again: `followUps.ts` and `communications.ts` had reintroduced
+  "enquiry" into guest-facing text.
 
 ## 3. Gaps nobody has named yet
 

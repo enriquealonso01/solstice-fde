@@ -20,6 +20,8 @@ staff console behind three scoped logins. Same agent on both channels, same tool
 | Integration recommendation | [`docs/integration-recommendation.md`](docs/integration-recommendation.md) |
 | Latency target and its justification | [`docs/latency-target.md`](docs/latency-target.md) |
 | How this was built, and what the agents caught in each other's work | [`docs/how-this-was-built.md`](docs/how-this-was-built.md) |
+| Where this goes next, in business outcomes | [`docs/where-this-goes.md`](docs/where-this-goes.md) |
+| Demo runbook, beat by beat | [`docs/demo-runbook.md`](docs/demo-runbook.md) |
 | At least one net-new tool | `availability_service` — see Assumptions below |
 | Native platform export | [`exports/telnyx-assistant.json`](exports/telnyx-assistant.json) — the live assistant, 25 tools, secret redacted. Provisioned from source by [`scripts/telnyx/provision.mjs`](scripts/telnyx/provision.mjs) |
 
