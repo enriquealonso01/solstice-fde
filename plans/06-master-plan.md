@@ -21,8 +21,8 @@
 > Safe — nothing in the client writes these tables. **Apply it and change nothing, or apply nothing
 > and weaken §13**, which is the package's best answer on authority.
 >
-> **Then:** **Telnyx** $3.09 — now gates **beat 3**, the live intent check, **G16 on voice** *and*
-> **T33's voice half**; one call settles all of them · **T21** delete
+> **Then:** **Telnyx** $3.09 — one call now settles **four** things: **beat 3**, the live intent
+> check, **G16 on voice**, and **T36** (whether PR #85's transfer guarantee reaches the voice leg) · **T21** delete
 > `INQ-2012`/`INQ-2013`, keep `INQ-2011` — *"DELETE-ME"* is **row one** of the sales inbox.
 >
 > **T33 — disclosure only, no code change.** Sol tells the guest a manager has it **today**, in
@@ -71,7 +71,10 @@
 
 *Everything below this section is closed, or evidence.*
 *• **T34** an unredacted SIP target ships in the public export. One line. **Do first.***
-*• **T33** say what "today" rests on — Policy 15, not a pager. Disclosure only, no code change.*
+*• **T36** PR #85's transfer record may not run on voice — `transfer_to_human` is provisioned as a
+**native** Telnyx handoff, so the webhook never fires there. Evidence filed, not a verdict.*
+*• **T35** nothing points the reviewer at `agents/tested.log.md` — 4,783 lines proving 18 of 19
+guardrails. Two lines in `README.md` and `SUBMISSION.md`. **The only place this package underclaims.***
 *• **T32** the escalation queue is FUTURE in the diagram and present tense in `sol.md` — **lowest
 priority.** Mind the **681-character** voice-prompt margin: wrap it in `voice:exclude`.*
 *• **T21** two test rows to delete — the only thing a panel sees without reading. Enrique's.*
@@ -188,6 +191,104 @@ is currently true.
 
 **Check when done:** `npx vitest run` green, and the README contains no `\d{2,5} tests` outside an
 `over N` construction.
+
+
+### T36. PR #85's fix may not reach the voice leg it was written for — evidence, not a verdict
+
+*Earns a slot because #85 identifies a real guest-facing risk **on voice** and the code it changed
+appears not to run there. I cannot settle it without a live call, so this is filed as evidence with
+the check that would decide it. **The change is correct and valuable for chat either way** — nothing
+here asks for a revert.*
+
+**What #85 fixed.** `transfer_to_human`'s *configured* branch now creates an escalation before
+announcing the handoff, closing a window where the guest has been told a manager is coming and
+nothing durable exists. The rationale given: *"That is G16 on the leg G16 was written for"* — and
+G16's test is *"ask for a manager **on a call**."*
+
+**The evidence that the voice leg does not reach that code:**
+
+1. `scripts/telnyx/provision.mjs:585-588` — *"`transfer_to_human` is a native Telnyx handoff, not a
+   webhook"*, and the provisioner converts it accordingly.
+2. The current export's 25 tools contain **`transfer` (native) and no `transfer_to_human` webhook**.
+   Handoff-related tools on voice are exactly: `create_escalation`, `transfer`, `hangup`.
+
+So on **voice**, the model invokes Telnyx's native transfer; our `escalation.ts` webhook is never
+called, and the new pre-announcement escalation does not run. On **chat**, the webhook is the
+mechanism and the fix applies in full.
+
+**Why it matters rather than being a labelling quibble.** The risk #85 describes is specific to
+voice: a warm transfer is announced before it connects, and **it can fail for reasons the branch
+cannot see — an unfunded account being the obvious one.** The balance is **$3.09**. That is beat 3.
+
+**What is *not* claimed here.** I have not observed a voice call. The prompt does instruct Sol to
+call `create_escalation`, so a record may well exist in practice — as prompt-level behaviour rather
+than an enforced guarantee, which is the distinction #85 itself draws when it says *"the guarantee
+belongs in the tool."*
+
+**Do this, in order:**
+
+1. **Confirm the mechanism from the artefacts first** — it costs nothing. If the voice assistant
+   genuinely has no path to the webhook, say so plainly in the commit that resolves this, and
+   correct #85's rationale in `agents/completed.log.md` rather than leaving *"the leg G16 was
+   written for"* standing.
+2. **Then decide whether voice needs its own guarantee.** The honest options are a prompt-level
+   instruction (weak, and the project has twice concluded prompts are not guarantees), or accepting
+   it and **naming it** beside G16 in the guardrail table.
+3. **Do not change `agent/sol.md` for this without checking the 681-character margin** — the
+   guardrail table sits outside every `voice:exclude` block.
+
+**This is now the third thing gated on one live call**, with G16's voice half and T33's unmeasured
+voice timing claim. **Top up Telnyx, run beat 3 once, and all three resolve together.**
+
+
+### T35. Nothing points the reviewer at the guardrail evidence — two lines, no code, no re-provision
+
+*Earns a slot because it is the only thing I have found in ninety iterations where this package
+**underclaims**, and it lands on two of Katie's asks at once — "build with agents" and "sell the
+vision". Two documentation lines. **Not a correctness fix**; if anything else is open, do that first.*
+
+**The gap.** `agents/tested.log.md` is **4,783 lines** of adversarial testing against production,
+and it holds the evidence for **18 of 19 guardrails**. **No deliverable mentions it.**
+
+- `agent/sol.md` §5 presents G1–G19 with a *"How to test it"* column — correctly framed as
+  instructions a reader can run, and it makes **no claim** that they were run. Honest, and it leaves
+  the strongest evidence in the repository invisible.
+- `docs/how-this-was-built.md` describes the three-agent loop and tells the lock-collision story,
+  but never says *here is what the disbelieving agent actually proved*.
+- `README.md:76` mentions "a tester" in a table cell. That is the entire trail.
+
+A reviewer finds the log only by browsing `agents/`.
+
+**Do this — and put it in `README.md` and `SUBMISSION.md`, not in `agent/sol.md`.** The guardrail
+section of `sol.md` sits **outside** every `voice:exclude` block, so adding there spends the
+**681-character** voice margin and forces a re-provision. The two documents below cost nothing.
+
+1. **`SUBMISSION.md`, in the "Where the graded items are" table**, a row after the agent config:
+
+   > | Guardrail evidence | `agents/tested.log.md` — 4,783 lines, **18 of 19 guardrails verified
+   > against production**, by the agent whose only job was to disbelieve the other two. G16's voice
+   > half is the one open item and needs a live call. |
+
+2. **`README.md`, beside the guardrail material**, one sentence in the same register:
+
+   > The rules above are not asserted — 18 of 19 were driven against the deployed system and the
+   > evidence is in `agents/tested.log.md`, including the refusals that failed first.
+
+**Pick two or three concrete highlights rather than the count alone**, because a number is a claim
+and an example is evidence. The strongest on hand, all already in the log:
+
+- **G13** refused card digits under a direct prompt injection from a *correctly identified* guest,
+  and refused **without calling the tool** — the prompt-level rule held before the masking layer.
+- **G17** re-proved at **500 trace rows** with no raw `args` column at all.
+- **PR #74**: 4 of 4 replies promised the guest that Sales had it; after the fix, **0 of 4**, with
+  2 of 4 refusing when pushed.
+
+**Say G16 is open in the same breath.** The package's credibility rests on volunteering the gap,
+and a coverage claim that hides one is worth less than a smaller claim that names it.
+
+**Check when done:** both files point at the log, the count says **18 of 19** and names G16 as the
+exception, `agent/sol.md` is untouched, and `npx vitest run` still passes (the README guard forbids
+exact test counts, not guardrail counts — do not introduce `\d+ tests`).
 
 
 ### T34. An unredacted SIP transfer target ships in the public export, and `SUBMISSION.md` says nothing secret is in it
@@ -934,6 +1035,229 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 92, 19:34 EST — I read one variable and concluded about a boolean that depends on two
+
+#### The correction, and it is a correction of a correction
+
+In **iteration 84** I checked the deployed environment, found `TELNYX_TRANSFER_TARGET` unset, and
+wrote that `transferToHuman`'s **unconfigured fallback** *"is the live configuration, not a test
+condition"*. In **iteration 85** I corrected that, saying the env var does not govern voice at all
+because voice uses Telnyx's native transfer.
+
+**Both were wrong, and PR #85 found the actual mechanism.** `escalation.ts:213`:
+
+```ts
+const target = process.env.TELNYX_TRANSFER_TARGET ?? process.env.DEMO_PHONE ?? null
+```
+
+**Two variables decide it, not one.** Verified against the deployed environment myself:
+
+```
+TELNYX_TRANSFER_TARGET   NOT SET
+DEMO_PHONE               SET (all)      -> configured is TRUE, the ANNOUNCE path is live
+```
+
+I read the first name in a `??` chain and stopped. **The same shape as every other error in this
+log** — verifying a part and concluding about the whole — now at the scale of a single expression.
+There is no new lesson here, only the same one at a smaller grain: *the question is what decides
+this value, not what I expected to decide it.*
+
+#### PR #85's finding is genuinely good
+
+A warm transfer is **announced before it connects**, so the configured path left a window where the
+guest has been told a manager is coming and **nothing durable exists** — and the transfer can fail
+for reasons the branch cannot see, *"an unfunded account being the obvious one"*. The chat branch
+has insisted on a record since PR #7; **the asymmetry was an oversight**, and it is now closed
+without any guest-facing wording change, which is what my T33 revision asked for.
+
+#### But the fix may not reach the leg it targets — T36, filed as evidence rather than a verdict
+
+#85's rationale is *"that is G16 on the leg G16 was written for"*, and G16's test is *"ask for a
+manager **on a call**."* Two artefacts say the voice leg does not reach that code:
+
+- `scripts/telnyx/provision.mjs:585-588` — *"`transfer_to_human` is a native Telnyx handoff, not a
+  webhook"*, and the provisioner converts it.
+- The current export's 25 tools carry **`transfer` (native) and no `transfer_to_human` webhook**.
+  Voice's handoff tools are exactly `create_escalation`, `transfer`, `hangup`.
+
+So the new pre-announcement escalation runs on **chat**, where the webhook is the mechanism, and
+**not on voice**, where Telnyx handles the transfer natively. That matters because the risk
+described is specific to voice, and the failure mode named — an unfunded account — is our **$3.09**.
+
+**I did not claim the system is broken.** I have not observed a voice call. The prompt does tell Sol
+to call `create_escalation`, so a record may exist in practice — as prompt-level behaviour rather
+than an enforced guarantee, which is exactly the distinction #85 itself draws.
+
+**Having been wrong twice about this same branch, I filed the evidence and the check that would
+settle it rather than a conclusion.** That is the correct output of a method that has been unreliable
+here, and it is a better use of being wrong than resolving to be more careful.
+
+#### One live call now settles three things
+
+G16's voice half · T33's unmeasured voice timing claim · T36. **Top up Telnyx, run beat 3 once.**
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| **Telnyx top-up, $3.09** | Enrique | open — **now settles three open questions in one call** |
+| T34 rotation decision | Enrique | open |
+| T21, delete `INQ-2012`/`INQ-2013` | Enrique | open — verified safe |
+| **T36** does #85 reach voice? | Agents | **open — new, artefact check costs nothing** |
+| T35 point at the guardrail evidence | Agents | open — two lines |
+
+Inbox empty. Lock held since 19:28. Suite green at 473, 37 files.
+
+
+### Iteration 91, 19:28 EST — the first thing in ninety iterations where this package underclaims
+
+#### The latency deliverable is honest and independently verified — nothing to correct
+
+The Tester's iteration 53 (PR #84) checked the commitments rather than the prose:
+
+- **Warm procedure does what it claims**: `GET /api/chat` → 405, **no session created** (140 before,
+  140 after), warm timings matching the runbook's own ~0.21s and ~0.26s.
+- **Tool webhook p95 = 270ms pooled over 80 calls** across four tools, inside the published 300ms.
+  Their first pass said it was *missed by 76ms* — a p95 computed from **twenty** samples. They
+  caught it themselves and **recorded the rule**, which is the more valuable half.
+- **Chat medians inside target on three turns, stated as n=3**, not as settling the target.
+
+And the document itself does the thing that is hard to do: *"First signal p50 1545ms, 45ms over the
+1.5s target… We are not moving the target to match the measurement; the target was reasoned from
+turn-taking, not from what we happened to score."*
+
+**No cross-document drift either.** `README.md:21` and `SUBMISSION.md:42` only *link* to the
+latency document — the number lives in exactly one place, which is why it has not rotted like the
+file counts did.
+
+#### What I did find: the evidence for 18 of 19 guardrails is invisible from every deliverable
+
+`agents/tested.log.md` is **4,783 lines** of adversarial testing against production and holds the
+proof for **18 of 19 guardrails**. **Nothing points at it.**
+
+- `agent/sol.md` §5 gives G1–G19 with a *"How to test it"* column. Correctly framed — instructions
+  a reader can run, claiming nothing about whether they were run. **Honest, and it leaves the
+  strongest artefact in the repository undiscoverable.**
+- `docs/how-this-was-built.md` tells the loop story and the lock collision, never *what the
+  disbelieving agent proved*.
+- `README.md:76` says "a tester" in a table cell. That is the whole trail.
+
+**T35 filed**, deliberately small: two documentation lines, in `README.md` and `SUBMISSION.md`
+**only**. The guardrail section of `sol.md` sits outside every `voice:exclude` block, so adding
+there would spend the **681-character** margin and force a re-provision for a presentational
+improvement. The two documents cost nothing.
+
+I specified **concrete highlights rather than the count**, because a number is a claim and an
+example is evidence — G13 refusing card digits under prompt injection *without calling the tool*,
+G17 re-proved at 500 trace rows, and PR #74's 4-of-4 → 0-of-4. And **G16 named as open in the same
+breath**: a coverage claim that hides its exception is worth less than a smaller one that names it.
+
+#### Why this is worth noting beyond the task
+
+Ninety iterations of this log are corrections of things claimed too strongly — mine most of all.
+**This is the first in the other direction.** The habit that produced the accuracy also produced a
+reluctance to state what was actually proved, and those are not separate dispositions. The fix is
+not to loosen the standard; it is to notice that *"18 of 19, here is the log, G16 is open"* **is**
+the careful statement, not a boast.
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — unapplied for a fourth consecutive Tester iteration** |
+| T34 rotation decision | Enrique | open |
+| Telnyx top-up, $3.09 | Enrique | open — G16 is the one guardrail T35 has to call open |
+| T21, delete `INQ-2012`/`INQ-2013` | Enrique | open — verified safe |
+| **T35** point at the guardrail evidence | Agents | **open — new, two lines** |
+| `SUBMISSION.md` "Two things" → three | Agents | open — one word, folds into T35 |
+| T33 disclosure | — | **CLOSED**, PR #83 |
+
+Inbox empty. No lock held. Suite green at 462.
+
+
+### Iteration 90, 19:24 EST — T33's disclosure is correctly voice-excluded; the suite is green at 462
+
+#### Full suite green
+
+**462 passed, 35 test files, 1.68s.** Up from 445 at iteration 79, with the new
+`export-redaction.test.ts` and `no-committed-credentials.test.ts` in it.
+
+#### T33's paragraph is in `sol.md` and costs the phone agent nothing
+
+The disclosure I specified in T33 has landed in the working tree, and it says the thing better than
+my draft did:
+
+> *"The gap is between policy and implementation, and it is named here rather than papered over in
+> what Sol says: if a manager does not call, that is the hotel failing its own policy, not the agent
+> having lied."*
+
+**It is inside the `voice:exclude` block at lines 94-116**, so it never reaches the phone. Verified
+the way that does not depend on line endings:
+
+```
+paragraph reaches the phone agent : false
+working-tree compile              : 29,319   ==  live 29,319
+margin                            : 681      unchanged
+```
+
+**No re-provision needed**, because the compile is identical to what is already live.
+
+#### I walked into the CRLF trap again, and caught it only by the check that could not lie
+
+Comparing `git show HEAD:agent/sol.md` against the working file reported **delta +405** — which
+reads as *"the paragraph is not excluded and just spent most of the margin."*
+
+**It is line endings.** `git show` emits the blob with **LF**; the working file is **CRLF**. The
+405 is 400 carriage returns plus collapse-rule differences, and **none of it is content**. The
+paragraph's real cost is **zero**.
+
+This is the **fifth** time line endings have corrupted a reading in this file, the second time for
+me, and the first time after **I wrote the warning into this plan myself** in iteration 86. What
+saved it was including a check that line endings cannot affect — a boolean `includes()` on the
+compiled output — beside the arithmetic. **When a measurement has a known failure mode, carry a
+second measurement that does not share it.** That is worth more than remembering the warning,
+because I demonstrably did not remember the warning.
+
+#### PR #82 generalised the credential guard, and its reasoning is worth keeping
+
+`no-committed-credentials.test.ts` scans **every tracked file**, not just the export, because
+`legs.test.ts` is itself the proof that an export-only check misses things — *"the fixture leaked in
+a file nobody thought to scan."*
+
+It is **shape-based rather than value-based, and for a stated reason I did not know**:
+`vitest.setup.ts` strips every credential before tests load, so a test **cannot** compare against
+`.env`. My iteration-89 method is therefore unavailable inside the suite, and shape-matching with
+`EXAMPLE / FIXTURE / REDACTED / NotAReal / PLACEHOLDER` exemptions is the right substitute.
+
+Two details that make it real rather than decorative: it red-checks the *"is actually looking at
+the repo"* case by stubbing `git ls-files`, so it cannot pass by scanning nothing; and it verified
+PR #81 against **`origin/main`**, not the working tree. It also caught a credential-shaped string
+in the author's own log entry.
+
+**My identifier-scope note is answered implicitly** — shape-matching does not flag UUID resource
+ids, so `TELNYX_CALL_CONTROL_APP_ID` and `TELNYX_SIP_CONNECTION_ID` stay. That is the right call
+and I am not re-raising it.
+
+#### Deploy is one commit behind, and it does not matter
+
+`HEAD 23:20:38` against `ready 23:14:45`. The undeployed commit is **#82, which adds a test file
+only**. PR #81's redaction is deployed. No runtime difference.
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| T34 rotation decision | Enrique | open — bound established, history escalated by #82 |
+| Telnyx top-up, $3.09 | Enrique | open |
+| T21, delete `INQ-2012`/`INQ-2013` | Enrique | open — verified safe |
+| T33 disclosure | Agents | **in the tree, uncommitted** — correct, zero compiled cost |
+| `SUBMISSION.md` "Two things" → three | Agents | open — one word |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 89, 19:20 EST — my own secret sweep had the flaw #81 names; redone properly, the conclusion holds
 

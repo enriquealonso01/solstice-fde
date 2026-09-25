@@ -4,63 +4,52 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 89 — 2026-09-25 ~19:20 EST
+## Iteration 91 — 2026-09-25 ~19:28 EST
 
-### Inbox empty. Lock held since 19:16. T34's redaction CLOSED at HEAD (PR #81).
+### Inbox empty. No lock held. Suite green at 462. T33 closed (PR #83).
 
-### My iteration-88 sweep had the exact flaw #81 names
+### The latency deliverable is honest and independently verified — nothing to correct
 
-PR #81 says of its own earlier scan: *"The scan looked for a list of things I predicted, and a SIP
-URI is none of them."*
+Tester iteration 53 (PR #84) checked the commitments, not the prose: the warm procedure returns
+**405 and creates no session** (140 before, 140 after) with timings matching the runbook; tool
+webhook **p95 270ms pooled over 80 calls**, inside the published 300ms; chat medians inside target
+**stated as n=3**.
 
-**That is what I did one iteration ago, and I presented the result as a bound.** I compared tracked
-files against **five `.env` variables I chose by hand**, then wrote into T34 that this was *"the
-only credential ever committed — decide on one item, not on an unknown number."*
+Their first pass said the webhook p95 was missed by 76ms — computed from **twenty** samples. They
+caught it themselves and **recorded the rule**, which is the more valuable half.
 
-**`TELNYX_SIP_USERNAME` was not among my five.** My sweep could not have seen the class of value it
-was claiming to bound. The conclusion was right only because #81 had already found the thing I was
-implicitly ruling out.
+The document also does the hard thing: *"1545ms against 1.5s… We are not moving the target to match
+the measurement."* And `README.md:21` / `SUBMISSION.md:42` only **link** to it, so the number lives
+in one place and has not rotted the way the file counts did.
 
-### Redone properly: every variable, not a chosen list
+### What I found: the guardrail evidence is invisible from every deliverable
 
-Parsed `.env` programmatically — **23 variables with values of 12+ characters** — and checked each
-against `git grep HEAD`.
+`agents/tested.log.md` is **4,783 lines** proving **18 of 19 guardrails** against production, and
+**nothing points at it.** `sol.md` §5 gives a *"How to test it"* column — honest, claims nothing
+about whether the tests were run. `how-this-was-built.md` tells the loop story but never what the
+disbelieving agent proved. `README.md:76` says "a tester" in a table cell.
 
-**Every actual secret is absent from HEAD:** `TELNYX_SIP_PASSWORD`, `TOOL_WEBHOOK_SECRET`,
-`PROPOSAL_LINK_SECRET`, `DEMO_PASSWORD`, `TELNYX_PUBLIC_KEY`, `TELNYX_SIP_USERNAME`,
-`TELNYX_SIP_URI`, `TELNYX_TELEPHONY_CREDENTIAL_ID`, and the four API keys.
+**T35 filed**, deliberately small: two lines, in `README.md` and `SUBMISSION.md` **only**. The
+guardrail section of `sol.md` is outside every `voice:exclude` block, so editing there spends the
+**681-character** margin and forces a re-provision for a presentational change.
 
-**Seven do appear, all identifiers or deliberately public:** phone number (published on purpose),
-base URL, model name, voice name, and three resource ids (`TELNYX_ASSISTANT_ID`,
-`TELNYX_CALL_CONTROL_APP_ID`, `TELNYX_SIP_CONNECTION_ID`).
+I specified **concrete highlights over the count** — G13 refusing card digits under prompt
+injection *without calling the tool*, G17 at 500 trace rows, PR #74's 4-of-4 → 0-of-4 — and **G16
+named open in the same breath**.
 
-**T34's bound stands, and now rests on a method that could have falsified it.** The answer did not
-change; the reason it can be trusted did. Re-sourced in the task text.
+### Why it is worth noting beyond the task
 
-### One note for whoever finishes `no-committed-credentials.test.ts`
-
-It is untracked in the working tree. Two **resource identifiers** are tracked and I am not
-proposing they be removed — but the guard's authors should **decide explicitly whether identifiers
-are in scope and write the answer down**, because the next person to add one will read the test,
-not the plan.
-
-### PR #81 is the right shape
-
-The fix is a rule in the export script, not a value in the artefact: every
-`sip:<user>@sip.telnyx.com` loses its local part and the script **refuses to write a file where one
-survives**. Red-checked twice, including against *a different credential under a brand-new key* — a
-test that only knew the one string would have been theatre.
-
-### Still open
-
-`SUBMISSION.md:45` reads *"Two things they did not ask for"* above **three** bullets.
+Ninety iterations of this log are corrections of things claimed too strongly, mine most of all.
+**This is the first in the other direction.** The habit that produced the accuracy also produced a
+reluctance to state what was proved. The fix is not to loosen the standard — it is to see that
+*"18 of 19, here is the log, G16 is open"* **is** the careful statement.
 
 ### The plan is accurate and correctly ordered
 
-**Enrique:** the SQL paste · T34 rotation decision · Telnyx top-up · T21.
-**Agents:** the one-word `SUBMISSION.md` fix · finish `no-committed-credentials.test.ts`.
+**Enrique:** the SQL paste · T34 rotation · Telnyx top-up · T21.
+**Agents:** **T35**, which absorbs the one-word `SUBMISSION.md` fix.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — still the only open item with a live security consequence in the
-running system.
+**The `drop policy` paste** — still the only open item with a live security consequence, and the
+Tester now records it **unapplied for a fourth consecutive iteration**.

@@ -94,7 +94,7 @@ inquiry lands on the group sales board. A human reads the escalation and routes 
 <!-- voice:exclude -->
 <!--
   Chat-only clarification, and excluded from the voice compile for two reasons. A guest on a call
-  has no use for it, and the compile sits 685 characters under a hard 30,000 cap — an unwrapped
+  has no use for it, and the compile sits a few hundred characters under a hard 30,000 cap — an unwrapped
   addition spends margin that PR #67 already had to correct once. Wrapped, the compile moves by a
   single whitespace character rather than by the length of the text.
 -->
