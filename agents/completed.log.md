@@ -3194,3 +3194,21 @@ because it describes behaviour, not paperwork.
 this file should expect to wrap something.
 
 `npx tsc -b --force` clean. `npx vitest run`: **428 passed, 30 files**.
+
+### Correction to the margin above, and it is the same mistake twice
+
+I wrote **1,086**. On disk after checkout it is **29,315, margin 685** — the CRLF conversion again,
+~400 characters across ~400 lines.
+
+**I logged a correction for exactly this in It55** ("the number a future reader needs is the one that
+comes back from disk") and then measured the working copy anyway, in the same file, four iterations
+later. Writing the lesson down did not make me apply it; what would have is measuring after the
+checkout rather than before, which is a step, not a principle.
+
+The number that matters: **685 characters of headroom.** One added paragraph in §1–§7 will truncate
+the voice prompt. The guard will catch it — it just caught me — but the next agent to add prose here
+should plan to wrap something in `voice:exclude` in the same edit.
+
+Re-provisioned and diffed: live instructions are **byte-identical** to the compile at 29,315, the
+supervisor-queue correction is live, "reaches Sales" is gone from the phone agent, and assumption 16
+is correctly absent from it. Existing assistant reused, nothing created, balance untouched at $3.09.
