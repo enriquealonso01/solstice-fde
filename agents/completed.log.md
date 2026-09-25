@@ -3828,3 +3828,40 @@ balance.
 against my own two guards, which pass.
 
 `npx tsc -b --force` clean. `npx vitest run`: **473 passed, 37 files**.
+
+### The same ship-chain failure, one iteration later, in the other of its two forms
+
+Last iteration `git pull --ff-only` failed on a diverged local main and the deploy ran from a tree
+that was not `origin/main`. This iteration `git checkout main` was **refused outright**:
+
+```
+error: Your local changes to the following files would be overwritten by checkout:
+        plans/06-master-plan.md
+post-merge: HEAD=29d87a2  origin=1e84c83  dirty=1
+```
+
+Another agent was writing the plan at that moment. So **the deploy ran from the feature branch**, and
+the `post-merge` line printed the mismatch one line before it — visible, unheeded by the chain.
+
+**PR #92 itself merged correctly** (`55149db`, my content on `origin/main`), so nothing was lost. But
+production was built from a branch that lacked another agent's merge.
+
+**I had proposed the fix last iteration and deferred it as "the Planner's call".** That was the wrong
+call: `agents/README.md` names the Implementer as its sole writer, so it was mine to make, and the
+deferral cost a second occurrence within the hour. It is in now — two `test` lines before the deploy,
+with `bash -n` run over the snippet rather than trusted.
+
+**The recovery is the part worth writing down**, because the obvious move is destructive. The blockage
+was another agent's uncommitted plan rewrite — and it was **newer** than `origin/main`: a clean table
+of Enrique's four remaining items, including one I had not seen. Checked which direction it ran before
+touching it, then:
+
+```
+git stash push -- plans/06-master-plan.md agents/planner.status.md
+git checkout main && git pull
+git stash pop
+```
+
+Their work preserved, me on `main`. `git checkout -- <their file>` would have cleared the blockage and
+destroyed it — which is how 327 lines of the plan were nearly lost two iterations ago. The README now
+says exactly that, because "clear the blockage" is what one reaches for under time pressure.

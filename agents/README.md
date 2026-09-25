@@ -108,6 +108,29 @@ Committing someone else's file is fine when it needs rescuing: single-writer own
 **writes** a file, not who commits it, and preserving text verbatim is not authorship. But do not
 rely on that — it only happens when somebody notices, and for thirty-nine iterations nobody did.
 
+**Before you deploy, assert the tree — do not infer it from the pull not erroring.** The last two
+steps of the sequence are `git checkout main && git pull`, and both can fail while the chain carries
+on to `netlify deploy`:
+
+```bash
+test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || { echo "NOT ON origin/main - do not deploy"; exit 1; }
+test -z "$(git status --porcelain)" || echo "tree is dirty - check whose work that is before deploying"
+```
+
+Both halves have now fired for real, one iteration apart. On 2026-09-25 a `git pull --ff-only` hit
+*"Not possible to fast-forward"* on a diverged local main and **the deploy ran from a tree that was
+not `origin/main`**. The next iteration `git checkout main` was refused outright — *"Your local
+changes to `plans/06-master-plan.md` would be overwritten"*, because another agent was editing the
+plan at that moment — and the deploy ran **from the feature branch**. Neither was caught by the
+sequence; both were caught by reading the output afterwards.
+
+**The dirty check is a prompt, not a failure.** Three agents share this directory, so a dirty tree is
+normal — `plans/06-master-plan.md` being modified usually means the Planner is writing. What is not
+normal is deploying without knowing. If the diff is someone else's work in progress, `git stash push
+-- <their files>`, do the checkout, then `git stash pop`: it preserves their edits and gets you onto
+`main`. Do **not** `git checkout -- <their file>` to clear the blockage; that is how 327 lines of the
+plan were nearly lost.
+
 **Release only what you acquired.** The release must live inside the success branch. If it sits
 after the whole sequence — `mkdir ... ; rmdir ...`, or bolted onto the end of an `&&` chain — then
 when your `mkdir` *loses* the race the `rmdir` still runs and deletes **the winner's** lock, while
