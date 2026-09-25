@@ -689,3 +689,36 @@ history can *address* SIP traffic at a named connection; they cannot authenticat
 Two guards now stop it coming back: `export-redaction.test.ts` (the Implementer's — asserts no `sip:`
 URI in the export has a local part other than the marker) and `no-committed-credentials.test.ts` (mine —
 scans every tracked file for credential shapes, which is what caught the test fixture).
+
+---
+
+## RETRACTION: the G16 voice request was never needed (2026-09-25, iteration 54)
+
+Above, repeatedly, I asked you to **unset `TELNYX_TRANSFER_TARGET` for two minutes** so I could exercise
+G16's voice half. **Do not do it. It was already unset, and unsetting it changes nothing.**
+
+`netlify env:list` against the deploy: `TELNYX_TRANSFER_TARGET` is absent, and has been the whole time.
+But the code reads two variables, and I only looked at the one I expected:
+
+```ts
+const target = process.env.TELNYX_TRANSFER_TARGET ?? process.env.DEMO_PHONE ?? null
+```
+
+`DEMO_PHONE` **is** set on the deploy, so a transfer counts as configured and the announce-the-handoff
+path is the live one. Confirmed against production, not inferred: `transfer_available: True`,
+`fallback: null`, `escalation_id: None`.
+
+I asked you for something already done, for about twelve hours, because I read the local `.env` and a
+variable name rather than the deployed environment and the expression. Nothing for you to action here —
+recorded because a request that was never needed should not sit on your list looking urgent.
+
+**What it turned up is real and is fixed** (PR #85, deployed): on the live configured path the agent was
+told to announce the handoff with no escalation in existence, so if the transfer failed — and the Telnyx
+balance is $3.09 — the guest had been told a manager was coming with nothing in writing. That is G16 on
+the voice leg. It now creates the record first when none exists, and behaves exactly as before when one
+does.
+
+**If you ever do want the unconfigured branch exercised**, it needs `DEMO_PHONE` unset as well as
+`TELNYX_TRANSFER_TARGET`. I have not done that: it is a demo-relevant environment change and we are
+fifteen hours out. It is the only remaining way to see that branch run in production, and it is optional
+— the branch is correct in source and covered by tests.
