@@ -97,15 +97,43 @@ Say: *these are in the data you sent us. We did not add them.*
 
 ### 5. Failure injection (2 min) — the moment they will remember
 
-Backend page, Failure injection, take the **property management system** offline.
+*Rehearsed end to end on production. Every line below is what actually came back.*
 
-Go back to the chat and ask for a late checkout. It now says it cannot confirm availability and
-offers a human. Then ask a policy question: **it still works**.
+**First, while everything is healthy**, ask in the guest chat:
+
+> *"Hi, this is Michael Chen, confirmation R55004. Can I keep the room until 2pm today?"*
+
+> **Yes — as a Platinum member, 2pm checkout is guaranteed on R55004, no need to worry about it.**
+
+Identify in the same sentence. If you just ask for a late checkout, Sol correctly asks who you
+are first, and you spend the beat on identification instead of the outage. Use **R55004**, the
+same number as the phone beat, so you are not juggling two. Use Platinum: Gold is conditional on
+availability by policy, so a Gold guest gets a hedged answer even on a healthy system and the
+contrast disappears.
+
+**Now** go to the Backend page, Failure injection, and take the **property management system**
+offline. Give it a few seconds. Ask the identical question again:
+
+> **I'm not able to confirm same-day availability right now — our system is down. I can't promise
+> 2pm at the moment, but as a Platinum member it's likely we can accommodate it once I can check;
+> I'll have a colleague follow up with you shortly to confirm.**
+
+A guaranteed yes became an honest "I cannot check". Point out that **it still called the tools** —
+`identify_guest` and `check_late_checkout` both fire. The refusal comes from the dependency, not
+from the model deciding to be careful, which is the difference between a guardrail and a mood.
+
+**Then, in the same conversation**, ask a policy question:
+
+> *"And separately, what is your cancellation policy for a flexible rate?"*
+
+> **Free cancellation up to 72 hours before check-in. Cancelling inside that window forfeits one
+> night's room and tax to the card on file.**
 
 Say: *the outage is scoped. In production the PMS goes down and the policy reference does not, so
-the agent should lose exactly the answers that depend on the thing that broke, and no others.*
+the agent loses exactly the answers that depend on the thing that broke, and no others.*
 
-Bring it back online.
+**Bring it back online and confirm all three switches read healthy before you move on.** A switch
+left on makes the rest of the demo look broken.
 
 ### 6. Cost, for the product owner (2 min)
 
