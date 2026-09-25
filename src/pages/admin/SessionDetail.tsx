@@ -72,7 +72,7 @@ export default function SessionDetail() {
         <Panel>
           <EmptyState
             title="No such session"
-            body="It may have been purged, or your role cannot read it. RLS decides that, not this page."
+            body="It may have been removed, or your role is not allowed to see it. That is decided in the database, not on this page."
           />
         </Panel>
         <Link to="/admin/sessions" className="btn-ghost mt-4 inline-flex">

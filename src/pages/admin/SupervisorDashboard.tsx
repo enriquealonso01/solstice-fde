@@ -60,7 +60,14 @@ export default function SupervisorDashboard() {
         <Metric label="Active now" value={live.length} hint={`${voiceCount} voice · ${chatCount} chat`} />
         <Metric label="Human in control" value={takenOver} hint="Supervisor took the call" />
         <Metric label="Archived" value={rows.filter((s) => s.status === 'ended').length} hint="Full transcript retained" />
-        <Metric label="Realtime" value={source === 'live' ? 'Connected' : 'Fixtures'} hint="sessions · messages · tool_invocations" />
+        {/* The hint used to print the three Postgres table names. It is the right evidence — this
+            page is subscribed, not polling — but a concierge supervisor does not read table names.
+            Same three streams, said in their words. */}
+        <Metric
+          label="Realtime"
+          value={source === 'live' ? 'Connected' : 'Sample data'}
+          hint="conversations, messages and actions, live"
+        />
       </div>
 
       <div className="mb-3 flex items-center gap-2">

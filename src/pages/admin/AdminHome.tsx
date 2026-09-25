@@ -89,7 +89,7 @@ export default function AdminHome() {
           value={proposals.rows.filter((p) => p.status === 'sent').length}
           hint="proposals delivered"
         />
-        <Metric label="Staff accounts" value={members.rows.length} hint="scoped by role in the database" />
+        <Metric label="Staff accounts" value={members.rows.length} hint="each one sees only its own work" />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
