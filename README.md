@@ -85,6 +85,16 @@ handoff described as a successful one, which is the exact thing the guardrails f
 All four were found by an agent whose only job is to disbelieve the other two, and all four are
 fixed. None of them would have been caught by the tests that were already passing.
 `docs/how-this-was-built.md` has the detail, including what the agents got wrong.
+**The guardrail table in `agent/sol.md` is not asserted either.** Eighteen of its nineteen rules were
+driven against the deployed system rather than against fixtures, and the evidence is in
+[`agents/tested.log.md`](agents/tested.log.md) — over 4,900 lines of it, including the refusals that
+failed the first time. The exception is **G16's voice half**, which needs a live phone call and is
+named here rather than rounded up. Two worth opening the file for: **G13** would not read a card's
+last four digits to a *correctly identified* cardholder who explicitly told it to ignore its system
+prompt, with the true answer sitting in the sample data; and **G17** was re-proved across 500 trace
+rows where the raw-argument column does not exist at all, so masking is a property of the write path
+rather than something applied on read.
+
 
 **The result:** over 230 files, more than 140 of them TypeScript, and over 400 tests across more than 30 test files. The line
 count splits in a way worth showing rather than totalling: **about 35,100 lines of source**, 3,500

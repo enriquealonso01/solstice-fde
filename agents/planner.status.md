@@ -4,59 +4,66 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 93 — 2026-09-25 ~19:38 EST
+## Iteration 94 — 2026-09-25 ~19:44 EST
 
-### Inbox empty. No lock held. `SUBMISSION.md` count fixed (PR #87).
+### Inbox empty. No lock held. Suite 473 passed, 37 files.
 
-### Two agents fixed the voice leg on the chat branch. The provisioner settles it
+### T36 CLOSED, and live rather than merely merged
 
-**What they got right, and I had wrong twice:** `configured` is TRUE because `DEMO_PHONE` is the
-`??` fallback and is set on the deploy, so the **announce** path is live. The Tester also retracted
-a twelve-hour-old request asking Enrique to unset a variable that was already unset, and recorded
-the rule: **read the expression, where it runs.**
+PR #90 put the rule where the voice leg reads it. Verified against the **live assistant**:
 
-**Their evidence:** `POST /api/tools/transfer_to_human {"channel":"voice"}` → `escalation_id: None`,
-"Announce the handoff before it happens." From which both concluded *G16 on the voice leg*.
-
-**`provision.mjs:586-603` performs the conversion, it does not just describe it:**
-
-```js
-if (name === 'transfer_to_human') { …
-  tools.push({ type: 'transfer', timeout_ms: 25000, transfer: { targets: […],
-    warm_transfer_instructions: 'Summarise the guest, the reservation, what has been tried,
-    and the exact ask. Then hand over.' } })
-  continue }
+```
+live warm_transfer_instructions : 457 chars
+  requires create_escalation first                 : true
+  forbids describing a handoff that did not happen : true
 ```
 
-**No webhook is registered under that name for voice.** `registry.ts:42,153` keeps it for **chat**.
-The export's 25 tools agree: native `transfer`, no `transfer_to_human`.
+The escalation is raised **before** the hand over, so a record exists whether or not the transfer
+connects — and if nobody picks up, Sol says plainly it could not reach a colleague instead of
+narrating a handoff that did not occur.
 
-So their instrument was right and **answered a different question than the one asked of it** — a
-`POST` to the endpoint, with `channel` as a payload field, says nothing about whether the voice
-assistant calls it. The provisioner says it cannot.
+### The near-miss, which is the real content of this iteration
 
-### The gap they found is real; it is not where the fix went
+My first read showed **89 iterations, newest 92**, T36 still on its original heading — and PR #88
+had just documented a reverted tree in which my file was **−327 lines**. I concluded my
+iteration-93 work was destroyed. **I drafted a restoration and tried to apply it.**
 
-On voice the only guidance is `warm_transfer_instructions`, and it contains **no escalation
-requirement**. The announce-before-connect window is still open on the leg G16 names, while #85
-closed the same window on chat — where PR #7 had already closed it.
+The `assert` in my own throwaway script failed, because the heading I was "restoring" was already
+there. Re-reading: **90 iterations, 6,028 lines, iteration 93 present, file clean and committed in
+PR #90.** Nothing was ever lost.
 
-**Remedy: one sentence in `warm_transfer_instructions` + a `--refresh`.** It does not touch
-`agent/sol.md` and does not spend the 681-character margin.
+**Had that assertion not fired, I would have written sixty duplicated lines into the file I was
+trying to protect.**
 
-### On being the one to say this
+Third time this session a read has raced another agent's write. The first two cost nothing because
+I only reported them. **This time I was about to act on the stale read.**
 
-I have no standing on this branch from past accuracy — I was wrong about it twice. What I have is
-an artefact that answers the **routing** question where theirs answers an **endpoint** question,
-and it is checkable in a minute without spending anything. That is the form a disagreement should
-take when the person raising it has a bad record on the topic.
+> **Before declaring that something was lost, read it again.** A missing-data conclusion is the case
+> where the observation is most likely a timing artefact *and* where acting on it does the most
+> damage. What saved this was defensive coding in a disposable script, not judgement.
 
-**Still unobserved by anyone:** whether a real call reaches the native transfer. Gated on $3.09.
+### PR #88's incident, worth Enrique knowing
+
+Three failures in one ship, none of them the change: **`git pull --ff-only` failed and the chain
+continued**, so the deploy ran from a tree that was not `origin/main`; the working tree had been
+**reverted** (`SUBMISSION.md` back to *"Two things"*, `list-counts.test.ts` deleted, my plan
+−327 lines) and was *"one `git add -A` away from being committed as a deletion"*; and they restored
+six files while **deliberately leaving `agents/planner.status.md` alone** as the one file with new
+content that was not theirs — which is why my status survived.
+
+### The Tester caught the second casualty: a guard that was not running
+
+`list-counts.test.ts` was **in HEAD and absent from the working tree**, so the suite ran 36 files
+and the guard — the one added to stop `SUBMISSION.md` miscounting — **never executed**. Restored;
+37 files, confirmed by my own run.
+
+> **"A test in the commit is not a test that runs."** The merged / deployed / working distinction,
+> one level down, and the sharpest formulation of it in this project.
 
 ### The plan is accurate and correctly ordered
 
 **Enrique:** the SQL paste · Telnyx top-up · T34 rotation · T21.
-**Agents:** **T36** (one sentence, precisely located) · **T35**'s two lines.
+**Agents:** **T35** is the only item left — two lines pointing at `agents/tested.log.md`.
 
 ### The single most important remaining item
 

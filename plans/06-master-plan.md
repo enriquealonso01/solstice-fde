@@ -67,11 +67,12 @@
 
 ---
 
-# ▶ OPEN WORK — one agent item; the rest is Enrique's
+# ▶ OPEN WORK — nothing is left for an agent; all four items are Enrique's
 
 *Everything below this section is closed, or evidence.*
 *• **T34** an unredacted SIP target ships in the public export. One line. **Do first.***
-*• **T36** the **voice** handoff has no escalation requirement. `provision.mjs:586-603` replaces
+*• **T36 CLOSED** (PR #90, live): the voice handoff now raises the escalation before the hand over.*
+*• ~~T36~~ the **voice** handoff had no escalation requirement. `provision.mjs:586-603` replaces
 `transfer_to_human` with a native Telnyx `transfer`, so PR #85's fix lands on **chat**. The voice
 guidance is `warm_transfer_instructions` and it says nothing about a record. One sentence + a
 `--refresh`.*
@@ -1065,6 +1066,160 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 95, 19:48 EST — T35 closed; the integration recommendation is accurate and I nearly said otherwise
+
+**Every agent-actionable item is now closed.** Everything still open belongs to Enrique.
+
+#### T35 shipped, and improved on the spec again
+
+Both files point at the evidence. `SUBMISSION.md:38` adds a *Guardrail evidence* row —
+*"**over 4,900 lines**, 18 of the 19 guardrails verified against production, by the agent whose only
+job was to disbelieve the other two. The exception is **G16's voice half**, which needs a live
+call"* — and `README.md:89-92` says the same in prose with two named highlights.
+
+**They used a floor where I had specified an exact count.** My task text said 4,783. That number
+would have rotted within the hour, exactly as *"236 files"* and *"443 tests"* did, and the same
+agents had already learned that lesson and applied it to my instruction without being asked.
+**Fifth time an agent has shipped better than I specified.**
+
+#### The integration recommendation: checked against `data/`, and it is right
+
+Its hinge sentence: *"The reservation lives in the PMS, the rate and inventory truth lives in the
+CRS, and the tier lives in loyalty. **Our sample export flattened all three into one CSV**, and no
+production system will hand us that."*
+
+I read the first fourteen columns of `solstice-guest-profiles.csv`, found `loyalty_tier` and the
+reservation fields but **no rate**, and concluded the claim overstated — two of three, not three.
+I was drafting the correction when I printed the full header:
+
+```
+ 6 loyalty_tier        <- loyalty / CRM
+ 9 reservation_id      <- PMS
+14 rate_plan
+15 nightly_rate        <- the column I had truncated away
+```
+
+**All three are in one file. The document is accurate as written**, and the sentence is doing real
+work: the flattening is exactly what a production integration will not provide.
+
+#### Two near-misses in two iterations, and they are the same near-miss
+
+Iteration 94: I concluded my own file had been destroyed and began restoring it, from a read taken
+while another agent was mid-write. Iteration 95: I concluded a deliverable overstated its claim,
+from a read that stopped at column 14 of 21.
+
+Neither was a reasoning error. **Both were reading errors** — a partial view of an artefact treated
+as the artefact. This is the same failure as the `head_limit` truncation early in this run, where I
+searched for a label, got ten results, and concluded it was not in the source.
+
+> As the remaining work gets finer, my errors have stopped being wrong inferences and become
+> **wrong inputs**. The correction is not to think harder about the conclusion; it is to print the
+> whole header, re-read the whole file, list all twenty-three variables. **The expensive mistakes
+> in this project have all been cheap to prevent, and always by the same move.**
+
+Both were caught before reaching the plan. That is the system working, but it is worth noticing
+that what caught them was habit rather than doubt: I printed the full list because it was the next
+obvious command, not because I suspected the first read.
+
+#### State after this iteration — nothing is left for an agent to do
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | **Enrique** | **open — the one that matters** |
+| Telnyx top-up, $3.09 | **Enrique** | open — beat 3, G16's voice half, the live call nobody has made |
+| T34 rotation decision | **Enrique** | open — after any rehearsal call, before the email |
+| T21, delete `INQ-2012`/`INQ-2013`, keep `INQ-2011` | **Enrique** | open — verified safe, no deliverable cites the deleted rows |
+| T35, T36 | — | **CLOSED** |
+
+Inbox empty. No lock held. Suite 473/37. Guardrails 18 of 19.
+
+**The plan is accurate and correctly ordered.**
+
+
+### Iteration 94, 19:44 EST — T36 closed and live; I nearly "restored" a file that was never damaged
+
+#### T36 is closed, and the fix is live rather than merely merged
+
+PR #90 put the rule where the voice leg actually reads it. Verified against the **live assistant**,
+not the source:
+
+```
+live warm_transfer_instructions : 457 chars
+  requires create_escalation first : true
+  forbids describing a handoff that did not happen : true
+```
+
+The instruction now raises the escalation **before** the hand over — *"so there is a durable record
+whether or not this transfer connects"* — and, if nobody picks up, says plainly that a colleague
+could not be reached rather than narrating a handoff that did not occur. The comment above it
+records why the order matters, which is the part that survives a future edit.
+
+**Suite: 473 passed, 37 files.**
+
+#### The near-miss, which is the real content of this iteration
+
+My first read this iteration showed the plan at **89 iterations, newest entry 92**, with T36 still
+carrying its original "evidence, not a verdict" heading. My iteration-93 work appeared to be gone,
+and PR #88 had just documented a reverted working tree in which `plans/06-master-plan.md` was
+**−327 lines**. The inference was immediate and wrong.
+
+**I drafted a restoration and tried to apply it.** The `assert` in my own edit failed — the heading
+I was "restoring" did not match, because the upgraded heading was already there. Re-reading showed
+**90 iterations, 6,028 lines, iteration 93 present, my file clean and committed in PR #90.**
+Nothing of mine was ever lost.
+
+**Had the assertion not failed, I would have written sixty duplicated lines into the file I was
+trying to protect** — damaging it in the name of repairing it, on the strength of a read taken
+while another agent was mid-restore.
+
+**Third time this session a read has raced another agent's write** — `legs.test.ts` in iteration 87,
+the plan mid-write in 93, and this. The first two cost nothing because I checked. This one was
+different in kind: **I was about to act on the stale read, not merely report it.**
+
+> **Rule, and it is the cheapest one in this log: before declaring that something was lost, read it
+> again.** A missing-data conclusion is exactly the case where the observation is most likely to be
+> an artefact of timing, and exactly the case where acting on it does the most damage. The
+> assertion that saved this was defensive coding in a throwaway script, not judgement.
+
+#### PR #88's incident is worth Enrique knowing about, not just the agents
+
+Three failures in one ship, **none of them the change**:
+
+1. **`git pull --ff-only` failed and the chain continued**, so the deploy ran from a tree that was
+   not `origin/main` — *"same family as the stale-HEAD incident earlier in this run: a git step
+   failed and the sequence carried on."*
+2. **The working tree had been reverted**: `SUBMISSION.md` read *"Two things"* again,
+   `list-counts.test.ts` was deleted, and `plans/06-master-plan.md` was **−327 lines**. Every added
+   line was older text, so an accident rather than a revert. Those lines were *"one `git add -A`
+   away from being committed as a deletion — the T22 hazard inverted: saved work quietly un-saved."*
+3. They restored six files from main and **deliberately left `agents/planner.status.md` alone**, the
+   one file with genuinely new content that was not theirs to overwrite. Correct call, and the
+   reason my status survived.
+
+#### And the second casualty, which the Tester caught: a guard that was not running
+
+`list-counts.test.ts` was **in HEAD and absent from the shared working tree**, so the suite ran
+**36 files and the guard never executed** — the very guard added to stop `SUBMISSION.md`
+miscounting. Restored; 37 files now, confirmed by my own run above.
+
+> **"A test in the commit is not a test that runs."** That is the merged / deployed / working
+> distinction, one level down, and it is the sharpest formulation of it anyone has produced in this
+> project.
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| Telnyx top-up, $3.09 | Enrique | open — the live call nobody has made |
+| T34 rotation decision | Enrique | open |
+| T21, delete `INQ-2012`/`INQ-2013` | Enrique | open — verified safe |
+| **T35** point at the guardrail evidence | Agents | **open — the only agent item left, two lines** |
+| T36 voice handoff record | — | **CLOSED**, PR #90, verified live |
+
+Inbox empty. No lock held. Suite 473/37.
+
 
 ### Iteration 93, 19:38 EST — two agents fixed the voice leg on the chat branch; the provisioner settles it
 

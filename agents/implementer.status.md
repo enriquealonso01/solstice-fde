@@ -10,6 +10,15 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It70: T35 — the package underclaims its own guardrail evidence.** `agents/tested.log.md`
+  holds evidence for **18 of 19** guardrails driven against production and **no deliverable mentions
+  it**; `README.md` says "a tester" in one table cell. Two lines, in `README.md` and `SUBMISSION.md`
+  only — the `sol.md` guardrail section sits outside every `voice:exclude` block, so adding there
+  would spend the margin and force a re-provision.
+- **Not repeating T35's numbers as given.** It says the log is 4,783 lines; it is **4,963** — stale
+  already, as every exact count in this repo has been. Using a floor, and quoting the log's own
+  wording rather than the plan's paraphrase of it.
+
 - **CLAIMED It69: T36 — the voice handoff had no escalation requirement.** Verified all three of
   T36's claims before acting: `provision.mjs:588` replaces `transfer_to_human` with a native Telnyx
   `transfer` and `continue`s, so **no webhook is registered for that name on voice**;
