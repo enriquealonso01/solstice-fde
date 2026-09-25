@@ -8,6 +8,42 @@ purpose — it is all in the log.
 
 ---
 
+## Iterations 48–50 DONE — README and transcript claims VERIFIED; migration 004 still open
+
+The lock was held by another agent for eighteen minutes across three of my iterations (`main` unmoved
+the whole time). I tested without it and queued the writing rather than shorten the twenty-minute stale
+rule, which the protocol tells me not to do. Shipped in one go when it freed.
+
+**MIGRATION 004 IS STILL NOT APPLIED — re-checked twice.** `PATCH proposals {"status":"approved"}` as
+`sales@` with the public anon key still returns the row. The iteration-43 send-gate bypass is live, and
+it is the **only known live defect**. One line of SQL, in `HUMAN_INTERVENTION.md`.
+
+**VERIFIED — every checkable claim in README.md.** Floors hold (237>230 files, 147>140 TS, 454>400
+tests, 33>30 test files); the three line figures are each inside a defensible range; and the immutable
+facts are exact (25 tools and secret redacted, first commit 12:35:00-04:00, 25 day-one commits, the
+12:35→16:21 window, `-395`). 13 local links resolve, site and health both 200, README phone matches
+`TELNYX_PHONE_NUMBER`. Re-measured again after `main` moved to `f206502`, which re-synced the export.
+One figure had gone stale — the paragraph arguing against a single total quoted `"61,700 lines"` while
+the repo passed 66,000 — floored in this PR.
+
+**VERIFIED — PR #73's transcript.** Both escalation ids are real rows, timestamps exact to the
+millisecond (`17:44:42.842012` / `17:44:51.575636`), same session, same category, both open, gap 8.734s
+against a claimed "nine seconds". Both quoted summaries match verbatim; each packet still labelled by
+its own id (PR #49 holding). Its claim about itself — "leans on `c0cb0a1c`, the second" — is true.
+
+**Checked that my own PR #74 did not leak.** Its note ends "never promise when" without re-scoping to
+group requests, while `escalation.ts:181` requires "Tell the guest it is with a manager today" for a
+complaint. Three complaint runs: **3 of 3** said "today" and named the manager or AGM, and one added "I
+can't promise the outcome myself". No leak. The ambiguity is latent, so I am not touching a verified
+chat prompt again this close in — **first thing to tighten after the deadline: scope paragraph two of
+`CHAT_CHANNEL_NOTE` back to the group case.**
+
+**I nearly filed a false finding** on "about 35,100 lines of source": three narrower definitions gave
+26k–31k before the right one gave 35,301. Rule 7 — when a document states a derived number, the defect
+is usually in my derivation.
+
+Cleanup: three complaint escalations closed; open count still **38**.
+
 ## Iteration 47 DONE — PR #74 VERIFIED, the chat honesty fix holds under pressure
 
 Re-tested my iteration-46 fix over four runs. Nothing has touched `chat.ts` or `sol.md` since
@@ -399,6 +435,11 @@ superseded wording; other agents' PR #11, #20, #25, #43.
     for four runs out of four. Read the whole assembled prompt, not the file someone just edited — and
     when a commit says it is knowingly leaving an inaccuracy in a prompt, go and hear what the model
     actually says before accepting the cost estimate.
+
+25. **Confirm an append actually appended.** Two `cat >> log` attempts this iteration silently wrote
+    nothing — Windows Python's `/tmp` is not git-bash's `/tmp`, and a raw string cannot end in a
+    backslash. Both failures printed a success-looking line. Count the file's lines before and after
+    and fail loudly on no change; the same rule as the PDF sweep that read zero files.
 
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real
