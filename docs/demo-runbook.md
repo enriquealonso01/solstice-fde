@@ -15,6 +15,11 @@ audiences in one room: a director of engineering and a non-technical product own
 - [ ] Telnyx balance above $20. Below that, do not attempt live calls.
 - [ ] Failure injection panel showing **all healthy**. Check this; a switch left on from rehearsal
       makes a working system look broken.
+- [ ] `npm run demo:tidy` — **run this last, minutes before they join, not the night before.**
+      Every chat you open leaves a session marked `active`, because a browser tab has no hangup
+      event to close it. So rehearsing is itself what fills the supervisor dashboard with stale
+      "live" conversations, and tidying early simply gets undone by your own last rehearsal. Run
+      it with no flag first to see the count, then `npm run demo:tidy` to close them.
 - [ ] `docs/demo-cheatsheet.md` open in a tab you can glance at for confirmation numbers.
 - [ ] Close every other tab. Especially this repository.
 
