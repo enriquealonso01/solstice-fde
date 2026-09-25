@@ -89,9 +89,11 @@ Two things are built but not live, and claiming otherwise would be the worst pos
 
 - **SMS delivery.** US carrier registration takes days and I started it late. The delivery layer
   picks email or SMS from config, so it is a switch rather than a rewrite.
-- **The supervisor takeover.** Listen, whisper, barge and take over are built from documented
-  Telnyx primitives and the browser client registers, but the full path has not been verified on
-  a live call. There is a documented conference-based fallback if the primary approach fails.
+- **The supervisor ladder, partly.** Verified live: the supervisor attaches to an in-progress
+  call, hears the guest, and "take over" really does stop Sol and leave the call up. Sol's own
+  audio does not reach the supervisor leg, which is an undocumented edge of supervising an
+  assistant call. The live transcript carries both sides, so nothing is hidden. The fix is a
+  conference-based join, written up and deliberately not built this close to submission.
 
 ---
 

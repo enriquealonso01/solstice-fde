@@ -29,7 +29,16 @@ interface Rung {
 }
 
 const RUNGS: Rung[] = [
-  { action: 'listen', label: 'Listen', effect: 'You hear both sides. Neither the guest nor Sol hears you.' },
+  // Verified on a live call 2026-09-25: the supervisor leg carries the GUEST's audio but not
+  // Sol's synthesized speech. Telnyx documents `monitor` as hearing everything, but an assistant
+  // leg evidently injects its output rather than streaming it. The transcript above shows both
+  // sides regardless, so the screen is not blind. Claiming "you hear both sides" here would be
+  // the one lie this panel must never tell.
+  {
+    action: 'listen',
+    label: 'Listen',
+    effect: "You hear the guest. Sol's own audio is not carried on the supervisor leg; read the live transcript for its half.",
+  },
   { action: 'whisper', label: 'Whisper', effect: 'Only Sol hears you. The guest does not.' },
   { action: 'barge', label: 'Barge', effect: 'Everyone on the call hears you. Sol keeps going.' },
   { action: 'takeover', label: 'Take over', effect: 'Sol stops talking. The call stays live and is yours.' },

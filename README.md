@@ -89,9 +89,14 @@ Sol answering on chat and on a real phone number; live transcripts streaming to 
 console; the rules engine and all ten inquiry verdicts; proposal generation with PDFs, and a proposal email that has actually been delivered; 308 passing
 tests.
 
-**Not yet exercised on a live call:** the supervisor ladder. The mechanism is built from documented
-Telnyx primitives, but whether a supervisor leg attaches to an `ai_assistant_start` leg is not
-documented either way, and a conference-based fallback is written down for if it does not.
+**Partly working, and stated precisely because it matters:** the supervisor ladder. Verified on a
+live call, a supervisor can attach to an in-progress assistant call, hears the GUEST, and
+`ai_assistant_stop` genuinely silences Sol while leaving the call up. What does not carry is Sol's
+own synthesized audio: Telnyx documents `monitor` as hearing everything, but an assistant leg
+appears to inject its speech rather than stream it. The live transcript shows both sides
+regardless, so the supervisor is never blind. The documented fix is to run the call in a
+conference and have the supervisor join it; that is written up and not built, because it would
+rework the inbound flow that currently answers the phone reliably.
 
 **Email:** proven end to end. Telnyx's shared sending domain is a sandbox that only delivers to the
 account's own verified address, so every send is routed there; verifying a real domain removes that

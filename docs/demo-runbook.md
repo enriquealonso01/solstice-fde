@@ -62,6 +62,12 @@ Ask to keep the room until 2pm.
 Say: *same agent, same tools, same rules. The phone is a different door into one system, not a
 second product.*
 
+While still on the call, open the session and click **Listen**. You hear the guest through the
+browser. Say plainly: *I can monitor a live call from here, and if I click Take over, Sol stops
+talking and the call stays up. Sol's own audio does not reach this leg, which is an undocumented
+corner of supervising an assistant call, so the transcript is what carries its half.* Volunteering
+that is stronger than being caught by it.
+
 ### 4. Group booking (4 min)
 
 Switch to Group sales. Open **INQ-2009**, the Phoenix retreat.
@@ -133,7 +139,7 @@ this change would be a prompt edit with no test and no audit trail.*
 | The phone call fails | Use the mic in the chat bubble. Same agent, same tools. Say so and move on. |
 | The site is slow to answer | Point at the tool chips: *it is working, and it is showing you what it is doing.* Do not apologise twice. |
 | A screen errors | The error boundary shows the real message. Read it aloud, say what you would check, move on. Handling it calmly is worth more than not hitting it. |
-| Supervisor takeover fails | It is the least-tested path. Say so plainly, show the transcript streaming instead, and move to the group workflow. |
+| Supervisor audio sounds one-sided | Expected, and say so before they notice: the supervisor leg carries the guest but not Sol's synthesized voice. Point at the live transcript, which has both sides, and explain the conference-based fix you chose not to build days before submission. |
 | Something is genuinely wrong | Say "that is a bug, here is what I would look at" and keep going. They are evaluating how you handle it. |
 
 ---
@@ -156,5 +162,5 @@ this change would be a prompt edit with no test and no audit trail.*
 
 - Do not open the repository unless asked. It reads as hiding behind code.
 - Do not demo more than one thing at a time on screen.
-- Do not claim the supervisor takeover works until it has been verified on a live call.
+- Do not claim the supervisor hears both sides. It hears the guest; the transcript carries Sol.
 - Do not fill silence after a question. Answer it, then stop.

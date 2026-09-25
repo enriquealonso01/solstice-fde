@@ -16,6 +16,7 @@ If something is urgent or you want it done next, put `!!` at the front of the li
 
 - 
 - !! The 'Talk to Sol' feature in the landing page chat does not work and says: "An unexpected error occurred"
+- Add a step-by-step tutorial for each of the 3 admin account types (one per profile), click by click, with the relevant area highlighted and the rest greyed out.
 
 ---
 
