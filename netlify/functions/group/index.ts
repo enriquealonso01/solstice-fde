@@ -55,7 +55,6 @@ import {
   check_availability,
   create_inquiry,
   update_inquiry,
-  createdInquiries,
   draft_clarifying_questions,
   evaluate_group_rules,
   find_alternates,
@@ -658,9 +657,13 @@ async function handleSend(req: Request, staff: AuthOk): Promise<Response> {
 /** Rows in the shape the admin inbox renders: `InquiryRow` with a denormalised payload, so
  *  the detail view never has to join to show a hotel name or a night count. */
 async function handleInquiries(): Promise<Response> {
+  // `loadInquiries()` already returns the seeded rows, this instance's runtime-created inquiries
+  // and anything rehydrated from Postgres. Appending `createdInquiries()` here counted every
+  // phoned-in inquiry twice, because it is the same `registeredInquiries()` the loader already
+  // spread. It only showed once an inquiry was created and the inbox read in the SAME warm
+  // instance — which is exactly the split-screen demo: take the call, then look at the board.
   const [inquiries, properties] = await Promise.all([loadInquiries(), loadProperties()])
-  const all = [...inquiries, ...createdInquiries()]
-  const rows = await Promise.all(all.map((inquiry) => buildInquiryRow(inquiry)))
+  const rows = await Promise.all(inquiries.map((inquiry) => buildInquiryRow(inquiry)))
   return json({
     ok: true,
     source: currentSourceName(),
