@@ -18,6 +18,7 @@ import { bookAmenity, checkLateCheckout, checkUpgradeEligibility } from './stayB
 import { checkCompAuthority, checkServiceRecoveryEligibility } from './recovery'
 import { createEscalation, transferToHuman } from './escalation'
 import { classifyIntent } from './routing'
+import { isOffline, OUTAGE_REASON, type FlagKey } from '../_lib/flags'
 
 export type ToolHandler = (args: ToolArgs, ctx: ToolContext) => Promise<ToolResult>
 
@@ -233,6 +234,25 @@ export function toolDefinitions(): ToolDefinition[] {
 
 // --------------------------------------------------------------- invocation
 
+/**
+ * Which upstream each tool depends on. Used only by failure injection: taking the PMS offline must
+ * stop the tools that genuinely need live inventory, and leave the ones that do not still working,
+ * because a system where everything fails at once teaches a panel nothing.
+ */
+const DEPENDENCY_OF: Record<string, FlagKey> = {
+  // Needs live, same-day inventory.
+  check_late_checkout: 'pms_offline',
+  check_upgrade_eligibility: 'pms_offline',
+  book_amenity: 'pms_offline',
+  // Needs the reservation record itself.
+  identify_guest: 'reservations_offline',
+  get_reservation: 'reservations_offline',
+  // Needs the policy reference.
+  get_policy: 'policy_source_offline',
+  check_service_recovery_eligibility: 'policy_source_offline',
+  check_comp_authority: 'policy_source_offline',
+}
+
 export async function runTool(name: string, args: ToolArgs, ctx: ToolContext): Promise<ToolResult> {
   const started = Date.now()
   const handler = handlers.get(name)
@@ -241,6 +261,20 @@ export async function runTool(name: string, args: ToolArgs, ctx: ToolContext): P
     return {
       ...toolFail(
         `The tool "${name}" is not mounted in this runtime. Do not answer as though it ran. Say you cannot complete that here and offer to put a colleague on it.`,
+      ),
+      latency_ms: Date.now() - started,
+    }
+  }
+
+  // Failure injection, checked here rather than inside each tool so there is exactly one seam and
+  // a new tool inherits it. An injected outage returns the SAME shape a real one would: ungrounded,
+  // with a reason the agent can say out loud. It must be indistinguishable to everything downstream,
+  // otherwise the demo proves nothing about the real failure path.
+  const dependency = DEPENDENCY_OF[name]
+  if (dependency && (await isOffline(dependency))) {
+    return {
+      ...toolFail(
+        `${OUTAGE_REASON[dependency]} Tell the guest plainly that you cannot confirm this right now, do not guess, and offer to have a colleague follow up.`,
       ),
       latency_ms: Date.now() - started,
     }

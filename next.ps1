@@ -82,7 +82,8 @@ function Check-Migrations {
     # One probe per migration: something the migration creates that did not exist before.
     $probes = @(
         @{ n = '001 supervisor fields'; url = 'sessions?select=supervisor_call_control_id&limit=1' },
-        @{ n = '002 follow-ups'; url = 'follow_ups?select=id&limit=1' }
+        @{ n = '002 follow-ups'; url = 'follow_ups?select=id&limit=1' },
+        @{ n = '003 failure injection'; url = 'demo_flags?select=key&limit=1' }
     )
     $pending = @()
     foreach ($probe in $probes) {

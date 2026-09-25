@@ -13,6 +13,7 @@ import 'reactflow/dist/style.css'
 import AdminShell from '@/components/admin/AdminShell'
 import BackendNode, { type MapLayer } from '@/components/admin/BackendNode'
 import { MAP_TABS } from '@/components/admin/backendMapModel'
+import FailureInjection from '@/components/admin/FailureInjection'
 
 const LEGEND: { layer: MapLayer; label: string; dot: string }[] = [
   { layer: 'guest', label: 'Guest surface', dot: 'bg-sky-400' },
@@ -108,6 +109,7 @@ export default function BackendMap() {
           Providers on this map: {providers.join(' · ')}
         </span>
       </div>
+          <FailureInjection />
     </AdminShell>
   )
 }
