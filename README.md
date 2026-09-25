@@ -86,11 +86,16 @@ All four were found by an agent whose only job is to disbelieve the other two, a
 fixed. None of them would have been caught by the tests that were already passing.
 `docs/how-this-was-built.md` has the detail, including what the agents got wrong.
 
-**The result:** roughly 210 files, about 125 of them TypeScript, near enough 28,700 lines, and a
-test suite in the low 300s. Those are deliberately rounded: the day-two loop was still merging
-while this paragraph was being written, and three precise counts went stale inside an hour.
-`git rev-list --count HEAD`, `git ls-files | wc -l` and `npx vitest run` are the live answers and
-they do not rot.
+**The result:** 236 files, 146 of them TypeScript, and 443 tests across 32 test files. The line
+count splits in a way worth showing rather than totalling: **about 35,100 lines of source**, 3,500
+of deliverable documents, and **13,800 of the agents' own coordination record** — the plan, the
+three status files, and the two logs in which the loop argued with itself. A single "61,700 lines"
+would flatter the first number by hiding the third, and the third is arguably the more interesting
+one.
+
+Figures are given as floors or rounded, deliberately: the day-two loop was still merging while this
+paragraph was written, and three precise counts went stale inside an hour. `git rev-list --count
+HEAD`, `git ls-files | wc -l` and `npx vitest run` are the live answers and they do not rot.
 
 **What we are not claiming.** Build-time model spend is not instrumented, so there is no figure
 here for it, and inventing one would undercut everything else on this page that *is* measured.
@@ -141,7 +146,7 @@ Worth being precise about, because a demo that overstates itself is worse than a
 **Real:** the deployed site and API; Postgres with row-level security enforcing role scoping;
 Sol answering on chat and on a real phone number; live transcripts streaming to the supervisor
 console; the rules engine and all ten inquiry verdicts; proposal generation with PDFs, and a proposal email that has actually been delivered; a test
-suite in the low 300s (`npx vitest run` for the live number).
+suite of over 400 tests (`npx vitest run` for the live number).
 
 **Partly working, and stated precisely because it matters:** the supervisor ladder. Verified on a
 live call, a supervisor can attach to an in-progress assistant call, hears the GUEST, and
@@ -194,5 +199,6 @@ npm run seed:users
 npm run dev
 ```
 
-`npm run typecheck` · `npx vitest run` (308 tests) · `npm run data:check` verifies the generated
+`npm run typecheck` · `npx vitest run` (over 400 tests; the command prints the live count) ·
+`npm run data:check` verifies the generated
 data still matches its sources.

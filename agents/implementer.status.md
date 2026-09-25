@@ -10,7 +10,22 @@ What I am doing right now, and what I did last. Overwritten each iteration.
   second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
   inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
   grep, where a filter hid the hit.
-- **CLAIMED It61: the deliverable's `file:line` citations, one of which has rotted.** Queue still
+- **DONE It62: the README's own numbers — PR pending.** Every figure in the result paragraph had
+  drifted: 210→236 files, 125→146 TypeScript, 28,700→61,710 lines, "low 300s"→443 tests, and a
+  precise `308 tests` in a README that explains on another page why precise counts rot. The lines
+  figure now shows its split (~35,100 source / 3,500 docs / **13,800 agent coordination record**)
+  because the total flatters the source number by hiding the third. Guard added on the **shape**
+  of the claim, not the number — counting tests from inside the suite is unreliable, and a check
+  wrong in a subtle direction is worse than none. Its limitation is written into the file: it
+  catches a rotted count, **not** a rotted band, verified by watching "low 300s" pass.
+- **DONE It61: PR #70.** `chat.ts:256` → **283** in `README.md:157` and `sol.md` assumption 15;
+  line 256 had become an `interface` declaration. **It was right when I defended it in T14** —
+  PRs #28 and #41 inserted lines above it, and a line number is prose to every tool in this repo.
+  It sits beside the no-TTL identity limit, so a stale pointer reads as carelessness about exactly
+  the thing that paragraph is being careful about. New `doc-citations.test.ts` pins each citation
+  to a substring its line must contain; red-checked on **both** failure modes, and the drift one
+  names the new line number in the failure message. Other three citations checked and correct.
+- **Superseded claim: citations — Queue still
   empty (T21 is Enrique's, Inbox empty). Four citations exist across README/SUBMISSION/sol.md/docs;
   **`chat.ts:256` now points at an `interface` declaration** and is cited twice. It was right when
   I defended it in T14 — PRs #28 and #41 inserted lines above it since. Fixing both and adding a

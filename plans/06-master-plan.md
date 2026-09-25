@@ -24,8 +24,9 @@
 > **Then:** **Telnyx** $3.09 (beat 3, the live intent check, **G16 on voice**) · **T21** delete
 > `INQ-2012`/`INQ-2013`, keep `INQ-2011` — *"DELETE-ME"* is **row one** of the sales inbox.
 >
-> **Agents, one item:** **re-export** `exports/telnyx-assistant.json`, **28,678** against live's
-> **29,315** — two changes behind, not one.
+> **Agents, two items:** **T30** one dated note on `transcripts/honest-handoff.md` — the
+> deliverable shows the duplicate escalation #69 fixed, and points the reviewer at both ids ·
+> **re-export** `exports/telnyx-assistant.json`, **28,678** against live's **29,315**.
 >
 > **T19 CLOSED** (PR #66) and **live on both runtimes** — voice re-provisioned, verified 29,315
 > byte-identical, "reaches Sales" gone. The escalation reaches the concierge supervisor's queue and a human
@@ -43,13 +44,70 @@
 # ▶ OPEN WORK — one agent item; the rest is Enrique's
 
 *Everything below this section is closed, or evidence.*
+*• **T30** one dated note on `transcripts/honest-handoff.md` — a deliverable linked from
+`SUBMISSION.md` shows the duplicate escalation #69 fixed, and invites the reviewer to check it.*
 *• **T21** two test rows to delete — the only thing a panel sees without reading. Enrique's.*
 *• **Re-export** `exports/telnyx-assistant.json` — 28,678 on disk against live's 29,315.*
 
-*One item is an agent's: the re-export. **Every other remaining item is one an agent is not
+*Two items are agents': T30 and the re-export. **Every other remaining item is one an agent is not
 permitted to take** — an irreversible database mutation, or spending money. The Tester's session
 refused the T21 `DELETE` for the same reason mine refused the approval `PATCH`. That is the
 boundary working, not a stall.*
+
+### T30. `transcripts/honest-handoff.md` shows the duplicate escalation as a feature — one dated note
+
+*Earns a slot because it is a named brief deliverable, it is linked from `SUBMISSION.md`, it
+explicitly invites the reviewer to check both escalation ids, and it presents as thoroughness the
+exact behaviour PR #69 shipped a fix to eliminate an hour earlier. Documentation only: no code, no
+deploy, no re-provision.*
+
+**For an implementer who has not read this conversation.**
+
+The transcript records a two-turn conversation in which Sol called `create_escalation` twice and
+the file quotes both rows side by side, arguing the pair shows the guest was not fobbed off:
+
+- turn 1 → `ea086719-f7b0-4b23-9c0e-949f33b00857`
+- turn 2 → `c0cb0a1c-1084-4e41-87d2-d072199b52b7`
+
+Verified against Postgres this iteration — **same session `258e7a7c`, same category `other`, both
+`open`, nine seconds apart** (`17:44:42.842` → `17:44:51.575`). That is exactly the merge key
+`mergeTargetFor` uses in `netlify/functions/tools/escalation.ts`. **On the current build that
+conversation raises one escalation**, enriched on the second turn, returning the same id with
+`merged_into_existing` in the trace.
+
+So the deliverable demonstrates, as evidence of care, the thing PR #69's own message calls *"worse
+than a repeat"* — and it leans on the *second* row for the better summary, which is precisely the
+failure mode described there: the first row is the one missing the detail.
+
+**Do this:** add a short dated note to the transcript. **Do not re-capture it** — a re-run costs a
+live session and money, opens a session row the demo tidy then has to clear, and would change every
+id and timing in a file whose value is that they are real.
+
+The file already has the right slot and voice for this. It closes with *"This behaviour was a
+defect earlier the same day"*, about the takeover fiction. Add the second defect beside it, in the
+same register — something close to:
+
+> **A second defect is visible in this capture, and it was fixed after it.** Sol raised two
+> escalations, nine seconds apart, for one conversation. Both ids above are real rows and both are
+> quoted honestly, but the pair is a bug, not thoroughness: the model escalates once it has the
+> gist and again when the guest adds detail, so the *first* row is the thinner one. Since PR #69
+> `create_escalation` enriches an open escalation from the same session in the same category
+> instead of inserting a second, and the same conversation today returns a single id with
+> `merged_into_existing`. Category stays part of the key on purpose — a group enquiry that turns
+> into a safety report still opens its own row.
+
+**Keep the existing quotes.** They are real rows and the note explains them rather than replacing
+them.
+
+**Why this is better than a clean transcript:** the file would then show two defects that this
+build found in itself and fixed the same day, one of them caught by the agent whose only job is to
+disbelieve the others. That is stronger evidence for the "build with agents" ask than a capture
+with nothing wrong in it.
+
+**Check when done:** the note names PR #69, does not claim a live re-measurement that nobody ran,
+and `npx vitest run src/lib/rules/__tests__/doc-citations.test.ts` still passes if any `path:NN`
+citation was added.
+
 
 ### T29. Enrique's dashboards — CLOSED, 3 of 3. PRs #50, #53 and #54.
 
@@ -545,6 +603,88 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 78, 18:30 EST — a deliverable transcript shows the bug #69 just fixed, and invites the reviewer to check it
+
+**New task: T30.** First one in several iterations, and it is documentation only.
+
+`transcripts/honest-handoff.md` — a named brief deliverable, linked from `SUBMISSION.md` — records
+Sol calling `create_escalation` **twice** in one conversation and quotes both rows side by side as
+evidence the guest was not fobbed off. Verified against Postgres:
+
+```
+ea086719  session 258e7a7c  cat other  sev normal  open  17:44:42.842
+c0cb0a1c  session 258e7a7c  cat other  sev normal  open  17:44:51.575
+```
+
+**Same session, same category, both open, nine seconds apart** — exactly the merge key
+`mergeTargetFor` uses. On the current build that conversation raises **one** escalation, enriched
+on the second turn, returning `merged_into_existing`.
+
+So a deliverable presents as thoroughness the behaviour PR #69's own message calls *"worse than a
+repeat"* — and it leans on the **second** row for the better summary, which is precisely the
+failure mode #69 describes: the first row is the thinner one. The file also says *"Both escalation
+ids above are real rows in Postgres"*, so it actively invites the check.
+
+**T30 is a dated note, not a re-capture.** Re-running costs a live session and money, opens a row
+the tidy must then clear, and would change every id and timing in a file whose worth is that they
+are real. The file already closes with *"This behaviour was a defect earlier the same day"* about
+the takeover fiction — the second defect belongs beside the first, in the same register. Then the
+transcript shows **two** bugs this build found in itself and fixed the same day, which is better
+evidence for the "build with agents" ask than a capture with nothing wrong in it.
+
+#### I had this evidence one iteration earlier and did not join it
+
+Last iteration I printed the four duplicate pairs and `258e7a7c` was **in my own output**. I
+concluded "invisible to a panel" — true of the *dashboards*, and I stopped there. The rows are not
+in a dashboard; they are quoted, by id, in a document a reviewer is pointed at. **"No UI surface"
+is not the same as "not visible."** I checked where the product renders them and not where we had
+written them down ourselves.
+
+#### PR #70 closes the T14 loop, and does it better than either of us managed
+
+`README.md` and `agent/sol.md` both cited `chat.ts:256` for the line restoring a verified identity
+onto a later turn. It is now line **283**.
+
+The history is worth keeping straight: **the citation was right when written.** In T14 I asked for
+it to be changed to 255 using a method that does not show line numbers; the Implementer disproved
+that with `grep -n` and I withdrew it. PRs #28 and #41 then inserted lines above it, and it drifted
+— *"a line number is prose to every tool in this repo."*
+
+The fix is the systemic one neither of us reached at the time: `doc-citations.test.ts` scans the
+eleven deliverable documents for `path:NN` and pins each citation to a substring the cited line must
+contain. A new citation with no entry **fails**, forcing the author to say what the line is for —
+the check a bare number cannot perform on itself. Both failure modes red-checked separately.
+
+I ran it: **2 tests passed**, 7ms.
+
+Where it sits is what makes it matter, and the commit message says it better than I would: the
+citation stands beside an honest statement of a real security limit — a verified identity with no
+TTL, looked up by session id alone — so a stale pointer there reads as carelessness about the exact
+thing the paragraph is being careful about.
+
+#### Also checked
+
+- **No transcript carries the retired wording.** `grep` for *"reaches Sales"* / *"Sales will follow
+  up"* across `transcripts/` and `docs/` returns nothing.
+- **Deliverables all present**: diagram (`architecture.drawio`, `.svg`), integration
+  recommendation, latency target, role walkthroughs, live-modification, how-this-was-built,
+  where-this-goes, six transcripts, native export.
+- **Transcript provenance is honest** — each states the capture date and *"Every tool call and
+  timing below is real."*
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| Telnyx top-up, $3.09 | Enrique | open — gates beat 3 and G16 on voice |
+| T21, delete `INQ-2012`/`INQ-2013`, keep `INQ-2011` | Enrique | open — SQL and row ids ready |
+| **T30** dated note on `honest-handoff.md` | Agents | **open — new this iteration** |
+| Re-export `exports/telnyx-assistant.json` | Agents | open — 28,678 vs live 29,315 |
+
+Inbox empty. No lock held. Deploy current with HEAD.
+
 
 ### Iteration 77, 18:24 EST — the duplicate escalations are real and invisible; I checked expecting a second T21
 

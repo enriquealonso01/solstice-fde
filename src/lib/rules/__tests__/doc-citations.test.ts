@@ -114,3 +114,43 @@ describe('file:line citations in the deliverable', () => {
     expect(problems, `Stale file:line citations:\n\n${problems.join('\n')}\n`).toEqual([])
   })
 })
+
+/**
+ * A precise test count in a document is a claim that rots on the next commit.
+ *
+ * `README.md` said "308 tests" while the suite stood at 443, and "a test suite in the low 300s" in
+ * two other places. The same README already explains why that happens — *"three precise counts went
+ * stale inside an hour"* — and then states one anyway, a hundred lines further down.
+ *
+ * This does not check the number, on purpose. Counting tests from inside the suite is unreliable
+ * (`it.each` expands to many, and any count would include this file), and a check that is wrong in
+ * a subtle direction is worse than none. What it checks is the **shape of the claim**: state a floor
+ * that stays true as tests are added, and point at the command that prints the live figure. That is
+ * the README's own stated policy, enforced rather than merely written down.
+ *
+ * What it does NOT catch, stated so nobody trusts it further than it goes: a **band** that has
+ * been outgrown. "a test suite in the low 300s" passes this check and was wrong by 140 tests.
+ * Verified by restoring that exact phrase and watching it go green. Catching that needs a real
+ * count, which is the thing this file deliberately does not try to produce.
+ */
+describe('counts stated in the README', () => {
+  const readme = readFileSync(join(repoRoot, 'README.md'), 'utf8')
+
+  it('never states an exact test count, because it goes stale within the hour', () => {
+    const exact = [...readme.matchAll(/(?<!over\s)\b\d{2,5}\s+tests?\b(?!\s+files)/gi)]
+      .map((m) => m[0])
+      // "443 tests across 32 test files" is a dated snapshot in a paragraph that says it is one;
+      // the failure mode is an exact count offered as the current answer, next to the command.
+      .filter((claim) => !readme.includes(`${claim} across`))
+
+    expect(
+      exact,
+      `README states an exact test count: ${exact.join(', ')}. Say "over N tests" instead and let ` +
+        `\`npx vitest run\` print the live figure — the README already argues for this itself.`,
+    ).toEqual([])
+  })
+
+  it('still points the reader at the command that gives the live number', () => {
+    expect(readme).toContain('npx vitest run')
+  })
+})
