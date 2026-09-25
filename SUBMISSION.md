@@ -46,6 +46,8 @@ Two things they did not ask for, which answer their email rather than the PDF:
 
 - `docs/how-this-was-built.md` — the six agents, and the bugs they found in each other's work
 - `docs/where-this-goes.md` — the vision, in outcomes
+- `docs/role-walkthroughs.md` — the three staff roles click by click, and what each click proves.
+  Start here if you want the staff side without a guided demo.
 
 ---
 

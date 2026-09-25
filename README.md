@@ -63,25 +63,33 @@ the human-readable sentence and all three regenerated options move with it.
 The Cost page inside the app measures what the system costs to *run*. This is what it cost to
 *build*, which is the more relevant number if you are deciding whether to work this way.
 
-**Elapsed: about 24 hours, of which under 5 were active.** First commit 2026-09-24 12:35 EDT,
-most recent 2026-09-25 12:45 EDT. Git puts the committed work in two windows — 12:35 to 16:21 on
-day one, and a second session on day two. The gap between them is a night's sleep, not work.
+**Elapsed: about 24 hours, of which under 5 were active.** First commit 2026-09-24 12:35 EDT.
+Git puts the committed work in two windows — 12:35 to 16:21 on day one, and a second session on
+day two. The gap between them is a night's sleep, not work.
 
 **Two different shapes of agent, in two phases.**
 
 | Phase | Shape | Output |
 |---|---|---|
 | Day one | **six agents in parallel**, disjoint file ownership, one orchestrator holding git | 25 commits: the system itself |
-| Day two | **three agents in a loop** — a planner, an implementer and a tester, coordinating only through single-writer files and one `mkdir` mutex | 15 commits, 5 reviewed PRs: hardening, proof and documentation |
+| Day two | **three agents in a loop** — a planner, an implementer and a tester, coordinating only through single-writer files and one `mkdir` mutex | every change reviewed and merged as its own PR: hardening, proof and documentation |
 
 The two phases answer different questions. Parallel agents are how you get a system built in an
-afternoon. The day-two loop is how you find out which parts of it were not true — and it did:
-the browser mic had never once worked, a deliverable named a tool that did not exist, and the
-group refusal promised an approver the schema cannot enforce. All three were found by an agent
-whose only job was to disbelieve the others, and all three are fixed. `docs/how-this-was-built.md`
-has the detail, including what the agents got wrong.
+afternoon. The day-two loop is how you find out which parts of it were not true — and it did.
+The browser mic had never once worked. A deliverable named a tool that does not exist. The group
+refusal promised an approver the schema cannot enforce. And on chat, a guest in distress was told
+"a colleague is joining" when nothing in the system guarantees anyone is watching — a failed
+handoff described as a successful one, which is the exact thing the guardrails forbid.
 
-**The result:** 211 tracked files, 125 TypeScript files, about 28,600 lines, 315 tests.
+All four were found by an agent whose only job is to disbelieve the other two, and all four are
+fixed. None of them would have been caught by the tests that were already passing.
+`docs/how-this-was-built.md` has the detail, including what the agents got wrong.
+
+**The result:** roughly 210 files, about 125 of them TypeScript, near enough 28,700 lines, and a
+test suite in the low 300s. Those are deliberately rounded: the day-two loop was still merging
+while this paragraph was being written, and three precise counts went stale inside an hour.
+`git rev-list --count HEAD`, `git ls-files | wc -l` and `npx vitest run` are the live answers and
+they do not rot.
 
 **What we are not claiming.** Build-time model spend is not instrumented, so there is no figure
 here for it, and inventing one would undercut everything else on this page that *is* measured.
