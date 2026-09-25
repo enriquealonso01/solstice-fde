@@ -2880,3 +2880,33 @@ refused. `status === 'blocked'` was already on the row the whole time.
 
 **The rule I am taking from it:** when a chip makes a claim about what someone should do next, the
 check is against the thing that decides it, not against the screen that displays it.
+
+### The post-deploy check found two more, and one of them I had just introduced
+
+Verifying PR #53 against the live bundle rather than against the deploy timestamp turned up three
+residual hits. `login_token` is only an API field name in code. The other two were real:
+
+1. **`useSupervisorVoice.ts:147` — I reintroduced the exact word T29 flagged.** My reword read
+   *"Supervisor audio is not deployed on **this build**"*. T29's complaint about
+   `ConversationThread` was *"the communications **endpoint** is not deployed on this **build**"* —
+   two words. I removed `build` from one file and typed it into another **in the same commit**,
+   while holding a list that named it. Now reads *"not available in this version"*.
+2. **`InquiryDetail.tsx:537` — a fourth shape my sweep could not see.** *"This is written to
+   `<code>audit_log</code>` with your user id."* My JSX pass reads text between `>` and `<`, so an
+   inline tag splits the sentence into fragments too short to look like prose. The guard now strips
+   `<code>`, `<strong>`, `<em>` and friends before scanning, so the words either side join up.
+
+That is the fourth distinct blind spot in this one task: predicted word list, attribute-only sweep,
+quoted-literals-only sweep, and now inline tags. Each was found by the next check rather than by the
+one that should have caught it.
+
+**And the red-check earned its place twice more.** The inline-tag rule went green on first run with
+the old sentence deliberately restored — not because the tag-stripping failed, but because
+`audit_log` was never in the jargon list, so nothing could have matched. A green there would have
+been read as "the new rule works". It only became evidence after adding the term and watching it go
+red, then green again on the fix.
+
+**Verification note:** the first three attempts at this check were themselves broken — `grep`
+aborted on a 754KB single-line bundle and every line printed `MISSING` or `gone` from a crashed
+process. `gone` from a grep that aborted looks identical to `gone` from a grep that ran. Redone in
+Python, which is where all ten new strings were confirmed live.

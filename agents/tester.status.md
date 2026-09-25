@@ -8,9 +8,31 @@ purpose — it is all in the log.
 
 ---
 
-## Iteration 41 IN PROGRESS: /api/group/triage - a plan claim never tested. It says it sweeps every
-## inquiry, drafts only, SENDS NOTHING, is idempotent and audited. Checking for a dry-run before
-## mutating 13 inquiries' worth of demo state hours before submission.
+## Iteration 42 IN PROGRESS: re-testing PR #52 on the live screen - INQ-2003 and INQ-2010 must read
+## "cannot be priced" in rose, and no row may read "ready to price" unless genuinely priceable.
+
+## Iteration 41: FOUND A DEFECT IN PR #51, WHICH I HAD VERIFIED ONE ITERATION EARLIER.
+
+PR #51's green "ready to price" chip appeared on INQ-2003 and INQ-2010 - **the only two rows that
+FAIL GRP-BLACKOUT and therefore cannot be priced at all.** They have no proposal precisely because
+pricing refused them, so "complete + unpriced" is the wrong proxy: every row the chip was visible on
+was wrong. Worse than the "0 missing" it replaced, on the screen beat 4 opens.
+Fixed by asking the status the row already carries (`'blocked'`, statusFor tools.ts:1300):
+blocked -> "cannot be priced" in rose. **PR #52 (8dffc34), deployed 21:17:58Z after its 21:17:01Z
+commit. FIXED-PENDING.**
+**RE-TEST:** read /admin/inquiries; INQ-2003 and INQ-2010 must read "cannot be priced" in rose, no row
+may read "ready to price" unless genuinely priceable, and INQ-2004/2012/2013 keep their counts.
+
+**I found it by cross-checking the screen against evaluate_group_rules, not by reading the copy** -
+which looked fine, and which I had signed off in iteration 40. New habit worth keeping: when a change
+adds a claim about state ("ready to price"), test it against the engine that owns that state.
+
+**triage: not run, deliberately.** No dry-run, no per-inquiry filter, and running it would have created
+proposals for INQ-2003/2010 (destroying the rows above), a new PRP-2001 revision, and follow-ups on my
+junk rows. Instead established "sends nothing" BY CONSTRUCTION: triage's only `_delivery/` import is the
+audit logger, and neither draftFollowUp nor generate_proposal contains `deliver(`, `markSent` or
+`sent_at`. Idempotency reduces to its two component calls, both already evidenced (iterations 27, 10) -
+a compositional argument, not an observation.
 
 ## Iteration 40: PR #51 VERIFIED against a prediction. Deployed 20:58:39Z, after its 20:58:30Z commit.
 
@@ -145,7 +167,14 @@ superseded wording; other agents' PR #11, #20, #25, #43.
    `curl | python`. Seven encoding false positives; the worst nearly had me re-provision the live voice
    agent to fix nothing — and my *first* byte-level check confirmed the wrong answer because the
    intermediate file was already corrupted.
-6. **Read the sentence, do not grep it.** A phrase list cannot tell a promise from a refusal to make
+6. **Assert on code, never on prose that mentions the code.** Twice now a test has matched the
+   explanatory comment instead of the logic and failed while the fix was correct (iterations 8, 41).
+   Strip `//` lines before asserting, and say in the file why.
+7. **Write test files with the file-write tool, not a shell heredoc.** `
+?
+` and backticks get
+   mangled; it cost three broken files across the run.
+8. **Read the sentence, do not grep it.** A phrase list cannot tell a promise from a refusal to make
    one, nor transcript history from a live banner.
 7. **Read the tool's argument contract before believing its answer.** The tools ignore unknown keys
    rather than erroring, so a typo is indistinguishable from a bug. Cost two false starts.
