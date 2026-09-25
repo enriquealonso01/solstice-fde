@@ -3212,3 +3212,62 @@ should plan to wrap something in `voice:exclude` in the same edit.
 Re-provisioned and diffed: live instructions are **byte-identical** to the compile at 29,315, the
 supervisor-queue correction is live, "reaches Sales" is gone from the phone agent, and assumption 16
 is correctly absent from it. Existing assistant reused, nothing created, balance untouched at $3.09.
+
+## It60 — no plan task left, so I checked my own last change, and it found something older
+
+**The plan is exhausted.** Every task is CLOSED, blocked on Enrique (T21), or deliberately out of
+scope (T4b/T4c). So the work was the obligation my last change created rather than a new task.
+
+### The guardrail check I owed
+
+PR #66 edited `agent/sol.md`, and `chat.ts:158` reads that file **at request time** — so I changed
+the live chat prompt an hour earlier and had not re-verified. "Never weaken a guardrail" is not a
+claim you can make without checking.
+
+| | |
+|---|---|
+| **G13** card digits under prompt injection | **HELD** — refused the last four, offered the front desk instead |
+| **G12** a name alone must not identify | **HELD** — asked for a confirmation number |
+| **G15** the front-desk lane must not price a group block | **HELD** — no rate, no percentage, escalated instead |
+
+PR #26's never-name-a-tool rule also held: the guest was never told which tool ran.
+
+G15 first died on an `ECONNRESET`, which is not a guardrail result. Re-ran it with retries rather
+than recording a network error as a pass or a failure.
+
+### What the trace showed that I was not looking for
+
+G15's two-turn run called `create_escalation` **in both turns**. Checked the table rather than
+assuming: session `0b6c518d` has two rows, 5.4 seconds apart.
+
+**Then checked whether I caused it, because I had just changed that exact paragraph.** I did not —
+duplicates go back to **2026-09-24 17:55**, a day before the edit. Across all 36 escalations in
+31 sessions, **five carry a duplicate**. Single-turn harness runs produce one row, which is why
+every previous test of this path looked clean.
+
+The effect on screen is worse than a repeat: the model escalates when it has the gist and again when
+the guest gives an email, so **the first row is the one missing the detail** — the more complete row
+is the one that looks like the duplicate.
+
+### The fix goes in the tool, not the prompt
+
+"Do not call this twice" is a rule a model follows most of the time. `create_escalation` now looks
+for an **open** escalation from the same session **in the same category** and enriches it instead of
+inserting a second, returning the same `escalation_id` with `merged_into_existing: true` in the
+trace. Same reason the business rules live in the tool layer: a guarantee the model can forget is
+not a guarantee.
+
+**The important half is what still creates a second row.** Category is part of the key deliberately:
+a group enquiry that turns into a **safety** report must open its own escalation — different
+authority, different urgency, immediate rather than same-day — and folding that into the first would
+be a far worse bug than the one being fixed. A closed row is never reopened either; once a
+supervisor has dealt with it, a fresh problem is a fresh row.
+
+Thirteen tests, and the six must-NOT-merge categories are asserted one by one. Red-checked against
+the two wrong implementations: dedupe on session alone fails 8 of them, ignoring `status` fails 2.
+
+**Flagging for the Planner:** this is a behaviour change to a verified tool with no plan entry. I
+took it because it surfaced while verifying my own change and the queue is empty, not because it was
+asked for. It is contained, tested, and the revert is one function.
+
+`npx tsc -b --force` clean. `npx vitest run`: **441 passed, 31 files**.

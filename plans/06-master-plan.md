@@ -24,9 +24,15 @@
 > **Then:** **Telnyx** $3.09 (beat 3, the live intent check, **G16 on voice**) · **T21** delete
 > `INQ-2012`/`INQ-2013`, keep `INQ-2011` — *"DELETE-ME"* is **row one** of the sales inbox.
 >
-> **Agents, both small:** **T19** one sentence — `agent/sol.md` still says the escalation *"reaches
-> Sales"*, and `sales` sees **0** escalation rows · **re-export** `exports/telnyx-assistant.json`,
-> **28,678** against live's **28,583**.
+> **Agents, one item:** **re-export** `exports/telnyx-assistant.json`, **28,678** against live's
+> **29,315** — two changes behind, not one.
+>
+> **T19 CLOSED** (PR #66) and **live on both runtimes** — voice re-provisioned, verified 29,315
+> byte-identical, "reaches Sales" gone. The escalation reaches the concierge supervisor's queue and a human
+> routes it on — verified three ways, all negative: `esc_read` admits concierge and admin only,
+> Sales is in no `ESCALATION_MATRIX` notify list, and `notify` sends nothing. One thread stays
+> open on purpose: `chat.ts:146` still says *"Sales will follow up"*, deferred as assumption 16.
+> **Bundle that fix into any other `chat.ts` deploy; do not deploy for it alone.**
 >
 > **T20 CLOSED** (PR #64). The warm-up is two `curl`s and **creates no session** — verified, 121
 > before and after. `/api/chat` returning **405** is the point, not a failure; making it a POST
@@ -34,11 +40,16 @@
 
 ---
 
-# ▶ OPEN WORK — three items, none of them large
+# ▶ OPEN WORK — one agent item; the rest is Enrique's
 
 *Everything below this section is closed, or evidence.*
-*• **T21** two test rows to delete — the only thing a panel sees without reading.*
-*• **T19** one sentence in `agent/sol.md`, shipped wrong.*
+*• **T21** two test rows to delete — the only thing a panel sees without reading. Enrique's.*
+*• **Re-export** `exports/telnyx-assistant.json` — 28,678 on disk against live's 29,315.*
+
+*One item is an agent's: the re-export. **Every other remaining item is one an agent is not
+permitted to take** — an irreversible database mutation, or spending money. The Tester's session
+refused the T21 `DELETE` for the same reason mine refused the approval `PATCH`. That is the
+boundary working, not a stall.*
 
 ### T29. Enrique's dashboards — CLOSED, 3 of 3. PRs #50, #53 and #54.
 
@@ -392,7 +403,7 @@ understates its own known issue is the thing we have corrected five times tonigh
 real answers and all belong in the production roadmap, which `docs/latency-target.md:116-117`
 already says. Tonight it is a checklist line.
 
-### T19. The escalation does not reach Sales — fix T17's wording before it ships
+### T19. The escalation does not reach Sales — CLOSED, PR #66. See iteration 75.
 
 *Earns the top slot because T17 is still uncommitted, so this costs one sentence now and a second
 PR later, and because the same sentence is already live in the chat prompt telling guests
@@ -534,6 +545,166 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 76, 18:17 EST — CORRECTION: I got the re-provision rule wrong one iteration ago
+
+**What I wrote last iteration is half wrong, and the wrong half is the actionable half.**
+
+I wrote: *"No deploy, no re-provision"* for PR #66, and the rule *"anyone editing sol.md between
+lines 127 and 221 must deploy **and** re-provision Telnyx."*
+
+The first clause is right. The second is **wrong**, and it would have told the next person to skip
+a re-provision they needed.
+
+#### What is actually true
+
+The two marker systems govern **different runtimes with different scopes**, and I collapsed them:
+
+| Marker | Governs | Scope |
+|---|---|---|
+| `SOL:SYSTEM:BEGIN/END`, `sol.md:127-221` | the **chat** runtime | only this block is extracted |
+| `<!-- voice:exclude -->` blocks | the **voice** runtime | everything *except* these ships |
+
+`scripts/telnyx/provision.mjs:224-227` compiles **the whole file**, stripping front matter,
+`voice:exclude` blocks and HTML comments — it never looks at the `SOL:SYSTEM` markers. So **any
+edit anywhere in `agent/sol.md` that is not inside a `voice:exclude` block changes the phone
+agent** and needs `--refresh`.
+
+**PR #66 is the proof, and it cuts both ways.** Hunk 1 rewrote the escalation paragraph at lines
+81-99 — *outside* `SOL:SYSTEM`, so chat was genuinely untouched and my md5 check was correct — but
+*inside* the voice compile, so the phone agent did need re-provisioning. Hunk 2 at ~368 sits inside
+a `voice:exclude` block, which is why assumption 16 correctly never reached the live prompt.
+
+#### An agent had already done it, and I verified it independently rather than trusting the log
+
+`agents/completed.log.md` reports a `--refresh` at 29,315, byte-identical. I read the live
+assistant myself rather than take that on faith:
+
+```
+live instructions chars: 29315
+  "reaches Sales"            : false
+  concierge supervisor queue : true
+  assumption 16 leaked       : false
+local voice compile        : 29315
+```
+
+**The log is accurate.** The T19 correction is live on the phone, the old wording is gone, and the
+internal note correctly did not leak. Existing assistant reused, balance untouched at $3.09.
+
+#### The shape of my error, because it is one I keep making
+
+I measured the **chat** path, found it unaffected, and wrote a rule that covered **both** runtimes.
+Same shape as the `sed` line-number correction and the `head_limit` truncation: the measurement was
+sound and the generalisation from it was not. **Verifying one runtime is not verifying the other**
+— which is the same sentence as *"verifying an implementation is not verifying a claim"*, one level
+down.
+
+Worth noting the system caught it and I did not: the re-provision happened because an agent read
+the file rather than my rule. Had they followed what I wrote, the phone agent would still be saying
+"reaches Sales" while `agent/sol.md` — the deliverable — said it does not.
+
+#### The one agent item, with a corrected number
+
+`exports/telnyx-assistant.json` is **28,678**; live is now **29,315**. The gap was 95 characters
+when I last logged it and is now **637** — the export is two changes behind (#56's voice cap and
+#66's T19 correction), not one. It is the *native export* deliverable, so it should match what a
+reviewer would pull from Telnyx.
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| Telnyx top-up, $3.09 | Enrique | open — gates beat 3 and G16 on voice |
+| T21, delete `INQ-2012`/`INQ-2013`, keep `INQ-2011` | Enrique | open — SQL and row ids ready |
+| Re-export `exports/telnyx-assistant.json` | Agents | open — **28,678** vs live **29,315** |
+| T19 | — | CLOSED and **live on both runtimes**, PR #66 + `--refresh` |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
+### Iteration 75, 18:12 EST — T19 closed; production is three commits behind HEAD and it does not matter
+
+**T19 is CLOSED (PR #66), and it answered more than it was asked.** The task was one sentence.
+The Implementer checked three independent routes before writing it, and all three are negative:
+
+- **RLS** — `esc_read` admits concierge and admin only (`schema.sql:171`). A sales account reads
+  zero escalation rows, which is exactly the Tester's **0 vs 31**.
+- **Category routing** — every notify list in `ESCALATION_MATRIX` is GM, Regional Security,
+  Manager on duty or AGM. **Sales appears in none.** A group request defaults to `other`.
+- **`notify` is not a delivery mechanism** — it is a stored string array interpolated into the
+  tool's reason text. Nothing sends it; `_delivery/` serves proposals, not escalations.
+
+`agent/sol.md` now says the row reaches the concierge supervisor's queue and a human routes it
+onward. **Naming the hop beats implying the board gets it directly.**
+
+#### The deploy is BEHIND HEAD, and I checked rather than assumed
+
+```
+HEAD    2026-09-25T22:08:55Z
+ready   2026-09-25T22:02:10Z    BEHIND
+```
+
+Three commits are merged and undeployed — **#65, #66, #67**. They touch `HUMAN_INTERVENTION.md`,
+the agent status and log files, `plans/06-master-plan.md`, and `agent/sol.md`. **No shipped code.**
+Production and `main` are functionally identical. Live surfaces and refusals re-checked:
+
+```
+/ 200   /login 200   /admin/inquiries 200
+/api/cost 401   /api/group/inquiries 401   /api/flags 401
+```
+
+#### The part worth keeping: `agent/sol.md` is a runtime input, not only a document
+
+`chat.ts:158` reads `agent/sol.md` **at request time**, falling back to the compiled constant in
+`netlify/functions/tools/solPrompt.ts` when the markdown is not in the bundle. So in this repo
+**"the commit only touched markdown" does not by itself mean "no deploy needed."**
+
+It is safe *this* time, and I verified it rather than reasoning about it. The runtime prompt is the
+block between the `SOL:SYSTEM` markers, `sol.md:127-221`. PR #66's two hunks land at lines 81-90
+and ~368 — **both outside the markers**. Extracting the block at the deployed commit and at HEAD:
+
+```
+dc01ed7  cae0b7d589bda3ebfd77ac78c3d4f85f
+HEAD     cae0b7d589bda3ebfd77ac78c3d4f85f
+```
+
+Byte-identical, so **no deploy** is needed and the stale `solPrompt.ts` fallback stays correct.
+
+> **CORRECTED IN ITERATION 76 — do not follow the rest of this paragraph as originally written.**
+> I also wrote *"no re-provision"* and *"anyone editing sol.md between lines 127 and 221 must
+> deploy and re-provision Telnyx."* **Both are wrong.** `provision.mjs` compiles the *whole file*
+> minus `voice:exclude` blocks and never reads the `SOL:SYSTEM` markers, so **any** edit outside a
+> `voice:exclude` block changes the phone agent. PR #66 did need a `--refresh`, and an agent
+> correctly performed one. See iteration 76.
+
+#### One T19 thread stays open by choice, and I agree with the choice
+
+`netlify/functions/chat.ts:146` still instructs Sol: *"call `create_escalation` so it reaches Sales
+with the details, and tell them Sales will follow up"* — the exact claim T19 disproved. It sits in
+`CHAT_CHANNEL_NOTE`, a string constant, so the edit is two phrases. The Implementer deferred it as
+**assumption 16** rather than deploy `chat.ts` hours before submission.
+
+That holds, and not merely because it is the cautious option: the overstatement is **one hop, not
+a fabrication** — a manager does get it and does route it on — a guest cannot tell the two
+sentences apart, and the reviewer who can is told at `sol.md:378` that we found it. The cost of
+being wrong is a named inaccuracy; the cost of a bad `chat.ts` deploy is beat 2.
+
+**But it should not stay unclaimed:** if anything else gives a reason to deploy `chat.ts` before
+11:00, this rides along at no extra risk. Bundle it, do not deploy for it.
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| Telnyx top-up, $3.09 | Enrique | open — gates beat 3 and G16 on voice |
+| T21, delete `INQ-2012`/`INQ-2013`, keep `INQ-2011` | Enrique | open — SQL and row ids ready |
+| Re-export `exports/telnyx-assistant.json` | Agents | open — **28,678** vs live **28,583** |
+| T19 | — | **CLOSED**, PR #66 |
+
+Inbox empty. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 74, 18:04 EST — T20 closed, and the warm-up fixes a flaw in my own spec
 

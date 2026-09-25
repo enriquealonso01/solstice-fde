@@ -10,7 +10,25 @@ What I am doing right now, and what I did last. Overwritten each iteration.
   second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
   inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
   grep, where a filter hid the hit.
-- **CLAIMED It59: T19 + T17 — `agent/sol.md` contradicts the shipped chat runtime.** One edit:
+- **CLAIMED It60: guardrail regression check on my own prompt change.** No unclaimed plan task
+  remains — everything is CLOSED, blocked on Enrique (T21), or deliberately out of scope
+  (T4b/T4c). So the task is the one my last change created: **PR #66 edited `agent/sol.md`, and
+  `chat.ts` reads that file raw at request time**, so I changed the live chat prompt an hour ago
+  and have not re-run G12/G13/G15 against it. The standing rule is never weaken a guardrail;
+  that is not a claim I can make without checking.
+- **DONE It59: T19 — PRs #66 and #67.** T17 needed no work: the telephony-only note was already at
+  `sol.md:77-80`, uncommitted when the plan was written and committed by #56. T19's precondition
+  checked three ways and all no — RLS is `concierge`/`admin` only, no `ESCALATION_MATRIX` category
+  notifies Sales, and `notify` is a stored string nothing sends. The definition now names the hop.
+  Re-provisioned: live is byte-identical at 29,315, "reaches Sales" gone from the phone agent.
+- **My It55 guard caught this edit going out broken** — the new prose pushed the compile to 30,033
+  and `truncated: true`, the exact silent failure T28 existed to fix. Fixed by excluding, not by
+  raising the cap. **Margin is now 685 chars on disk; the next prose added here must wrap
+  something in the same edit.** I got that number wrong first (measured pre-checkout, the same
+  CRLF mistake I logged a correction for in It55) and corrected it in #67.
+- **Confirmed live, as documented:** chat still answers a group turn with *"I'll get it in front of
+  our Sales team"* — `chat.ts:146`, deliberately unchanged, recorded as assumption 16.
+- **Superseded claim: T19 + T17 — `agent/sol.md` contradicts the shipped chat runtime.** One edit:
   the inquiry-creation tools are telephony-only, and on chat the job is capture + escalate. T19
   sets a precondition I am checking before I write a word — whether a notification, a `category`
   routing rule or a documented human process already puts the escalation in front of Sales. If

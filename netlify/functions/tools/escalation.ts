@@ -44,6 +44,32 @@ function newId(prefix: string): string {
   return `${prefix}-${rnd}`
 }
 
+/**
+ * One conversation, one open escalation per category.
+ *
+ * A two-turn group request produced TWO rows: the model calls `create_escalation` when it has the
+ * gist, and again once the guest gives an email. Measured on production, five of thirty-one
+ * sessions carried a duplicate — the supervisor's queue shows one guest twice, and the FIRST copy
+ * is the one missing the detail, so the more complete row is the one that looks like the repeat.
+ *
+ * The guarantee belongs here rather than in the prompt. "Do not call this twice" is a rule a model
+ * follows most of the time; this makes it true every time, which is the same reason the business
+ * rules live in the tool layer and not in the instructions.
+ *
+ * Category is part of the key on purpose. A caller whose group enquiry turns into a safety report
+ * must open a SECOND escalation — different category, different authority, different urgency — and
+ * silently folding that into the first would be a far worse bug than the one being fixed. Only an
+ * `open` row is a merge target: once a supervisor has closed one, a fresh problem is a fresh row.
+ */
+export function mergeTargetFor(
+  rows: Array<{ id: string; category: string; status: string }> | null | undefined,
+  category: string,
+): string | null {
+  if (!rows) return null
+  const hit = rows.find((r) => r.category === category && r.status === 'open')
+  return hit ? hit.id : null
+}
+
 // ---------------------------------------------------------- create_escalation
 
 export async function createEscalation(args: ToolArgs, ctx: ToolContext): Promise<ToolResult> {
@@ -83,23 +109,48 @@ export async function createEscalation(args: ToolArgs, ctx: ToolContext): Promis
   // problem, not a reason to drop the escalation on the floor.
   let persistedId: string | null = null
   let persistenceError: string | null = null
+  let mergedIntoExisting = false
   try {
     const db = getDatabase()
     if (db) {
-      const { data, error } = await db
-        .from('escalations')
-        .insert({
-          session_id: ctx.session_id ?? null,
-          category,
-          severity: route.severity,
-          summary,
-          packet,
-          status: 'open',
-        })
-        .select('id')
-        .single()
-      if (error) persistenceError = error.message
-      else if (data && typeof data.id === 'string') persistedId = data.id
+      // Look for an open escalation this session already raised in the same category, and enrich it
+      // rather than adding a second row. See mergeTargetFor above for why category is part of the key.
+      let existingId: string | null = null
+      if (ctx.session_id) {
+        const { data: open } = await db
+          .from('escalations')
+          .select('id,category,status')
+          .eq('session_id', ctx.session_id)
+        existingId = mergeTargetFor(open as Array<{ id: string; category: string; status: string }> | null, category)
+      }
+
+      if (existingId) {
+        packet.escalation_id = existingId
+        const { error } = await db
+          .from('escalations')
+          .update({ severity: route.severity, summary, packet })
+          .eq('id', existingId)
+        if (error) persistenceError = error.message
+        else {
+          persistedId = existingId
+          mergedIntoExisting = true
+        }
+      } else {
+        const { data, error } = await db
+          .from('escalations')
+          .insert({
+            session_id: ctx.session_id ?? null,
+            category,
+            severity: route.severity,
+            summary,
+            packet,
+            status: 'open',
+          })
+          .select('id')
+          .single()
+        if (error) persistenceError = error.message
+        else if (data && typeof data.id === 'string') persistedId = data.id
+      }
     } else {
       persistenceError = 'No database configured; the escalation was not recorded.'
     }
@@ -111,6 +162,9 @@ export async function createEscalation(args: ToolArgs, ctx: ToolContext): Promis
     {
       escalation_id: persistedId ?? localId,
       persisted: persistedId !== null,
+      // True when this enriched the escalation the session already had rather than opening a
+      // second one. Visible in the trace so the audit trail shows a merge, not a silent drop.
+      merged_into_existing: mergedIntoExisting,
       persistence_error: persistenceError,
       category,
       severity: route.severity,
