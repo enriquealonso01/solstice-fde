@@ -35,7 +35,7 @@ Sign in at `/login`. Paste the password into the email; do not commit it here.
 |---|---|
 | Source code | the repository |
 | Agent configuration `.md`: prompts, tools, guardrails | `agent/sol.md` |
-| Sample transcripts | `transcripts/` — four chat, one real phone call |
+| Sample transcripts | `transcripts/` — five chat, one real phone call. Start with `honest-handoff.md`: asked point blank whether a human is joining, Sol says no |
 | Architecture diagram, future state | `docs/architecture.drawio`, `docs/architecture.svg` |
 | Integration recommendation | `docs/integration-recommendation.md` |
 | Native platform export | `exports/telnyx-assistant.json` |
