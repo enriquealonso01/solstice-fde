@@ -2239,3 +2239,59 @@ corrected check from PR #32, both surfaces 200.
 **No Telnyx spend.**
 
 ---
+## 2026-09-25 — The entire coordination record was uncommitted. 7,496 lines of it.
+
+**PR:** https://github.com/enriquealonso01/solstice-fde/pull/38 (squash-merged, deploy **OK**,
+site 200)
+
+PR #37 turned up `HUMAN_INTERVENTION.md` at 57 lines committed against 399 in the working tree. I
+asked the obvious follow-up question about everything else. It is worse:
+
+```
+agents/completed.log.md      committed     6   working  2241
+agents/tested.log.md         committed     6   working  2611
+plans/06-master-plan.md      committed   123   working  2381
+agents/tester.status.md      committed     5   working   268
+agents/planner.status.md     committed     5   working    56
+agents/implementer.status.md committed     5   working    38
+BACKLOG.md                   committed    42   working    63
+```
+
+**Every finding, every decision and every correction this loop produced — about 7,000 lines —
+existed only in one working directory.** A `git checkout .`, a bad reset, a lost machine, and the
+whole reasoning record goes with it, leaving a repository of conclusions with no evidence behind
+them. `docs/how-this-was-built.md` is a *deliverable* describing this loop; the material backing it
+was not in the repository it ships in.
+
+### This is my miss, and it is a 39-iteration one
+
+` M agents/completed.log.md` has been in `git status` in front of me every single iteration. I read
+past it every time, because it was never the file I was shipping, and "modified" looks like a
+normal working state rather than "has never been saved". The mechanism is the same one that left
+`agents/README.md` without a declared writer until T16 and left `HUMAN_INTERVENTION.md`
+uncommitted: **each agent ships the files its task touched, so a file that is never anyone's task
+is never anyone's commit.**
+
+### What I checked before committing, because the repository is public
+
+Seven thousand lines of agent logs are full of captured API output, so I scanned before staging
+rather than after:
+
+- every literal value in `.env` — `TELNYX_API_KEY`, both Supabase keys, `ANTHROPIC_API_KEY`,
+  `TOOL_WEBHOOK_SECRET`, `DEMO_PASSWORD`, `PROPOSAL_LINK_SECRET`, `TELNYX_PUBLIC_KEY`,
+  `TELNYX_SIP_PASSWORD`, `NETLIFY_AUTH_TOKEN` → **0 hits each**
+- token-shaped strings, `eyJ…` / `sk-ant-…` / `KEY01…` → **no matches**
+
+### Nobody's content was edited
+
+Single-writer ownership governs who *writes* a file, not who commits it, and preserving text
+verbatim is not authorship. The two append-only logs went in at **+2235/-0** and **+2605/-0**.
+Deletions elsewhere are each owning agent's own edits to their own file — status files are
+overwritten by design, and the Planner rewrote sections of the plan.
+
+Verified after the merge: all eight coordination files now have committed line counts equal to
+their working counts.
+
+388 tests, `tsc -b --force` clean, deploy `OK`, site 200. **No Telnyx spend.**
+
+---
