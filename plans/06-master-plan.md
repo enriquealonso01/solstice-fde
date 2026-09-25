@@ -71,8 +71,10 @@
 
 *Everything below this section is closed, or evidence.*
 *• **T34** an unredacted SIP target ships in the public export. One line. **Do first.***
-*• **T36** PR #85's transfer record may not run on voice — `transfer_to_human` is provisioned as a
-**native** Telnyx handoff, so the webhook never fires there. Evidence filed, not a verdict.*
+*• **T36** the **voice** handoff has no escalation requirement. `provision.mjs:586-603` replaces
+`transfer_to_human` with a native Telnyx `transfer`, so PR #85's fix lands on **chat**. The voice
+guidance is `warm_transfer_instructions` and it says nothing about a record. One sentence + a
+`--refresh`.*
 *• **T35** nothing points the reviewer at `agents/tested.log.md` — 4,783 lines proving 18 of 19
 guardrails. Two lines in `README.md` and `SUBMISSION.md`. **The only place this package underclaims.***
 *• **T32** the escalation queue is FUTURE in the diagram and present tense in `sol.md` — **lowest
@@ -193,7 +195,35 @@ is currently true.
 `over N` construction.
 
 
-### T36. PR #85's fix may not reach the voice leg it was written for — evidence, not a verdict
+### T36. PR #85's fix lands on chat, not voice — the voice gap is real and now located precisely
+
+> **Upgraded in iteration 93 from "evidence" to a confirmed routing finding.** `provision.mjs:586-603`
+> does not merely describe the conversion, it performs it: when building the voice assistant's tool
+> list it **replaces** `transfer_to_human` with a native Telnyx `transfer` tool and `continue`s, so
+> **no webhook is registered for that name on voice**. `registry.ts:42,153` keeps it as a webhook for
+> **chat**. Two independent artefacts agree — the provisioner source and the export's 25 tools.
+>
+> **What this means for the Tester's check.** Their production evidence was
+> `POST /api/tools/transfer_to_human {"channel":"voice", …}` → `escalation_id: None`. That exercises
+> the **endpoint**, and `channel:"voice"` is a payload field. It does not establish that the voice
+> assistant ever calls that endpoint — and the provisioner says it cannot. **The instrument was
+> right; it answered a different question than the one asked of it.**
+>
+> **The gap they found is real, and it is not where the fix went.** On voice the handoff is Telnyx's
+> native transfer, whose only guidance is `warm_transfer_instructions` in `provision.mjs:600-602`:
+> *"Summarise the guest, the reservation, what has been tried, and the exact ask. Then hand over."*
+> **No escalation requirement anywhere in it.** That is the announce-before-connect window, on the
+> leg G16 was written for, still open.
+>
+> **The concrete remedy, if it is judged worth doing:** add the escalation-first sentence to
+> `warm_transfer_instructions` and re-provision. It is prompt text on a native tool, so it does
+> **not** touch `agent/sol.md` and does **not** spend the 681-character margin — but it **does**
+> require a `--refresh`, and the Tester verifies live against compile byte-for-byte.
+>
+> **Still unobserved:** whether a real call reaches the native transfer at all. That is the live
+> call, still gated on $3.09.
+
+### T36 (original filing). PR #85's fix may not reach the voice leg it was written for
 
 *Earns a slot because #85 identifies a real guest-facing risk **on voice** and the code it changed
 appears not to run there. I cannot settle it without a live call, so this is filed as evidence with
@@ -1035,6 +1065,95 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 93, 19:38 EST — two agents fixed the voice leg on the chat branch; the provisioner settles it
+
+#### What both of them concluded
+
+PR #85 (Implementer) and Tester iteration 54 independently established that `configured` is TRUE —
+`DEMO_PHONE` is the `??` fallback and is set on the deploy — so the **announce** path is live, not
+the refusal. **That part is right, and I had it wrong twice.** The Tester also retracted a request
+that had sat on Enrique's list for twelve hours asking him to unset a variable that was already
+unset, and recorded the rule: **read the expression, where it runs.**
+
+Their production evidence:
+
+```
+POST /api/tools/transfer_to_human {"channel":"voice", …}
+  transfer_available True   fallback (null)   escalation_id None
+  human_reason "Announce the handoff before it happens…"
+```
+
+From which both concluded: *a G16 gap on the leg G16 was written for*, fixed by adding an
+escalation-first instruction to the configured branch.
+
+#### The provisioner says that branch is not on the voice leg
+
+`scripts/telnyx/provision.mjs:586-603` does not merely comment on this, it **performs** it. Building
+the voice assistant's tool list:
+
+```js
+if (name === 'transfer_to_human') {
+  if (!transferTarget) { skipped.push(...); continue }
+  tools.push({ type: 'transfer', timeout_ms: 25000, transfer: { targets: […],
+    warm_transfer_instructions: 'Summarise the guest, the reservation, what has been tried,
+    and the exact ask. Then hand over.' } })
+  continue
+}
+```
+
+**`transfer_to_human` is replaced by a native Telnyx `transfer` tool and no webhook is registered
+under that name.** `registry.ts:42,153` keeps it as a webhook for **chat**. The export's 25 tools
+agree: `transfer` (native), no `transfer_to_human`.
+
+**So their instrument was right and answered a different question than the one asked of it.**
+`POST /api/tools/transfer_to_human` with `channel:"voice"` exercises the endpoint; `channel` is a
+payload field. Nothing in that call establishes that the voice assistant invokes the endpoint — and
+the provisioner says it cannot.
+
+#### The gap they found is real. It is just not where the fix went
+
+On voice the handoff is Telnyx's native transfer, and its only guidance is
+`warm_transfer_instructions`: *"Summarise the guest, the reservation, what has been tried, and the
+exact ask. Then hand over."* **No escalation requirement anywhere in it.** The
+announce-before-connect window they correctly identified is still open on the leg G16 names, and
+#85 closed the same window on **chat**, where PR #7 had already closed it — which is why the
+behaviour there was already asymmetric in the direction they described.
+
+**The remedy is small if it is judged worth doing:** add the escalation-first sentence to
+`warm_transfer_instructions` and re-provision. It is prompt text on a native tool — it does **not**
+touch `agent/sol.md` and does **not** spend the 681-character margin, but it **does** need a
+`--refresh`.
+
+#### On being the one to say this, having been wrong twice about this exact branch
+
+I have no standing on this branch from past accuracy. What I have is an artefact that answers the
+routing question directly, where theirs answers a question about the endpoint. **That is the whole
+of my case, and it is checkable in about a minute without spending anything** — which is the form a
+disagreement should take when the person raising it has a bad record on the topic.
+
+**Still unobserved by anyone:** whether a real call reaches the native transfer at all. That remains
+the live call, gated on **$3.09**.
+
+#### Also closed
+
+**#87** fixed `SUBMISSION.md`'s *"Two things"* above three bullets — the commit is titled
+*"submission cannot count to three"*, which is the right amount of ceremony for it.
+
+#### State after this iteration
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| Telnyx top-up, $3.09 | Enrique | open — still the only way to observe the voice leg |
+| T34 rotation decision | Enrique | open |
+| T21, delete `INQ-2012`/`INQ-2013` | Enrique | open — verified safe |
+| **T36** voice handoff has no escalation requirement | Agents | **open — located precisely, remedy is one sentence** |
+| T35 point at the guardrail evidence | Agents | open — two lines |
+| `SUBMISSION.md` count | — | **CLOSED**, PR #87 |
+
+Inbox empty. No lock held.
+
 
 ### Iteration 92, 19:34 EST — I read one variable and concluded about a boolean that depends on two
 

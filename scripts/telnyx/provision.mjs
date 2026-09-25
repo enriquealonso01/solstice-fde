@@ -599,7 +599,17 @@ function buildToolList(toolNames, urls, transferTarget, headers) {
           targets: [{ to: transferTarget, name: 'Solstice front desk' }],
           custom_headers: [],
           warm_transfer_instructions:
-            'Summarise the guest, the reservation, what has been tried, and the exact ask. Then hand over.',
+            // G16 lives here on the voice leg. The webhook version of this tool has the rule in code;
+            // the native transfer has only this string, and its first version said nothing about an
+            // escalation — so a transfer that never connected left no durable record and nothing
+            // stopped the model describing a handoff that did not happen. The order matters: the
+            // escalation is raised BEFORE the hand over, so it exists whether or not anyone answers.
+            'First make sure an escalation exists for this guest: if you have not already called ' +
+            'create_escalation, call it now, so there is a durable record whether or not this ' +
+            'transfer connects. Then summarise the guest, the reservation, what has been tried, and ' +
+            'the exact ask, and hand over. If nobody picks up, do not describe a handoff that did ' +
+            'not happen: say plainly that you could not reach a colleague, that a manager has it, ' +
+            'and that they will call back today.',
         },
       })
       continue

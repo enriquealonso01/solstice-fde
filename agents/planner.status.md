@@ -4,52 +4,60 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 91 — 2026-09-25 ~19:28 EST
+## Iteration 93 — 2026-09-25 ~19:38 EST
 
-### Inbox empty. No lock held. Suite green at 462. T33 closed (PR #83).
+### Inbox empty. No lock held. `SUBMISSION.md` count fixed (PR #87).
 
-### The latency deliverable is honest and independently verified — nothing to correct
+### Two agents fixed the voice leg on the chat branch. The provisioner settles it
 
-Tester iteration 53 (PR #84) checked the commitments, not the prose: the warm procedure returns
-**405 and creates no session** (140 before, 140 after) with timings matching the runbook; tool
-webhook **p95 270ms pooled over 80 calls**, inside the published 300ms; chat medians inside target
-**stated as n=3**.
+**What they got right, and I had wrong twice:** `configured` is TRUE because `DEMO_PHONE` is the
+`??` fallback and is set on the deploy, so the **announce** path is live. The Tester also retracted
+a twelve-hour-old request asking Enrique to unset a variable that was already unset, and recorded
+the rule: **read the expression, where it runs.**
 
-Their first pass said the webhook p95 was missed by 76ms — computed from **twenty** samples. They
-caught it themselves and **recorded the rule**, which is the more valuable half.
+**Their evidence:** `POST /api/tools/transfer_to_human {"channel":"voice"}` → `escalation_id: None`,
+"Announce the handoff before it happens." From which both concluded *G16 on the voice leg*.
 
-The document also does the hard thing: *"1545ms against 1.5s… We are not moving the target to match
-the measurement."* And `README.md:21` / `SUBMISSION.md:42` only **link** to it, so the number lives
-in one place and has not rotted the way the file counts did.
+**`provision.mjs:586-603` performs the conversion, it does not just describe it:**
 
-### What I found: the guardrail evidence is invisible from every deliverable
+```js
+if (name === 'transfer_to_human') { …
+  tools.push({ type: 'transfer', timeout_ms: 25000, transfer: { targets: […],
+    warm_transfer_instructions: 'Summarise the guest, the reservation, what has been tried,
+    and the exact ask. Then hand over.' } })
+  continue }
+```
 
-`agents/tested.log.md` is **4,783 lines** proving **18 of 19 guardrails** against production, and
-**nothing points at it.** `sol.md` §5 gives a *"How to test it"* column — honest, claims nothing
-about whether the tests were run. `how-this-was-built.md` tells the loop story but never what the
-disbelieving agent proved. `README.md:76` says "a tester" in a table cell.
+**No webhook is registered under that name for voice.** `registry.ts:42,153` keeps it for **chat**.
+The export's 25 tools agree: native `transfer`, no `transfer_to_human`.
 
-**T35 filed**, deliberately small: two lines, in `README.md` and `SUBMISSION.md` **only**. The
-guardrail section of `sol.md` is outside every `voice:exclude` block, so editing there spends the
-**681-character** margin and forces a re-provision for a presentational change.
+So their instrument was right and **answered a different question than the one asked of it** — a
+`POST` to the endpoint, with `channel` as a payload field, says nothing about whether the voice
+assistant calls it. The provisioner says it cannot.
 
-I specified **concrete highlights over the count** — G13 refusing card digits under prompt
-injection *without calling the tool*, G17 at 500 trace rows, PR #74's 4-of-4 → 0-of-4 — and **G16
-named open in the same breath**.
+### The gap they found is real; it is not where the fix went
 
-### Why it is worth noting beyond the task
+On voice the only guidance is `warm_transfer_instructions`, and it contains **no escalation
+requirement**. The announce-before-connect window is still open on the leg G16 names, while #85
+closed the same window on chat — where PR #7 had already closed it.
 
-Ninety iterations of this log are corrections of things claimed too strongly, mine most of all.
-**This is the first in the other direction.** The habit that produced the accuracy also produced a
-reluctance to state what was proved. The fix is not to loosen the standard — it is to see that
-*"18 of 19, here is the log, G16 is open"* **is** the careful statement.
+**Remedy: one sentence in `warm_transfer_instructions` + a `--refresh`.** It does not touch
+`agent/sol.md` and does not spend the 681-character margin.
+
+### On being the one to say this
+
+I have no standing on this branch from past accuracy — I was wrong about it twice. What I have is
+an artefact that answers the **routing** question where theirs answers an **endpoint** question,
+and it is checkable in a minute without spending anything. That is the form a disagreement should
+take when the person raising it has a bad record on the topic.
+
+**Still unobserved by anyone:** whether a real call reaches the native transfer. Gated on $3.09.
 
 ### The plan is accurate and correctly ordered
 
-**Enrique:** the SQL paste · T34 rotation · Telnyx top-up · T21.
-**Agents:** **T35**, which absorbs the one-word `SUBMISSION.md` fix.
+**Enrique:** the SQL paste · Telnyx top-up · T34 rotation · T21.
+**Agents:** **T36** (one sentence, precisely located) · **T35**'s two lines.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — still the only open item with a live security consequence, and the
-Tester now records it **unapplied for a fourth consecutive iteration**.
+**The `drop policy` paste** — still the only open item with a live security consequence.
