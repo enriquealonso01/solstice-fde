@@ -32,7 +32,7 @@ export default function SupervisorAudioStatus() {
         </span>
         <span className="block text-xs leading-relaxed">
           {voice.ready
-            ? 'This browser is registered as a SIP client, so a call you take over will reach your headset.'
+            ? 'This browser is connected to the phone system, so a call you take over will reach your headset.'
             : voice.unavailableReason}
         </span>
       </span>

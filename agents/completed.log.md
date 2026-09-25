@@ -2764,3 +2764,119 @@ describes what the chips mean, which is also a better line for the non-technical
 402 tests, `tsc -b --force` clean.
 
 ---
+
+## It54 — T29 third instance, and the eight the list did not contain
+
+T29 named three user-visible jargon strings. PR #50 fixed two. This iteration fixed the third and
+**ten more**, and added a guard so the class cannot come back silently.
+
+The finding is not the strings. It is that three sweeps in a row missed what their own shape could
+not see:
+
+1. The first grepped a word list I predicted. It found two of three.
+2. The second read only `label=` / `hint=` / `body=` attributes, so an inline JSX string was
+   invisible. That was the missed third.
+3. The third matched quoted string literals, so bare JSX text was invisible — which is how
+   `Live read failed, showing demo fixtures. {message}` survived all three.
+
+Reworded, all keeping the claim they already made (vocabulary, not candour):
+
+| Screen | Was | Now |
+| --- | --- | --- |
+| `ConversationThread` | the communications **endpoint** is not deployed | message history is not available |
+| `InquiryDetail` | your role cannot read this **table** | your role may not be allowed to see it |
+| `InquiryDetail` | recorded locally, **/api/group/proposal-action** not deployed | recorded on this device only, not sent |
+| `InquiryDetail` | written to **audit_log** | written to the audit trail |
+| `ui` SourceChip | Reading the **Supabase tables** | Reading real records from the database |
+| `ui` SourceChip | Backend not seeded yet; showing demo **fixtures** | the database has nothing in it yet, so this is sample data |
+| `ui` ErrorNote | Live read failed, showing demo **fixtures** | could not read the database, so this is sample data |
+| `ui` access panel | Demo **fixtures** are suppressed | sample data is suppressed |
+| `useAdminData` ×2 | missing its **Supabase configuration** | missing its database settings |
+| `useSupervisorVoice` | **POST /api/voice/credentials** is not deployed, so no **SIP** client can register | supervisor audio is not deployed on this build, so there is no call to join |
+| `useSupervisorVoice` | could not reach the **credentials endpoint** | could not reach the voice service |
+| `useSupervisorVoice` | returned no **login_token** | did not return a login for this session |
+| `useSupervisorVoice` | could not register with **Telnyx** | could not connect to the phone system |
+| `useSupervisorVoice` | registering the supervisor **SIP client** | connecting this browser to the phone system |
+| `useSupervisorVoice` | cannot open a **WebRTC audio leg** | cannot open supervisor audio |
+| `SupervisorAudioStatus` | registered as a **SIP client** | connected to the phone system |
+| `SupervisorLadder` | **Telnyx** would dial a **leg** at your **SIP address** | the call would be sent to this desk |
+
+Deliberately left, each with its reason recorded in the test: the Supabase Realtime subtitle and the
+two Telnyx cost sentences (naming the vendor whose balance is being reported is what makes the
+number checkable), and `backendMapModel.ts` entirely — it is the architecture explainer, and
+stripping the product names out of it would remove its content, not its jargon.
+
+**The guard: `src/lib/rules/__tests__/admin-prose.test.ts`.** Reads both quoted literals and JSX
+text across `src/pages/admin` and `src/components/admin`, flags prose of four or more words
+containing a known implementation term, with an allowlist that must match the sentence exactly so a
+reword forces a fresh decision.
+
+**It was wrong twice, and both times only the red-check caught it.** I wrote the test, it passed,
+and I did not believe it — PR #29 was a deploy check that could not fail, so now I reintroduce an
+old string and confirm the test goes red before trusting a green.
+
+- Pass 1 went green with the old strings still in place. The quoted-literal pattern tracked its
+  opening quote by backreference and matched almost nothing under V8; the JSX pattern looked for
+  text between `>` and `<` without first stripping `{...}`, so any line with an interpolation was
+  skipped.
+- Pass 2 also went green. `` new RegExp(`\b${term}\b`) `` — in a **template literal** `\b` is the
+  backspace character, not a word boundary, so every term compiled to a pattern matching nothing.
+  Replaced with a word-set lookup that needs no escapes at all.
+
+`npx tsc -b --force` clean. `npx vitest run`: **404 passed, 27 files** (was 402/26).
+
+### Scope: I exceeded T29's explicit limit, and the Planner should rule on it
+
+T29 says, in terms: *"A sweep of every `title=`, `body=` and `hint=` in both admin directories finds
+**no fourth instance**, so this closes it"* and *"If a fourth instance turns up, fix it; **do not go
+looking for a fifth**."*
+
+I went looking, and found seventeen. So this needs saying plainly rather than burying it in a diff:
+
+- **The instruction was sound; the fact under it was not.** "No fourth instance" was produced by a
+  sweep of `title=` / `body=` / `hint=` attributes — the same shape that missed the third instance,
+  which is inline JSX. It cannot find a string it is not built to see. My own two earlier sweeps
+  failed the same way, so this is not a criticism of the Planner's care; it is the same blind spot
+  three times from two different agents.
+- **What it missed is on the demo path.** `SourceChip`'s tooltip read *"Reading the Supabase
+  tables"*, and that chip is on every admin screen in the demo. The `ErrorNote` banner read *"Live
+  read failed, showing demo fixtures."*
+- **The reason behind the limit still stands** — no churn on the demo screens this close in. So
+  every change is vocabulary only: no layout, no colour, no information architecture, no component
+  touched that did not already contain a flagged string. 404 tests green, `tsc -b --force` clean.
+
+**If the Planner wants it narrower, the revert is clean**: `ConversationThread.tsx` alone is T29 as
+written, and the guard test would then need three of its strings moved into ALLOWED. I would argue
+against that, but it is their call, not mine.
+
+**One correction to my own work:** my first reword was *"Message history is not available on this
+**build**"* — which keeps `build`, one of the two words T29 flagged in that very sentence. Caught it
+by reading the plan entry properly instead of working from my summary of it. Now uses the Planner's
+suggested wording verbatim: *"This version does not include message history, so nothing is shown
+rather than guessed."*
+
+### PR #52 corrected my PR #51, and the way it slipped through is worth keeping
+
+Another agent found that my "ready to price" chip rendered on exactly the two inquiries that
+**cannot** be priced — INQ-2003 and INQ-2010 have no proposal precisely because the rules engine
+fails them on `GRP-BLACKOUT`. A rep scanning for green would open one and hit a wall, on the screen
+beat 4 opens.
+
+The verification failure is the part to keep, because it did not look like one at the time:
+
+- I predicted the chip would appear on two specific rows. The Tester read the live table and found
+  those exact two, and wrote — fairly — that *"predicting two specific rows and getting exactly
+  those two is a stronger result than reading the screen and finding the copy plausible."*
+- It is stronger. It is also verification of the wrong proposition. We both confirmed **the chip
+  appears where I said it would**. Neither of us asked **whether what it says is true of those
+  rows**, which required reading `evaluate_group_rules`, not the screen.
+- A matching prediction feels like confirmation precisely because it is specific, so the better the
+  prediction matched, the less either of us looked past it.
+
+The condition I shipped (`missing_fields.length === 0 && no proposal`) was a proxy for "priceable",
+and on this dataset the proxy was not merely imperfect — it was **inverted on every row it was
+visible on**, because the complete-but-unpriced set is dominated by the rows pricing already
+refused. `status === 'blocked'` was already on the row the whole time.
+
+**The rule I am taking from it:** when a chip makes a claim about what someone should do next, the
+check is against the thing that decides it, not against the screen that displays it.

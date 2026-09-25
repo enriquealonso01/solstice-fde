@@ -39,7 +39,7 @@ export type AccessProblem = 'expired' | 'forbidden' | 'unavailable'
 export const ACCESS_MESSAGE: Record<AccessProblem, string> = {
   expired: 'Your session has expired. Sign in again to see live data.',
   forbidden: 'This account does not have access to these records.',
-  unavailable: 'The server cannot verify your session right now. Its Supabase configuration is missing.',
+  unavailable: 'The server cannot verify your session right now. It is missing its database settings.',
 }
 
 export interface Loaded<T> {
@@ -515,7 +515,7 @@ export function isMissingBackend(failure: ApiFailure | null): boolean {
 const FAILURE_MESSAGE: Record<Exclude<ApiFailure, 'not_deployed' | 'network'>, string> = {
   unauthorized: 'Your session has expired. Sign in again to continue.',
   forbidden: 'This account is not allowed to act on these records.',
-  unavailable: 'The server is missing its Supabase configuration, so it cannot verify your session.',
+  unavailable: 'The server is missing its database settings, so it cannot verify your session.',
   error: 'The request failed.',
 }
 
