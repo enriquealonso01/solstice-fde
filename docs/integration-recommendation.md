@@ -33,9 +33,13 @@ normalizes OPERA, the CRS, and loyalty into the internal shapes this agent alrea
 is the only component that knows a vendor's field names. Everything above it, including every tool
 in this proof of concept, stays unchanged when a property migrates PMS.
 
-That seam already exists here. The tools call `getReservation` and `getPropertyRate`, not a vendor
-API, so swapping the provided CSVs for OPERA's Hospitality Integration Platform is a change in one
-directory, not a rewrite.
+That seam already exists here, and it is narrower than "a directory". The tools call
+`getReservation` and `getPropertyRate`, never a vendor API, and **every read of the provided data
+goes through one file** — `netlify/functions/_lib/data.ts` holds all seven imports of
+`data/generated/*.json` and nothing outside it touches them. Swapping the CSVs for OPERA's
+Hospitality Integration Platform is a change to that file's implementation, not a rewrite. The
+group pricing path makes the same point in a comment: `getPropertyRate()` is the only sanctioned
+route to a nightly rate.
 
 **Writes go through a queue with an approval gate, not straight at the PMS.** Booking an amenity or
 extending a checkout is a write, and PMS writes fail in ways reads do not: the property is in night
