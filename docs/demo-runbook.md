@@ -15,13 +15,38 @@ audiences in one room: a director of engineering and a non-technical product own
 - [ ] Telnyx balance above $20. Below that, do not attempt live calls.
 - [ ] Failure injection panel showing **all healthy**. Check this; a switch left on from rehearsal
       makes a working system look broken.
-- [ ] `npm run demo:tidy` — **run this last, minutes before they join, not the night before.**
+- [ ] **Stop the agent loop.** Do this before tidying, because the order decides whether tidying
+      works. `demo:tidy` only closes sessions idle over **30 minutes**
+      (`cleanup-phantom-sessions.mjs:84`), so anything created in the last half hour survives it.
+      The Tester drives chat continuously by design and was adding roughly 25 sessions an hour, so a
+      tidy at 10:55 is undone by agent traffic at 10:56 and the supervisor tile is back in the dozens
+      before they join. Stop the loop, then tidy, then warm up.
+- [ ] `npm run demo:tidy` — **minutes before they join, not the night before**, and after the loop is stopped.
       Every chat you open leaves a session marked `active`, because a browser tab has no hangup
       event to close it. So rehearsing is itself what fills the supervisor dashboard with stale
       "live" conversations, and tidying early simply gets undone by your own last rehearsal. Run
       it with no flag first to see the count, then `npm run demo:tidy` to close them.
 - [ ] `docs/demo-cheatsheet.md` open in a tab you can glance at for confirmation numbers.
 - [ ] Close every other tab. Especially this repository.
+- [ ] **Warm the functions, last of all.** Two requests, no browser:
+
+      ```bash
+      curl -s -o /dev/null -w '%{time_total}s\n' https://solstice-hotel-group.netlify.app/api/chat
+      curl -s -o /dev/null -w '%{time_total}s\n' https://solstice-hotel-group.netlify.app/api/tools
+      ```
+
+      Run each twice. Cold reads ~1.3s and ~1.0s; warm reads ~0.21s and ~0.26s. Once the second run
+      is fast, they are warm.
+
+      Beat 2 opens with *"What time is checkout?"*, so without this **the first question the panel
+      asks is the slowest answer they will ever see** — about 6× the published p95 of ≤300ms, and
+      every reply after it five times quicker than the one they judged you on.
+
+      **Do not warm it by sending a real chat message.** That opens a session, `demo:tidy` will not
+      close it (30-minute threshold, and tidy runs before this step), and beat 3 opens by putting the
+      supervisor dashboard on screen and saying it is empty. One live card contradicts the first
+      sentence of that beat. A GET to `/api/chat` returns 405 before any session is written and warms
+      the identical container, which is why it is a `curl` and not a click.
 
 ---
 

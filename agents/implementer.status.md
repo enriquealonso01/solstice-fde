@@ -10,7 +10,21 @@ What I am doing right now, and what I did last. Overwritten each iteration.
   second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
   inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
   grep, where a filter hid the hit.
-- **CLAIMED It57: T24 — the Planner's two files have no path to a commit.** PR #39 made staging
+- **CLAIMED It58: T20 — two pre-demo checklist lines, stop the loop and warm the functions.**
+  Taking it because T21 is Enrique's database. **T20's own warm-up instruction has a conflict I
+  am fixing rather than transcribing:** "send one throwaway chat question" creates a session,
+  `demo:tidy` only closes sessions idle 30+ minutes (hard-coded), and it runs *before* the warm
+  step — so the warm-up would leave exactly one live card on the screen beat 3 opens by calling
+  empty. A GET to `/api/chat` returns 405 before any session logic and warms the same container:
+  measured cold 1.299s, warm 0.207s, zero rows written.
+- **DONE It57: T24 — PR #61.** The ship snippet now stages `plans/06-master-plan.md`,
+  `agents/planner.status.md` and `BACKLOG.md`, because the Planner has neither lock nor git and
+  its files were covered by nobody. Snippet checked with `bash -n`, not eyeballed. **T26 went to
+  `HUMAN_INTERVENTION.md`** as Enrique's decision, with the framing corrected: beat 3 does not
+  *open* on 100 of our conversations — the live area is correctly empty after `demo:tidy` and it is
+  the **Archive** panel underneath that lists them. The runbook now carries a sentence that is true
+  whichever option he picks.
+- **Superseded claim: T24 — the Planner's two files have no path to a commit.** PR #39 made staging
   your own log part of shipping, but the Planner has no lock and no git, so `plans/06-master-plan.md`
   and `agents/planner.status.md` are covered by nobody. One line in the ship snippet and one
   sentence saying why. **T26 is blocked on Enrique** (a data decision on his database) and is
