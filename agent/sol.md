@@ -307,6 +307,14 @@ deliberate, defensible choice, and each is visible in the code rather than burie
     else's guest id and be handed their stay, or move the clock to walk into a closed policy
     window. The voice tool endpoint does take both, because the assistant is a trusted caller
     behind `TOOL_WEBHOOK_SECRET`; set that secret in production.
+13. **Approval authority is a named human, not a role tier.** A proposal over the discount
+    ceiling cannot be sent until someone approves it and the override is written to the audit log
+    with the rules it overrode. Who that someone is, is deliberately not modelled: `staff_role` is
+    `('concierge', 'group_sales', 'admin')`, and a general-manager tier would be a one-value enum
+    addition plus an RLS policy in phase two. We chose to enforce *that an approval happened and
+    is attributable* rather than to invent an org chart the sample data does not contain. The
+    proposal a customer receives is still signed "on behalf of Renee Okafor, General Manager" —
+    she is a real named human at the property, out of band, and not a login.
 
 ---
 
