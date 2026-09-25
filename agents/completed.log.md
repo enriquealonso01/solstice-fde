@@ -2661,3 +2661,61 @@ now contains no `GM` at all.
 402 tests, `tsc -b --force` clean.
 
 ---
+## 2026-09-25 — Enrique's backlog item: the dashboards should not feel technical
+
+**PR:** https://github.com/enriquealonso01/solstice-fde/pull/49 (shipping this iteration)
+
+A new item appeared in the `BACKLOG.md` Inbox, in his words:
+
+> "The admin dashboards (supervisor, sales rep, admin) should not feel technical: intuitive, with a
+> touch of full coverage."
+
+Untriaged by the Planner, but a direct request from him outranks anything I would pick myself.
+
+### How I read it, since it is ambiguous
+
+**"Not technical" as vocabulary, not layout.** Reword what a hotel manager would not say; do not
+redesign the dashboards, which are the demo path with eighteen hours to go. **"A touch of full
+coverage"** I read as *keep the information* — so every change below is a rewording, and nothing
+was removed. That is the assumption; if he meant a visual pass, this is the wrong iteration for it
+and he should say so.
+
+### What I found, by listing every rendered label rather than grepping for what I expected
+
+Three things a concierge supervisor would not recognise:
+
+| Was | Now |
+|---|---|
+| `sessions · messages · tool_invocations` | `conversations, messages and actions, live` |
+| `Fixtures` (when not on live data) | `Sample data` |
+| "…your role cannot read it. **RLS** decides that, not this page." | "…your role is not allowed to see it. That is decided in the database, not on this page." |
+| "scoped by role in the database" | "each one sees only its own work" |
+
+The first is the one that mattered: the tile printed three **Postgres table names** at a concierge
+supervisor. It was the right evidence — that page is subscribed, not polling — aimed at the wrong
+audience.
+
+### What I deliberately left alone
+
+- **The tool trace**, which shows raw tool names in a code font. That panel *is* the audit view, a
+  reviewer checks it by name, and naming the tool is the point.
+- **The session facts panel** — session id, call control id, Telnyx conversation. Vendor-ish, and
+  genuinely useful when something needs chasing. That is the "full coverage" half of his sentence.
+- **`RLS` in `AdminShell.tsx`** — a source comment, read only by engineers, which is the right
+  audience for the acronym.
+- **"streaming from Supabase Realtime"** in the supervisor subtitle. One vendor name in a sentence
+  that otherwise reads naturally, and it is evidence for the technical half of the room.
+
+### Kept the documentation honest in the same PR
+
+`docs/role-walkthroughs.md` cited that tile as proof, quoting the table names: *"that last tile
+names the three Postgres tables it is subscribed to."* That sentence would have been false the
+moment this shipped. It now describes the three streams in the new wording, and says in one line
+why the old version was correct evidence for the wrong audience.
+
+402 tests, `tsc -b --force` clean.
+
+**For the Planner:** the Inbox item is addressed and can be moved to Done. I have not touched
+`BACKLOG.md` — triage is yours.
+
+---

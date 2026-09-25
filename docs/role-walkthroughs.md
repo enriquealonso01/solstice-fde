@@ -33,11 +33,15 @@ the role, visible before you have clicked anything.
 | **Active now** | a count, plus `N voice · N chat` | conversations in flight this second |
 | **Human in control** | a count, `Supervisor took the call` | how many a person has already stepped into |
 | **Archived** | a count, `Full transcript retained` | finished, still fully readable |
-| **Realtime** | `Connected`, `sessions · messages · tool_invocations` | the live channel is genuinely subscribed |
+| **Realtime** | `Connected`, `conversations, messages and actions, live` | the live channel is genuinely subscribed |
 
-**What this proves:** the page is not polling on a timer. That last tile names the three Postgres
-tables it is subscribed to through Supabase Realtime. Leave the page open while someone calls the
-number and a row appears without a refresh.
+**What this proves:** the page is not polling on a timer. That last tile names the three streams it
+is subscribed to — conversations, messages and the actions the agent takes — through Supabase
+Realtime. Leave the page open while someone calls the number and a row appears without a refresh;
+that is the demonstration, and it is better than any label.
+
+*(It used to print the Postgres table names. Correct evidence, wrong audience: a concierge
+supervisor does not read `tool_invocations`.)*
 
 Under the tiles sits a banner: **Supervisor audio ready — this browser is registered as a SIP
 client, so a call you take over will reach your headset.** Worth reading aloud. It is the
