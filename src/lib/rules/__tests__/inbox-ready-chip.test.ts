@@ -1,79 +1,187 @@
 // The inbox's Rules chip must not tell a rep an inquiry is ready to price when pricing has already
 // refused it.
 //
-// The defect this guards, found on live data: PR #51 replaced "0 missing" with a green
-// "ready to price" chip whenever missing_fields was empty and no proposal existed. On production the
-// only two rows without a proposal were INQ-2003 and INQ-2010 — and they have no proposal *because*
-// the rules engine fails them on GRP-BLACKOUT:
+// THIS TEST REPLACES ONE THAT PASSED WHILE THE SCREEN WAS WRONG. The first version read
+// GroupInbox.tsx as text and asserted that a `status === 'blocked'` check appeared before the
+// "ready to price" string. It did appear, it shipped, it deployed, the live bundle contains it
+// verbatim — and /admin/inquiries still showed a green "ready to price" on INQ-2003 and INQ-2010,
+// because the `inquiries` table never stores `blocked`. Live values are `new` (9 rows),
+// `needs_info`, `needs_review` and `auto_approvable`; MOCK_INQUIRIES uses `ready`. The branch could
+// not fire on any row that has ever existed.
+//
+// A test that asserts the shape of the code proves only that the code has that shape. So this one
+// runs the real decision function over the real production payloads and asserts the chip a rep
+// would see.
+//
+// The payloads below are copied from the live rows, and the two that matter are the ones the rules
+// engine refuses on GRP-BLACKOUT:
 //
 //   "Solstice Austin Congress Ave does not take group blocks between March 10, 2027 through
-//    March 19, 2027, and these dates fall…"
-//
-// So the green chip appeared on exactly the two inquiries that cannot be priced, and nowhere else.
-// Completeness and priceability are different questions, and the set of complete-but-unpriced rows is
-// dominated by the ones pricing already refused — which is why the proxy failed on every row it was
-// visible on.
-//
-// The row already carries status 'blocked' (statusFor, tools.ts:1300), so this is about asking rather
-// than plumbing.
+//    March 19, 2027, and these dates fall inside that window."
 
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { rulesChipFor } from '@/pages/admin/inboxRulesChip'
+import { evaluateGroupRules, isPriceable } from '@/lib/rules/engine'
+import type { InquiryRow } from '@/components/admin/mockData'
 
-const NL = String.fromCharCode(10)
-const src = readFileSync(join(process.cwd(), 'src/pages/admin/GroupInbox.tsx'), 'utf8')
-
-/** Drop `//` lines. See the note below for why this is required rather than convenient. */
-function stripComments(text: string): string {
-  return text
-    .split(NL)
-    .filter((line) => !line.trim().startsWith('//'))
-    .join(NL)
+/** A row shaped like the ones useInquiries() hands the inbox. */
+function row(code: string, payload: Record<string, unknown>, missing: string[] = []): InquiryRow {
+  return {
+    id: `id-${code}`,
+    inquiry_code: code,
+    source: 'portal',
+    status: 'new', // what production actually stores; never 'blocked'
+    missing_fields: missing,
+    created_at: '2026-07-03T00:00:00Z',
+    // Live payloads carry these two alongside the row column; mirror that rather than inventing a
+    // cleaner shape than production has.
+    payload: (payload ? { ...payload, missing_fields: missing, incomplete_fields: missing } : payload) as unknown as InquiryRow['payload'],
+  }
 }
 
-const cellStart = src.indexOf('<SeverityChip severity={severity} />')
+/** INQ-2003, live. Complete, and refused by GRP-BLACKOUT on the Austin March window. */
+const INQ_2003 = row('INQ-2003', {
+  company_name: 'Longhorn Analytics Summit',
+  contact_name: 'Priya Vance',
+  contact_email: 'pvance@longhornsummit.com',
+  contact_phone: '512-555-2277',
+  event_type: 'Conference',
+  preferred_property_code: 'SOL-AUS',
+  alternate_property_ok: false,
+  arrival_date: '2027-03-14',
+  departure_date: '2027-03-17',
+  nights: 3,
+  rooms_requested: 30,
+  room_type_preference: 'Standard King',
+  requested_discount_pct: 12,
+  stated_budget_per_night: 210,
+  meeting_space_needed: true,
+  meeting_capacity_needed: 250,
+  special_requests: 'Need full ballroom for keynote sessions',
+  date_received: '2026-07-03',
+  inquiry_id: 'INQ-2003',
+})
 
-/**
- * The Rules cell, isolated so these assertions cannot be satisfied by another part of the file, and
- * with comments removed.
- *
- * The comment stripping is load-bearing. The cell carries a long explanation that necessarily quotes
- * "ready to price", "cannot be priced" and "0 missing" in order to explain the defect. The first
- * version of this test matched those quotes in the prose rather than the code, and failed while the
- * fix was correct — the same trap as the prompt test in iteration 8. Assert on code, never on prose
- * that mentions the code.
- */
-const rulesCell = stripComments(src.slice(cellStart, src.indexOf('</td>', cellStart)))
-const srcNoComments = stripComments(src)
+/** INQ-2010, live. Complete, no proposal, and also not priceable. */
+const INQ_2010 = row('INQ-2010', {
+  company_name: 'Golden State Policy Forum',
+  contact_name: 'Evan Rutherford',
+  contact_email: 'erutherford@gspforum.org',
+  contact_phone: '916-555-2244',
+  event_type: 'Conference',
+  preferred_property_code: 'SOL-SAC',
+  alternate_property_ok: false,
+  arrival_date: '2027-05-04',
+  departure_date: '2027-05-06',
+  nights: 2,
+  rooms_requested: 18,
+  room_type_preference: 'Standard King',
+  requested_discount_pct: 10,
+  stated_budget_per_night: 165,
+  meeting_space_needed: true,
+  meeting_capacity_needed: 120,
+  special_requests: 'Need panel space for 3 concurrent sessions',
+  date_received: '2026-07-12',
+  inquiry_id: 'INQ-2010',
+})
+
+/** INQ-2004, live. Four missing fields, so the count still wins. */
+const INQ_2004 = row(
+  'INQ-2004',
+  {
+    company_name: 'Meridian Wealth Partners',
+    contact_name: 'J. Ostrander',
+    contact_email: 'jostrander@meridianwp.com',
+    contact_phone: null,
+    event_type: 'Board Offsite',
+    preferred_property_code: 'SOL-DEN',
+    alternate_property_ok: false,
+    arrival_date: null,
+    departure_date: null,
+    nights: null,
+    rooms_requested: null,
+    room_type_preference: null,
+    requested_discount_pct: null,
+    stated_budget_per_night: null,
+    meeting_space_needed: true,
+    meeting_capacity_needed: null,
+    special_requests: null,
+    date_received: '2026-07-04',
+    inquiry_id: 'INQ-2004',
+  },
+  ['arrival_date', 'departure_date', 'rooms_requested', 'meeting_capacity_needed'],
+)
+
+/** INQ-2001, live. Complete, and the engine does not block it — the control for the green chip. */
+const INQ_2001 = row('INQ-2001', {
+  company_name: 'Harlow & Vance Consulting',
+  contact_name: 'Bethany Cruz',
+  contact_email: 'bcruz@harlowvance.com',
+  contact_phone: '312-555-2211',
+  event_type: 'Corporate Retreat',
+  preferred_property_code: 'SOL-CHI',
+  alternate_property_ok: false,
+  arrival_date: '2026-09-14',
+  departure_date: '2026-09-16',
+  nights: 2,
+  rooms_requested: 18,
+  room_type_preference: 'Standard King',
+  requested_discount_pct: 10,
+  stated_budget_per_night: 240,
+  meeting_space_needed: true,
+  meeting_capacity_needed: 20,
+  special_requests: 'Need a breakout room for half the group on day 2',
+  date_received: '2026-07-01',
+  inquiry_id: 'INQ-2001',
+})
 
 describe('the inbox Rules chip', () => {
-  it('is reachable — the cell was located and still offers the green state', () => {
-    expect(rulesCell.length).toBeGreaterThan(120)
-    expect(rulesCell).toContain('ready to price')
+  it('does not call the two live unpriced inquiries ready to price', () => {
+    expect(rulesChipFor(INQ_2003)).toEqual({ kind: 'blocked' })
+    expect(rulesChipFor(INQ_2010)).toEqual({ kind: 'blocked' })
   })
 
-  it('checks the blocked status before offering "ready to price"', () => {
-    expect(rulesCell).toMatch(/status === 'blocked'/)
-    expect(rulesCell.indexOf("status === 'blocked'")).toBeLessThan(rulesCell.indexOf('ready to price'))
+  it('agrees with the engine that refused them, on the blocker it names', () => {
+    // Guard the guard: if this ever stops blocking, the case above starts passing for the wrong
+    // reason, so state the premise out loud.
+    const evaluation = evaluateGroupRules({
+      inquiry: { ...INQ_2003.payload, missing_fields: [] } as never,
+      received_date: '2026-07-03',
+    })
+    expect(isPriceable(evaluation)).toBe(false)
+    expect(evaluation.pricing_blocked_by).toContain('GRP-BLACKOUT')
   })
 
-  it('says something truthful when pricing has refused, and not in the go-colour', () => {
-    expect(rulesCell).toMatch(/cannot be priced/)
-    const from = rulesCell.indexOf("status === 'blocked'")
-    const to = rulesCell.indexOf('cannot be priced')
-    expect(to).toBeGreaterThan(from)
-    const blockedBranch = rulesCell.slice(from, to)
-    // rose, not emerald: a rep scanning by colour must not read this as go
-    expect(blockedBranch).toMatch(/rose/)
-    expect(blockedBranch).not.toMatch(/emerald/)
+  it('still leads with the missing-field count when fields are missing', () => {
+    expect(rulesChipFor(INQ_2004)).toEqual({ kind: 'missing', count: 4 })
   })
 
-  it('still shows the missing-field count, which was already clear', () => {
-    expect(rulesCell).toMatch(/\{inquiry\.missing_fields\.length\} missing/)
+  it('does say ready to price for a complete, priceable inquiry', () => {
+    // Without this the whole chip could be a constant "cannot be priced" and every other case
+    // above would still pass.
+    expect(rulesChipFor(INQ_2001)).toEqual({ kind: 'ready' })
   })
 
-  it('does not reintroduce "0 missing"', () => {
-    expect(srcNoComments).not.toMatch(/['"`]0 missing/)
+  it('does not claim a refusal that never happened when the engine throws', () => {
+    const broken = row('INQ-BAD', null as unknown as Record<string, unknown>)
+    expect(rulesChipFor(broken)).toEqual({ kind: 'unknown' })
+  })
+
+  it('never renders "0 missing", and never asks the dead status question again', () => {
+    const src = readInbox()
+    expect(src).not.toMatch(/['"`]0 missing/)
+    // `status` on an inquiry row is new | needs_info | needs_review | auto_approvable. Asking it
+    // for 'blocked' is how the previous fix came to do nothing at all.
+    expect(src).not.toMatch(/status === 'blocked'/)
   })
 })
+
+function readInbox(): string {
+  const NL = String.fromCharCode(10)
+  return readFileSync(join(process.cwd(), 'src/pages/admin/GroupInbox.tsx'), 'utf8')
+    .split(NL)
+    .filter((line: string) => !line.trim().startsWith('//'))
+    .join(NL)
+}

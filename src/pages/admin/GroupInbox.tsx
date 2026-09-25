@@ -18,6 +18,7 @@ import {
   SourceChip,
 } from '@/components/admin/ui'
 import { useInquiries, useProposals } from '@/components/admin/useAdminData'
+import { rulesChipFor, type RulesChip } from './inboxRulesChip'
 import { money, shortDate, verdictSeverity, type InquiryRow, type ProposalRow } from '@/components/admin/mockData'
 
 type StatusFilter = 'all' | 'needs_decision' | 'ready' | 'sent'
@@ -233,21 +234,14 @@ function InboxRow({
           // learning the only useful thing: this one is complete and nobody has priced it yet.
           //
           // BUT COMPLETE IS NOT THE SAME AS PRICEABLE, and the two came apart on real data. The
-          // only two rows with no proposal were INQ-2003 and INQ-2010 — and they have no proposal
+          // only two rows with no proposal are INQ-2003 and INQ-2010 — and they have no proposal
           // precisely BECAUSE the rules engine fails them on GRP-BLACKOUT ("does not take group
           // blocks between March 10 and March 19, 2027"). So a green "ready to price" appeared on
-          // exactly the two inquiries that cannot be priced at all, and on no others: the set of
-          // complete-but-unpriced rows is dominated by the ones pricing already refused.
+          // exactly the two inquiries that cannot be priced at all, and on no others.
           //
-          // The row already carries the answer — `status` is 'blocked' when the engine blocked it
-          // (statusFor, tools.ts:1300) — so this needs no new plumbing, only asking.
-          inquiry.missing_fields.length > 0 ? (
-            <span className="chip bg-sky-50 text-sky-800">{inquiry.missing_fields.length} missing</span>
-          ) : inquiry.status === 'blocked' ? (
-            <span className="chip bg-rose-50 text-rose-800">cannot be priced</span>
-          ) : (
-            <span className="chip bg-emerald-50 text-emerald-800">ready to price</span>
-          )
+          // Ask the engine, not the row's status column: see inboxRulesChip.ts for why the status
+          // column cannot answer this.
+          renderRulesChip(rulesChipFor(inquiry))
         )}
       </td>
       <td className="px-4 py-3">{proposal ? <ProposalStatusChip status={proposal.status} /> : <span className="text-xs text-solstice-stone">none yet</span>}</td>
@@ -258,4 +252,18 @@ function InboxRow({
       </td>
     </tr>
   )
+}
+
+/** The Rules chip. Kept next to the table so the wording and the colour travel together. */
+function renderRulesChip(chip: RulesChip) {
+  switch (chip.kind) {
+    case 'missing':
+      return <span className="chip bg-sky-50 text-sky-800">{chip.count} missing</span>
+    case 'blocked':
+      return <span className="chip bg-rose-50 text-rose-800">cannot be priced</span>
+    case 'unknown':
+      return <span className="chip bg-amber-50 text-amber-800">needs a look</span>
+    case 'ready':
+      return <span className="chip bg-emerald-50 text-emerald-800">ready to price</span>
+  }
 }
