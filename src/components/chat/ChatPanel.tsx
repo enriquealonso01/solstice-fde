@@ -65,7 +65,7 @@ export function ChatPanel(props: ChatPanelProps) {
           onClose()
         }
       }}
-      className="sol-rise flex h-[min(34rem,calc(100vh-7.5rem))] w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-solstice-sand bg-white shadow-[0_28px_70px_-24px_rgba(20,18,16,0.55)]"
+      className="sol-rise sol-panel-height flex w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-solstice-sand bg-white shadow-[0_28px_70px_-24px_rgba(20,18,16,0.55)]"
     >
       <header className="relative shrink-0 border-b border-solstice-gold/20 bg-solstice-ink px-4 py-3">
         <div
