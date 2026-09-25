@@ -123,7 +123,7 @@ interface CancellationTerms {
   no_show_charge_applied: boolean
 }
 
-function cancellationTerms(reservation: Reservation, now: Date): CancellationTerms {
+export function cancellationTerms(reservation: Reservation, now: Date): CancellationTerms {
   const terms = RATE_PLAN_TERMS[reservation.rate_plan] ?? {
     refund_class: 'not_documented' as const,
     policy_ref: null,
@@ -155,9 +155,24 @@ function cancellationTerms(reservation: Reservation, now: Date): CancellationTer
     const checkIn = atLocalTime(reservation.check_in_date, POLICY_RULES.standard_check_in_local)
     const deadline = new Date(checkIn.getTime() - POLICY_RULES.free_cancellation_window_hours * 3_600_000)
     base.free_cancellation_deadline = deadline.toISOString()
-    const inside = now.getTime() > deadline.getTime()
-    base.inside_free_cancellation_window = !inside
-    base.penalty_if_cancelled_now = inside ? POLICY_RULES.late_cancellation_penalty : 'none'
+    const past = now.getTime() > deadline.getTime()
+    base.inside_free_cancellation_window = !past
+    base.penalty_if_cancelled_now = past ? POLICY_RULES.late_cancellation_penalty : 'none'
+
+    // SAY WHICH SIDE OF THE LINE THIS GUEST IS ON, in the field the model actually reads.
+    //
+    // `human_summary` used to carry only the general rule, so answering "will I be charged if I
+    // cancel?" required inferring the guest's position from `inside_free_cancellation_window`, a
+    // negated boolean. Observed twice in production on R55003, whose deadline passed on
+    // 2026-07-15: once self-contradictory ("cancelling would cost you one night… you're inside the
+    // 72-hour free cancellation window"), and once flatly wrong ("you're fine to cancel now with
+    // no charge"). The data was right both times; only the reading of it was wrong.
+    //
+    // A fact the model has to derive is a fact it can get backwards, so state it outright.
+    const deadlineText = deadline.toISOString().slice(0, 10)
+    base.human_summary = past
+      ? `${terms.human_summary} This booking is PAST that deadline, which fell on ${deadlineText}, so cancelling now forfeits ${POLICY_RULES.late_cancellation_penalty}. It is too late to cancel free of charge.`
+      : `${terms.human_summary} This booking is STILL INSIDE the free window, which runs until ${deadlineText}, so cancelling now costs nothing.`
   }
 
   if (terms.refund_class === 'non_refundable') {
