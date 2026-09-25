@@ -43,6 +43,23 @@
 }
 .sol-rise { animation: sol-rise 220ms cubic-bezier(0.22, 1, 0.36, 1); }
 
+/*
+ * The chat panel's height, which is a phone problem rather than a styling one.
+ *
+ * `vh` on a phone is the *large* viewport: it measures as though the browser's
+ * collapsible toolbars were already hidden, and it does not shrink when the
+ * keyboard opens. Sizing the panel with it puts the composer underneath
+ * Safari's bottom bar on exactly the device a panelist is most likely to open
+ * the landing page on. `dvh` tracks the viewport that is actually visible, so
+ * the composer stays reachable. The `vh` rule is kept as the fallback for
+ * browsers without `dvh` (Safari below 15.4), where the old behaviour is still
+ * better than no height at all.
+ */
+.sol-panel-height { height: min(34rem, calc(100vh - 7.5rem)); }
+@supports (height: 100dvh) {
+  .sol-panel-height { height: min(34rem, calc(100dvh - 7.5rem)); }
+}
+
 @keyframes sol-dot {
   0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
   30%           { opacity: 1;    transform: translateY(-3px); }
