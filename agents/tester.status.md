@@ -8,6 +8,34 @@ purpose — it is all in the log.
 
 ---
 
+## Iteration 44 DONE — role scoping VERIFIED at four layers; PR #55 closed; my harness had been lying
+
+**A harness defect first, because it taints earlier entries.** `Network.clearBrowserCookies` is not
+signing out — Supabase keeps the session in `localStorage`. The iteration-39 guard cleared nothing, and
+every `SIGN IN: [object Object]` line in the log is a run whose account was never established. Caught
+when I asked for `supervisor@` and the header said **`admin@ Super admin`**. Iteration 42's PR #55
+re-test claims `sales@` and was almost certainly `admin@`; the chip evidence still holds (the chip is
+computed from the row, not the role) but I re-ran it properly rather than argue.
+`role.js` and `inbox.js` now use `Storage.clearDataForOrigin` + `localStorage.clear()`, and **abort with
+exit 2 unless the page names the expected role**. Pass `WALK_ROLE`.
+
+**Role scoping VERIFIED** with real password-grant tokens for all three accounts:
+API (concierge 403 with the real refusal text on six group routes, 189B vs 27,498B for sales/admin,
+401 for no/garbage token) · RLS both directions (concierge 0 of 13 inquiries and 0 of 10 proposals;
+sales 0 sessions vs the concierge's 121, 0 of 628 tool_invocations, 0 of 34 escalations; controls all
+return exact `content-range` counts) · cross-role writes denied both ways via no-op PATCH probes ·
+and the screens (concierge nav offers only "Live sessions"; `/admin/inquiries`, `/admin/cost`, `/admin`
+all redirect to `/admin/sessions` with zero INQ codes on the page; control: their own screen shows
+`ACTIVE NOW 100`).
+
+**The in-role write hole is still open** — `group_sales PATCH proposals` still returns the row, so
+migration 004 has not been applied. Re-confirmed live this iteration.
+
+**PR #55 closed: VERIFIED** on a role-confirmed `Group sales` session. INQ-2003 and INQ-2010 read
+"cannot be priced", no row reads "ready to price", INQ-2004/2012/2013 keep their counts, no
+"0 missing" anywhere. The green chip is still unexercised by live data and is covered only by the
+INQ-2001 control in `inbox-ready-chip.test.ts`.
+
 ## Iteration 43 DONE — the send guardrail holds on every path the product offers, and fails on one it does not
 
 Asked whether a flagged proposal (**PRP-2009**, GRP-DISCOUNT-CEILING, 17% vs a 15% ceiling) can be sent
@@ -241,7 +269,12 @@ superseded wording; other agents' PR #11, #20, #25, #43.
     session row behind; that is how 11 became 90.
 15. **Assert the route you landed on, not the one you asked for**, and **never trust an existing
     session** - a reused Chrome profile authenticates you as whoever ran last, and the symptom looks
-    like a routing bug. Clear cookies over CDP before signing in.
+    like a routing bug. ~~Clear cookies over CDP before signing in.~~ **CORRECTED at iteration 44: that
+    remedy did nothing.** Supabase keeps the session in `localStorage`, so `Network.clearBrowserCookies`
+    left me signed in as the previous account for several iterations while the harness reported the one
+    I asked for. Use `Storage.clearDataForOrigin` with `storageTypes: 'all'` **and** an explicit
+    `localStorage.clear()`, then make the page state the role it thinks you are and abort if it is not
+    the one you wanted. A guard you have never seen refuse is not a guard.
 16. `pkill -f` does not work in git-bash on Windows. Use PowerShell CIM filtered on both the debug port
     and the scratchpad id. Reuse one Chrome profile.
 17. **Check that the field you are branching on can actually hold the value you are testing for.**
@@ -262,8 +295,16 @@ superseded wording; other agents' PR #11, #20, #25, #43.
     first, restore immediately, and re-read the row to confirm the restore — do not trust the PATCH's
     own response.
 
+21. **An unreadable value in your own output is a failure, not noise.** `SIGN IN: [object Object]`
+    printed in two iterations before I asked what it meant, and it was the harness telling me it had
+    never checked who it signed in as. Stop on anything you cannot read.
+22. **Verify identity from the artefact, not from the credentials you sent.** Sending the right
+    password proves nothing if the app was already authenticated as someone else. Make the page name
+    the role, poll for it, and abort the run otherwise.
+
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real
 widget), `recover.js`, `chat.js`, `walk.js`–`walk4.js`, `transcript.js`, `sessionlist.js`, `sweep.py`,
-`pdfsweep.py`, `uicopy.js`, `inbox.js` (clears cookies, asserts the landed route, reads the Rules
-cell per row).
+`pdfsweep.py`, `uicopy.js`, `inbox.js` (wipes origin storage, asserts the signed-in ROLE and the landed route, reads
+the Rules cell per row), `role.js` (per-role route sweep), `control.js` (the own-surface control),
+`probe.js` (step-by-step sign-in diagnosis). All four need `WALK_ROLE` and exit 2 on a wrong identity.

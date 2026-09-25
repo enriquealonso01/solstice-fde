@@ -3933,3 +3933,121 @@ underneath it. Four endpoints and a hostile model conversation all refused corre
 still failed, because the gate reads a column the client was allowed to write. **When a guardrail
 decides from stored state, the question is not only "who can call the function" but "who can write
 what the function reads."**
+
+---
+
+## Iteration 44 — 2026-09-25 22:02–22:20Z — VERIFIED role scoping (4 layers) + VERIFIED PR #55 + a harness defect that had been lying to me
+
+### First, the correction that matters most: my browser harness was signing in as the wrong account
+`Network.clearBrowserCookies` **is not signing out.** Supabase keeps the session in `localStorage`, so
+the "never trust an existing session" guard I added at iteration 39 and recorded as rule 15 cleared
+nothing at all. The `'STALE SESSION'` tripwire never fired because the app, already authenticated,
+redirected away from `/login` and my check returned an object that printed as `[object Object]` —
+which I read past in iterations 42 and 44 without asking what it meant.
+
+Caught it here: I asked for `supervisor@`, and the page header read
+**`admin@solsticehotels.com  Super admin`**, with a full group inbox on screen. Every earlier
+`SIGN IN: [object Object]` line in this log is a run whose account I did not actually establish.
+
+**What it costs:** iteration 42's PR #55 re-test said "same harness, same account" as `sales@`. It was
+almost certainly `admin@`. The chip evidence itself still holds — the Rules chip is computed from the
+row, not the role, and admin sees the same 13 rows — but the account in that entry is wrong, and I
+re-ran the whole thing properly below rather than argue it did not matter.
+
+**Fixed in both harnesses** (`role.js`, `inbox.js`): `Storage.clearDataForOrigin` with
+`storageTypes: 'all'`, plus an explicit `localStorage.clear()`, and then the part that was missing —
+**the page must name the role it thinks I am, polled, before the run reports anything**:
+```
+signed in as: "Group sales" (expected "Group sales")
+```
+and `process.exit(2)` with "this run proves nothing" otherwise. I chose the rendered role label over
+the email because the label is in the shell as soon as it renders; the email lags and made the first
+version of the guard abort on a correct session.
+
+**Rule 15 was wrong in its remedy and is now corrected in the status file.** Clearing cookies was
+never the fix; clearing origin storage and asserting the rendered identity is.
+
+### Role scoping, with real signed-in wrong-role tokens — VERIFIED at four layers
+Tokens obtained from `POST /auth/v1/token?grant_type=password` for all three demo accounts, so these
+are genuine sessions rather than forged headers. `profiles` gives the roles:
+`concierge supervisor@`, `group_sales sales@`, `admin admin@`.
+
+**1. The HTTP API.** Concierge token against six group routes, and the controls:
+```
+conc_proposals   HTTP 403   189B  {"ok":false,"error":"This role cannot see group sales. Group sales inquiries are
+                                   readable by group_sales and admin only, which is what row level security
+                                   enforces in the database as well."}
+conc_send        HTTP 403   189B  (identical)
+conc_assistant   HTTP 403   189B  (identical)
+/group/inquiries /group/approve /group/audit  all HTTP 403
+sales_proposals  HTTP 200  27498B  {"ok":true,"persisted":true,"proposals":[{"id":"PRP-2011",…
+admin_proposals  HTTP 200  27498B  (same)
+notoken          HTTP 401    81B  "Authorization: Bearer <supabase access token> is required."
+garbage          HTTP 401    56B  "Invalid or expired session token."
+```
+189 bytes against 27,498 is the discrimination, and the 401/403 split separates "who are you" from
+"you are not allowed".
+
+**2. Row level security, which is what that error message claims.** Checked rather than trusted, both
+directions, with `Prefer: count=exact` so the count is computed server-side and an empty result cannot
+be a failed request:
+```
+CONCIERGE on the group tables        GROUP_SALES on the concierge tables
+  inquiries    rows=0   */0            sessions          rows=0   */0
+  proposals    rows=0   */0            tool_invocations  rows=0   */0
+  follow_ups   rows=0   */0            escalations       rows=0   */0
+                                       messages          rows=0   */0
+
+CONTROLS — each role on its own surface
+  sales   inquiries  rows=13   0-12/13        concierge sessions          rows=121  0-120/121
+  sales   proposals  rows=10   0-9/10         concierge tool_invocations  rows=200  0-199/628
+                                              concierge escalations       rows=34   0-33/34
+```
+
+**3. Cross-role writes.** Probed with the column set to its own current value, so a permitted write is
+an exact no-op and `[]` versus a returned row distinguishes denied from allowed with zero data change:
+```
+concierge   PATCH proposals  {"status":"awaiting_approval"}  -> []                 denied
+group_sales PATCH escalations {"status":"open"}              -> []                 denied
+group_sales PATCH proposals  {"status":"awaiting_approval"}  -> [{"id":"35632960…  ALLOWED
+```
+The third line is iteration 43's open hole, re-confirmed live: **migration 004 is still not applied.**
+It also validates the probe — the technique can return a row, so the two `[]` results are real
+refusals and not an artifact.
+
+**4. The screens, as a panel would click them.** Concierge, identity confirmed as "Concierge
+supervisor":
+```
+nav offers  : ["Solstice.","Live sessions"]        <- no Group inbox, no Cost, no Overview
+asked /admin/inquiries   REDIRECTED to /admin/sessions   INQ codes on page=0
+asked /admin/cost        REDIRECTED to /admin/sessions   INQ codes on page=0
+asked /admin             REDIRECTED to /admin/sessions   INQ codes on page=0
+asked /admin/sessions    stayed
+```
+Not one inquiry code reaches the page. **Control — the concierge can still do their job:**
+`/admin/sessions` shows `ACTIVE NOW 100`, `0 voice · 100 chat`, and the conversation list
+("Unidentified guest … Chat Active … Sol is handling this"), 105 matches for voice|chat.
+`tbody tr` = 0 there because that screen is card-based, not a table — a measurement artifact of my
+selector, which is why the control was worth running rather than assuming the redirect told the whole
+story.
+
+### PR #55 re-tested on a role-confirmed session — VERIFIED
+`signed in as: "Group sales" (expected "Group sales")`, landed `/admin/inquiries`, 13 rows:
+```
+INQ-2010  cannot be priced
+INQ-2003  cannot be priced
+rows saying "ready to price"     : (none)
+rows saying "N missing"          : INQ-2013=1 missing, INQ-2012=1 missing, INQ-2004=4 missing
+"0 missing" anywhere on the page : no
+```
+INQ-2009 reads "(neither)" because it now carries a proposal and shows the severity chip instead —
+consistent with the outer branch. The green chip is still unexercised by live data, as iteration 42
+predicted; it is covered only by the INQ-2001 control in `inbox-ready-chip.test.ts`.
+**PR #55 closes.**
+
+### The lesson
+The thing that nearly wasted this iteration was not the product. It was that my instrument reported an
+identity it had never checked, and printed `[object Object]` where the answer should have been — twice,
+in two earlier iterations, without my stopping on it. **An unreadable value in an instrument's output
+is a failure, not noise.** And a guard is only a guard if you have watched it refuse: this one had
+never once aborted a run, which should have been the tell.
