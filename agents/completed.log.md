@@ -3724,3 +3724,61 @@ is theirs. Verified the restore rather than assuming — `Three things` back, It
 since `agents/README.md` is protocol: **after `git pull`, assert the tree is clean and equal to
 `origin/main` before deploying.** Two lines. Today the check is "did the pull print an error", and I
 only caught this by reading output I could easily have skimmed.
+
+## It69 — T36: G16 was enforced in code on one channel and absent as prose on the other
+
+### Verified all three claims before touching anything, and one T36 did not make
+
+| T36's claim | Verified |
+|---|---|
+| `provision.mjs:588` swaps `transfer_to_human` for a native Telnyx `transfer` and `continue`s | ✅ so **no webhook is registered for that name on voice** |
+| `registry.ts:42` keeps it as a webhook | ✅ that is the **chat** path |
+| `warm_transfer_instructions` has no escalation requirement | ✅ one sentence: *"Summarise the guest, the reservation, what has been tried, and the exact ask. Then hand over."* |
+
+**The claim T36 did not make, which decides whether the fix matters:** the tool is skipped entirely
+when no transfer target resolves, and I had established in It67 that `TELNYX_TRANSFER_TARGET` is
+**unset in production**. So I checked whether the assistant has a transfer tool at all rather than
+assuming the finding was live. It does — the export carries **23 webhook + 1 transfer + 1 hangup**, and
+the target resolves through the fallback chain `TRANSFER_TARGET || TELNYX_SIP_URI || DEMO_PHONE` to the
+supervisor SIP URI. Real, live, on the demo path.
+
+### The shape of the bug is the interesting part
+
+**G16 is enforced in code on the channel that has a webhook, and existed only as prose on the channel
+that does not.** `transferToHuman`'s fallback branch guarantees an escalation and forbids describing a
+handoff that did not happen. The native transfer had a single sentence of guidance and no such rule —
+so on the leg G16 was *written for*, a transfer nobody answered left no durable record and nothing
+stopped the model narrating a handoff that never occurred.
+
+The instruction now requires the escalation **before** the hand over, so the record exists whether or
+not anyone picks up, and says what to do when nobody does — in the same words G16's own success
+criterion uses: *"a manager has it, and they will call back today."*
+
+### Verified live, and one thing that survived by design
+
+Re-provisioned and re-exported, because tools live in the export as well as on the assistant:
+
+```
+live warm_transfer_instructions requires create_escalation : true
+forbids describing a handoff that did not happen            : true
+export matches live                                         : true
+export transfer target still REDACTED                       : true
+instructions parity  compile === live === export  29,319    : true
+```
+
+That fourth line is the one I was watching. T34's redaction lives in the **export script**, not in the
+artefact, so a re-export could not quietly undo it — which was the whole argument for putting it there
+rather than editing the JSON. First time that has been tested by an actual regeneration.
+
+### Also: my own status file had stopped being a status file
+
+`agents/implementer.status.md` says *"Overwritten each iteration"* at the top. It was **234 lines**
+carrying every claim since It1, and its **first entry was iteration 54's** — so either of the other two
+agents opening it to see what I was doing read a task I finished fifteen iterations earlier. That is
+worse than a long file; it is a coordination file that actively misinforms.
+
+Rewritten to 50 lines: what I am doing now, standing state worth knowing (parity, the guards I own and
+that each has been red-checked, what is open for Enrique), and the one-line shipping history preserved
+verbatim. The reasoning was always in `completed.log.md`; none is lost.
+
+`npx tsc -b --force` clean. `npx vitest run`: **473 passed, 37 files**.
