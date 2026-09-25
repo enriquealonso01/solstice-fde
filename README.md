@@ -159,11 +159,11 @@ identity has no TTL, and the lookup is by session id alone, so it is not checked
 the session is still open either. Possession of the session id is therefore possession of that
 guest's verified identity, indefinitely.
 
-The id is a server-minted uuid that is never accepted from the caller, so this is not an open door;
-the exposure is that a *leaked* id stays useful rather than going stale. Two things come first in
-production, in this order: a TTL on the binding, and re-verification before anything that discloses
-stay detail. Neither is built, and neither should be attempted the night before a submission on the
-one path the whole concierge demo runs through.
+A caller cannot invent an id, only replay one the server minted, and minted ids are unguessable
+uuids — so this is not an open door; the exposure is that a *leaked* id stays useful rather than
+going stale. Two things come first in production, in this order: a TTL on the binding, and
+re-verification before anything that discloses stay detail. Neither is built, and neither should be
+attempted the night before a submission on the one path the whole concierge demo runs through.
 
 **Email:** proven end to end. Telnyx's shared sending domain is a sandbox that only delivers to the
 account's own verified address, so every send is routed there; verifying a real domain removes that

@@ -335,8 +335,8 @@ deliberate, defensible choice, and each is visible in the code rather than burie
     would be unusable. The limit is that the binding has no TTL, and the lookup is by session id
     alone — it is not checked against whether the session is still open — so holding the id is
     holding that identity indefinitely.
-    The id is a server-minted uuid and is never accepted from the caller, so the exposure is a
-    *leaked* id staying useful rather than an open door. In production the order is: a TTL on the
+    A caller cannot invent an id, only replay one the server minted, and minted ids are
+    unguessable uuids, so the exposure is a *leaked* id staying useful rather than an open door. In production the order is: a TTL on the
     binding, then re-verification before anything that discloses stay detail. Stated rather than
     patched, because this is the path the entire concierge flow runs on.
 
