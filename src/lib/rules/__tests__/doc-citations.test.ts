@@ -52,9 +52,12 @@ const RESOLVE: Record<string, string> = {
  * moving a line forces both the number and this entry to be updated together.
  */
 const EXPECTED: Record<string, string> = {
-  'netlify/functions/chat.ts:283': 'saved?.guest_id',
-  'chat.ts:283': 'saved?.guest_id',
-  'netlify/functions/chat.ts:146': 'create_escalation',
+  // Shifted from 283 and 146 at iteration 46: the chat channel note grew a comment block recording
+  // why it no longer promises the guest that Sales will follow up. The substrings are unchanged, so
+  // this guard still checks the citation means what the document says it means.
+  'netlify/functions/chat.ts:303': 'saved?.guest_id',
+  'chat.ts:303': 'saved?.guest_id',
+  'netlify/functions/chat.ts:160': 'create_escalation',
   'cleanup-phantom-sessions.mjs:84': 'STALE_MINUTES',
 }
 
