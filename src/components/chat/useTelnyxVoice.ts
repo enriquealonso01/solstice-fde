@@ -110,7 +110,7 @@ export function useTelnyxVoice(assistantId: string | undefined): VoiceSession {
               audio: true,
               video: false,
               remoteElement: remoteAudioRef.current ?? undefined,
-              preferred_codecs: [{ mimeType: 'audio/opus', clockRate: 48000, channels: 1 }],
+              preferred_codecs: preferredAudioCodecs(),
             })
             callRef.current = call
           } catch (cause: unknown) {
@@ -188,6 +188,36 @@ export function useTelnyxVoice(assistantId: string | undefined): VoiceSession {
         : null
 
   return { state, error, muted, remoteAudioRef, start, stop, toggleMute, unavailableReason }
+}
+
+/**
+ * Opus first, when the browser actually offers it.
+ *
+ * Telnyx recommends pinning opus for assistant calls, but the codec has to be
+ * the browser's own capability object: `setCodecPreferences` rejects anything
+ * that is not an exact match of an entry it advertised, down to `sdpFmtpLine`.
+ * A hand-written `{ mimeType: 'audio/opus', clockRate: 48000 }` looks right,
+ * typechecks, and throws at call time. The SDK does not guard that call, so the
+ * throw surfaces as its unclassified 49001 "An unexpected error occurred" and
+ * the mic appears simply broken.
+ *
+ * Returns undefined rather than a guess when opus is not advertised, which
+ * leaves the SDK on its default negotiation instead of failing the call.
+ */
+export function preferredAudioCodecs(): RTCRtpCodec[] | undefined {
+  const receiver = (globalThis as { RTCRtpReceiver?: typeof RTCRtpReceiver }).RTCRtpReceiver
+  if (typeof receiver?.getCapabilities !== 'function') return undefined
+
+  let codecs: readonly RTCRtpCodec[] | undefined
+  try {
+    codecs = receiver.getCapabilities('audio')?.codecs
+  } catch {
+    return undefined
+  }
+  if (!codecs) return undefined
+
+  const opus = codecs.filter((codec) => codec.mimeType.toLowerCase() === 'audio/opus')
+  return opus.length > 0 ? opus : undefined
 }
 
 function messageOf(cause: unknown, fallback: string): string {
