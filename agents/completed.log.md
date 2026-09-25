@@ -2951,3 +2951,95 @@ reporting truncation, not a miscount. Checked rather than assumed, because a num
 reconcile is the shape of a real bug.
 
 `npx tsc -b --force` clean. `npx vitest run`: **419 passed, 29 files**.
+
+### T28 verification, and two corrections to the numbers above
+
+**Re-provisioned and diffed, which is step 3 of T28.** The live assistant
+(`assistant-fee8d29d`) now carries instructions **byte-identical** to the compile, no truncation
+marker, sections 8 and 9 absent, guardrails present. Existing assistant reused, nothing created,
+balance untouched at $3.09 (11 API calls, all free; no `--buy`).
+
+The three edits T28 reported missing from live are now live: PR #26's never-name-a-tool rule and
+PR #34's channel note both confirmed by string. T1c's is confirmed by construction rather than by
+its name — **"named approver" is not a phrase in `agent/sol.md`**; the wording is assumption 13,
+*"Approval authority is a named human, not a role tier"*, in §6, which the compile keeps.
+
+**Correction 1 — the margin is smaller than I wrote.** I measured 28,194 with 1,806 to spare. After
+commit and checkout the compile reads **28,583, margin 1,417**. The 389 are line endings: git
+converts LF to CRLF on checkout, one byte per line across ~475 lines. Nothing is wrong, but the
+figure I recorded was measured on a working copy git was about to rewrite, and the number a future
+reader needs is the one that comes back from disk.
+
+**Correction 2 — my first live diff said the prompt was empty, and my probe was the bug.** I read
+`data.instructions`; this endpoint returns the assistant at the top level. I reported `live length:
+0` and four ABSENT lines before checking the response shape. Had I trusted it I would have "found" a
+failed provision that had in fact succeeded — the mirror image of the deploy check that could not
+fail. Both now confirmed against the real field.
+
+**One thing I broke and fixed: `inq.json`.** My `git add -A` in #56 committed a 13KB scratch dump of
+demo rows another agent had left in the repo root. No credentials — the rows are the seeded
+fictional dataset — but a scratch file in the root of what Enrique submits is noise in something
+being read as evidence of how the work was done. Removed in #57 with `git rm --cached`, so whoever
+is using it keeps their copy, and ignored so the next `git add -A` cannot pull it back. `git add -A`
+is what the protocol asks for, so the fix is the ignore rule, not the habit.
+
+**Deploy verified:** production serving the latest commit, and `/api/chat` still answers the
+cancellation-policy turn correctly, which is the check that matters — `agent/sol.md` is bundled into
+the chat function and the wrapper comments sit inside what chat reads raw.
+
+## It56 — T27, and a red main I put there myself
+
+### First: PR #56's test was failing on `main`, and I shipped it that way
+
+`npx vitest run` this iteration: **1 file failed, 410 passed**. The file was
+`voice-prompt-size.test.ts`, mine, from last iteration, which had passed 10/10 when I ran it.
+
+```
+SyntaxError: Invalid or unexpected token
+ ❯ src/lib/rules/__tests__/voice-prompt-size.test.ts:4:31
+   4| * `agent/sol.md` calls itself the single agent definition, but the ph…
+```
+
+An error pointing **inside a block comment** is not where the problem is; it is what a shifted
+sourcemap looks like. The file was byte-clean, valid UTF-8, identical to `HEAD`.
+
+**Cause:** `provision.mjs` is the only file in the tree with a shebang. Git rewrote it to CRLF on
+checkout, and vite strips the shebang when transforming the module for a test and leaves the
+orphaned `\r` behind. Node parses the file fine. `esbuild` parses it fine. Only the vite transform
+does not, and only after a checkout.
+
+Verified three ways rather than assuming: **LF alone fixes it**, **removing the shebang alone fixes
+it**, and **every other file is CRLF and passes**. The shebang is the difference, and the CLI needs
+it, so the fix is `.gitattributes` with `*.mjs text eol=lf`.
+
+**Why I did not catch it:** I ran the suite against my working copy, where the file was still LF,
+and never after a checkout. Last iteration I corrected the compile figure for exactly this reason —
+"the number a future reader needs is the one that comes back from disk" — and then did not apply the
+same thought to the test itself. The same conversion, the same iteration, noticed in one place and
+not the other.
+
+### T27 — two protocol paragraphs, plus one the Planner did not ask for
+
+`agents/README.md` protected against releasing a lock you do not hold and said **nothing** about
+holding one you never release. Added, as specified: do not background anything inside the lock, and
+do not infer the holder from another agent's status file. Grep went from **zero** mentions of
+backgrounding to three.
+
+I added a third paragraph the plan did not ask for, because I nearly made the mistake while writing
+the second one. The obvious fix to "whose lock is this" is to write an owner file into
+`agents/.lock` — and **every agent releases with `rmdir`, which removes only empty directories**. One
+owner file turns every release into a silent failure and the mutex into a permanent block on all
+three agents. Verified rather than asserted: `rmdir` on a directory containing one file returns
+`Directory not empty`.
+
+That is a scoped addition to the section T27 is about, and it guards the specific wrong turn the
+task's own wording invites. Flagging it so the Planner can cut it if they disagree.
+
+**Also noted, no action:** the Tester retracted PR #52, which had "corrected" my PR #51. Its premise
+was false — `status` is never `'blocked'` for those rows, so the branch it added was unreachable and
+my defect survived until PR #55 asked the rules engine directly. The lesson I recorded from #52
+stands unchanged, and is if anything stronger: **check the thing that decides, not the screen that
+displays**. That is what #55 did and what neither #51 nor #52 did.
+
+`npx tsc -b --force` clean. `npx vitest run`: **420 passed, 29 files** — including the file that was
+red when this iteration started.

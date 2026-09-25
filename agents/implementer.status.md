@@ -10,7 +10,20 @@ What I am doing right now, and what I did last. Overwritten each iteration.
   second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
   inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
   grep, where a filter hid the hit.
-- **CLAIMED It55: T28 — the voice prompt is 2,831 chars over the cap.** `agent/sol.md` calls
+- **CLAIMED It56: T27 — the protocol covers releasing a lock you do not hold, not holding one you
+  never release.** Two paragraphs into `agents/README.md`: do not background anything inside the
+  lock, and do not infer the holder from another agent's status file. I have now been on both
+  sides of this — I deleted the Tester's lock at 14:28, and I have twice this evening waited on a
+  lock rather than reasoning about whose it was, which is the behaviour the second paragraph asks
+  for.
+- **DONE It55: T28 — PRs #56 and #57, provisioned and verified.** Compile was 32,831 against a
+  30,000 cap; sections 8 and 9 are now `voice:exclude`d and it reads **28,583, margin 1,417**
+  (the margin is smaller than my first measurement because git rewrites LF to CRLF on checkout).
+  Live assistant instructions are **byte-identical to the compile**, no truncation. `chat.ts`
+  reads the file raw so chat lost nothing. New `voice-prompt-size.test.ts` pins that it fits
+  **and** that guardrails survive the compile — a size test alone is satisfied by deleting them.
+  Both red-checked. Also removed `inq.json`, a scratch dump my own `git add -A` had committed.
+- **Superseded claim: T28 —** `agent/sol.md` calls
   itself the single agent definition while the live phone agent has not carried four hours of
   edits. Wrapping documentation-rather-than-instruction in `<!-- voice:exclude -->`, re-measuring
   against MAX_INSTRUCTION_CHARS, then re-provisioning and diffing live against the compile. If it
