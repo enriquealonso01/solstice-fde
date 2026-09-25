@@ -20,6 +20,7 @@ import { json } from '../telnyx/_lib/http'
 import { envOrNull } from '../telnyx/_lib/env'
 import { handleSupervisor, SUPERVISOR_ACTIONS } from './supervisor'
 import { handleCredentials } from './credentials'
+import { handleClientState } from './client-state'
 
 export default async function handler(req: Request, _context: Context): Promise<Response> {
   const route = lastSegment(new URL(req.url).pathname)
@@ -27,6 +28,9 @@ export default async function handler(req: Request, _context: Context): Promise<
   switch (route) {
     case 'supervisor':
       return handleSupervisor(req)
+    case 'client-state':
+    case 'client_state':
+      return handleClientState(req)
     case 'credentials':
     case 'credential':
     case 'token':

@@ -299,6 +299,21 @@ export function useSupervisorVoice(enabled = true): SupervisorVoice {
             ? 'Registering the supervisor SIP client…'
             : (error ?? 'Supervisor audio is not registered, so a dialled leg would go unanswered.')
 
+  // Report every transition to the server.
+  //
+  // Registration happens inside a browser nobody is watching, and when a supervisor leg dies two
+  // seconds after being dialled the server trace cannot tell "never registered" from "registered
+  // but never answered". Those have completely different fixes. One POST per transition, fire and
+  // forget, so a failure to report can never affect the audio path.
+  const reported = useRef<string | null>(null)
+  useEffect(() => {
+    if (!enabled) return
+    const key = `${state}:${error ?? ''}`
+    if (reported.current === key) return
+    reported.current = key
+    void postJson('/api/voice/client-state', { state, detail: error ?? null }).catch(() => {})
+  }, [state, error, enabled])
+
   return { state, ready, error, remoteAudioRef, unavailableReason, primeAudio, retry }
 }
 
