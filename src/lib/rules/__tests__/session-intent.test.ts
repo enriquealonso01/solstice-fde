@@ -46,27 +46,51 @@ describe('intentLabel', () => {
   })
 })
 
-describe('the chat turn persists it', () => {
+describe('both runtimes persist it', () => {
   // A source guard. The behavioural path needs Supabase, which vitest.setup.ts strips by design,
   // so asserting on a session row here would pass while checking nothing — that mistake is already
   // recorded in agents/tested.log.md. This pins the wiring instead, and says so.
-  const src = readFileSync(join(process.cwd(), 'netlify/functions/chat.ts'), 'utf8')
+  //
+  // The writer moved from `chat.ts` into the tool layer, because BOTH channels call
+  // `classify_intent` and both need the same row updated: chat through `chat.ts`, telephony
+  // through the `/api/tools` webhook. Chat-only would have left every phoned-in session labelled
+  // "classifying…" — which is the beat the demo runbook opens the supervisor screen on.
+  const read = (rel: string) => readFileSync(join(process.cwd(), rel), 'utf8')
+  const registry = read('netlify/functions/tools/registry.ts')
+  const chat = read('netlify/functions/chat.ts')
+  const toolWebhook = read('netlify/functions/tools/index.ts')
 
   it('writes sessions.intent somewhere', () => {
-    expect(src).toMatch(/from\('sessions'\)\.update\(\{\s*intent\s*\}\)/)
+    expect(registry).toMatch(/from\('sessions'\)\.update\(\{\s*intent:\s*classified\s*\}\)/)
   })
 
   it('does it off the back of a successful classify_intent, not on every tool', () => {
-    expect(src).toMatch(/use\.name === 'classify_intent' && result\.ok/)
+    expect(registry).toMatch(/name !== 'classify_intent' \|\| !result\.ok/)
   })
 
   it('is fire-and-forget, so a label can never fail a guest turn', () => {
-    const idx = src.indexOf("use.name === 'classify_intent'")
-    expect(idx).toBeGreaterThan(-1)
-    const block = src.slice(idx, idx + 320)
-    expect(block).toMatch(/void bindSessionIntent/)
-    // the writer itself must swallow its own errors
-    const writer = src.slice(src.indexOf('async function bindSessionIntent'))
-    expect(writer.slice(0, 400)).toMatch(/try\s*\{[\s\S]*catch/)
+    const writer = registry.slice(registry.indexOf('export async function recordClassifiedIntent'))
+    expect(writer.slice(0, 700)).toMatch(/try\s*\{[\s\S]*catch/)
+  })
+
+  it('is wired into the chat runtime', () => {
+    // chat.ts keeps its own writer, shipped in PR #41. Left as-is deliberately: rewriting a
+    // freshly-merged critical path to remove eight lines of duplication is the worse trade this
+    // close in. Both writers are asserted, so neither can quietly stop writing.
+    expect(chat).toMatch(/use\.name === 'classify_intent' && result\.ok/)
+    expect(chat).toMatch(/void bindSessionIntent/)
+  })
+
+  it('is wired into the telephony tool webhook, which had no write at all', () => {
+    expect(toolWebhook).toMatch(/recordClassifiedIntent\(ctx, name, result\)/)
+  })
+
+  it('has a writer per channel and no more, so neither can be dropped unnoticed', () => {
+    const writes = [registry, chat, toolWebhook]
+      .join(' ')
+      .match(/from\('sessions'\)\.update\(\{\s*intent/g)
+    // One in chat.ts (PR #41), one in the tool layer for telephony. If a third appears, or either
+    // disappears, this fails and somebody looks.
+    expect(writes).toHaveLength(2)
   })
 })

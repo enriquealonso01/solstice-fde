@@ -59,8 +59,10 @@ Look at the Guest column on a phone call. It reads like `Unknown caller +*******
 phone number is masked in the database layer, not blurred in CSS.** A supervisor who does not
 need the digits does not get the digits.
 
-The Intent column fills in by itself, and on a live call you may catch it reading `classifying…`
-before it settles. That is Sol deciding what the conversation is about while it is happening.
+The Intent column is filled by `classify_intent`, the routing decision Sol makes before anything
+else — that is Sol deciding what the conversation is about while it is happening. A row that still
+reads `classifying…` is one where no classification has been recorded yet, which on a live call you
+may briefly catch.
 
 ### Step 4 — open a session
 
