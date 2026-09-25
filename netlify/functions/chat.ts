@@ -139,12 +139,32 @@ let cachedPrompt: string | null = null
  * function's bundle on the demo's main path. It only stops the prompt asking for something the
  * channel cannot do.
  */
+// This note is the LAST thing in the chat prompt, so it is the most salient instruction the model
+// has. Its first version said the escalation "reaches Sales with the details" and to "tell them
+// Sales will follow up". PR #66 established that neither is true: `escalations` is readable by
+// concierge and admin only, every notify list in the matrix is GM / Regional Security / Manager on
+// duty / AGM, and the row carries a free-text summary rather than the structured payload the group
+// sales board receives. A manager reads it and routes it onward.
+//
+// Measured on production before this change, four runs out of four told the guest otherwise, even
+// though the tool result in the model's own context read "Escalation … to agm":
+//   "I've logged this and it's going to our Sales team today. They'll reach out to dana.reyes@… "
+//   "This has gone to our Sales team … They'll reach out to dana.reyes@… with a quote."
+//   "This is logged and going to our Sales team today."
+// A named destination and a promised day, both wrong, to a guest. The model was not drifting; it
+// was following this note.
 const CHAT_CHANNEL_NOTE = `
 ON THIS CHANNEL
 You are on web chat, which has no inquiry-creation tool. Do not try to open a group inquiry here
 and do not refer to one. For a group request: capture what the customer gives you, call
-create_escalation so it reaches Sales with the details, and tell them Sales will follow up. That
-is the whole of your job on a group request here, not a fallback from a failed attempt.`
+create_escalation, and tell them a manager has it and will follow up. That is the whole of your job
+on a group request here, not a fallback from a failed attempt.
+
+Be careful what you promise about who has it. The escalation does not reach the group sales board,
+so do not tell the guest that Sales has it, that Sales or a team will contact them, or that it is
+going anywhere today. You may say that a group block is priced by Sales rather than by you, because
+that is true; what you have actually just done is put it in front of a manager, so say that much and
+no more. Never name who will make contact, and never promise when.`
 
 function systemPrompt(): string {
   if (cachedPrompt) return cachedPrompt

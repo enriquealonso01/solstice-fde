@@ -357,7 +357,7 @@ deliberate, defensible choice, and each is visible in the code rather than burie
     the send path belongs to whatever holds identity in production, and is deliberately not
     papered over here.
 15. **A verified identity survives the whole session, with no expiry.** `identify_guest` binds the
-    guest to the session row, and every later turn restores it (`chat.ts:283`) rather than asking
+    guest to the session row, and every later turn restores it (`chat.ts:303`) rather than asking
     again. That is deliberate: the transcript records what Sol *said*, not what it *knows*, so
     without the binding it would re-verify the same guest on every message and the conversation
     would be unusable. The limit is that the binding has no TTL, and the lookup is by session id
@@ -374,19 +374,31 @@ deliberate, defensible choice, and each is visible in the code rather than burie
   the voice compile is 1.4KB from a hard 30,000-char cap, so it is chat-only by exclusion rather
   than by omission: a reader of this file still sees it, the phone agent is not asked to carry it.
 -->
-16. **The live chat prompt still tells guests "Sales will follow up", and this file no longer does.**
-    `netlify/functions/chat.ts:146` carries the wording PR #28 shipped: *"call `create_escalation` so
-    it reaches Sales with the details, and tell them Sales will follow up."* Verified false in the
-    same way as above — `esc_read` admits `concierge` and `admin` only, a `sales` account reads zero
-    escalation rows, and no category in `ESCALATION_MATRIX` notifies Sales (`other`, the default for
-    a group request, notifies Manager on duty or AGM). `notify` is a stored string array interpolated
-    into the tool's reason text; nothing sends it.
-    So a guest on chat is told Sales has it when a concierge supervisor has it. The overstatement is
-    one hop, not a fabrication: a human really does receive it with the details.
-    **Not changed, deliberately.** It is a prompt edit to a runtime that was verified hours before
-    submission, and the cost of being wrong about a prompt is higher than the cost of a named
-    inaccuracy. Corrected here, in the definition, where a reviewer reads what is true; the one-line
-    prompt edit is the first thing to land after the deadline.
+16. **RESOLVED. The live chat prompt used to tell guests "Sales will follow up"; it no longer does.**
+    PR #28 shipped the wording *"call `create_escalation` so it reaches Sales with the details, and
+    tell them Sales will follow up"* in the chat channel note, and PR #66 corrected this file while
+    deliberately leaving that note alone — a prompt edit to a runtime verified hours before submission
+    looked more expensive than a named inaccuracy.
+
+    It was more expensive than it looked, because the note is appended **last** and so outranked the
+    correction above it. Measured against production, **four runs out of four**, the guest was told:
+    *"I've logged this and it's going to our Sales team today. They'll reach out to
+    dana.reyes@… with a quote."* · *"This has gone to our Sales team … They'll reach out to …"* ·
+    *"This is logged and going to our Sales team today."* — a named destination and a promised day,
+    both wrong, while the tool result in the model's own context read `Escalation … to agm`. The model
+    was not drifting; it was obeying the note.
+
+    Why it was false, checked three ways: `esc_read` admits `concierge` and `admin` only, so a `sales`
+    account reads zero escalation rows; no category in `ESCALATION_MATRIX` notifies Sales (`other`,
+    the default for a group request, notifies Manager on duty or AGM); and `notify` is a stored string
+    array interpolated into the tool's reason text, which nothing sends.
+
+    `netlify/functions/chat.ts:160` now says *"call `create_escalation`, and tell them a manager has
+    it and will follow up"*, and forbids naming who will make contact or promising when. The true part
+    is kept — a group block is priced by Sales rather than by Sol — and the false part, that Sales has
+    it and is about to call, is gone. Pinned by `chat-note-sales-promise.test.ts`, which asserts on the
+    note's body with comments stripped so it cannot be satisfied by this explanation, and which fails
+    on the old wording.
 <!-- /voice:exclude -->
 ---
 
