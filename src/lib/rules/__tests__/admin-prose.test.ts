@@ -50,6 +50,7 @@ const JARGON = [
   'post request',
   'login_token',
   'tool_invocations',
+  'audit_log',
   'session_id',
   'inquiry_id',
 ]
@@ -101,6 +102,10 @@ function visibleText(source: string): string[] {
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
     .replace(/^\s*\/\/.*$/gm, ' ')
     .replace(/\{[^{}]*\}/g, ' ')
+    // Inline formatting tags split a sentence into fragments too short to look like prose:
+    // `This is written to <code>audit_log</code> with your user id` was invisible for exactly
+    // this reason. Remove the tag, keep the words either side as one run of text.
+    .replace(/<\/?(code|strong|em|b|i|kbd|abbr|small)>/g, '')
   for (const m of stripped.matchAll(/>([^<>{}]+)</g)) {
     out.push(m[1])
   }

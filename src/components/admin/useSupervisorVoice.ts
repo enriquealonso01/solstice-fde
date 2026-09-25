@@ -144,7 +144,7 @@ export function useSupervisorVoice(enabled = true): SupervisorVoice {
           setState('unavailable')
           setError(
             res.failure === 'not_deployed'
-              ? 'Supervisor audio is not deployed on this build, so there is no call to join.'
+              ? 'Supervisor audio is not available in this version, so there is no call to join.'
               : (res.error ?? 'Could not reach the voice service.'),
           )
         }

@@ -534,7 +534,7 @@ function JustificationDialog({
           />
         </label>
         <p className="mt-2 text-xs text-solstice-stone">
-          This is written to <code>audit_log</code> with your user id. Overrides are readable forever.
+          This is recorded in the audit trail with your user id. Overrides are readable forever.
         </p>
         <div className="mt-4 flex justify-end gap-2">
           <button type="button" className="btn-ghost" onClick={onCancel} disabled={busy}>
