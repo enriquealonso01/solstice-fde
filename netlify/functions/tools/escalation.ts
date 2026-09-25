@@ -203,7 +203,13 @@ export async function transferToHuman(args: ToolArgs, ctx: ToolContext): Promise
     .filter(Boolean)
     .join(' ')
 
+  const escalationExists = Boolean(escalationId)
+
   if (ctx.channel === 'voice') {
+    // Two variables decide this, not one. `TELNYX_TRANSFER_TARGET` is absent from the deployed
+    // environment, but `DEMO_PHONE` is set and is the `??` fallback, so `configured` is TRUE in
+    // production — the announce-the-handoff path is the live one, not the refusal below. Checked with
+    // `netlify env:list` against the deploy, because the local `.env` has neither.
     const target = process.env.TELNYX_TRANSFER_TARGET ?? process.env.DEMO_PHONE ?? null
     const configured = Boolean(target) && Boolean(process.env.TELNYX_API_KEY)
     return toolOk(
@@ -216,11 +222,22 @@ export async function transferToHuman(args: ToolArgs, ctx: ToolContext): Promise
         escalation_id: escalationId,
         authority_required: route.authority,
         // Explicit failure path: the Telnyx account cannot place the call today.
+        //
+        // AND the one that is not about configuration at all. A warm transfer is announced BEFORE it
+        // connects, so between the announcement and the pickup there is a window in which the guest
+        // has been told a manager is coming and nothing durable exists — and a transfer can fail for
+        // reasons this branch cannot see, an unfunded account being the obvious one. That is G16 on
+        // the leg G16 was written for. So when no escalation exists yet, say so here too: the chat
+        // branch below has done this since PR #7 and the asymmetry was an oversight, not a decision.
         fallback: configured
-          ? null
+          ? escalationExists
+            ? null
+            : 'No escalation exists yet, so if this transfer does not connect nothing durable has reached a human. Call create_escalation before you announce the handoff.'
           : 'No transfer destination is configured, so the call cannot be handed off live. Tell the guest a manager will call them back today, create an escalation if one does not exist yet, and stay with the guest until they are done.',
         human_reason: configured
-          ? 'Announce the handoff before it happens, read the context back to the person picking up, then step aside.'
+          ? escalationExists
+            ? 'Announce the handoff before it happens, read the context back to the person picking up, then step aside.'
+            : 'Create the escalation first, so there is a written record if the transfer does not connect. Then announce the handoff, read the context back to the person picking up, and step aside.'
           : 'Do not pretend a transfer happened. Say plainly that you are putting a manager on it and that they will call back today.',
       },
       { citations: [policyCitation(15)] },
@@ -236,13 +253,13 @@ export async function transferToHuman(args: ToolArgs, ctx: ToolContext): Promise
   // takeover happens when a human sitting at the console chooses to join. So this branch
   // must not tell the guest that a colleague is joining *now*, or ask them to hold while
   // someone "connects" — that is G16's failure ("I'm transferring you now" into silence)
-  // wearing a different channel. The voice branch above already refuses to pretend; chat
-  // owes the guest the same honesty.
+  // wearing a different channel. The voice branch above refuses to pretend when no transfer is
+  // configured — and, since iteration 54, also insists on a record when one IS configured, because
+  // that is the live configuration and an announced transfer can still fail to connect.
   //
   // The durable record is the escalation, not this call. If one does not exist yet, the
   // hand has not actually been raised anywhere a human will see it, and saying so is the
   // whole point of `fallback`.
-  const escalationExists = Boolean(escalationId)
   return toolOk(
     {
       directive: 'request_supervisor_takeover',
