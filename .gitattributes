@@ -1,0 +1,13 @@
+# Keep executable scripts checked out with LF, on every platform.
+#
+# This is not a style preference. `scripts/telnyx/provision.mjs` begins with a shebang, and on a
+# Windows checkout git rewrote it to CRLF. Vite strips the shebang when it transforms the module for
+# a test, leaves the orphaned `\r` behind, and the file dies with "SyntaxError: Invalid or unexpected
+# token" pointing at a line inside a comment — which is what a shifted sourcemap looks like, not
+# where the problem is. Node and esbuild both parse the same file happily, so nothing local catches
+# it either.
+#
+# Verified three ways: LF alone fixes it, removing the shebang alone fixes it, and every other file
+# in the tree is CRLF and fine. The shebang is what makes this file different, and the CLI needs it.
+*.mjs text eol=lf
+*.sh  text eol=lf
