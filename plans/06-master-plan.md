@@ -81,10 +81,10 @@ audit rows are from real conversations.
 | ~~M1~~ | ~~Live failure-injection toggle~~ | **DONE.** Postgres-backed switches, ~3s to take effect, scoped outages. Verified: PMS offline refuses late checkout, policy still answers |
 | ~~M2~~ | ~~Future-capabilities roadmap~~ | **DONE.** `docs/where-this-goes.md`, outcomes not features, including what we would not do |
 | ~~M3~~ | ~~Demo runbook~~ | **DONE.** `docs/demo-runbook.md`: 18 minutes, 7 beats, what to say, what to do when something breaks |
-| M4 | Rehearsable live modification, documented | They will ask you to change something on the spot | 30m |
-| M5 | Make live-service tests hermetic | A flaky run during a technical deep-dive undercuts everything | 45m |
-| M6 | Clean phantom sessions from the supervisor grid | Old supervisor-leg bug left empty sessions that look like junk on screen | 20m |
-| M7 | Submission package: what actually gets sent, and how | Nobody has decided whether this is a repo link, a zip, or both | 30m |
+| ~~M4~~ | ~~Rehearsable live modification~~ | **DONE.** `docs/live-modification.md`, rehearsed for real: 15→12 moves the verdict AND regenerates the rep's sentence. `npm run verdict -- INQ-2009` |
+| ~~M5~~ | ~~Hermetic tests~~ | **DONE.** `vitest.setup.ts` strips every credential before any test loads. 308 pass with `.env` sourced, the condition that used to be flaky |
+| ~~M6~~ | ~~Clean phantom sessions~~ | **DONE.** 9 deleted, 16 stale chat sessions closed. Root cause named: chat has no hangup event. `npm run demo:tidy` |
+| ~~M7~~ | ~~Submission package~~ | **DONE.** `SUBMISSION.md`: what to send, draft email, pre-send checklist, and the two things to state plainly |
 
 ---
 
@@ -102,8 +102,7 @@ Things that are not on any list but would be noticed.
 
 1. **No one has walked the whole app as a stranger.** Every screen has been checked in isolation.
 2. **The landing page has never been reviewed on a phone.** A panel may open it on mobile.
-3. **`DEMO_LOGINS.md` is gitignored**, correct for the repo, but the panel needs credentials. The
-   submission needs a decision about how they get them.
+3. ~~`DEMO_LOGINS.md` is gitignored~~ — RESOLVED: credentials go in the email body, see `SUBMISSION.md`.
 4. **No error path has been demoed deliberately.** We know it degrades; nobody has shown it.
 5. **The chat bubble's mic has never been used.** Browser voice is built and unverified.
 6. **Nothing states what this cost to build.** The cost page shows runtime cost; the build itself

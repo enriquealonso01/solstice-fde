@@ -11,6 +11,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     resolve: { alias: { '@': path.resolve(__dirname, './src') } },
     server: { port: 5173 },
+    // Credentials are stripped before any test file loads: see vitest.setup.ts for why.
+    test: { setupFiles: ['./vitest.setup.ts'] },
     define: {
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.SUPABASE_URL ?? ''),
       'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.SUPABASE_ANON_KEY ?? ''),
