@@ -102,6 +102,46 @@ Agents are good at finding bugs and bad at deciding what matters.
 
 ---
 
+## Day two: three agents in a loop, and the bug the protocol wrote itself
+
+Day one was six agents in parallel. Day two was a smaller, stranger shape: three agents — a
+planner, an implementer and a tester — running on a five-minute loop, coordinating through nothing
+but files. One writer per file, and a single mutex for git and deploy, taken with `mkdir` because
+it is atomic.
+
+It found things the first day could not. The browser mic had never once worked. A deliverable named
+a tool that did not exist. The group refusal promised an approver the schema cannot enforce. A
+malformed `session_id` bought a fully working but completely untraced conversation, which falsified
+a guarantee this README makes in writing. **None of those would have been caught by the tests,
+which passed throughout.** They were found by an agent whose only job was to disbelieve the other
+two.
+
+**And the protocol produced a bug of its own, which is the part worth telling.** This file's
+sibling, `agents/README.md`, documented the mutex like this:
+
+```bash
+mkdir agents/.lock
+# ...work...
+rmdir agents/.lock        # always release, even on failure
+```
+
+That comment is wrong, and the implementer followed it. Its `mkdir` lost the race, the release ran
+anyway because it was not conditional on the acquire, and it deleted the **tester's** lock while
+the tester was mid-ship. The window was seconds: the implementer noticed, checked the tree, found
+real in-flight work, recreated the lock, shipped nothing, and wrote the incident into its own log
+before doing anything else.
+
+Two things about that are worth more than the fix. The first is that the instruction was the
+cause — "always release" is a reasonable sentence that describes the wrong behaviour, and a careful
+agent following it carefully still gets it wrong. The second is that the repair was structural
+rather than a resolution to be more careful: the release now lives inside the success branch, where
+it is *incapable* of releasing a lock the agent does not hold.
+
+The document defining single-writer ownership also had no declared writer of its own, which is why
+the fix sat unowned for an iteration. It has one now.
+
+---
+
 ## The honest summary
 
 Six agents wrote most of this system in a day. They also wrote bugs that unit tests could not
