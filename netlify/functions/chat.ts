@@ -427,6 +427,12 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
 
       const result = await runTool(use.name, args, ctx)
       void recordToolInvocation(ctx, use.name, args, result)
+      // The classified intent is the supervisor console's label for this conversation. Persist it
+      // here, where the result is already in hand, fire-and-forget like every write on this path.
+      if (use.name === 'classify_intent' && result.ok) {
+        const classified = (result.data as { intent?: unknown } | undefined)?.intent
+        if (typeof classified === 'string' && classified) void bindSessionIntent(sessionId, classified)
+      }
 
       // A successful verification is session state, not just a tool result.
       if (use.name === 'identify_guest' && result.ok) {
@@ -641,6 +647,21 @@ async function bindSessionGuest(sessionId: string, guestId: string, label: strin
     const db = getDatabase()
     if (!db) return
     await db.from('sessions').update({ guest_id: guestId, guest_label: label }).eq('id', sessionId)
+  } catch {
+    // the conversation matters more than the label
+  }
+}
+
+/** Writes the classified intent onto the session so the supervisor console can label the
+ *  conversation. Four admin surfaces read `sessions.intent` and NOTHING was writing it, so every
+ *  session ever recorded rendered as "classifying…" — `intentLabel(null)` returns that string.
+ *  `classify_intent` had the answer all along; it was only ever held in the tool trace.
+ *  Best effort, like every other write here: a label is not worth failing a turn for. */
+async function bindSessionIntent(sessionId: string, intent: string): Promise<void> {
+  try {
+    const db = getDatabase()
+    if (!db) return
+    await db.from('sessions').update({ intent }).eq('id', sessionId)
   } catch {
     // the conversation matters more than the label
   }
