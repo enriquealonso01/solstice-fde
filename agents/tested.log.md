@@ -4177,3 +4177,116 @@ packet and never claims anything is sent.
 not exercise it, because doing so would have added a row I could not delete.
 
 **VERIFIED.** No fix needed, no lock taken for the test itself.
+
+---
+
+## Iteration 46 — 2026-09-25 22:28–22:40Z — FIXED-PENDING — chat told a guest, four times out of four, that Sales had their group request
+
+Took **PR #66** ("Say where a chat escalation actually lands, which is not the sales board"), the next
+untested implementer change. The change to `agent/sol.md` is right, and its own commit message names
+what it left behind:
+
+> `chat.ts:146` still tells guests "Sales will follow up". Out of scope per T19 and I agree — a prompt
+> edit to a runtime verified hours before submission costs more than a named inaccuracy. Recorded as
+> assumption 16.
+
+That line is **mine**, from PR #28. So I went to see what the guest is actually told.
+
+### The two strings are in the same prompt, and mine is appended last
+`chat.ts:151`: `cachedPrompt = ${readPromptFromMarkdown() ?? SOL_SYSTEM_PROMPT}\n${CHAT_CHANNEL_NOTE}`.
+`sol.md` says *"tell them a manager has it"* and *"it is not the group sales board"*; the note, after
+it, said *"call create_escalation so it reaches Sales with the details, and tell them Sales will follow
+up"*. Last instruction wins.
+
+### Four two-turn conversations against production. Every one of them said Sales
+Turn 1, a 25-room Denver block with no email; turn 2, the guest gives the email. Straight at
+`POST /api/chat`, reading the SSE.
+
+```
+A t1: "Group blocks like this go through our Sales team rather than me directly. I can pass along the
+       details right now so they follow up with a quote — what's the best email to reach you at?"
+B t2: create_escalation -> Escalation d44dfac1 to agm
+      "I've logged this and it's going to our Sales team today. They'll reach out to
+       dana.reyes@northwindlogistics.com with a quote for the 25-room, 3-night Denver block."
+C t2: create_escalation -> Escalation 6726b698 to agm
+      "This has gone to our Sales team for Northwind Logistics … They'll reach out to
+       dana.reyes@northwindlogistics.com with a quote."
+D t2: create_escalation -> Escalation dd6c8d78 to agm
+      "This is logged and going to our Sales team today. They'll reach out to you at
+       dana.reyes@northwindlogistics.com with a quote."
+```
+
+A **named destination** and, in two of three, a **promised day** — to a guest, about where their
+request went and who will contact them. Both false, on the evidence PR #66 itself gathered: `esc_read`
+admits `concierge` and `admin` only so a sales account reads zero rows; no category in
+`ESCALATION_MATRIX` notifies Sales; and `notify` is a stored string array nothing sends.
+
+**The model was not drifting.** The tool result in its own context read `Escalation … to agm` — it had
+the correct routing in front of it and said Sales anyway, because the last thing the prompt told it to
+do was say Sales. This is the difference between a model that needs three runs to characterise and an
+instruction that is simply wrong: four for four, no variance to speak of.
+
+### Fixed — PR #74, `85fc736`, deployed
+`CHAT_CHANNEL_NOTE` now says *"call `create_escalation`, and tell them a manager has it and will follow
+up"*, plus:
+
+> Be careful what you promise about who has it. The escalation does not reach the group sales board, so
+> do not tell the guest that Sales has it, that Sales or a team will contact them, or that it is going
+> anywhere today. You may say that a group block is priced by Sales rather than by you, because that is
+> true; what you have actually just done is put it in front of a manager, so say that much and no more.
+> Never name who will make contact, and never promise when.
+
+The true part is kept deliberately — Sales really does price group blocks — because removing it would
+trade one inaccuracy for another.
+
+Deploy `6ab6f7ba2dcca9f34e389028`, state `ready`, published `2026-09-25T22:37:59Z`. Lock taken
+22:34:01Z, released 22:38:04Z.
+
+### A guard I did not write caught my own change
+Adding the comment block shifted line numbers, and `doc-citations.test.ts` (PR #70, untested by me
+until now) failed with exactly what had gone stale:
+```
+README.md: cites netlify/functions/chat.ts:283 for "saved?.guest_id", but line 283 is
+  "async function runTurn({ …" — it looks like line 303 now.
+agent/sol.md: cites netlify/functions/chat.ts:146 for "create_escalation", but line 146 is
+  "// duty / AGM, and the row carries a free-text summary rather than the" — it looks like line 160 now.
+```
+Renumbered all three and updated `EXPECTED` **keys only** — the substrings it checks are untouched, so
+the guard is not weakened. That is the second time this run a test written by someone else has told me
+something true about my own edit before a human could.
+
+### The test, written around the trap it sits in
+`chat-note-sales-promise.test.ts`, 8 cases. The note now *quotes the phrases it forbids* in its
+explanation, which is the exact trap from iterations 8, 41 and 42 — so every assertion runs on the
+template-literal body with `//` lines stripped, and one case proves the stripping works by asserting
+the forbidden phrase IS present above the note and IS NOT inside it. **Red-checked**: with the original
+wording restored, 5 of 8 fail; with the fix, 8 pass. Suite 453 / 33 files, `tsc` clean.
+
+### Assumption 16 rewritten as resolved
+It documented the inaccuracy as accepted. It now records that the cost estimate was wrong — the note
+outranked the correction because of where it sits — with the four production replies, the three reasons
+it was false, and the test that pins it.
+
+### Smoke check only, NOT a verification
+I fixed this in this iteration, so it cannot be VERIFIED here. One run after the deploy, to be sure I
+had not made the agent evasive rather than honest:
+```
+t1: "Group blocks like this are priced and confirmed by Sales, not by me — but I can get this in front
+     of a manager to follow up with you. Could I get your email address first?"
+t2: create_escalation -> Escalation c6dfd5ba to agm
+    "That's noted and in front of a manager now — since group pricing has to come from Sales, they're
+     the ones who'll be quoting the 25 rooms, 3 nights in Denver for November. You'll hear back at the
+     email you gave me."
+```
+Correct destination, no promised day, true part intact.
+
+**RE-TEST next iteration, four runs, and watch two things:** that no run says Sales *has* it or will
+make contact, and *"You'll hear back at the email you gave me"* — which names no one and no day, so I
+am not filing it, but it is the nearest remaining promise and worth reading three more times.
+
+### Cleanup
+Five escalations from these runs (all `Northwind Logistics`, a company I invented) are set to `closed`.
+Open escalation count back to **38** (`Content-Range: 0-0/38`), the same baseline as iteration 45. Five
+new `active` sessions were created, which adds to the stale-session pile already logged for `demo:tidy`.
+
+**FIXED-PENDING.**

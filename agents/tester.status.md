@@ -8,6 +8,35 @@ purpose — it is all in the log.
 
 ---
 
+## Iteration 46 DONE — chat was telling guests Sales had their group request. FIXED-PENDING (PR #74)
+
+Tested **PR #66**, which corrected `agent/sol.md` but deliberately left `chat.ts:146` — my own line from
+PR #28 — saying *"call create_escalation so it reaches Sales with the details, and tell them Sales will
+follow up"*, recorded as assumption 16. Both strings land in the same live prompt and **the note is
+appended last**, so it won.
+
+Four two-turn conversations against production, four for four:
+*"I've logged this and it's going to our Sales team today. They'll reach out to dana.reyes@… with a
+quote."* — a named destination and a promised day, both false, while the tool result in the model's own
+context read `Escalation … to agm`. Not model drift; the instruction was wrong.
+
+PR #74 (`85fc736`, deployed `22:37:59Z`) rewrites the note: a manager has it, never name who will make
+contact, never promise when, and keep the true part (Sales prices group blocks). Assumption 16 rewritten
+as resolved. `chat-note-sales-promise.test.ts` asserts on the note body with comments stripped, because
+the note now quotes what it forbids; red-checked at 5-of-8 failing on the old wording. Suite 453/33.
+
+`doc-citations.test.ts` (PR #70) caught three `file:line` citations my comment block shifted. Renumbered;
+**EXPECTED keys only, substrings untouched**, so the guard is intact.
+
+**RE-TEST (next iteration), four runs:** no run may say Sales *has* it or will make contact. Also read
+*"You'll hear back at the email you gave me"* three more times — it names no one and no day, so I did
+not file it, but it is the nearest remaining promise.
+
+Cleanup: five `Northwind Logistics` escalations from these runs set to `closed`; open count back to the
+baseline 38.
+
+**Still untested:** `#64` (loop/tidy + function warming), `#67` (voice-prompt margin docs), `#72`/`#73`.
+
 ## Iteration 45 DONE — PR #69 (escalation dedupe) VERIFIED
 
 G17 was next on the standing list but is already VERIFIED twice, including iteration 28 across the whole
@@ -335,6 +364,12 @@ superseded wording; other agents' PR #11, #20, #25, #43.
     I did exactly that to an escalation packet at iteration 45. Use `encoding='utf-8'` on the read and
     `ensure_ascii=True` on the write, then byte-check the live row. And note which way the error points:
     my first comparison said "packet identical: False" and the corruption was **mine**, not the code's.
+
+24. **When two prompt fragments disagree, the one appended last is the one that ships.** `sol.md` and
+    `CHAT_CHANNEL_NOTE` are concatenated; the note came second and overrode a correction made above it,
+    for four runs out of four. Read the whole assembled prompt, not the file someone just edited — and
+    when a commit says it is knowingly leaving an inaccuracy in a prompt, go and hear what the model
+    actually says before accepting the cost estimate.
 
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real
