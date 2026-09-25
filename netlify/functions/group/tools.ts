@@ -1407,7 +1407,7 @@ export async function edit_proposal(args: EditProposalArgs): Promise<ToolResult<
   const materialised = await materialiseProposal(proposal, { force_render: true })
   if (!materialised) {
     return fail(
-      `We saved nothing, because the letter for ${proposal.proposal_id} cannot be rebuilt: enquiry ${proposal.inquiry_id} or its hotel is no longer in the directory.`,
+      `We saved nothing, because the letter for ${proposal.proposal_id} cannot be rebuilt: inquiry ${proposal.inquiry_id} or its hotel is no longer in the directory.`,
     )
   }
   if (materialised.pdfBytes) {

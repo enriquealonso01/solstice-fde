@@ -1,4 +1,4 @@
-// Follow-ups: the message we send when an enquiry cannot be quoted yet.
+// Follow-ups: the message we send when an inquiry cannot be quoted yet.
 //
 // INQ-2004 is the case this exists for. No dates, no phone, and "around 25" rooms, which is not
 // a number we can hold inventory against. The wrong answers are to quote anyway, or to leave it
@@ -16,7 +16,7 @@
 // The body is assembled from `assessCompleteness`, which returns one question per field that is
 // actually absent. It names nothing else. There is no deadline and no policy in it, because we
 // have no basis for either: the hotel never told us how long it will hold anything for an
-// enquiry it has not priced.
+// inquiry it has not priced.
 
 import { randomBytes } from 'node:crypto'
 import { assessCompleteness, describeMissing } from '../../../src/lib/rules'
@@ -77,13 +77,13 @@ export function composeFollowUp(input: {
     const greeting = contact_name ? `Hi ${contact_name.split(' ')[0]}, ` : 'Hi, '
     return {
       subject: null,
-      body: `${greeting}this is Sol at Solstice Hotels about your group enquiry for ${company_name}. Before I can put a quote together I need your ${missing_summary}. Reply here with those and I will come straight back with the rate and the block.`,
+      body: `${greeting}this is Sol at Solstice Hotels about your group inquiry for ${company_name}. Before I can put a quote together I need your ${missing_summary}. Reply here with those and I will come straight back with the rate and the block.`,
     }
   }
 
   const numbered = questions.map((q, i) => `${i + 1}. ${q}`).join('\n')
   return {
-    subject: `A couple of quick questions about your group enquiry for ${company_name}`,
+    subject: `A couple of quick questions about your group inquiry for ${company_name}`,
     body: [
       `Hello ${contact_name || 'there'},`,
       '',
@@ -174,7 +174,7 @@ export async function getFollowUp(code: string): Promise<FollowUp | null> {
   return all.find((f) => f.follow_up_id === code || f.row_id === code) ?? memory.get(code) ?? null
 }
 
-/** The live follow-up on an enquiry: the most recent one nobody has sent or discarded. */
+/** The live follow-up on an inquiry: the most recent one nobody has sent or discarded. */
 export async function findFollowUpByInquiry(inquiryCode: string): Promise<FollowUp | null> {
   const all = await listFollowUps()
   const mine = all.filter((f) => f.inquiry_id === inquiryCode)
@@ -255,11 +255,11 @@ export interface DraftFollowUpResult {
   human_summary?: string
 }
 
-/** Idempotent per enquiry, like a proposal: a rep clicking twice edits one draft. */
+/** Idempotent per inquiry, like a proposal: a rep clicking twice edits one draft. */
 export async function draftFollowUp(inquiryCode: string): Promise<DraftFollowUpResult> {
   const inquiry = await loadInquiry(inquiryCode)
   if (!inquiry) {
-    return { ok: false, error: `We have no record of an enquiry with the reference ${inquiryCode}.` }
+    return { ok: false, error: `We have no record of an inquiry with the reference ${inquiryCode}.` }
   }
 
   const contact = await loadInquiryContact(inquiryCode)
@@ -278,7 +278,7 @@ export async function draftFollowUp(inquiryCode: string): Promise<DraftFollowUpR
   if (missing.length === 0) {
     return {
       ok: false,
-      error: `Enquiry ${inquiryCode} has everything we need on it, so there is nothing to ask for. Generate the proposal instead.`,
+      error: `Inquiry ${inquiryCode} has everything we need on it, so there is nothing to ask for. Generate the proposal instead.`,
     }
   }
 
@@ -328,7 +328,7 @@ export async function draftFollowUp(inquiryCode: string): Promise<DraftFollowUpR
     follow_up: followUp,
     human_summary:
       channel === 'needs_human'
-        ? `We have drafted the questions for ${inquiry.company_name}, but this enquiry has neither an email address nor a phone number on it, so there is nowhere to send them. Somebody needs to find a contact detail first.${durabilityNote(followUp)}`
+        ? `We have drafted the questions for ${inquiry.company_name}, but this inquiry has neither an email address nor a phone number on it, so there is nowhere to send them. Somebody needs to find a contact detail first.${durabilityNote(followUp)}`
         : `Follow-up ${followUp.follow_up_id} is drafted, asking for the ${describeMissing(missing)}. It goes by ${channel === 'sms' ? 'text message' : 'email'} once somebody approves it.${durabilityNote(followUp)}`,
   }
 }
@@ -370,7 +370,7 @@ export async function actOnFollowUp(args: {
       ok: false,
       status: followUp.status,
       follow_up_id: followUp.follow_up_id,
-      error: `Follow-up ${followUp.follow_up_id} was discarded. Draft a new one if the enquiry still needs chasing.`,
+      error: `Follow-up ${followUp.follow_up_id} was discarded. Draft a new one if the inquiry still needs chasing.`,
     }
   }
 
@@ -413,7 +413,7 @@ export async function actOnFollowUp(args: {
           status: followUp.status,
           follow_up_id: followUp.follow_up_id,
           error:
-            'There is no email address or phone number on this enquiry, so approving the wording would not achieve anything. Somebody has to find a contact detail first.',
+            'There is no email address or phone number on this inquiry, so approving the wording would not achieve anything. Somebody has to find a contact detail first.',
         }
       }
       followUp.status = 'approved'
@@ -443,7 +443,7 @@ export async function actOnFollowUp(args: {
           status: followUp.status,
           follow_up_id: followUp.follow_up_id,
           error:
-            'This enquiry has neither an email address nor a phone number on it, so there is nowhere to send the follow-up. We have not guessed one.',
+            'This inquiry has neither an email address nor a phone number on it, so there is nowhere to send the follow-up. We have not guessed one.',
         }
       }
       if (followUp.status !== 'approved') {
@@ -471,7 +471,7 @@ export async function actOnFollowUp(args: {
           email: contact?.email ?? null,
           phone: contact?.phone ?? null,
         },
-        subject: followUp.subject ?? `Your group enquiry with Solstice Hotels`,
+        subject: followUp.subject ?? `Your group inquiry with Solstice Hotels`,
         html: followUpHtml(followUp),
         text: followUp.body,
         sms_body: followUp.channel === 'sms' ? followUp.body : undefined,
@@ -510,7 +510,7 @@ function escapeHtml(value: string): string {
 }
 
 /** Plain, unbranded-but-tidy HTML. A follow-up is a short note, not a proposal, and dressing it
- *  up as one would overstate where the enquiry has actually got to. */
+ *  up as one would overstate where the inquiry has actually got to. */
 export function followUpHtml(followUp: FollowUp): string {
   const paragraphs = followUp.body
     .split(/\n{2,}/)
@@ -520,7 +520,7 @@ export function followUpHtml(followUp: FollowUp): string {
     .join('')
 
   return `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>${escapeHtml(followUp.subject ?? 'Your group enquiry')}</title></head>
+<html lang="en"><head><meta charset="utf-8"><title>${escapeHtml(followUp.subject ?? 'Your group inquiry')}</title></head>
 <body style="margin:0;padding:24px;background:#F7F3EC;font-family:Inter,Helvetica,Arial,sans-serif;color:#2E2A26;font-size:15px;line-height:24px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:560px;max-width:92%;background:#ffffff;border:1px solid #E8E1D7;">

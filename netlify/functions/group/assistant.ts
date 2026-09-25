@@ -159,7 +159,7 @@ const TOOLS: {
   {
     name: 'get_proposal',
     description:
-      'The proposal currently on this enquiry: its reference, status, totals, discount, rule verdicts, any prose a rep has written, and whether it has been sent. Call this before answering ANY question about the proposal. If it returns nothing, no proposal has been generated yet.',
+      'The proposal currently on this inquiry: its reference, status, totals, discount, rule verdicts, any prose a rep has written, and whether it has been sent. Call this before answering ANY question about the proposal. If it returns nothing, no proposal has been generated yet.',
     input_schema: { type: 'object', properties: {} },
     run: async (inquiry_id) => {
       const proposal = await findProposalByInquiry(inquiry_id)
@@ -170,7 +170,7 @@ const TOOLS: {
           data: {
             exists: false,
             human_summary:
-              'There is no proposal on this enquiry yet. I can draft one if the rules allow it.',
+              'There is no proposal on this inquiry yet. I can draft one if the rules allow it.',
           },
         }
       }
@@ -220,7 +220,7 @@ const TOOLS: {
     run: async (inquiry_id, input, actor) => {
       const proposal = await findProposalByInquiry(inquiry_id)
       if (!proposal) {
-        return { ok: false, grounded: false, error: 'There is no proposal on this enquiry yet.' }
+        return { ok: false, grounded: false, error: 'There is no proposal on this inquiry yet.' }
       }
       const edits: Record<string, unknown> = {}
       if (typeof input.intro === 'string') edits.intro = input.intro
@@ -244,7 +244,7 @@ const TOOLS: {
   {
     name: 'draft_follow_up',
     description:
-      'Draft the message asking the customer for exactly the fields this enquiry is missing. Picks email or text from the contact details we hold. It is a draft: somebody has to approve it before it can go.',
+      'Draft the message asking the customer for exactly the fields this inquiry is missing. Picks email or text from the contact details we hold. It is a draft: somebody has to approve it before it can go.',
     input_schema: { type: 'object', properties: {} },
     run: async (inquiry_id) => {
       const result = await draftFollowUp(inquiry_id)
@@ -256,7 +256,7 @@ const TOOLS: {
   {
     name: 'follow_up_action',
     description:
-      'Approve, send or discard the follow-up on this enquiry. Sending a follow-up that has not been approved is refused: somebody reads what we are about to say to a customer before we say it.',
+      'Approve, send or discard the follow-up on this inquiry. Sending a follow-up that has not been approved is refused: somebody reads what we are about to say to a customer before we say it.',
     input_schema: {
       type: 'object',
       properties: {
@@ -272,7 +272,7 @@ const TOOLS: {
         return {
           ok: false,
           grounded: false,
-          error: 'There is no follow-up on this enquiry yet. Draft one first.',
+          error: 'There is no follow-up on this inquiry yet. Draft one first.',
         }
       }
       const result = await actOnFollowUp({
@@ -294,7 +294,7 @@ const TOOLS: {
   {
     name: 'get_follow_up_history',
     description:
-      'Every follow-up on this enquiry and what happened to each: drafted, approved, sent, discarded. Use this to answer "have we already followed up?" rather than guessing.',
+      'Every follow-up on this inquiry and what happened to each: drafted, approved, sent, discarded. Use this to answer "have we already followed up?" rather than guessing.',
     input_schema: { type: 'object', properties: {} },
     run: async (inquiry_id) => {
       const all = (await listFollowUps()).filter((f) => f.inquiry_id === inquiry_id)
@@ -316,7 +316,7 @@ const TOOLS: {
           human_summary:
             all.length === 0
               ? 'We have never sent this customer a follow-up.'
-              : `There ${all.length === 1 ? 'is 1 follow-up' : `are ${all.length} follow-ups`} on this enquiry. ${all.filter((f) => f.status === 'sent').length} of them went out.`,
+              : `There ${all.length === 1 ? 'is 1 follow-up' : `are ${all.length} follow-ups`} on this inquiry. ${all.filter((f) => f.status === 'sent').length} of them went out.`,
         },
       }
     },
@@ -324,7 +324,7 @@ const TOOLS: {
   {
     name: 'get_communication_history',
     description:
-      'Everything we have sent this customer and everything they have sent us, oldest first: proposals, follow-ups, and the call the enquiry came from. Use this to answer "what have we sent this customer?".',
+      'Everything we have sent this customer and everything they have sent us, oldest first: proposals, follow-ups, and the call the inquiry came from. Use this to answer "what have we sent this customer?".',
     input_schema: { type: 'object', properties: {} },
     run: async (inquiry_id) => {
       const summary = await communicationsSummary(inquiry_id)

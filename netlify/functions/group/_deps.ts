@@ -140,7 +140,7 @@ export const GENERATED_SOURCE: GroupDataSource = {
 }
 
 /**
- * Enquiries opened at runtime, by Sol on a phone call. They are not in the generated dataset,
+ * Inquiries opened at runtime, by Sol on a phone call. They are not in the generated dataset,
  * because they did not exist when it was built, and every tool that takes an inquiry_id has to
  * be able to see them or the phone-only demo path dead-ends the moment the call ends.
  *

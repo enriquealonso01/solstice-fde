@@ -1,11 +1,11 @@
-// The conversation thread for one enquiry: everything we have said to this customer and
+// The conversation thread for one inquiry: everything we have said to this customer and
 // everything they have said to us, in the order it happened.
 //
 // It is assembled rather than stored, from the three places the record actually lives:
 //   - `proposals`  what we quoted, and when it went out
 //   - `follow_ups` what we asked for, and when that went out
-//   - `sessions` + `messages`  the call or chat the enquiry came from, which is how the thread
-//     explains where a voice-created enquiry appeared from rather than leaving a mystery row
+//   - `sessions` + `messages`  the call or chat the inquiry came from, which is how the thread
+//     explains where a voice-created inquiry appeared from rather than leaving a mystery row
 //
 // DEMO_MODE honesty. The thread shows the CUSTOMER's own address as the recipient, because that
 // is who the proposal is addressed to and a screen that said "enrique@..." would be lying about
@@ -59,8 +59,8 @@ async function resolveInquiryCode(idOrUuid: string): Promise<string | null> {
   return (data[0] as { inquiry_code: string }).inquiry_code
 }
 
-/** The voice call or chat an enquiry was created from, so the thread starts where the customer
- *  actually started. Best effort: no session is a normal outcome for a portal enquiry. */
+/** The voice call or chat an inquiry was created from, so the thread starts where the customer
+ *  actually started. Best effort: no session is a normal outcome for a portal inquiry. */
 async function inboundFromSession(inquiryCode: string): Promise<CommunicationItem[]> {
   const db = tryGetDb()
   if (!db) return []
@@ -104,11 +104,11 @@ async function inboundFromSession(inquiryCode: string): Promise<CommunicationIte
         id: `session:${session.id}`,
         direction: 'inbound',
         channel: session.channel === 'chat' ? 'sms' : 'voice',
-        subject: 'Enquiry taken over the phone',
+        subject: 'Inquiry taken over the phone',
         preview: guestTurns[0]
           ? preview(guestTurns[0].content)
-          : 'The customer called in and Sol opened this enquiry from the conversation.',
-        body: transcript || 'The customer called in and Sol opened this enquiry from the conversation.',
+          : 'The customer called in and Sol opened this inquiry from the conversation.',
+        body: transcript || 'The customer called in and Sol opened this inquiry from the conversation.',
         status: 'received',
         occurred_at: session.started_at,
         actor: session.guest_label ?? null,
@@ -126,7 +126,7 @@ export interface CommunicationsResult {
   demo_mode: boolean
 }
 
-/** Newest LAST, which is how a thread reads. Never 404: an enquiry nobody has written to yet
+/** Newest LAST, which is how a thread reads. Never 404: an inquiry nobody has written to yet
  *  has an empty thread, not a missing one. */
 export async function getCommunications(inquiryIdOrUuid: string): Promise<CommunicationsResult> {
   const env = readDeliveryEnv()

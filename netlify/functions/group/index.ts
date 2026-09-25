@@ -10,7 +10,7 @@
 //   POST /api/group/proposal-edit   staff    rewrite the PROSE of a proposal, never the numbers
 //   POST /api/group/follow-up       staff    draft the "we need a few more details" message
 //   POST /api/group/follow-up-action staff   approve | send | discard that message
-//   GET  /api/group/communications  staff    the conversation thread for one enquiry
+//   GET  /api/group/communications  staff    the conversation thread for one inquiry
 //   POST /api/group/approve         staff    a named human approves an over-authority proposal
 //   POST /api/group/reject          staff    ...or turns it down
 //   POST /api/group/send            staff    shorthand for the send_proposal tool
@@ -47,6 +47,7 @@ import { findProposalByInquiry, getProposal, listProposals, tokenMatches } from 
 import { pdfFilename } from './proposal'
 import { getCommunications } from './communications'
 import { actOnFollowUp, draftFollowUp, type FollowUpAction } from './followUps'
+import { triageInbox } from './triage'
 import {
   approve,
   buildInquiryRow,
@@ -158,6 +159,8 @@ export default async function handler(req: Request, _context: Context): Promise<
   switch (route) {
     case 'assistant':
       return handleAssistant(req, staff)
+    case 'triage':
+      return handleTriage(req, staff)
     case 'approve':
       return handleApproval(req, 'approve', staff)
     case 'reject':
@@ -543,7 +546,7 @@ async function handleProposalEdit(req: Request, staff: AuthOk): Promise<Response
     proposalId = (await findProposalByInquiry(body.value.inquiry_id))?.proposal_id
   }
   if (!proposalId) {
-    return json({ ok: false, error: 'No proposal has been generated for this enquiry yet.' }, 404)
+    return json({ ok: false, error: 'No proposal has been generated for this inquiry yet.' }, 404)
   }
 
   const result = await edit_proposal({
@@ -629,7 +632,7 @@ async function handleFollowUpAction(req: Request, staff: AuthOk): Promise<Respon
   )
 }
 
-/** The conversation thread. Never 404: an enquiry nobody has written to has an empty thread. */
+/** The conversation thread. Never 404: an inquiry nobody has written to has an empty thread. */
 async function handleCommunications(url: URL): Promise<Response> {
   const inquiryId = url.searchParams.get('inquiry_id')?.trim()
   if (!inquiryId) return json({ ok: false, error: 'inquiry_id is required', items: [] }, 400)
@@ -743,4 +746,19 @@ async function servePdf(req: Request, idSegment: string, token: string | null): 
       'Cache-Control': 'no-store',
     },
   })
+}
+
+
+/**
+ * POST /api/group/triage — sweep the inbox and draft what is obvious.
+ *
+ * Produces drafts only. The approval gate is untouched, so a flagged proposal still cannot be
+ * sent by anyone, agent or human, without a recorded decision.
+ */
+async function handleTriage(req: Request, staff: AuthOk): Promise<Response> {
+  if (req.method !== 'POST') {
+    return json({ ok: false, error: 'Use POST to run triage.' }, 405)
+  }
+  const result = await triageInbox(staff.actor)
+  return json(result)
 }
