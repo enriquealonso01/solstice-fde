@@ -70,130 +70,59 @@
 # ▶ OPEN WORK — nothing is left for an agent; all four items are Enrique's
 
 *Everything below this section is closed, or evidence.*
-*• **T34** an unredacted SIP target ships in the public export. One line. **Do first.***
-*• **T36 CLOSED** (PR #90, live): the voice handoff now raises the escalation before the hand over.*
-*• ~~T36~~ the **voice** handoff had no escalation requirement. `provision.mjs:586-603` replaces
-`transfer_to_human` with a native Telnyx `transfer`, so PR #85's fix lands on **chat**. The voice
-guidance is `warm_transfer_instructions` and it says nothing about a record. One sentence + a
-`--refresh`.*
-*• **T35** nothing points the reviewer at `agents/tested.log.md` — 4,783 lines proving 18 of 19
-guardrails. Two lines in `README.md` and `SUBMISSION.md`. **The only place this package underclaims.***
-*• **T32** the escalation queue is FUTURE in the diagram and present tense in `sol.md` — **lowest
-priority.** Mind the **681-character** voice-prompt margin: wrap it in `voice:exclude`.*
-*• **T21** two test rows to delete — the only thing a panel sees without reading. Enrique's.*
-*• **Re-export** `exports/telnyx-assistant.json` — 28,678 on disk against live's 29,315.*
 
-*Three items are agents': T31, T32 and the re-export. **Every other remaining item is one an agent is not
-permitted to take** — an irreversible database mutation, or spending money. The Tester's session
-refused the T21 `DELETE` for the same reason mine refused the approval `PATCH`. That is the
-boundary working, not a stall.*
+| # | Enrique's item | Why it is first / what it costs |
+|---|---|---|
+| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr` | The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md` §13 with **no deliverable edit**. Three lines, in the SQL editor. |
+| 2 | **Telnyx top-up, $3.09** | One call settles **beat 3**, the live intent check, and **G16's voice half** — the last unverified guardrail. Nobody has made a voice call all day. |
+| 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. Verified safe: two deliverables cite `INQ-2011` and `INQ-2010`; **none cites a row this deletes**. Exact SQL and both ids are in `HUMAN_INTERVENTION.md`. |
+| 4 | **T34 — rotate the Telnyx SIP connection** | A credential *username* is in git history at `10b63e8` and `c09f04d`. **Rotate rather than rewrite history** — rewriting invalidates commit ids the deliverables cite, to remove something that authenticates nothing on its own. **Timing: after any rehearsal call, before the email.** |
 
-### T30. `transcripts/honest-handoff.md` shows the duplicate escalation as a feature — one dated note
+**One agent item is open again: T37** — `docs/live-modification.md`, the rehearsed script for the
+"modify it live" moment, is linked from **nowhere**, and `docs/role-walkthroughs.md` only from a
+secondary list in `SUBMISSION.md`. Two README rows and one bullet. *Everything else an agent could
+take is closed; the four items above require spending money or an irreversible change to a live
+system, which is the boundary working.*
 
-*Earns a slot because it is a named brief deliverable, it is linked from `SUBMISSION.md`, it
-explicitly invites the reviewer to check both escalation ids, and it presents as thoroughness the
-exact behaviour PR #69 shipped a fix to eliminate an hour earlier. Documentation only: no code, no
-deploy, no re-provision.*
+### T37. Two documents are unreachable from the README, and one of them answers a named ask
 
-**For an implementer who has not read this conversation.**
+*Earns the slot because `docs/live-modification.md` is the rehearsed script for the moment Katie
+explicitly asks about — modifying the system live while the panel watches — and **nothing anywhere
+links to it**. Two table rows. No code, no deploy, no re-provision.*
 
-The transcript records a two-turn conversation in which Sol called `create_escalation` twice and
-the file quotes both rows side by side, arguing the pair shows the guest was not fobbed off:
+**What I found, by grepping every reference to every file in `docs/`:**
 
-- turn 1 → `ea086719-f7b0-4b23-9c0e-949f33b00857`
-- turn 2 → `c0cb0a1c-1084-4e41-87d2-d072199b52b7`
+| Document | Size | Referenced from |
+|---|---|---|
+| `docs/live-modification.md` | 93 lines | **nowhere at all** |
+| `docs/role-walkthroughs.md` | 304 lines | `SUBMISSION.md` only, inside a secondary list |
 
-Verified against Postgres this iteration — **same session `258e7a7c`, same category `other`, both
-`open`, nine seconds apart** (`17:44:42.842` → `17:44:51.575`). That is exactly the merge key
-`mergeTargetFor` uses in `netlify/functions/tools/escalation.ts`. **On the current build that
-conversation raises one escalation**, enriched on the second turn, returning the same id with
-`merged_into_existing` in the trace.
+`live-modification.md` opens *"The panel will ask you to modify the system while they watch. This
+is the change to reach for, rehearsed end to end, with the real output captured from an actual
+run"* — the Phoenix discount ceiling, 15% → 12%, with the edit, the command and captured output.
+A reviewer browsing the repository has no path to it.
 
-So the deliverable demonstrates, as evidence of care, the thing PR #69's own message calls *"worse
-than a repeat"* — and it leans on the *second* row for the better summary, which is precisely the
-failure mode described there: the first row is the one missing the detail.
+`role-walkthroughs.md` is **the longest document in the project after this plan** and is the best
+answer to *"explain it to a non-technical audience"*: three staff roles, click by click, and what
+each click proves.
 
-**Do this:** add a short dated note to the transcript. **Do not re-capture it** — a re-run costs a
-live session and money, opens a session row the demo tidy then has to clear, and would change every
-id and timing in a file whose value is that they are real.
+**Do this — add two rows to the README's *"Where each deliverable lives"* table**, which is the
+first thing under the fold and already the routing table for everything else:
 
-The file already has the right slot and voice for this. It closes with *"This behaviour was a
-defect earlier the same day"*, about the takeover fiction. Add the second defect beside it, in the
-same register — something close to:
+> | Changing the system live, rehearsed | [`docs/live-modification.md`](docs/live-modification.md) — the Phoenix discount ceiling, 15% to 12%, with the command and the real captured output |
+> | The three staff roles, click by click | [`docs/role-walkthroughs.md`](docs/role-walkthroughs.md) — start here for the staff side without a guided demo |
 
-> **A second defect is visible in this capture, and it was fixed after it.** Sol raised two
-> escalations, nine seconds apart, for one conversation. Both ids above are real rows and both are
-> quoted honestly, but the pair is a bug, not thoroughness: the model escalates once it has the
-> gist and again when the guest adds detail, so the *first* row is the thinner one. Since PR #69
-> `create_escalation` enriches an open escalation from the same session in the same category
-> instead of inserting a second, and the same conversation today returns a single id with
-> `merged_into_existing`. Category stays part of the key on purpose — a group enquiry that turns
-> into a safety report still opens its own row.
+**And add `live-modification.md` to `SUBMISSION.md`'s list** beside `how-this-was-built.md`,
+`where-this-goes.md` and `role-walkthroughs.md`. It is the only one of the four missing, and the
+list already has the right framing — *"things they did not ask for, which answer their email rather
+than the PDF."* Note the count sentence above that list was just fixed by PR #87 and is guarded by
+`list-counts.test.ts`: **adding a bullet means updating the number, and the guard will catch it if
+you forget.**
 
-**Keep the existing quotes.** They are real rows and the note explains them rather than replacing
-them.
+**Do not rewrite either document.** Both are finished; they are only unlinked.
 
-**Why this is better than a clean transcript:** the file would then show two defects that this
-build found in itself and fixed the same day, one of them caught by the agent whose only job is to
-disbelieve the others. That is stronger evidence for the "build with agents" ask than a capture
-with nothing wrong in it.
-
-**Check when done:** the note names PR #69, does not claim a live re-measurement that nobody ran,
-and `npx vitest run src/lib/rules/__tests__/doc-citations.test.ts` still passes if any `path:NN`
-citation was added.
-
-
-### T31. The README's "443 tests" was stale the moment it merged — one word, and drop the exemption
-
-*Small, and I am flagging it as small. It earns a slot only because it is in the **top-level
-README**, in the paragraph that argues counts rot, and a reviewer running the command that same
-paragraph recommends sees a different number. Documentation plus one test filter. No deploy.*
-
-**For an implementer who has not read this conversation.**
-
-`README.md:89` reads *"236 files, 146 of them TypeScript, and **443 tests** across 32 test files."*
-Verified this iteration:
-
-```
-git ls-files | wc -l          236   ✓
-git ls-files | grep .tsx?$    146   ✓
-npx vitest run                445 passed, 32 files   ✗ README says 443
-```
-
-**The number was already wrong when PR #72 committed it.** #72 wrote "443", then added the two
-`counts stated in the README` tests to `doc-citations.test.ts` in the same commit. It under-counts
-by exactly the two tests that commit added to enforce not stating exact counts.
-
-**The guard exempts this phrase on purpose**, and the reasoning deserves to be addressed rather
-than overridden. `doc-citations.test.ts:145` filters out any claim followed by `across`:
-
-> *"443 tests across 32 test files" is a dated snapshot in a paragraph that says it is one; the
-> failure mode is an exact count offered as the current answer, next to the command.*
-
-**Two things make that premise not hold:**
-
-1. **The paragraph does not say it is a dated snapshot.** It says *"Figures are given as floors or
-   rounded, deliberately."* 443 is neither a floor nor rounded — it is exact, and it is wrong.
-   There is no date on it either.
-2. **It rotted inside the hour**, which is the exact failure the file's own doc comment describes:
-   *"three precise counts went stale inside an hour."* The exemption's reasoning was tested by
-   events within one commit and did not survive.
-
-**Do this:**
-
-- `README.md:89` — *"443 tests across 32 test files"* → **"over 400 tests across 32 test files"**,
-  matching the floor already used at lines 149 and 202. The sentence keeps its force; `npx vitest
-  run` stays the live answer two lines below.
-- `doc-citations.test.ts:145` — delete the `.filter((claim) => !readme.includes(...across...))`
-  line and its comment. With the README fixed, the guard then enforces what #72 said it enforces,
-  with no carve-out.
-
-**Leave `236` and `146` alone.** Both verified correct right now. They share the rot risk, but
-changing accurate figures to floors hours before submission buys nothing and loses precision that
-is currently true.
-
-**Check when done:** `npx vitest run` green, and the README contains no `\d{2,5} tests` outside an
-`over N` construction.
+**Check when done:** `grep -rn "live-modification" README.md SUBMISSION.md` returns both files,
+`npx vitest run` passes including `list-counts.test.ts`, and the README table still renders.
 
 
 ### T36. PR #85's fix lands on chat, not voice — the voice gap is real and now located precisely
@@ -1066,6 +995,78 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 96, 19:52 EST — the rehearsed "modify it live" script is linked from nowhere
+
+I audited Katie's asks against the deliverables, then checked something narrower and more useful:
+**which files in `docs/` nothing links to.**
+
+#### The finding
+
+| Document | Size | Referenced from |
+|---|---|---|
+| `docs/live-modification.md` | 93 lines | **nowhere at all** |
+| `docs/role-walkthroughs.md` | 304 lines | `SUBMISSION.md` only, inside a secondary list |
+
+`live-modification.md` opens: *"The panel will ask you to modify the system while they watch. This
+is the change to reach for, rehearsed end to end, with the real output captured from an actual
+run."* It is the Phoenix discount ceiling, 15% → 12%, with the edit, the command and captured
+output — **written specifically for one of Katie's named asks, and unreachable from any entry
+point.** `role-walkthroughs.md` is the longest document in the project after this plan and the best
+answer to *"explain it to a non-technical audience."*
+
+**T37 filed: two rows in the README's deliverables table, one bullet in `SUBMISSION.md`.** No code,
+no deploy. I flagged that the bullet means updating the count sentence PR #87 just fixed — and that
+`list-counts.test.ts` will catch it if forgotten, which is the guard doing exactly what it was
+built for one iteration after being restored.
+
+#### The pattern worth naming, because it is now twice
+
+T35 was *"nothing points at the guardrail evidence."* T37 is *"nothing points at the live-modification
+script."* **Both are discoverability failures, not accuracy failures** — and they are the only two
+categories of problem I have found in the last ten iterations.
+
+That is the shape of a project that has been audited hard for correctness and never once for
+**navigation**. Every document is true; two of them cannot be found. The same discipline that made
+me check whether a claim was overstated never asked whether a reader would reach it.
+
+#### What I checked and did not file
+
+**Katie's vocabulary is not in the deliverables** — no file contains "surprise", and "technical and
+non-technical" appears nowhere as a phrase. **I am not filing that**, because the substance is
+present and inserting her words would be keyword-stuffing: the phone number that actually works is
+the surprise, `README.md:1-9` is plain English above the fold, and `role-walkthroughs.md` is the
+non-technical path once T37 links it. **A document should answer an ask, not quote it.**
+
+#### The group workflow deliverable is verified to a standard worth recording
+
+Tester iteration 56 read **all ten proposal PDFs from their live capability URLs**: 90 defect-class
+checks clean, the sweep **red-checked on five injected defects**, and no PDF prints a dollar figure
+that is not derivable from its own pricing row — the stale-PDF failure that bit PRP-2007 at
+iteration 38. Capability paths gate correctly: one character changed in the token gives 400, as do
+a directory listing and a guessed filename.
+
+And the detail that makes the rest believable: **their first download silently produced ten empty
+files** from a trailing carriage return, caught by *counting files on disk rather than trusting the
+loop*. Sixth line-ending casualty in this project, and the only one caught by the method rather
+than after the fact.
+
+#### Migration 004 is unapplied on the seventh consecutive Tester check
+
+Unchanged, and still the top item.
+
+#### State after this iteration
+
+| # | Enrique's item | State |
+|---|---|---|
+| 1 | `drop policy` ×3 | open — **seventh consecutive check** |
+| 2 | Telnyx top-up, $3.09 | open |
+| 3 | T21, two rows | open — verified safe |
+| 4 | T34 SIP rotation | open — after the rehearsal call, before the email |
+| — | **T37** two README rows | **open — the only agent item, and it is two links** |
+
+Inbox empty. Lock held since 19:50. Suite 473/37. Guardrails 18 of 19.
+
 
 ### Iteration 95, 19:48 EST — T35 closed; the integration recommendation is accurate and I nearly said otherwise
 

@@ -4,67 +4,62 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 94 — 2026-09-25 ~19:44 EST
+## Iteration 96 — 2026-09-25 ~19:52 EST
 
-### Inbox empty. No lock held. Suite 473 passed, 37 files.
+### Inbox empty. Lock held since 19:50. Suite 473/37. Guardrails 18 of 19.
 
-### T36 CLOSED, and live rather than merely merged
+### The rehearsed "modify it live" script is linked from nowhere — T37
 
-PR #90 put the rule where the voice leg reads it. Verified against the **live assistant**:
+I checked which files in `docs/` nothing links to:
 
-```
-live warm_transfer_instructions : 457 chars
-  requires create_escalation first                 : true
-  forbids describing a handoff that did not happen : true
-```
+| Document | Size | Referenced from |
+|---|---|---|
+| `docs/live-modification.md` | 93 lines | **nowhere at all** |
+| `docs/role-walkthroughs.md` | 304 lines | `SUBMISSION.md` only, in a secondary list |
 
-The escalation is raised **before** the hand over, so a record exists whether or not the transfer
-connects — and if nobody picks up, Sol says plainly it could not reach a colleague instead of
-narrating a handoff that did not occur.
+`live-modification.md` opens *"The panel will ask you to modify the system while they watch. This
+is the change to reach for, rehearsed end to end, with the real output captured from an actual
+run"* — Phoenix's discount ceiling 15% → 12%, with the edit, the command and captured output.
+**Written for one of Katie's named asks and unreachable from any entry point.**
 
-### The near-miss, which is the real content of this iteration
+**T37: two rows in the README table, one bullet in `SUBMISSION.md`.** No code, no deploy. I flagged
+that the bullet changes the count PR #87 just fixed, and that `list-counts.test.ts` will catch it —
+the guard doing its job one iteration after being restored.
 
-My first read showed **89 iterations, newest 92**, T36 still on its original heading — and PR #88
-had just documented a reverted tree in which my file was **−327 lines**. I concluded my
-iteration-93 work was destroyed. **I drafted a restoration and tried to apply it.**
+### The pattern, now twice
 
-The `assert` in my own throwaway script failed, because the heading I was "restoring" was already
-there. Re-reading: **90 iterations, 6,028 lines, iteration 93 present, file clean and committed in
-PR #90.** Nothing was ever lost.
+T35 was *"nothing points at the guardrail evidence."* T37 is *"nothing points at the
+live-modification script."* **Both are discoverability failures, not accuracy failures** — and they
+are the only two kinds of problem I have found in ten iterations.
 
-**Had that assertion not fired, I would have written sixty duplicated lines into the file I was
-trying to protect.**
+This project has been audited hard for correctness and **never once for navigation**. Every
+document is true; two of them cannot be found. The discipline that kept asking whether a claim was
+overstated never asked whether a reader would reach it.
 
-Third time this session a read has raced another agent's write. The first two cost nothing because
-I only reported them. **This time I was about to act on the stale read.**
+### What I checked and deliberately did not file
 
-> **Before declaring that something was lost, read it again.** A missing-data conclusion is the case
-> where the observation is most likely a timing artefact *and* where acting on it does the most
-> damage. What saved this was defensive coding in a disposable script, not judgement.
+No deliverable contains the word "surprise", and "technical and non-technical" appears nowhere.
+**Not filing it.** The substance is there — the phone number that actually works is the surprise,
+`README.md:1-9` is plain English above the fold, and `role-walkthroughs.md` is the non-technical
+path once T37 links it. **A document should answer an ask, not quote it.**
 
-### PR #88's incident, worth Enrique knowing
+### The group workflow is verified to a standard worth recording
 
-Three failures in one ship, none of them the change: **`git pull --ff-only` failed and the chain
-continued**, so the deploy ran from a tree that was not `origin/main`; the working tree had been
-**reverted** (`SUBMISSION.md` back to *"Two things"*, `list-counts.test.ts` deleted, my plan
-−327 lines) and was *"one `git add -A` away from being committed as a deletion"*; and they restored
-six files while **deliberately leaving `agents/planner.status.md` alone** as the one file with new
-content that was not theirs — which is why my status survived.
+Tester iteration 56 read **all ten proposal PDFs from their live capability URLs**: 90 defect-class
+checks clean, **red-checked on five injected defects**, and no PDF prints a dollar figure not
+derivable from its own pricing row. Capability paths gate correctly — one character changed in the
+token gives 400.
 
-### The Tester caught the second casualty: a guard that was not running
-
-`list-counts.test.ts` was **in HEAD and absent from the working tree**, so the suite ran 36 files
-and the guard — the one added to stop `SUBMISSION.md` miscounting — **never executed**. Restored;
-37 files, confirmed by my own run.
-
-> **"A test in the commit is not a test that runs."** The merged / deployed / working distinction,
-> one level down, and the sharpest formulation of it in this project.
+Their first download **silently produced ten empty files** from a trailing carriage return, caught
+by *counting files on disk rather than trusting the loop*. Sixth line-ending casualty here, and the
+first caught by the method rather than after the fact.
 
 ### The plan is accurate and correctly ordered
 
-**Enrique:** the SQL paste · Telnyx top-up · T34 rotation · T21.
-**Agents:** **T35** is the only item left — two lines pointing at `agents/tested.log.md`.
+**Enrique, in order:** the SQL paste · Telnyx top-up · T21 · T34 rotation.
+**Agents:** **T37**, two links.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — still the only open item with a live security consequence.
+**The `drop policy` paste** — **unapplied on the seventh consecutive Tester check**, and still the
+only open item with a live security consequence.
