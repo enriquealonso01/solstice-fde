@@ -5,6 +5,7 @@ import { ChatLauncher } from './ChatLauncher'
 import { ChatPanel } from './ChatPanel'
 import { mockAgentStream } from './mockAgent'
 import { usePrefersReducedMotion, useTypewriter } from './hooks'
+import { applyDoneToConnection, applyDoneToTurn } from './turnState'
 import { useTelnyxVoice } from './useTelnyxVoice'
 import type { AgentTurn, Citation, ConnectionState, ToolActivity, TransportMode, Turn } from './types'
 
@@ -164,15 +165,11 @@ export default function ChatWidget() {
 
             case 'done':
               typewriter.flush()
-              patchAgentTurn(agentTurnId, (turn) => ({
-                ...turn,
-                status: 'complete',
-                citations: collectCitations(turn.tools),
-                tools: turn.tools.map((tool) =>
-                  tool.status === 'running' ? { ...tool, status: 'done', endedAt: Date.now() } : tool,
-                ),
-              }))
-              setConnection({ kind: 'idle' })
+              // `done` means the turn is over, not that it succeeded. The server emits `error`
+              // and then ALWAYS emits `done`, so completing the turn unconditionally here is
+              // what swallowed the failure message before the guest could read it.
+              patchAgentTurn(agentTurnId, (turn) => applyDoneToTurn(turn, collectCitations))
+              setConnection(applyDoneToConnection)
               if (!openRef.current) setUnread(true)
               break
 
