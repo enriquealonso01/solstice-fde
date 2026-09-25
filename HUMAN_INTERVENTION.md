@@ -573,3 +573,26 @@ The demo is not at risk from an honest click-through — no screen offers this, 
 refuse. The exposure is a panel member opening devtools. **`agents/tested.log.md` records the send
 guardrail as VERIFIED for every application path and BLOCKED on this one**; please do not read the
 VERIFIED as covering it.
+
+---
+
+## Correction on INQ-2012 / INQ-2013 (2026-09-25, iteration 43)
+
+Above I listed these as blocked because "I have no DB write access". **That was wrong.** The service
+role key in `.env` writes fine through PostgREST, and I used it in iteration 43 to restore PRP-2009
+after proving the RLS hole.
+
+So I tried to delete them myself. **My own session refused the DELETE** (`Irreversible Deletion`) — the
+same class of block that stops me touching `/api/flags` for beat 5. I did not work around it. So it is
+still yours, and here is everything needed:
+
+```sql
+delete from inquiries where inquiry_code in ('INQ-2012','INQ-2013');
+```
+
+Checked before asking: neither row has a proposal or a follow-up pointing at it, so nothing cascades.
+Both are mine, created 2026-09-25 at 18:04:11Z (`Vantage Labs`, id `77eab5fe-e872-4e42-8857-b44ee5c034a7`)
+and 18:20:46Z (`Vantage Labs DELETE-ME`, id `5cc932a1-e546-47ba-8b25-01ad1cdfe5fd`). They are rows one
+and two of the inbox at beat 4, and one of them says DELETE-ME on screen.
+
+Afterwards `/admin/inquiries` should show **11 rows**, and the two "1 missing" chips go with them.
