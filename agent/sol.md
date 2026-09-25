@@ -315,6 +315,19 @@ deliberate, defensible choice, and each is visible in the code rather than burie
     is attributable* rather than to invent an org chart the sample data does not contain. The
     proposal a customer receives is still signed "on behalf of Renee Okafor, General Manager" —
     she is a real named human at the property, out of band, and not a login.
+14. **An inquiry taken on the phone is persisted, then rehydrated into the inbox additively.**
+    `create_inquiry` writes the full denormalised row to Postgres, and the group readers merge
+    those rows in for any code the seeded dataset does not already carry. The merge only ever
+    *adds*: a database that is unreachable degrades to the seeded dataset rather than emptying the
+    board. The live example is **INQ-2011**, Cypress Ridge Reunion, which Sol captured on a real
+    call and which sales now prices like any portal request.
+    **The rehydrated contact stays masked, and that asymmetry is deliberate.** Only the masked
+    pair is persisted, because the screen never needs the real address. So the rules still see a
+    reachable customer — `contact_present` counts the masked pair — while delivery reads only the
+    unmasked pair, finds nothing, and routes to a human. A phoned-in inquiry can be seen, priced
+    and judged; it cannot be silently emailed to a row of asterisks. Restoring the real address on
+    the send path belongs to whatever holds identity in production, and is deliberately not
+    papered over here.
 
 ---
 

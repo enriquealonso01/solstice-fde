@@ -115,15 +115,22 @@ The brief invites assumptions, so these are explicit rather than buried:
    overrode. Which *role* may approve is deliberately not modelled — a general-manager tier is a
    one-value enum addition in phase two. What is enforced is that an approval happened and is
    attributable, which is the part that matters for an audit.
-4. **Payment data is last-four only** in the export; a real PMS would hold a token. Card digits are
+4. **A phone-taken group inquiry is persisted and rehydrated into the inbox, contact still
+   masked.** `create_inquiry` writes the row to Postgres and the group readers merge it in for any
+   code the seeded dataset lacks, additively, so an unreachable database degrades to the seeded
+   set rather than emptying the board. **INQ-2011** is the live example, captured on a real call.
+   Only the masked contact is stored, so the rules still see a reachable customer while delivery
+   finds no address and routes to a human: the inquiry can be priced and judged, never silently
+   emailed to a row of asterisks.
+5. **Payment data is last-four only** in the export; a real PMS would hold a token. Card digits are
    never returned to the model and never spoken.
-5. **`SOL-PVD.base_rate_suite = -395` is a data error, not a price.** It is quarantined at the
+6. **`SOL-PVD.base_rate_suite = -395` is a data error, not a price.** It is quarantined at the
    access layer, visible in the admin UI, and never used for pricing.
-6. **Providence's "Boston-area sister property" does not exist in the directory.** The agent surfaces
+7. **Providence's "Boston-area sister property" does not exist in the directory.** The agent surfaces
    the referral and states plainly that it cannot quote there.
-7. **The `notes` column of the inquiries CSV is the challenge author's answer key.** It is stripped
+8. **The `notes` column of the inquiries CSV is the challenge author's answer key.** It is stripped
    before anything reaches the database or the model.
-8. **INQ-2010 is also inside a blackout**, not only over the seasonal discount cap, which the sample
+9. **INQ-2010 is also inside a blackout**, not only over the seasonal discount cap, which the sample
    data's own note does not mention. Both are reported.
 
 ## What is real, and what is not
