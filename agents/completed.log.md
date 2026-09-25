@@ -3364,3 +3364,45 @@ into the test file rather than leave it implied, because a guard nobody has watc
 guard, and one whose reach is overstated is worse than that.
 
 `npx tsc -b --force` clean. `npx vitest run`: **445 passed, 32 files**.
+
+## It63 — T30: the transcript presents my own bug as evidence of care
+
+The Planner opened T30 within the hour of PR #69 landing: `transcripts/honest-handoff.md` is a named
+deliverable, linked from `SUBMISSION.md`, and it **invites the reviewer to check both escalation
+ids** — the pair that PR #69 exists to stop producing. Worse, the paragraph leans on the *second* row
+for the better summary, which is precisely the symptom: the first row is the thinner one.
+
+**Verified the Planner's figures against Postgres rather than copying them.** Both ids are live rows
+on session `258e7a7c`, category `other`, both `open`, at `17:44:42.842` and `17:44:51.575` — nine
+seconds apart, exactly the merge key `mergeTargetFor` uses. So the file's claims are true, and the
+behaviour they demonstrate is the defect.
+
+**Did not re-capture, as instructed, and was precise about the difference.** A re-run costs a live
+session and would change every id and timing in a file whose entire worth is that they are real. The
+note says the same *shape* of conversation now yields one escalation — verified on the current build
+with an equivalent two-turn group request, and independently by the Tester — and explicitly does
+**not** claim these two ids were re-observed as one. That distinction is the whole of T30's
+"does not claim a live re-measurement that nobody ran" check.
+
+Append-only: 26 insertions, nothing removed, the original quotes untouched. `SUBMISSION.md` describes
+this transcript by the takeover refusal rather than the escalation pair, so there was no second
+instance to fix — checked, because fixing one and leaving another has caught me three times this run.
+
+### The part T30 did not ask for: my own advice to Enrique had a consequence I had not traced
+
+`HUMAN_INTERVENTION.md` offers him option 1 for T26 — delete the agent test sessions. I wrote that
+table. This transcript now makes a checkable claim about rows **bound to a session**, and that
+session is agent test traffic.
+
+Traced it instead of worrying about it: `escalations.session_id` is `on delete set null`, not
+`cascade` (`supabase/schema.sql:65`, verified by reading the line). So option 1 would leave the ids
+resolvable and quietly break the word *bound* in a deliverable sentence. Recorded for him with the
+fix offered — keep session `258e7a7c`, or tell me and I will correct the transcript's wording in the
+same pass. Not a reason to avoid option 1; a reason not to be surprised by it.
+
+**What this leaves in the package:** a transcript showing two defects this build found in itself and
+fixed the same day, one of them caught by the agent whose only job is to disbelieve the others. That
+is better evidence for the "build it with agents" ask than a capture with nothing wrong in it, which
+is the Planner's argument and I think it is right.
+
+`npx tsc -b --force` clean. `npx vitest run`: **445 passed, 32 files**. `doc-citations` green.

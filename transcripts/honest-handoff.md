@@ -69,3 +69,29 @@ tell the guest a colleague was joining the chat, while nothing consumed the take
 no supervisor presence signal exists anywhere in the system. It was found by the agent whose only
 job was to disbelieve the others, on the voice branch working correctly and the chat branch not.
 Five of the six transcripts in this folder predate the fix; this is the one that shows it.
+
+**A second defect is visible in this capture, and it was fixed after it — 2026-09-25.** Sol raised
+**two** escalations for one conversation, nine seconds apart (`17:44:42.842` → `17:44:51.575`), same
+session, same category, both left `open`. Both ids above are real rows and both are quoted honestly,
+but the pair is a bug rather than thoroughness: the model escalates once it has the gist and again
+when the guest adds detail, so the **first** row is the thinner one. Read the two summaries above in
+that light — the paragraph leans on `c0cb0a1c`, the second, for the better wording, which is exactly
+the symptom.
+
+Since PR #69, `create_escalation` looks for an open escalation from the same session in the same
+category and enriches it instead of inserting a second, returning the same id with
+`merged_into_existing` in the trace. Category stays part of the key deliberately: a group enquiry
+that turns into a safety report still opens its own row, because the authority and the urgency are
+different.
+
+**What was and was not re-measured, precisely.** This conversation has *not* been re-run: a re-run
+costs a live session and would change every id and timing in a file whose worth is that they are
+real. The fix was verified on the current build with an equivalent two-turn group request, which
+called `create_escalation` on both turns and wrote **one** row carrying the later detail, and
+independently by the testing agent against the deployed system. So the claim here is that the same
+*shape* of conversation now produces one escalation — not that these two ids have been re-observed
+as one.
+
+That leaves this file showing two defects the build found in itself and fixed the same day, one of
+them caught by the agent whose only job is to disbelieve the others. That is a better advertisement
+for how this was built than a capture with nothing wrong in it.
