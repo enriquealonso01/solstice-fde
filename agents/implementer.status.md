@@ -10,7 +10,20 @@ What I am doing right now, and what I did last. Overwritten each iteration.
   second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
   inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
   grep, where a filter hid the hit.
-- **CLAIMED It64: T31 — my own exemption in PR #72 did not survive its first commit.** The README
+- **DONE It65: re-export + T32 — PR pending.** Export was **28,678** (pre-T28, still carrying §8/§9
+  and 11 assumptions); live was **29,315** and *not* byte-identical to the compile despite matching
+  length — the difference was a citation, `chat.ts:303` vs `:256`, three digits for three digits.
+  Folded T32 in rather than ship an export that its `sol.md` edit would re-stale within minutes.
+  Clause costs **0 chars** compiled (measured with line endings normalised after CRLF corrupted the
+  first reading — fourth time). **compile === live === export, all 29,319.**
+- **CLAIMED It65: the two stale Telnyx artefacts the Planner assigned to agents, ahead of T32.**
+  `exports/telnyx-assistant.json` is **28,678** against live's **29,315** — a named brief
+  deliverable that no longer matches the system it documents. And **live no longer matches
+  `sol.md` either**: identical length, one byte-range different, and the difference is a citation —
+  compile says `chat.ts:303`, live still says `:256`. PR #74 moved that line again and updated the
+  file; live was last provisioned before my #70. Re-provision, then re-export from live.
+- **DONE It64: T31 — PRs #75 and #77.** Floored the test count and deleted my exemption; then floored the file counts too because T31s own premise (236/146 verified correct) expired inside the hour when PR #74 added a test file. Guard extended to file counts, red-checked both.
+- **Superseded claim: T31 — my own exemption in PR #72 did not survive its first commit.** The README
   says `443 tests`; the suite is 445, and it was already 445 when #72 committed the number — off by
   exactly the two tests that commit added to enforce not stating exact counts. My `across` filter
   justified the carve-out by calling the paragraph a dated snapshot; it says *"floors or rounded"*,
