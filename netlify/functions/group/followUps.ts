@@ -26,6 +26,7 @@ import { auditLog, describeError } from '../_delivery/audit'
 import { routeFor, type Route } from '../_delivery/config'
 import { loadInquiry, loadInquiryContact, loadInquiryContext } from './_deps'
 import { resolveInquiryRowId } from './store'
+import { endSentence } from '../../../shared/text'
 
 export type FollowUpStatus = 'draft' | 'approved' | 'sent' | 'discarded' | 'needs_human'
 export type FollowUpChannel = 'email' | 'sms' | 'needs_human'
@@ -77,7 +78,7 @@ export function composeFollowUp(input: {
     const greeting = contact_name ? `Hi ${contact_name.split(' ')[0]}, ` : 'Hi, '
     return {
       subject: null,
-      body: `${greeting}this is Sol at Solstice Hotels about your group inquiry for ${company_name}. Before I can put a quote together I need your ${missing_summary}. Reply here with those and I will come straight back with the rate and the block.`,
+      body: `${endSentence(`${greeting}this is Sol at Solstice Hotels about your group inquiry for ${company_name}`)} Before I can put a quote together I need your ${missing_summary}. Reply here with those and I will come straight back with the rate and the block.`,
     }
   }
 
@@ -87,7 +88,7 @@ export function composeFollowUp(input: {
     body: [
       `Hello ${contact_name || 'there'},`,
       '',
-      `Thank you for getting in touch about ${company_name}. I would love to put a proposal together for you, and there are just a few things I need before I can quote properly and hold the rooms:`,
+      `${endSentence(`Thank you for getting in touch about ${company_name}`)} I would love to put a proposal together for you, and there are just a few things I need before I can quote properly and hold the rooms:`,
       '',
       numbered,
       '',

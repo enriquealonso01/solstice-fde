@@ -10,6 +10,7 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf
 import type { GroupInquiry, Property, RuleVerdict } from '../../../shared/types'
 import { formatUsd, type PricedBlock } from '../../../src/lib/rules/pricing'
 import { speakDate } from '../../../src/lib/rules/dates'
+import { endSentence } from '../../../shared/text'
 
 const BRAND = {
   ink: '#141210',
@@ -154,7 +155,7 @@ function escapeHtml(value: string): string {
 }
 
 export function defaultIntro(doc: ProposalDocument): string {
-  return `Thank you for thinking of us for ${doc.company_name}. Here is the group block we have put together for you, held for you until ${speakDate(doc.expires_on)}.`
+  return `${endSentence(`Thank you for thinking of us for ${doc.company_name}`)} Here is the group block we have put together for you, held for you until ${speakDate(doc.expires_on)}.`
 }
 
 /** Rep-written prose arrives as plain text with blank lines between paragraphs. It is escaped
@@ -417,7 +418,7 @@ export async function renderProposalPdf(doc: ProposalDocument): Promise<Uint8Arr
 
   drawWrapped(
     page,
-    `Prepared for ${doc.contact_name} at ${doc.company_name}. Reference ${doc.inquiry_id}.`,
+    `${endSentence(`Prepared for ${doc.contact_name} at ${doc.company_name}`)} Reference ${doc.inquiry_id}.`,
     regular,
     11,
     PAGE.margin,
