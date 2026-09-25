@@ -109,3 +109,13 @@ Two things are built but not live, and claiming otherwise would be the worst pos
 - [ ] Telnyx balance above $20, or do not invite them to call the number
 - [ ] The live site loads and the chat bubble answers
 - [ ] `npx vitest run` is green
+- [ ] **Production is actually serving the latest `main`.** Merging is not deploying, and a deploy
+      can fail silently: one errored at 18:45 on 2026-09-25 and left `main` ahead of production
+      until a retry two minutes later. Nobody was notified. Check the newest deploy is
+      `state: ready` **and** that its commit is current `main` — a timestamp newer than your merge
+      can belong to a deploy that failed.
+
+      ```bash
+      git log --oneline -1
+      npx netlify api listSiteDeploys --data "{\"site_id\":\"$(node -e         "console.log(require('./.netlify/state.json').siteId)")\"}"         | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{          const d=JSON.parse(s)[0];console.log(d.state,d.created_at,(d.commit_ref||'').slice(0,8))})"
+      ```
