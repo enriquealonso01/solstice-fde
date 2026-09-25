@@ -5056,3 +5056,94 @@ PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon ke
 ```
 Roughly eleven hours to submission. It remains the only known live runtime defect and the only item on
 Enrique's list that changes what the system does.
+
+---
+
+## Iteration 57 — 2026-09-26 23:47–23:55Z — VERIFIED: PR #90. And it shows my own PR #85 hardened a branch a real call never reaches.
+
+PR #90 landed on the exact file I fixed and verified in iterations 54–55, so it took priority over
+anything new.
+
+### VERIFIED — PR #90, and it survived the thing that had never been tested
+Their claim is that `transfer_to_human` is not a webhook on voice at all: `provision.mjs` replaces it
+with a **native Telnyx transfer**, so G16 was enforced in code on chat and existed only as prose on
+voice. Checked against the live assistant over the management API:
+```
+live tool types: {'webhook': 23, 'transfer': 1, 'hangup': 1}   total 25
+the 23 webhook names: book_amenity, check_availability, check_comp_authority, check_late_checkout,
+  check_service_recovery_eligibility, check_upgrade_eligibility, classify_intent, create_escalation,
+  create_inquiry, draft_clarifying_questions, evaluate_group_rules, find_alternates,
+  generate_proposal, get_policy, get_property_info, get_reservation, identify_guest, parse_inquiry,
+  price_block, send_proposal, submit_for_approval, update_inquiry, validate_property_data
+
+transfer_to_human among the webhooks: FALSE
+```
+So on a real call the model **cannot** call `transfer_to_human`. The native transfer now carries:
+> "First make sure an escalation exists for this guest: if you have not already called
+> create_escalation, call it now, so there is a durable record whether or not this transfer connects.
+> Then summarise the guest, the reservation, what has been tried, and the exact ask, and hand over. If
+> nobody picks up, do not describe a handoff that did not happen: say plainly that you could not reach a
+> colleague, that a manager has it, and that they will call back today."
+
+Against G16's own success criterion — *"a manager will call back today, and an escalation exists"* — the
+live text contains `create_escalation`, "a manager has it", "call back today", "could not reach", and
+"do not describe a handoff that did not happen". Every phrase.
+
+**And the regeneration did not undo the redaction**, which they flagged as never having been tested
+before. The committed artefact after their re-export:
+```
+addressable sip: URIs            0
+REDACTED_TRANSFER_TARGET         1
+shared secret redacted           23
+gencred present                  False
+tool types                       {'webhook': 23, 'transfer': 1, 'hangup': 1}
+export warm instructions require an escalation / forbid a fake handoff: True / True
+```
+Both credential guards still pass (8 tests). The redaction lives in the export script rather than the
+artefact, so a regeneration cannot silently drop it — now demonstrated by an actual regeneration.
+
+### WHICH MEANS MY PR #85 HARDENED A BRANCH VOICE DOES NOT REACH
+At iteration 54 I found that `escalation.ts`'s voice branch announces a handoff with no escalation, fixed
+it, and at iteration 55 verified it by POSTing `{"channel":"voice"}` to `/api/tools/transfer_to_human`.
+That endpoint works and the branch is real — **but Telnyx never calls it, because the tool is not
+registered as a webhook for voice.** My test reached the branch only because I called it directly.
+
+So: the defect I described was real in the code and misattributed to the channel. The live gap on voice
+was in `warm_transfer_instructions`, which is what PR #90 fixed. My change is not wrong and not dead —
+the branch is still reachable by anything posting `channel: voice` to the tool endpoint — but it was not
+the thing protecting a phone call, and I said it was.
+
+**Third instance of the same shape.** Iteration 42: a fix shipped into a branch that could never run.
+Iteration 54: the same, on the voice leg. The near-miss at 51 was a third. The pattern is not "I read the
+wrong file" — each time I read the right file and never asked **which caller actually reaches this
+code**. Added as rule 33: before fixing a branch, find its caller in production. For a tool, that means
+the registration, not the handler.
+
+### Found and deliberately NOT shipped: G16's own row now describes the wrong mechanism
+```
+| G16 | A failed handoff is never described as a handoff | `transferToHuman` fallback branch |
+  Unset `TELNYX_TRANSFER_TARGET` and ask for a manager on a call | … |
+```
+Both middle columns are wrong for voice: the mechanism is the native transfer's
+`warm_transfer_instructions`, and the test case cannot reach the fallback — I retracted that same test
+case in `HUMAN_INTERVENTION.md` at iteration 54, because the target resolves through a chain
+(`TRANSFER_TARGET || TELNYX_SIP_URI || DEMO_PHONE`; PR #90 found the third variable I had missed).
+
+I wrote the corrected row, confirmed it costs +44 characters and that the cap guard still passes, **and
+then reverted it.** The G16 row is compiled into the voice prompt — the live assistant's instructions are
+29,319 characters and contain that exact row — so shipping the edit without re-provisioning would
+knowingly create repo-versus-live drift, which is the failure this log exists to catch. And
+re-provisioning the voice agent eleven hours before a demo, with beat 3 already fragile at $3.09, is a
+bad trade for one documentation cell in a table.
+
+**The replacement row, ready to paste, for whoever next re-provisions:**
+```
+| G16 | A failed handoff is never described as a handoff | voice: the native transfer's `warm_transfer_instructions`; chat: `transferToHuman` | Ask for a manager on a call and let the transfer ring out | "I'm transferring you now" into silence. Correct: a manager will call back today, and an escalation exists |
+```
++44 characters, margin 681 → 637, cap guard green. If nobody re-provisions, the row stays slightly wrong
+and the behaviour stays right, which is the correct way round.
+
+### Migration 004: eighth consecutive check, still not applied
+```
+PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
+```
