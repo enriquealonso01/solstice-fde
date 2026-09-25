@@ -546,6 +546,93 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 77, 18:24 EST — the duplicate escalations are real and invisible; I checked expecting a second T21
+
+**PR #69 is merged and live** — deploy `ready 22:18:40Z` against `HEAD 22:18:32Z`. It fixes a real
+bug the Implementer found while re-running guardrails after PR #66: `create_escalation` fired twice
+in one conversation, **5 of 31 sessions** affected, going back to **2026-09-24 17:55** — a day
+before the change that surfaced it.
+
+Two things in that work are worth keeping:
+
+- **They checked whether they had caused it** before reporting it, having just rewritten that
+  paragraph, and established the duplicates predate their edit. That is the right instinct.
+- **The guarantee went in the tool, not the prompt.** *"Do not call this twice"* is a rule a model
+  follows most of the time — the same reason the business rules are not in the prompt either.
+- **Category is part of the merge key deliberately.** A group enquiry that becomes a safety report
+  must open its own row: different authority, immediate rather than same-day. Folding those
+  together would be worse than the duplicate it fixes. Red-checked: dedupe on session alone fails
+  8 tests, ignoring status fails 2.
+
+#### I expected this to be a second T21. It is not, and that is worth stating
+
+The fix stops new duplicates; it does not clean the existing ones. I checked the table expecting
+demo-visible residue in the supervisor's queue:
+
+```
+total escalation rows: 38
+session+category groups with >1 row: 4     (all open,open)
+```
+
+Four duplicate pairs, all `open`. **`demo:tidy` does not touch escalations** —
+`cleanup-phantom-sessions.mjs` has no escalation handling at all. So on the face of it this looked
+exactly like the "DELETE-ME at row one" problem.
+
+**It is not, because escalations have no UI surface.** Every reference in `src/` is either the
+architecture backend-map, which draws the table as a *node* rather than its rows, or a chat tool
+label. **No component queries the table; no function lists it for a UI.** Only
+`netlify/functions/tools/escalation.ts` reads and writes it. A panel clicking the product cannot
+see these rows. They are visible only to someone querying the database directly.
+
+**No task. No cleanup needed before submission.** I am recording the check because the conclusion
+is the opposite of the one I set out expecting, and the next person will have the same instinct.
+
+#### One residual nuance in the T19 wording, with a recommendation not to act on it
+
+`agent/sol.md:89` now says the row *"reaches the **concierge supervisor's queue**"*. That is true
+at the layer that matters — `esc_read` genuinely scopes the table to `concierge` and `admin` — but
+**"queue" implies a screen, and no screen renders escalations.** The paragraph ends with *"a
+reviewer who checks will find that out in about a minute"*; a reviewer who checks one step further
+finds there is no consumer.
+
+**My recommendation is to leave it, and the reasoning is not risk-aversion:**
+
+1. The sentence is **not false**, unlike *"reaches Sales"*, which RLS actively contradicted. Every
+   correction we have made so far fixed something untrue.
+2. Per the rule I corrected in iteration 76, **any edit to `sol.md` outside a `voice:exclude` block
+   now costs a second voice re-provision** — and this paragraph is exactly such a region, which is
+   why #66 needed one.
+3. The paragraph is already the most candid in the file.
+
+**But it should not be unclaimed, and the panel answer should be ready:** *today that queue is the
+table itself, durable and RLS-scoped; the supervisor console view is the next build.* If anything
+else gives a reason to edit `sol.md` before 11:00, a clause saying so rides along for free. Same
+policy as `chat.ts:146` — **bundle it, do not re-provision for it alone.**
+
+#### PR #68: earlier browser role evidence was unreliable, and has been re-verified
+
+The Tester found `Network.clearBrowserCookies` never signed the harness out — **Supabase keeps the
+session in `localStorage`** — so earlier browser runs executed as whoever logged in last. Both
+harnesses now wipe origin storage and abort unless the page names the expected role, and Rule 15's
+remedy is corrected. Role scoping was then verified at four layers with real password-grant tokens
+(API 403/200/401, RLS both directions with server-computed counts, cross-role no-op `PATCH` probes,
+and the screens a panel clicks), and **PR #55 was re-verified on a role-confirmed session**. No
+open claim is left resting on the broken harness.
+
+#### State after this iteration
+
+Unchanged. Inbox empty, no lock held, deploy current with HEAD.
+
+| Item | Owner | State |
+|---|---|---|
+| `drop policy` ×3, project `bcrivjgqrxahgxyiqlpr` | Enrique | **open — the one that matters** |
+| Telnyx top-up, $3.09 | Enrique | open — gates beat 3 and G16 on voice |
+| T21, delete `INQ-2012`/`INQ-2013`, keep `INQ-2011` | Enrique | open — SQL and row ids ready |
+| Re-export `exports/telnyx-assistant.json` | Agents | open — 28,678 vs live 29,315 |
+
+**The plan is accurate and correctly ordered.**
+
+
 ### Iteration 76, 18:17 EST — CORRECTION: I got the re-provision rule wrong one iteration ago
 
 **What I wrote last iteration is half wrong, and the wrong half is the actionable half.**
