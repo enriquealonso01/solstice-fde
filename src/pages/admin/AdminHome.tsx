@@ -114,7 +114,7 @@ export default function AdminHome() {
                       <span className="block truncate text-sm font-medium text-solstice-ink">
                         {s.guest_label ?? 'Unidentified guest'}
                       </span>
-                      <span className="block truncate text-xs capitalize text-solstice-stone">{intentLabel(s.intent)}</span>
+                      <span className="block truncate text-xs capitalize text-solstice-stone">{intentLabel(s.intent, s.status)}</span>
                     </span>
                     <ChannelChip channel={s.channel} />
                     <SessionStatusChip status={s.status} />

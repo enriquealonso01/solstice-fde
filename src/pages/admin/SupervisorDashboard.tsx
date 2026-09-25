@@ -126,7 +126,7 @@ export default function SupervisorDashboard() {
                   <td className="px-4 py-2.5">
                     <ChannelChip channel={s.channel} />
                   </td>
-                  <td className="px-4 py-2.5 capitalize text-solstice-stone">{intentLabel(s.intent)}</td>
+                  <td className="px-4 py-2.5 capitalize text-solstice-stone">{intentLabel(s.intent, s.status)}</td>
                   <td className="px-4 py-2.5 text-solstice-stone">
                     {shortDate(s.started_at)} · {clockTime(s.started_at)}
                   </td>
@@ -169,7 +169,7 @@ function SessionCard({ session, now }: { session: SessionRow; now: number }) {
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         <ChannelChip channel={session.channel} />
         <SessionStatusChip status={session.status} />
-        <span className="chip bg-solstice-sand/60 capitalize text-solstice-slate">{intentLabel(session.intent)}</span>
+        <span className="chip bg-solstice-sand/60 capitalize text-solstice-slate">{intentLabel(session.intent, session.status)}</span>
       </div>
 
       {session.status === 'active' ? (

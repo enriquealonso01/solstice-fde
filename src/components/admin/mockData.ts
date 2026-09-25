@@ -803,9 +803,19 @@ export function duration(fromIso: string, toMs: number): string {
   return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`
 }
 
-export function intentLabel(intent: string | null): string {
-  if (!intent) return 'classifying…'
-  return intent.replace(/_/g, ' ')
+/**
+ * The conversation's routing label.
+ *
+ * `classifying…` asserts work in progress, and that is only true while the conversation is live.
+ * On a finished one it claims something that will never happen — and most sessions that carry no
+ * intent never ran `classify_intent` at all, so there is nothing in flight to wait for. Pass the
+ * status and an ended, unclassified conversation says what it is instead of pretending to be busy.
+ *
+ * Callers without a status keep the old behaviour, which is correct for a row that is live.
+ */
+export function intentLabel(intent: string | null, status?: string | null): string {
+  if (intent) return intent.replace(/_/g, ' ')
+  return status && status !== 'active' ? 'not classified' : 'classifying…'
 }
 
 /** Worst verdict wins. Drives the inbox badge and the send lock. */

@@ -44,6 +44,24 @@ describe('intentLabel', () => {
   it('humanises a real intent', () => {
     expect(intentLabel('group_booking')).toBe('group booking')
   })
+
+  // Fixing the write only helps sessions recorded after it shipped. 116 of 120 rows already
+  // existed with no intent, and 85 of those never ran classify_intent at all — so the badge was
+  // claiming work in progress that never started and never would. On a finished conversation that
+  // is simply false, and after demo:tidy closes the stale ones it is false on most of the board.
+  it('does not claim to be classifying a conversation that has ended', () => {
+    expect(intentLabel(null, 'ended')).toBe('not classified')
+    expect(intentLabel(null, 'taken_over')).toBe('not classified')
+  })
+
+  it('still says classifying while the conversation is genuinely live', () => {
+    expect(intentLabel(null, 'active')).toBe('classifying…')
+  })
+
+  it('prefers a real intent over the status in every case', () => {
+    expect(intentLabel('group_booking', 'ended')).toBe('group booking')
+    expect(intentLabel('guest_concierge', 'active')).toBe('guest concierge')
+  })
 })
 
 describe('both runtimes persist it', () => {
