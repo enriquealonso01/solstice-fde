@@ -2719,3 +2719,48 @@ why the old version was correct evidence for the wrong audience.
 `BACKLOG.md` — triage is yours.
 
 ---
+## 2026-09-25 — "0 missing": a blue chip announcing an absence of problems, on ten of thirteen rows
+
+**PR:** https://github.com/enriquealonso01/solstice-fde/pull/51 (shipping this iteration)
+
+Second pass at Enrique's backlog item. PR #50 fixed the **vocabulary**; he also asked for
+*intuitive*, and that is a different thing. So I went looking for a screen that uses ordinary words
+and still makes a rep translate before they can act.
+
+### The find
+
+The group inbox's Rules column rendered `{missing_fields.length} missing`. With nothing missing
+that is the string **"0 missing"** — and I measured it against production rather than guessing at
+the frequency: **ten of the thirteen rows** show it, on the screen beat 4 opens.
+
+It is a negative framing of a positive state. A rep has to work out "zero of what, missing from
+where" before arriving at the only useful fact: *this one is complete and nobody has priced it
+yet.* Now it says that:
+
+| State | Was | Now |
+|---|---|---|
+| complete, no proposal | `0 missing` (blue) | **`ready to price`** (green) |
+| incomplete | `3 missing` (blue) | `3 missing` (blue) — unchanged, it is already clear |
+| proposal exists | rule verdict chip | unchanged |
+
+The colour now carries the queue as well as the text: green is yours to act on, blue is waiting on
+the customer. `3 missing` I deliberately left alone — it names what is absent, which is exactly
+right when something *is*.
+
+### Something I got wrong earlier, corrected
+
+I had previously written in `docs/role-walkthroughs.md` that the Discount column "shows two numbers
+when they disagree, e.g. `22% 15%`", and called the gap the decision. Reading the component, it is
+not two bare numbers: the requested figure is **struck through** and the allowed one bold — the
+sale-price convention, which is genuinely intuitive. My text dump had flattened the styling and I
+described the flattened version. **Left the component alone**; it was already right, and I would
+have "fixed" something that was not broken if I had trusted my own earlier note.
+
+### Kept the documentation honest in the same PR
+
+`role-walkthroughs.md` described that column as "counts what is missing, e.g. `0 missing`". It now
+describes what the chips mean, which is also a better line for the non-technical half of the room.
+
+402 tests, `tsc -b --force` clean.
+
+---

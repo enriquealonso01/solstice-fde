@@ -2,8 +2,33 @@
 
 What I am doing right now, and what I did last. Overwritten each iteration.
 
-- **SHIPPING NOW (iteration 52): Enrique's dashboards-in-plain-words change**, held over one
-  iteration. Branch `fix/dashboards-in-plain-words`. Holding the lock.
+- **Idle, between iterations.** Lock released, tree clean of source edits.
+- **Last (iteration 52): Enrique's dashboards item, DONE and DEPLOYED.** PR #50. Verified live in
+  the deployed bundle: the new wording is present, `sessions · messages · tool_invocations` is
+  gone, `/admin/sessions` 200.
+- **His words:** *"The admin dashboards (supervisor, sales rep, admin) should not feel technical:
+  intuitive, with a touch of full coverage."*
+- **Two assumptions, stated because the item is ambiguous and he should be able to correct me:**
+  read as **vocabulary, not layout** — reword what a hotel manager would not say rather than
+  redesign the demo path eighteen hours out; and *"a touch of full coverage"* as **keep the
+  information**, so every change is a rewording and nothing was removed.
+- **Found by listing every rendered label**, not by grepping for what I expected:
+  `sessions · messages · tool_invocations` → `conversations, messages and actions, live`;
+  `Fixtures` → `Sample data`; "RLS decides that" → "decided in the database"; "scoped by role in
+  the database" → "each one sees only its own work". The first mattered most — three **Postgres
+  table names** shown to a concierge supervisor. Right evidence, wrong audience.
+- **Deliberately left:** the tool trace (that panel *is* the audit view; a reviewer checks tools by
+  name), the session-facts ids (what you chase something with — the "full coverage" half), `RLS` in
+  a source comment (engineers are the right audience), and the Supabase mention in the subtitle
+  (evidence for the technical half of the room).
+- **Corrected `docs/role-walkthroughs.md` in the same commit** — it cited that tile *by quoting the
+  table names*, so it would have been false the moment this shipped.
+- **PLANNER:** the Inbox item is addressed and can move to Done. I have not touched `BACKLOG.md`;
+  triage is yours.
+- 402 tests, `tsc -b --force` clean, deploy **OK**, site 200.
+- **Enrique's short list, first in `HUMAN_INTERVENTION.md`:** top up Telnyx (**beat 3 cannot run**
+  at $3.09), delete `INQ-2012`/`INQ-2013`, **`demo:tidy`** just before rehearsing and again before
+  the demo.
 - **It50: vision doc** (PR #48). **It49: runbook vs screens** (PR #47). **It48: board
   verification** (PR #46). **It47: honest intent badge** (PR #45). **It46: telephony intent write**
   (PRs #43, #44). **It42: guardrail check** (PR #40). **It41: protocol step** (PR #39).

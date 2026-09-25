@@ -136,7 +136,9 @@ Two things to point at:
 
 1. **The Discount column sometimes shows two numbers**, e.g. `22% 15%`. That is what the customer
    asked for next to what the rules allow. The gap is the decision.
-2. **The Rules column counts what is missing**, e.g. `0 missing`, and the Proposal column tracks
+2. **The Rules column says what this row is waiting for.** `ready to price` means every field is
+   there and nobody has quoted it yet; `3 missing` means Sol is still chasing the customer for
+   three answers. Once a proposal exists it becomes the rule verdict instead. The Proposal column tracks
    its state independently — `none yet`, `rejected`, and so on.
 
 The Inquiry column also carries the source: `voice` or `portal`. **The same inbox holds enquiries
