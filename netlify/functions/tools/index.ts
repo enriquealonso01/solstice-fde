@@ -100,7 +100,13 @@ export default async function handler(req: Request, _context: Context): Promise<
   await recordToolInvocation(ctx, name, args, result)
   // Telephony reaches the tools here rather than through `chat.ts`, so the intent write has to
   // happen on this path too or a phoned-in session stays labelled "classifying…" forever.
-  void recordClassifiedIntent(ctx, name, result)
+  //
+  // AWAITED, not fire-and-forget. This handler returns immediately, and a serverless container can
+  // freeze the moment it does — a `void` call here was verified to lose the write while the
+  // awaited `recordToolInvocation` above kept its row from the very same request. `chat.ts` gets
+  // away with fire-and-forget because its SSE stream holds the invocation open; this path has no
+  // such luxury. The cost is one UPDATE by primary key on a webhook whose budget is 300ms.
+  await recordClassifiedIntent(ctx, name, result)
 
   // `summary` is the human line the guest chip and the supervisor trace both render.
   return json({ ...result, summary: summarize(name, result) })
