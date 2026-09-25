@@ -131,6 +131,14 @@ describe('file:line citations in the deliverable', () => {
  * that stays true as tests are added, and point at the command that prints the live figure. That is
  * the README's own stated policy, enforced rather than merely written down.
  *
+ *
+ * **It had one exemption, and the exemption lasted one commit.** The first version skipped any count
+ * followed by "across", on the argument that "443 tests across 32 test files" was a dated snapshot in
+ * a paragraph that admitted as much. Two things were wrong with that. The paragraph says figures are
+ * "floors or rounded", and 443 was neither — it was exact, undated, and already wrong when it was
+ * committed, under-counting by exactly the two tests that same commit added to enforce this rule.
+ * So the carve-out was removed rather than defended: the guard now applies with no exception, which
+ * is what its first commit message claimed it did.
  * What it does NOT catch, stated so nobody trusts it further than it goes: a **band** that has
  * been outgrown. "a test suite in the low 300s" passes this check and was wrong by 140 tests.
  * Verified by restoring that exact phrase and watching it go green. Catching that needs a real
@@ -142,9 +150,6 @@ describe('counts stated in the README', () => {
   it('never states an exact test count, because it goes stale within the hour', () => {
     const exact = [...readme.matchAll(/(?<!over\s)\b\d{2,5}\s+tests?\b(?!\s+files)/gi)]
       .map((m) => m[0])
-      // "443 tests across 32 test files" is a dated snapshot in a paragraph that says it is one;
-      // the failure mode is an exact count offered as the current answer, next to the command.
-      .filter((claim) => !readme.includes(`${claim} across`))
 
     expect(
       exact,

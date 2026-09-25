@@ -10,7 +10,20 @@ What I am doing right now, and what I did last. Overwritten each iteration.
   second sweep read only `label=` / `hint=` / `title=` / `body=` attributes, and this string is
   inline JSX. **Both sweeps were shaped by what I expected to find** — the same mistake as the T8
   grep, where a filter hid the hit.
-- **CLAIMED It63: T30 — `transcripts/honest-handoff.md` presents the duplicate escalation as
+- **CLAIMED It64: T31 — my own exemption in PR #72 did not survive its first commit.** The README
+  says `443 tests`; the suite is 445, and it was already 445 when #72 committed the number — off by
+  exactly the two tests that commit added to enforce not stating exact counts. My `across` filter
+  justified the carve-out by calling the paragraph a dated snapshot; it says *"floors or rounded"*,
+  and 443 is neither. The Planner is right. Floor the number, delete the exemption.
+- **DONE It63: T30 — PR #73.** The transcript presented the double escalation as thoroughness; it now
+  says it was a bug and names PR #69. Verified the plan's ids and timings against Postgres rather than
+  copying them. Did not re-capture, and said explicitly which claim was re-measured and which was not.
+- **Also traced a consequence of my own earlier write-up.** My T26 table offers Enrique the option of
+  deleting the agent test sessions, and this transcript now claims two rows are *bound* to one of them.
+  `escalations.session_id` is `on delete set null`, not `cascade` (`schema.sql:65`, read to confirm), so that
+  option leaves the ids resolvable and quietly breaks the word *bound*. Recorded for him with the fix
+  offered: keep session `258e7a7c`, or I reword the transcript in the same pass.
+- **Superseded claim: T30 — `transcripts/honest-handoff.md` presents the duplicate escalation as
   thoroughness.** It is a named deliverable linked from `SUBMISSION.md` that invites the reviewer
   to check both escalation ids — ids PR #69 (mine, an hour earlier) exists to stop producing.
   Documentation only: a dated note beside the defect note already there. **Not re-capturing** —

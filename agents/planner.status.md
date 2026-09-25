@@ -4,60 +4,59 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 79 — 2026-09-25 ~18:36 EST
+## Iteration 80 — 2026-09-25 ~18:42 EST
 
-### Inbox empty. No lock held. Full suite green: 445 passed, 32 files.
+### Inbox empty. Lock held by another agent (T31 likely in hand).
 
-### I swept the deliverables for everything a reviewer can independently check
+### T30 closed, and it improved on my spec for the fourth time
 
-Following last iteration's lesson — *"no UI surface is not the same as not visible"*.
+PR #73. My spec said the note must *"not claim a live re-measurement that nobody ran."* What
+shipped turns that into a named paragraph — **"What was and was not re-measured, precisely"** —
+saying the fix was verified with an *equivalent* two-turn request and by the Tester, and that
+**these two ids were not re-observed as one**. Mine was a prohibition; theirs is a positive account
+of the epistemic state. They re-derived the figures from Postgres rather than copying my plan.
 
-**Every database id quoted in a deliverable resolves.** Four UUIDs, three transcripts, nowhere
-else: the T30 pair in `honest-handoff.md`; `6152e6be` in `refund-outside-window.md` (category
-`refund`, open); `701de11f` in `voice-call.md` (channel voice, status ended, **53 messages**).
+**They also traced a consequence I missed.** `HUMAN_INTERVENTION.md` offers Enrique the option of
+deleting the test sessions. `escalations.session_id` is **`on delete set null`, not cascade**
+(`schema.sql:65`), so that option leaves both ids resolvable while quietly falsifying the word
+*"bound"* in the transcript they had just written. Flagged for Enrique, correctly **not** as a
+reason to avoid the option.
 
-### T21 is verified safe, and this check could have caught it being wrong
+### The architecture diagram is honest, and disagrees with one sentence in `sol.md`
 
-Deliverables cite **`INQ-2011`** (`README.md:127`, `demo-runbook.md:238`) and **`INQ-2010`**
-(`README.md:139`). T21 deletes **2012 and 2013**, keeps 2011. **No deliverable depends on a row
-T21 removes**; two depend on one it keeps. Had T21 named `INQ-2011`, running it would have broken
-the README and the runbook an hour before the demo.
+Checked it against reality — a deliverable I had not verified in many iterations. It holds up:
+**"Escalation queue"** (*"On-call rota and an SLA timer"*) sits inside the band labelled
+**"FUTURE: production hardening, designed but not built."**
 
-### README counts: two verified, one wrong on arrival — T31 filed
+Which is right, and which is why `agent/sol.md:89` reads oddly beside it: present tense, *"the row
+reaches the concierge supervisor's queue"*, when iteration 77 established no screen lists them.
+**T32 filed and marked the lowest-priority open item.**
+
+### The constraint that matters more than T32: 685 characters
 
 ```
-git ls-files | wc -l       236   ✓        git ls-files | grep .tsx?$   146   ✓
-npx vitest run             445 passed     README:89 says 443           ✗
+current voice compile : 29,315     MAX_INSTRUCTION_CHARS : 30,000     margin : 685
 ```
 
-**The count was already stale when PR #72 committed it.** #72 wrote "443", then added the two
-`counts stated in the README` tests in the same commit — it under-counts by exactly the two tests
-that commit added to enforce not stating exact counts.
+PR #67 had to correct this margin once already. **Anyone editing `agent/sol.md` needs this number.**
 
-The guard exempts the phrase on purpose (`doc-citations.test.ts:145` filters claims followed by
-`across`), reasoning it is *"a dated snapshot in a paragraph that says it is one."* **That premise
-does not hold:** the paragraph says figures are *"floors or rounded"* — 443 is neither, and undated
-— and it rotted **inside the hour**, the exact failure the file's own doc comment names.
+I tested the way round it instead of asserting one: wrapping a 276-character clarification in
+`voice:exclude` moves the compile to **29,316 — +1 character, not +276.** Human-facing additions to
+that file are essentially free *if wrapped*, and expensive if not.
 
-**T31 is one word** (`443` → `over 400`, the floor used twice already) **and deleting the filter.**
-I am flagging it as small; it earns a slot only because it is in the top-level README, in the
-paragraph arguing counts rot, two lines above the command that prints a different number.
+Honest residue: **+1 is not 0.** Live would drift from compile by one character and the Tester's
+byte-identical check would show it. I did not claim byte-identical when I had measured 29,316.
 
-### The rest of #72 is right, including the part that needed judgement
+### T31 still open
 
-**61,710 lines is true and misleading** — ~35,100 source, 3,500 deliverable docs, **13,800 of the
-agents' own coordination record**; the total flatters the first by hiding the third, and the third
-is arguably the more interesting number. And the guard checks the **shape of the claim, not the
-number**, because counting tests from inside the suite is unreliable — with the limitation written
-into the file rather than implied.
+`README.md:89` still reads 443; the suite is 445.
 
 ### The plan is accurate and correctly ordered
 
 **Enrique, in order:** the SQL paste · Telnyx top-up · **T21** two rows (verified safe).
-**Agents, three:** **T30** the dated note · **T31** the README count · re-export the Telnyx JSON.
+**Agents:** **T31** the README count · re-export the Telnyx JSON · **T32** lowest priority.
 
 ### The single most important remaining item
 
 **The `drop policy` paste.** It closes a live hole *and* restores `agent/sol.md` §13 exactly as
-written. Of the agent items, **T30 is the one worth doing first** — it is on a deliverable a
-reviewer is pointed at; T31 is one word.
+written. Everything else open is one word, one file refresh, or one sentence I have marked skippable.

@@ -3406,3 +3406,41 @@ is better evidence for the "build it with agents" ask than a capture with nothin
 is the Planner's argument and I think it is right.
 
 `npx tsc -b --force` clean. `npx vitest run`: **445 passed, 32 files**. `doc-citations` green.
+
+## It64 — T31: my exemption lasted one commit, and the Planner is right
+
+T31 is a criticism of PR #72, mine, from two hours earlier. It is correct and worth stating plainly
+rather than hedging.
+
+`README.md:89` said **443 tests**. The suite was at **445 when #72 committed that number** — wrong on
+arrival, under by exactly the two tests that same commit added *to enforce not stating exact counts*.
+
+And the guard I wrote in that commit exempted the phrase, with a reason:
+
+> *"443 tests across 32 test files" is a dated snapshot in a paragraph that says it is one.*
+
+**The paragraph says no such thing.** It says figures are *"floors or rounded, deliberately"*. 443 is
+neither — it is exact and undated. I wrote a carve-out justified by a property of the text I had
+written myself and did not check. The exemption's premise was falsified by events inside one commit.
+
+**Done:** `443 tests across 32 test files` → `over 400 tests`, matching the floors at the other two
+sites. Deleted the `across` filter and its comment, so the guard applies with **no exception** —
+which is what #72's commit message already claimed it did.
+
+**Kept the removal reasoning in the test's doc comment** rather than letting it vanish with the code.
+A future reader who thinks of that same exemption should find out it was tried and why it failed,
+inside the hour, which is more useful than a clean file.
+
+**Verified the removal actually bites**, since deleting a filter that nothing tested would be its own
+version of the same mistake: restored the exact previously-exempt phrase and the guard now names it —
+*"README states an exact test count: 443 tests."*
+
+Left `236` and `146` alone as T31 directs. Both verified correct, and trading true precision for a
+floor this close in buys nothing.
+
+**On the wider point:** this is the second time this run that a guard I wrote needed a correction
+rather than the code it guards. Both times the flaw was the same shape — I asserted something about
+neighbouring text instead of reading it. The lesson is not "write fewer guards", it is that **a guard's
+premise is a claim and needs checking like any other.**
+
+`npx tsc -b --force` clean. `npx vitest run`: **453 passed, 33 files**.
