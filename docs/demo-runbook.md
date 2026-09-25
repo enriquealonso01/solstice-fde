@@ -75,7 +75,9 @@ that is stronger than being caught by it.
 
 ### 4. Group booking (4 min)
 
-Switch to Group sales. Open **INQ-2009**, the Phoenix retreat.
+Switch to Group sales. Open **INQ-2009**, the Phoenix retreat. **Click it from the inbox list.**
+The detail URL takes the row's uuid, not the code, so typing `/admin/inquiries/INQ-2009` renders
+"Inquiry not found" — a dead end you do not want to discover on stage.
 
 - One flag: they asked 17%, the property's ceiling is 15%.
 - Three costed options: approve at 15% for $7,994.25, escalate for a sign-off at 17%, or counter
