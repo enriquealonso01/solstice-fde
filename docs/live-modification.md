@@ -27,7 +27,7 @@ npx vite-node scripts/show-verdict.ts -- INQ-2009
 
 No network, no model, under a second. Run it before and after.
 
-**Before:**
+**Before** — real output, captured 2026-09-25:
 
 ```
 INQ-2009 — Camelback Fitness Retreat at Solstice Phoenix Camelback
@@ -35,20 +35,30 @@ asked for 15 rooms at 17% off
 
   FLAG  GRP-DISCOUNT-CEILING
         asked 17, allowed 15
-        "The customer asked for 17% off. We can approve up to 15% on our own, so this is
-         2 points over what we are allowed to give away without the general manager
-         signing it off."
+        "The customer asked for 17% off. We can approve up to 15% on our own, so this is 2 points over what we can authorise ourselves, and it needs a named approver to sign it off before it goes out."
+
+  at the discount the customer asked for (17%): $7806.15
+  (what they may actually be offered depends on the verdicts above)
 ```
 
-**After:**
+**After** — same command, after changing one number:
 
 ```
+INQ-2009 — Camelback Fitness Retreat at Solstice Phoenix Camelback
+asked for 15 rooms at 17% off
+
   FLAG  GRP-DISCOUNT-CEILING
         asked 17, allowed 12
-        "The customer asked for 17% off. We can approve up to 12% on our own, so this is
-         5 points over what we are allowed to give away without the general manager
-         signing it off."
+        "The customer asked for 17% off. We can approve up to 12% on our own, so this is 5 points over what we can authorise ourselves, and it needs a named approver to sign it off before it goes out."
+
+  at the discount the customer asked for (17%): $7806.15
+  (what they may actually be offered depends on the verdicts above)
 ```
+
+Three things moved together and none of them is a prompt: the ceiling, the gap the rep is told
+about (2 points becomes 5), and the sentence itself. **The price did not move**, and that is worth
+saying out loud — $7806.15 is what the customer *asked for* either way. What changed is whether a
+rep may agree to it alone.
 
 ## What to say while you do it
 
