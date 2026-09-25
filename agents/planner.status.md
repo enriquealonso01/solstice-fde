@@ -4,53 +4,53 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 66 — 2026-09-25 ~17:26 EST
+## Iteration 68 — 2026-09-25 ~17:36 EST
 
 ### Inbox checked first. Empty.
 
-### T29 closes at 3 of 3, and the admission survived every rewrite
+### T28 is CLOSED — verified merged, provisioned and matching
 
-PR #54 fixed the last string:
+My longest-standing open item, and the last one that made a shipped deliverable untrue:
 
-> *"This version does not include message history, so nothing is shown rather than guessed."*
+```
+agent/sol.md raw            33,651
+compiled                    28,194     cap 30,000, no truncation marker
+voice:exclude blocks             1     (was 0 — the facility finally used)
 
-No "endpoint", no "build", and the *"rather than guessed"* clause — the whole reason that sentence
-exists — is intact. All three of Enrique's instances are now in hotel words with their candour
-unchanged, which was the constraint I was most worried would be lost when I wrote the task.
+live assistant              28,583     stuck at 28,678 from 12:59 through 16:39
+PR #26 "never name a tool"  PRESENT    was ABSENT four hours ago
+```
 
-### I swept again with a deliberately different method
+The assistant has been re-provisioned, the drift is gone, and `agent/sol.md` can truthfully call
+itself *"the single agent definition"* again. I flagged the consequence: the Tester verified
+`exports/telnyx-assistant.json` byte-identical to the **old** prompt, so that export is now the
+stale side of the pair and should be re-exported.
 
-Tonight's recurring failure is a sweep shaped by what its author expected. So rather than re-run
-mine, I changed its shape: pull **all** user-visible text — six attribute kinds *and* inline JSX
-between tags — instead of a predicted word list or a predicted attribute set. Two hits, wanting
-different answers:
+**I also recorded a non-defect deliberately.** T1c's "named approver" is still absent from the
+prompt, and that is correct — it lives in the tool layer's `human_reason`, which both runtimes
+call. I checked that same marker at iteration 56 when it *was* evidence of drift, so without a note
+the next person repeating my check will re-raise it.
 
-**`SupervisorLadder.tsx:233`** shows a raw `POST /api/voice/supervisor` on a screen beat 3 uses —
-**but only when `simulated` is true**, the supervisor-audio failure state, and Enrique verified the
-ladder working live at 11:32. It is also an honesty message of exactly the kind T29 protects. I
-logged suggested wording and said explicitly it is **not worth its own PR** — one line if someone
-is already in that file.
+### The number that will bite someone later
 
-**`CostPage.tsx:158`**, *"Live from the Telnyx API, not an estimate"* — **checked and deliberately
-left alone**. Beat 6 shows the Cost page to the non-technical product owner, and naming the
-provider while asserting the number is fetched rather than estimated is a credibility claim. The
-technical word earns its place; stripping it would weaken the page to satisfy a rule.
+Compiled length reads **28,194** from a normal text-mode read and **28,583** on the platform. The
+389-character gap is **CRLF** — Windows line endings survive into the prompt, and Python's
+universal newlines hide them. The first divergence is at character 38: `\n\n` against `\r\n\r\n`.
 
-**I recorded that second one as a non-finding on purpose.** A sweep that only ever reports hits
-teaches its reader that every match is a defect. Saying "I looked at this and it should stay" is
-part of the result, and after over-pushing T8 for four iterations I would rather err toward
-calibration than volume.
+**So real headroom under the cap is ~1,417 characters, not ~1,806** — someone sizing a future
+addition from a normal read will believe they have 27% more room than exists. That is the kind of
+measurement error that only shows up as a truncated prompt weeks later, so I put the number and its
+cause in the plan rather than just the happy result.
 
 ### The plan is accurate and correctly ordered
 
-Seven open, none larger than a paragraph: **T28** the voice prompt 2,831 over its cap · **T27** two
-protocol lines · **T26** beat 3's test conversations (Enrique) · **T24** Planner commit path ·
+Six open plus one follow-on, none larger than a paragraph: **re-export the Telnyx JSON** · **T27**
+two protocol lines · **T26** beat 3's test conversations (Enrique) · **T24** Planner commit path ·
 **T21** two rows (Enrique) · **T20** two checklist lines · **T19** one sentence.
 **Guardrails 18 of 19.**
 
-### The single most important remaining task
+### The single most important remaining item
 
-**T28** for the agents — still the only open item that makes a shipped deliverable untrue.
-
-**For Enrique: T21 and the Telnyx top-up.** T21 is two rows and promotes the real phoned-in inquiry
-to the top of the inbox; the top-up gates beat 3, the live intent check, and G16.
+**Enrique's, and now it is the only thing with real consequence left: top up Telnyx.** $3.09 gates
+beat 3 — 4 of ~18 minutes — the live end-to-end intent check, and **G16 on voice**, the last open
+guardrail. Everything the agents have left is a paragraph or two rows.

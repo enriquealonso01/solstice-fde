@@ -1,35 +1,34 @@
 # Master plan: the whole picture
 
-> ## 17:26 — Enrique's dashboards item is fully closed. Seven open, all small.
+> ## 17:36 — **T28 CLOSED.** The last item that made a shipped deliverable untrue is fixed.
 >
-> **T29 CLOSED, 3 of 3** (PRs #50, #53, #54). The last string now reads *"This version does not
-> include message history, so nothing is shown rather than guessed"* — no "endpoint", no "build",
-> and the *rather than guessed* clause that gives the sentence its point is intact.
+> ```
+> compiled agent/sol.md   28,194   cap 30,000   no truncation   voice:exclude blocks: 1
+> live assistant          28,583   was 28,678 for four hours
+> PR #26 "never name a tool to a guest"   PRESENT  (was ABSENT)
+> ```
 >
-> **Swept again with a different method** — all user-visible text, six attribute kinds **and**
-> inline JSX, rather than a predicted word list. Two hits:
-> • `SupervisorLadder.tsx:233` shows `POST /api/voice/supervisor`, but **only in the simulated
-> failure state**, which should not appear on the demo path. One line if you are already in the
-> file: *"the supervisor audio service is not responding yet…"*. Not worth its own PR.
-> • `CostPage.tsx:158` *"Live from the Telnyx API, not an estimate"* — **checked and deliberately
-> left**. Beat 6 shows Cost to the product owner and that sentence is a credibility claim; the
-> technical word earns its place.
+> The assistant is re-provisioned, the drift is gone, and `agent/sol.md` can call itself *"the
+> single agent definition"* truthfully again. **Re-export `exports/telnyx-assistant.json`** — the
+> Tester verified it byte-identical to the *old* prompt, so it is now the stale side of the pair.
 >
-> **T28 is the only open item that makes a shipped deliverable untrue.** `agent/sol.md` calls
-> itself *"the single agent definition"* while the live phone agent is four hours behind it;
-> compile is **2,831 over** the 30,000 cap. Wrap documentation in `voice:exclude`, re-measure,
-> provision, diff — or document the provisioning timestamp if it will not fit tonight.
+> **T1c's "named approver" is still absent from the prompt and that is correct** — it lives in the
+> tool layer's `human_reason`, which both runtimes call. Do not re-raise it.
 >
-> **Open:** T28 · **T27** two protocol lines · **T26** beat 3's test conversations (Enrique) ·
-> **T24** Planner commit path · **T21** two rows (Enrique) · **T20** two checklist lines · **T19**
-> one sentence. **Guardrails 18/19.** **Enrique's: Telnyx $3.09.**
+> **Headroom warning:** real margin under the cap is **~1,417 chars, not ~1,806**. The 389-char gap
+> is **CRLF** — Windows line endings reach the platform and Python's universal newlines hide them.
+> Anyone sizing an addition from a normal text read will think they have 27% more room.
+>
+> **Open:** **T27** two protocol lines · **T26** beat 3's test conversations (Enrique) · **T24**
+> Planner commit path · **T21** two rows (Enrique) · **T20** two checklist lines · **T19** one
+> sentence · plus **re-export the Telnyx JSON** per above. **Guardrails 18/19.**
+> **Enrique's: Telnyx $3.09.**
 
 ---
 
 # ▶ OPEN WORK — three items, none of them large
 
 *Everything below this section is closed, or evidence.*
-*• **T28** the voice prompt is 2,831 chars over its cap, which is why it is stale.*
 *• **T27** two lines: the protocol covers one lock failure and tonight's was the other one.*
 *• **T26** beat 3 opens on 100 of our own test conversations — Enrique's call, my read is "say so".*
 *• **T24** one line so the Planner's two files can ever be committed — PR #39 covered everyone else.*
@@ -83,7 +82,7 @@ confident".** Change the vocabulary, keep the admission:
 **Do not** touch layout, colour or information architecture. Vocabulary only. If a fourth instance
 turns up, fix it; do not go looking for a fifth.
 
-### T28. The voice prompt is 2,831 chars over the cap, which is why it is four hours stale
+### T28. The voice prompt — CLOSED, PR #56. Compiled 28,194 under a 30,000 cap; assistant re-provisioned.
 
 *Earns the top slot because `agent/sol.md` calls itself "the single agent definition" while the
 live phone agent has not carried its last four hours of edits, and the reason turns out to be a
@@ -531,6 +530,96 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 68, 17:36 EST — T28 VERIFIED and closed. Plus a headroom number that will bite later.
+
+**Inbox checked first. Empty.**
+
+PR #56 brings the voice prompt under the cap. **Verified end to end — merged, provisioned, and
+matching:**
+
+```
+agent/sol.md raw            33,651
+compiled                    28,194        cap 30,000     under, no truncation marker
+voice:exclude blocks             1        (was 0 — the facility finally used)
+
+live assistant instructions 28,583        was 28,678 at both 12:59 and 16:39
+PR #26 "never name a tool"  PRESENT       <- was ABSENT four hours ago
+```
+
+**The assistant has been re-provisioned**, the four-hour drift is gone, and the file no longer
+contradicts the platform. `agent/sol.md` can call itself *"the single agent definition"* truthfully
+again, and `exports/telnyx-assistant.json` should be re-exported to match — the Tester verified it
+byte-identical to the **old** live prompt at its iteration 36, so it is now the stale one.
+
+**T1c's "named approver" is still absent from the prompt, and that is correct, not a gap.** As
+established at iteration 56, that refusal text lives in the tool layer's `human_reason` strings
+which both runtimes call — it was never supposed to be in the instructions. Recording it so the
+absence is not re-raised as a defect by someone repeating my own iteration-56 check.
+
+#### The number that will bite someone later
+
+Compiled length reads **28,194** from a normal text-mode read and **28,583** on the platform. The
+389-character gap is **CRLF**: Windows line endings survive into the prompt, and Python's universal
+newlines hide them. The first difference between my compile and the live text is at character 38,
+and it is `
+
+` against `
+
+
+
+`.
+
+**So the real headroom under the 30,000 cap is ~1,417 characters, not ~1,806.** Anyone sizing a
+future addition from an LF-normalised read will believe they have 27% more room than they do. Worth
+a line in `agent/sol.md` §9 or beside the cap in `provision.mjs` if anyone is in either file.
+
+**PR #57** also dropped a scratch query dump from the repo root — worth noting only because the
+repo is public and that is the class of file that should never be in it.
+
+### Iteration 67, 17:31 EST — I had a compelling wrong finding half-written and killed it
+
+**Inbox checked first. Empty.**
+
+PR #55 replaces the inbox chip's proxy with a real question to the rules engine. Because that chip
+has now been revised three times (#51 defective, #52 patched, #55 rebuilt) and sits on beat 4's
+screen, I checked the **claim** rather than the implementation: does every chip match what the
+engine actually says?
+
+**Ground truth, all thirteen, from `evaluate_group_rules`:**
+
+```
+blocked        INQ-2003  INQ-2004  INQ-2005  INQ-2010
+needs_approval INQ-2002  INQ-2007  INQ-2008  INQ-2009  INQ-2012
+auto_approve   INQ-2001  INQ-2006  INQ-2011  INQ-2013
+```
+
+**Then I nearly filed this:** cross-referencing against which inquiries have no proposal, INQ-2013
+(*Vantage Labs DELETE-ME*) and INQ-2012 came out as the only two rows that would show the green
+**"ready to price"** chip — meaning the junk rows at positions one and two would wear the only
+affirmative badges on the screen. Specific, alarming, and it would have made T21 urgent.
+
+**It is false.** Before writing it I read `inboxRulesChip.ts` instead of stopping at my own model,
+and found the branch I had skipped — **line 42**: `if (inquiry.missing_fields.length > 0) return
+{ kind: 'missing' }`, checked *before* the engine is consulted at line 53. Both junk rows have one
+missing field each, so they render a blue **"1 missing"**, not a green "ready to price".
+
+**The real state, confirmed from the data:**
+
+| Row | missing | chip |
+|---|---|---|
+| INQ-2013, INQ-2012 | 1 each | `1 missing` (blue) |
+| INQ-2004 | 4 | `4 missing` (blue) |
+| INQ-2003, INQ-2010 | 0 | **`cannot be priced`** (rose) — PR #52/#55 working |
+| everything else | — | has a proposal, shows a severity chip |
+
+**No row shows "ready to price" at all right now**, which is worth handing to the Tester for its
+iteration-42 screen check: expect rose on 2003 and 2010, and expect **no** green anywhere.
+
+**This is the seventh time tonight a checking method rather than a system was at fault — and the
+first time I caught it before it reached this file.** The difference was reading one more branch of
+the code I was reasoning about instead of trusting a model I had built from two data columns. The
+wrong version was more interesting than the right one, which is exactly when to check twice.
 
 ### Iteration 66, 17:26 EST — T29 closes 3 of 3. One more instance, and one deliberate non-finding.
 

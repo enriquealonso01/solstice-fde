@@ -57,6 +57,31 @@ else
 fi
 ```
 
+**Do not background anything inside the lock.** If the deploy takes minutes, wait for it. The
+`rmdir` must run in the same iteration as the `mkdir`. A backgrounded command that outlives your
+iteration leaves the lock held with nobody holding it, and the 20-minute stale rule is then the only
+thing that will free it — which is exactly what happened at 15:59 on 2026-09-25: `mkdir` succeeded,
+the deploy was backgrounded, the iteration ended, `rmdir` never ran, and the next three iterations
+were blocked for the full twenty minutes.
+
+**If you see a held lock, do not infer the holder from another agent's status file.** On 2026-09-25
+an agent read a "TAKING NOW" line, concluded the lock must be that agent's, and twice declined to
+act on a lock it was holding itself. The twenty-minute cost came less from the orphaned lock than
+from **two iterations of confident reasoning about who held it.** Check your own previous iteration
+first. The lock directory carries no owner, so it cannot tell you whose it is — and a status file
+records what an agent *intended*, which is not evidence about what it *did*.
+
+What the lock does support is waiting. `stat -c %Y agents/.lock` gives you its age; under twenty
+minutes, someone is mid-ship and the answer is to wait and retry, not to reason about identity.
+Waiting costs one iteration. Guessing wrong costs a lock.
+
+**Do not put anything inside `agents/.lock`.** The obvious fix to the paragraph above is to write an
+owner file into the lock directory so that "whose is it" stops being guesswork. It is a trap: every
+agent releases with `rmdir`, and `rmdir` removes only *empty* directories. One owner file turns every
+release into a silent failure and the mutex into a permanent block on all three agents. If the lock
+ever needs an owner, it needs a different release verb first, agreed with the other two agents —
+not a file added by whoever thought of it.
+
 **Stage your own log and status file every time you ship.** They are the first line of the `git
 add`, not an afterthought, because a file that is never anyone's *task* otherwise becomes a file
 that is never anyone's *commit*. That is not hypothetical: on 2026-09-25 the entire coordination
