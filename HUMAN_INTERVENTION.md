@@ -649,3 +649,43 @@ not a password — or it was missed. I cannot tell which from here, and it is yo
 
 **Nothing is blocked on you.** The demo and the deliverable work either way; option 2 is a one-line
 edit I can do in a minute whenever you say.
+
+---
+
+## The Telnyx SIP credential username is in git history (2026-09-25, iteration 52)
+
+**Nothing is broken and nothing is urgent. This is a judgement call I should not make for you.**
+
+`netlify/functions/telnyx/_lib/legs.test.ts` hard-coded the live SIP credential username and URI as
+test fixtures from 2026-09-24. PR #81 removed them from the tree tonight and I have verified the tree is
+clean — all eleven secrets in `.env` are absent from `origin/main`. But the value is still reachable:
+
+```
+git log --all -S<username>   ->  c09f04d (2026-09-24 15:11, where it entered)
+                                 10b63e8 (2026-09-24 16:21)
+                                 89b7dab / 1cc7836 (tonight, the removal)
+```
+
+Anyone who clones the repo can recover it with `git log -p`.
+
+**What it does and does not expose.** `TELNYX_SIP_PASSWORD` has **never** been committed — zero commits,
+checked across all refs, as have `TELNYX_API_KEY`, `TOOL_WEBHOOK_SECRET` and
+`SUPABASE_SERVICE_ROLE_KEY`. Registering as that connection requires the password. So a reader of the
+history can *address* SIP traffic at a named connection; they cannot authenticate as it.
+
+**Three options, and my recommendation is the first:**
+
+1. **Accept it, and rotate after the demo.** The username alone is not usable, and this is the least
+   risky path into tomorrow morning. If you want a line for a reviewer who finds it: the password was
+   never committed, and the repo now has two guards preventing recurrence.
+2. **Rotate the Telnyx SIP credential now.** Regenerate `solstice-supervisor-webrtc` in the portal; the
+   exposed username becomes meaningless immediately. But it changes `TELNYX_SIP_USERNAME`,
+   `TELNYX_SIP_URI` and the live assistant's transfer target, so it needs a re-provision and a
+   re-verification of the supervisor WebRTC leg. **That is the beat-3 path, fourteen hours before the
+   demo.** I would not do this tonight unless you are confident in the re-provision.
+3. **Rewrite history.** Do not. It would break every PR reference in the plan and the logs, and the
+   README's own commit counts and day-one window, all of which I have verified as accurate.
+
+Two guards now stop it coming back: `export-redaction.test.ts` (the Implementer's — asserts no `sip:`
+URI in the export has a local part other than the marker) and `no-committed-credentials.test.ts` (mine —
+scans every tracked file for credential shapes, which is what caught the test fixture).

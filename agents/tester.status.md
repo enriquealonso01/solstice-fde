@@ -8,6 +8,44 @@ purpose — it is all in the log.
 
 ---
 
+## Iterations 51–52 DONE — a live SIP credential was in the committed tree; the Implementer's fix VERIFIED
+
+**51:** verified PR #79's "export re-synced with live" by reading the live assistant over the Telnyx
+management API (`GET`, no spend): 25 tools, same model and voice, no keys differing either way, and all
+24 tool differences are exactly one deliberate redaction each. Then found `legs.test.ts` hard-coding the
+**live SIP credential username, URI and connection id** as fixtures, while the same target is redacted in
+the export one directory away.
+
+**I measured the wrong artefact first** and nearly logged "0 credentials committed" — I had copied the
+export off disk, where the Implementer had an uncommitted fix. **Rule: when the question is "what is
+committed", read `origin/main` via `git show` / `git grep <rev>`.** In a tree three agents share, disk is
+somebody's draft. I also flagged four "leaks" that were an assistant id, a public URL, a model name and a
+voice name — "appears in `.env`" is not "is a credential".
+
+**I collided with the Implementer**, who found the same thing in the same minute and had the better,
+property-based fix in flight. I reverted my overlapping edit, parked my guard, and **released the lock so
+they could ship a security fix**. Their replacement of my synthetic value mid-run is also why my
+red-check appeared to pass a mutant it should have caught — **a red-check is only valid if nothing else
+is editing the file.**
+
+**52:** their `1cc7836` VERIFIED against `origin/main`: all eleven `.env` secrets absent, 0 addressable
+SIP URIs in the export, shared secret still redacted 23x, fixtures obviously fake, 14/14 legs tests pass.
+Their regex red-checked in isolation on five cases.
+
+**But the username is permanent in git history** — 2 commits added it on day one, 2 removed it tonight.
+`TELNYX_SIP_PASSWORD`, `TELNYX_API_KEY`, `TOOL_WEBHOOK_SECRET` and `SUPABASE_SERVICE_ROLE_KEY` have
+**never** been committed, so it can address that connection but not authenticate as it. Escalated with
+three options; recommendation is **accept now, rotate after the demo** — re-provisioning fourteen hours
+out is the bigger risk and a history rewrite would break every PR reference and the README counts I
+verified.
+
+Shipped `no-committed-credentials.test.ts`: every tracked file, by credential *shape*, exempting lines
+marked fake. Shape-based because `vitest.setup.ts` strips credentials before tests load. Red-checked on a
+clean tree — the synthetic value fails by file and line, and stubbing `git ls-files` fails the
+"is actually looking at the repo" case.
+
+**Migration 004: third consecutive iteration unapplied.** Still the only known live *runtime* defect.
+
 ## Iterations 48–50 DONE — README and transcript claims VERIFIED; migration 004 still open
 
 The lock was held by another agent for eighteen minutes across three of my iterations (`main` unmoved
@@ -440,6 +478,15 @@ superseded wording; other agents' PR #11, #20, #25, #43.
     nothing — Windows Python's `/tmp` is not git-bash's `/tmp`, and a raw string cannot end in a
     backslash. Both failures printed a success-looking line. Count the file's lines before and after
     and fail loudly on no change; the same rule as the PDF sweep that read zero files.
+
+26. **"What is committed" is a different question from "what is on disk."** Use `git show <rev>:<path>`
+    and `git grep <pattern> <rev>`. Reading the working tree in a repository three agents share measures
+    somebody's uncommitted draft — it turned a real committed credential into a clean bill of health.
+27. **A red-check is only valid if nothing else is editing the file.** Hold the lock or confirm
+    `git status` is clean first, then mutate. At iteration 51 another agent replaced my synthetic value
+    while the test ran, and the guard looked broken when it was fine.
+28. **"Appears in `.env`" is not "is a credential."** An assistant id, a public base URL, a model name
+    and a voice name all live there. Flagging them as leaks buries the one that is real.
 
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real
