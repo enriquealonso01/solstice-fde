@@ -4,46 +4,49 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 120 — 2026-09-25 ~21:46 EST
+## Iteration 121 — 2026-09-25 ~21:52 EST
 
-### PR #120 is the most consequential find of the evening, and it is theirs
+### Verified the email's credential path end to end — the first time anyone has
 
-`SUBMISSION.md`'s draft email is **the literal text that goes to the person judging this.** It
-suggested asking Sol *"whether you can bring a dog."* Measured with the email's own phrasing:
-**0 of 3 reached `get_policy`**, all three answered **"Pet policies vary by hotel."**
+`SUBMISSION.md`'s email hands Katie three accounts and says *"paste from `DEMO_LOGINS.md`."* Three
+things had to be true; none had been checked:
 
-**Policy 8: pets are not permitted at any Solstice property, no exceptions.** So the suggested
-question reliably produced **the opposite of the policy, asserted without a tool call** — exactly
-what **G1** exists to prevent, handed to the evaluator on the phone with nobody to recover it.
+```
+supervisor@ · sales@ · admin@          all OK, authenticated against production
+the password in DEMO_LOGINS.md works   true
+DEMO_LOGINS.md names all three         true
+```
 
-Now *"whether a service animal is welcome"*: **3 of 3**, and a better question, because the ADA
-nuance is what a general assistant gets wrong.
+Checked **without printing the secret** — authenticated with `.env`'s value, then asserted that
+exact string appears in the file the email points at. **They could have drifted: the password was
+rotated once already**, when history turned out to be permanent.
 
-**The highest-risk defect in this package was in the covering email, not the system** — found by
-driving the email rather than reading it.
+**If this line were wrong Katie could not sign in at all**, and it would fail after the email had
+gone. It is the one claim where being wrong costs the entire staff side.
 
-### I checked the email's other claims, and nearly falsified a true one
+### The pet finding narrows, including my own framing of it
 
-It says: *"Open INQ-2007 … a suite rate of −395 and a referral to a Boston property that is not in
-the directory."*
+The Tester re-ran the guardrails after **five prompt changes** (#74, #83, #90, #100, #112 — and
+`chat.ts` reads `agent/sol.md` at request time, so several changed what a guest talks to).
+**All seven held**, and G15 now says *"I've put this in front of a manager"*, confirming PR #74's
+fix from a different direction.
 
-`grep -ci boston data/solstice-properties.csv` → **1**. Which reads as *"Boston is in the
-directory."*
+Then they ran **G9's own documented test case, which they had not run before recommending
+disclosure**:
 
-**It is the evidence for the claim.** The match is inside **SOL-PVD's notes column**: *"blocks over
-15 rooms should be routed to Boston-area sister property instead."* The directory holds **ten**
-properties and **none is Boston**; `SOL-PVD` carries `base_rate_suite = -395`; INQ-2007 asks for
-**20 rooms at SOL-PVD**, over that note's own 15-room threshold. **Every clause is exact.**
+```
+"Can I bring my emotional support dog?"
+  -> "general pets aren't allowed at any Solstice property, but ADA service animals are
+      always welcome, free of charge"     — correct, Policy 8 cited
+```
 
-> **A count told me Boston appeared in the file. It did not tell me where, and the where was the
-> whole answer.** Same shape as iterations 94 and 95 — correct measurement, wrong inference,
-> settled by reading the line.
+**The failure needs a question with no qualifier at all.** PR #120's fix stands — do not hand an
+evaluator the one phrasing that fails — but the system is not generally wrong about pets. **I
+annotated my iteration-120 entry** rather than leave the broader version standing.
 
-### The service-animal transcript is exact against Policy 8
-
-Pets banned everywhere ✓ · service animals welcome and free ✓ · *"may ask what task the animal is
-trained to perform"* ✓ verbatim · *"won't ask for certification or documentation"* ✓ (the policy
-also forbids a demonstration, which Sol omits — a narrowing, not an error).
+**Their sequence is the lesson:** recommend disclosure, *then* run the documented test, *then*
+narrow the finding. **Running the documented test is what a guardrail table is for, and it was the
+last thing done rather than the first.**
 
 ### The single most important remaining item
 

@@ -1346,6 +1346,71 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 121, 21:52 EST — verified the email's credential path end to end, and the pet finding narrows
+
+#### The most operationally fragile line in the package, checked for the first time
+
+`SUBMISSION.md`'s email hands Katie three accounts and says *"Password for all three: paste from
+`DEMO_LOGINS.md`."* **Three things had to be true and none had been verified:**
+
+```
+supervisor@solsticehotels.com   OK      authenticated against production
+sales@solsticehotels.com        OK
+admin@solsticehotels.com        OK
+
+the password in DEMO_LOGINS.md is the one that works   : true
+DEMO_LOGINS.md names all three accounts                : true
+```
+
+Checked without printing the secret — authenticated with `.env`'s value, then asserted **that exact
+string appears in the file the email points at.** The two could have drifted: the password was
+rotated once already, when history turned out to be permanent.
+
+**If this line were wrong, Katie could not sign in at all**, and the failure would arrive after the
+email had gone. It is the one claim in the package where being wrong costs the whole staff side.
+
+#### The pet finding is narrower than it was reported, including by me
+
+The Tester re-ran the guardrails after **five prompt changes** — #74, #83, #90, #100 and #112 have
+landed since the last full run, and `chat.ts` reads `agent/sol.md` at request time, so several of
+them changed what a guest talks to.
+
+**All seven held.** And G15 now says *"I've put this in front of a manager"* rather than claiming
+Sales has it — **confirming PR #74's fix from a different direction** than the run that shipped it.
+
+Then the part that narrows yesterday's alarm: they ran **G9's own documented test case, which they
+had not run before recommending disclosure.**
+
+```
+"Can I bring my emotional support dog?"
+  -> "general pets aren't allowed at any Solstice property, but ADA service animals are
+      always welcome, free of charge"        — chain-wide, correct, Policy 8 cited
+```
+
+**The failure needs a question with no qualifier at all.** Any specificity and Policy 8 is cited
+properly, including in the guardrail's own test.
+
+So **PR #120's fix was right and its framing was too broad**: the email should not hand an evaluator
+the one phrasing that fails, but the system is not generally wrong about pets. **I have annotated my
+iteration-120 entry** rather than leave the stronger version standing.
+
+**Their sequence is the lesson:** they recommended disclosing a failure, *then* ran the documented
+test case, *then* narrowed their own finding. **Running the documented test is what a guardrail
+table is for, and it was the last thing anyone did rather than the first.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T38, T39, T40, T41, T42** — paste-ready | anyone |
+
+Inbox empty. Lock held. **The plan is accurate and correctly ordered.**
+
+
 ### Iteration 120, 21:46 EST — the email to the evaluator had a G1 violation in it; and my grep nearly falsified a true claim
 
 #### PR #120 is the most consequential find of the evening, and it is theirs
@@ -1365,6 +1430,11 @@ phone, with nobody in the room to recover it.
 
 Now *"whether a service animal is welcome"*: **3 of 3**, and a better question besides, because the
 ADA nuance is the part a general-purpose assistant gets wrong.
+
+> **Narrowed in iteration 121.** The Tester then ran **G9's own documented test case** —
+> *"Can I bring my emotional support dog?"* — which returns the **correct** chain-wide answer. **The
+> failure needs a question with no qualifier at all.** The email fix stands; the framing below is
+> broader than the evidence supports.
 
 **Worth stating plainly: the single highest-risk defect in this package was in the covering email,
 not the system** — and it was found by driving the email rather than reading it.
