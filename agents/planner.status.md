@@ -4,56 +4,56 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 193 — 2026-09-26 03:53 EST
+## Iteration 196 — 2026-09-26 04:10 EST
 
-**The plan is accurate and correctly ordered. No agent task is open and none was filed.**
+**The plan is accurate and correctly ordered.** T53 is claimed (It139); nothing else open for an agent.
 
-### The first transcript a reviewer is told to read holds verbatim
-
-`SUBMISSION.md:40`: *"Start with **`honest-handoff.md`**: asked point blank whether a human is joining, Sol says
-no."* **Nobody had re-run it.** Replayed its own opening on the current build — and **turn one volunteered the
-disclaimer before being asked:** *"I'm not able to bring a live person into this chat right now, but the
-escalation is logged with your details and confirmation number R55006."*
-
-Then the load-bearing moment: *"Is a human being joining this chat right now, yes or no?"* →
-**"No — not right now in this chat."** The committed transcript has *"No — I can't put a live person into this
-chat right now."* **Same refusal, same structure.**
-
-### That is G16's chat half — correcting my own phrasing from last iteration
-
-At iteration 192 I wrote G16 *"needs a funded call."* **Only the voice half does.** The chat half costs nothing
-and is now verified. My sentence collapsed a two-runtime guardrail into its more expensive half.
-
-### The trace shows the design the transcript describes
+### Ran `data:check` — the command my banner rests the concierge path on, and had never run
 
 ```
-create_escalation  Escalation a6df3981-… to agm
-transfer_to_human  "Handing over to a colleague"
-transfer_to_human  "Handing over to a colleague"
-create_escalation  Escalation a6df3981-… to agm      <- the SAME id
+OK - 9 generated files match their sources: properties, guests, reservations, policies,
+     policy-document, inquiries, data-quality, rules, manifest
 ```
 
-**`transfer_to_human` says "handing over" while Sol tells the guest "No."** On its own that reads like the model
-contradicting its tool. **The transcript explains it at line 44:** *"the refusal is load-bearing… facts reported
-separately on purpose. A supervisor *can* join a chat, so the route exists."* Nothing in chat consumes the
-raised hand — the separation is what PR #7 fixed at iteration 8. **A deliverable earned its keep: it pre-empted
-a wrong reading of its own trace.**
+**And my banner's wording is accurate**, checked rather than assumed: it says `data:check` *"proves those files
+match the CSVs you sent"*, and `build.mjs:395-397` reads the CSVs, **regenerates every payload and compares
+byte-for-byte** (`:373`). **A full rebuild, not a stored-hash check.**
 
-### And a third verification arrived free — escalation dedupe
+### The manifest is a better artifact than anything points at
 
-**Two `create_escalation` calls, one row, same id.** `escalation-dedupe.test.ts` exists for this and **it holds
-live, not just in the suite.** The committed transcript shows two ids; this run produced one, so dedupe is
-stricter than the capture.
+`data/generated/manifest.json` records **sha256 for all four source files** plus counts
+(properties 10 · guests 24 · reservations 25 · policies 15 · inquiries 10 · rules 65). **That answers the
+sharpest challenge the package invites** — *"how do I know you didn't edit the CSVs?"* — **and no deliverable
+mentions it** (zero hits in README, SUBMISSION, docs).
 
-### Tally, stated precisely
+*(Incidental: guests 24, reservations 25 — that gap is Chen's second reservation, iteration 165's finding,
+encoded in the manifest's own counts.)*
 
-`G2 G3 G4 G5 G6 G7(Platinum) G8 G9 G10 G11 G12 G13 G14 G15 G17 G18 G19` **+ G16 chat half**
-**Outstanding: G16's voice half** (needs the balance) **and G1**, the category the others are instances of.
+### Three of four hashes mismatched, and I nearly filed it
 
-### Disclosure
+`properties`, `guests`, `inquiries` all MISMATCH; `policies` MATCH. **For a package claiming "we did not touch
+your data", that is the worst possible false signal.**
 
-One escalation row, `category: other`, `normal`, to **agm** — **fewer than the transcript's two, because
-dedupe.** Still on no screen the panel sees.
+**Tested the hypothesis, then read the function.** All three match **LF-normalised** content and all three are
+CRLF on disk; the `.md` is LF and matches as-is. And `build.mjs:356`:
+`readFileSync(path,'utf8').split('\r\n').join('\n')` — with the comment *"…it just stops moving for a reason
+that has nothing to do with the data. **Found at iteration 112, the same class as the compile hash in iteration
+96.**"*
+
+**Deliberate, documented, correct** — hashes over LF so they do not move with a checkout. **Seventeenth
+near-miss, caught the same way as the last several: read the function that produced the field.**
+
+### What survives, and why I still filed nothing
+
+The manifest records `sha256` **without saying it is LF-normalised.** The code explains it; the artifact does
+not. **And that is exactly why "point a reviewer at the manifest" would be the wrong task** — the underclaim and
+the trap are the same file, and **a pointer without a label would manufacture the false signal I just talked
+myself out of.**
+
+**They are a pair.** The labelling half needs a new payload key and a regeneration of nine files with
+`data:check` following it, at 04:1x. **Nothing directs a reviewer to recompute those hashes**, so the trap is
+unreachable by instruction. **Leaving both — and writing down that they are a pair**, so nobody does the cheap
+half alone.
 
 ### Open
 
@@ -65,8 +65,9 @@ dedupe.** Still on no screen the panel sees.
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T53 | One row in the audit's superseding block | **CLAIMED It139** |
 
-**Tester silent 7h25m.** Inbox and In progress empty. No lock held.
+**Tester silent 7h41m.** Inbox and In progress empty. No lock held.
 
 ### The single most important remaining item
 

@@ -248,6 +248,84 @@ describe('the requirements audit', () => {
       `${FILE} names availability_service without the correction that says the name is gone from the code.`,
     ).toContain('that name no longer exists in the code')
   })
+
+  /**
+   * Every row still marked PARTIAL must be addressed in the superseding block.
+   *
+   * The block was written at iteration 125 and corrected eight verdicts. It missed **D1** — *"explain
+   * clearly to BOTH technical and non-technical stakeholders"*, one of the brief's six evaluation
+   * criteria — whose stated reason, *"no rehearsed narrative tying them together"*, was closed by
+   * `docs/demo-runbook.md` opening on *"two audiences in one room: a director of engineering and a
+   * non-technical product owner."* T53 found it fourteen iterations later.
+   *
+   * So the sweep that corrected understatements understated its own coverage, and nothing noticed,
+   * because a list of corrections reads as complete. This is the invariant that would have: the set of
+   * PARTIAL row ids below the block must be a subset of the ids the block mentions. It generalises —
+   * any future PARTIAL left unaddressed fails here rather than in front of a reviewer counting six asks.
+   */
+  const NUMBER_WORDS: Record<number, string> = {
+    7: 'seven',
+    8: 'eight',
+    9: 'nine',
+    10: 'ten',
+    11: 'eleven',
+    12: 'twelve',
+  }
+
+  /** The block is the quoted region at the top; the body is everything after the last `>` line. */
+  const audit = () => {
+    const lines = readFileSync(join(repoRoot, FILE), 'utf8').replace(/\r\n/g, '\n').split('\n')
+    const lastQuoted = lines.reduce((acc, l, i) => (l.startsWith('>') ? i : acc), 0)
+    return {
+      block: lines.slice(0, lastQuoted + 1).join('\n'),
+      body: lines.slice(lastQuoted + 1).join('\n'),
+    }
+  }
+
+  it('finds a block and a body to compare, so the case below is not vacuous', () => {
+    const { block, body } = audit()
+    expect(block, 'no superseding block found at the top of the audit').toContain('| Row | Then | Now |')
+    expect(body.length, 'nothing below the block to audit').toBeGreaterThan(500)
+  })
+
+  it('addresses every verdict still marked PARTIAL below it', () => {
+    const { block, body } = audit()
+    const partialIds = [
+      ...new Set(
+        body
+          .split('\n')
+          .filter((l) => /\*\*PARTIAL\*\*/.test(l))
+          .map((l) => l.match(/^\|\s*([A-Z][0-9]*)\s*\|/)?.[1])
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ]
+
+    expect(partialIds.length, 'no PARTIAL rows left; update or remove this case').toBeGreaterThan(0)
+
+    const unaddressed = partialIds.filter((id) => !new RegExp(`\\b${id}\\b`).test(block))
+    expect(
+      unaddressed,
+      `${FILE} still marks ${unaddressed.join(', ')} as PARTIAL and the correction block never mentions ` +
+        `them. That is how D1 survived from iteration 125 to 139 — the block corrected eight verdicts and ` +
+        `read as complete. Either say what is still missing, or add a row saying it is done.`,
+    ).toEqual([])
+  })
+
+  it('counts its own rows correctly in the heading', () => {
+    // The heading said "eight" while the table held nine. A self-describing count is the cheapest
+    // thing in the file to get wrong and the easiest to check.
+    const { block } = audit()
+    const rows = block.split('\n').filter((l) => /^>\s*\|\s*\*\*[A-Z]/.test(l)).length
+    expect(rows, 'no correction rows found in the block').toBeGreaterThan(0)
+
+    const word = NUMBER_WORDS[rows]
+    expect(word, `no spelled-out word for ${rows} rows; extend NUMBER_WORDS`).toBeTruthy()
+    expect(
+      block,
+      `the block holds ${rows} correction rows, so its heading should say "${word} verdicts". It said ` +
+        `"eight" while the table held nine until iteration 139.`,
+    ).toContain(`${word} verdicts`)
+  })
 })
 
 /**

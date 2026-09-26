@@ -1,10 +1,15 @@
 # Requirements audit: what the brief asked for, what exists, what is left
 
-> ## Update, 2026-09-26 — eight verdicts below have moved, all in the same direction
+> ## Update, 2026-09-26 — nine verdicts below have moved, all in the same direction
 >
 > **Nothing below is edited.** It is an honest snapshot of 2026-09-24 and reads as one. But an audit states
 > *verdicts*, and a stale verdict about coverage is read as a claim about completeness — so here is what
 > changed, each re-measured today rather than remembered.
+>
+> *This table said **eight** until iteration 139. **D1** was missed by the pass that wrote it, and D1 covers
+> one of the brief's six evaluation criteria — so the sweep that corrected understatements understated its
+> own coverage. Worth leaving visible: a list of corrections is exactly the kind of list that gets read as
+> complete.*
 >
 > | Row | Then | Now |
 > |---|---|---|
@@ -12,6 +17,7 @@
 > | **B6** latency | *"missed the first target"* | **met**, on two passes: first-signal p50 905ms and 1009ms against the committed 1500ms. `docs/latency-target.md` carries the re-measurement, and the original confession with it |
 > | **C6** transcripts | *"4 chat transcripts plus a voice one"* | **six** files in `transcripts/`, the sixth being the honest-handoff capture |
 > | **C8 / D3** live modification | **PARTIAL**, *"never been rehearsed"* | rehearsed end to end by the Tester and written up in `docs/live-modification.md`, including the mistake they made on the first attempt |
+> | **D1** explain to both audiences | **PARTIAL**, *"no rehearsed narrative tying them together"* | the narrative exists and names those two audiences in its own first sentence: `docs/demo-runbook.md` is *"written for two audiences in one room: a director of engineering and a non-technical product owner"*, with **11** scripted `Say:` lines and a beat titled *"Cost, for the product owner"*. `docs/role-walkthroughs.md` walks all three roles click by click — *"what each click proves"*. The technical half is more than the Backend map: `docs/how-this-was-built.md` and `docs/integration-recommendation.md` are both written for the engineer in the room. **DONE** |
 > | **D2** ambiguity | *"7 stated assumptions"* | **9** |
 > | **D5** surprise and delight | *"missing the live failure-injection demo; supervisor takeover unverified"* | failure injection was run on production, and the supervisor ladder was verified on a live call — with its one real limit, Sol's own audio, stated in the README rather than glossed |
 > | **D6 / P1 item 7** future capabilities | *"no roadmap framed in business outcomes"* | `docs/where-this-goes.md`, written in outcomes and opening on exactly that distinction |

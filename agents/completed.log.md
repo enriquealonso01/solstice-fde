@@ -8430,3 +8430,93 @@ code does.
 
 `npx tsc -b` clean. `npx vitest run` **822 tests / 58 files** in the clone, and **817 passed, 5 skipped,
 0 failed** on a bare checkout with neither `.env` nor `.git`.
+
+---
+
+## It139 — T53: the ninth of the eight verdicts I corrected at iteration 125
+
+T53 was open and unclaimed, and it is a correction of my own work, which makes it the most interesting
+task I have taken all night.
+
+At It125 I prepended a superseding block to `plans/05-requirements-audit.md` correcting **eight** stale
+verdicts, every one an understatement. `plans/05-requirements-audit.md:79` still reads:
+
+> `| D1 | Explain clearly to BOTH technical and non-technical stakeholders | **PARTIAL** | Backend map for
+> technical, cost page for commercial. No rehearsed narrative tying them together |`
+
+**D1 appears zero times in the block I wrote.** I checked rather than took T53's word for it: the block
+names A5, B6, C6, C8/D3, D2, D5, D6/P1-7 and E. Not this one. And D1 is not a minor row — it is one of the
+six criteria the brief evaluates against.
+
+### The reason it gave was closed by the first sentence of a file
+
+`docs/demo-runbook.md`, line 3, before anything else in the document:
+
+> *"The order to show things in, what to say, and what to do when something breaks. **Written for two
+> audiences in one room: a director of engineering and a non-technical product owner.**"*
+
+That is a rehearsed narrative tying the two audiences together, naming them in the same words D1 uses, and
+announcing itself as such in its opening line. So the verdict was being held up by a justification that a
+deliverable had already answered — which is worse than either verdict argued honestly, and is why T53
+insisted the choice was *mark it DONE or give a different reason*.
+
+I looked for a reason to keep PARTIAL and did not find one that survives. The technical half is the
+Backend map plus `docs/how-this-was-built.md` (*"the honest account of how that went"*) and
+`docs/integration-recommendation.md` (*"what we would tell an IT team that is nervous about it"*). The
+non-technical half is the Cost page, `docs/where-this-goes.md`, and a runbook beat titled **"Cost, for the
+product owner"**. `docs/role-walkthroughs.md` walks all three staff roles click by click, *"what each click
+proves"*. The only residual I can name is that the narrative has not been *delivered* yet, which is true
+of every demo before it happens and is not a gap in a package. **DONE.**
+
+### Two wrong counts of the same number before the right one
+
+T53 claimed *"eight scripted `Say:` beats"*. I did not want to restate a figure, so I counted.
+
+My first grep — `"\*\*Say[:,]|Say this out loud|Say out loud|Say:"` — returned **4**. That looked like T53
+being wrong, and for a minute I was drafting a note saying so. It was my pattern: I had enumerated the
+phrasings I expected (`**Say`, `Say out loud`, `Say:`) rather than searching for the word. A second pass
+over `\bSay\b` found **11**:
+
+```
+77  Say that          150 Say: *same agent, same tools…    231 Say this about the projection…
+88  Say out loud…     154 Say plainly: *I can monitor…     264 Say while doing it…
+132 Say your confirm… 183 Say: *these are in the data…     277 Say "that is a bug…"
+219 Say: *the outage is scoped                             296 Say it
+```
+
+So T53 undercounted at eight and I undercounted at four, and the row now says **11**. The general lesson is
+the one this project keeps producing from a different angle each time: **a count taken with a pattern
+built from expected forms measures the expectation, not the thing.** I have now made that mistake in a
+guard (It138), in a mutation (It133, It137) and in a plain count (here).
+
+Better than the cue count, and found while looking for it: the runbook has a **beat titled "Cost, for the
+product owner."** A section header addressed to one of the two named audiences is stronger evidence for D1
+than any number of speaking cues, and it is in the row.
+
+### The guard is the rule, not the row
+
+Adding a D1 row fixes today. The reason D1 survived fourteen iterations is structural: **a list of
+corrections reads as complete.** Nothing checked that the block covered everything it implied it covered.
+
+`doc-paths.test.ts` now requires that **every row still marked PARTIAL below the block is named in the
+block** — today C8, D1, D3, D5 and D6. That is the invariant that would have caught this at It125, and it
+generalises: the next PARTIAL left unaddressed fails here rather than in front of a reviewer counting the
+brief's six asks against our own audit.
+
+A second case checks the block counts its own rows: the spelled-out number in the heading must match the
+number of correction rows. It said *eight* while the table held nine, which is the cheapest thing in the
+file to get wrong.
+
+Red-checked three ways, restores by `cp` from the scratchpad: removing the D1 row fails 1, reverting the
+heading to *eight* fails 1, deleting the whole block fails 5.
+
+### Shape of the edit
+
+**7 insertions, 1 deletion.** The deletion is the heading line inside my own It125 block, changing *eight*
+to *nine*; everything from the original document's first `##` onward is **byte-identical to HEAD**, which I
+checked with `cmp` rather than by reading the diff. The block also now says plainly that it said eight
+until this iteration and that D1 was missed by the pass that wrote it — left visible rather than tidied,
+because the interesting part is not the row, it is that a correction list can be incomplete and still read
+as authoritative.
+
+`npx tsc -b` clean. `npx vitest run` **825 tests / 58 files** green (up 3).

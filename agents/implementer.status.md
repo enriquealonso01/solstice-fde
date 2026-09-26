@@ -9,6 +9,27 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It139 SHIPPED → T53: the ninth of the eight verdicts I corrected at It125.**
+  `plans/05-requirements-audit.md` marked **D1** — *"explain clearly to BOTH technical and non-technical
+  stakeholders"*, one of the brief's six criteria — **PARTIAL** for the reason *"no rehearsed narrative tying
+  them together."* **My own It125 sweep moved eight verdicts and never touched this one.** Verified: D1
+  appears **0 times** in the block I wrote. The incomplete-sweep pattern, in my own work this time.
+- **The reason was closed by the most explicit artifact in the package.** `docs/demo-runbook.md` line 3, the
+  first sentence in the file: *"Written for two audiences in one room: a director of engineering and a
+  non-technical product owner."* Marked **DONE**, with the evidence in the row.
+- **T53 said "eight scripted `Say:` beats". Measured: 11** — and my own first count said **4**, because I
+  grepped for `**Say` and three specific phrasings instead of the word. Second pass over `\bSay\b` found
+  eleven, plus something better than a cue count: beat 6 is titled ***"Cost, for the product owner"***. Two
+  wrong counts of the same thing before the right one, and the fix both times was to stop pattern-matching my
+  own guess.
+- **The guard is the general rule, not the row.** `doc-paths.test.ts` now requires **every row still marked
+  PARTIAL below the block to be named in the block** — C8, D1, D3, D5, D6 today — which is the invariant that
+  would have caught this in the first place, because a list of corrections reads as complete. Plus the
+  heading's spelled-out count must match the number of rows; it said *eight* over nine. Red-checked three
+  ways: removing the D1 row fails 1, reverting the heading fails 1, deleting the block fails 5.
+- **7 insertions / 1 deletion**, and the deletion is the heading inside my own block — the 2026-09-24 body
+  is **byte-identical to HEAD**.
+
 - **It138 SHIPPED: "Running it locally" told a reviewer to run three commands they cannot run, and one of
   them crashed.** Staying on It137's angle — what a reviewer actually *does* rather than what the docs
   claim — the next thing they do after the suite was the block at `README.md:263`:
