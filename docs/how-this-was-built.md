@@ -42,10 +42,17 @@ This is the part that justifies the approach.
 **The 401 that would have killed the voice demo.** Securing `/api/tools` broke every tool call Sol
 makes on a live phone call, because the provisioning script registered the assistant's webhook
 tools without the new secret header. The voice agent found it, proved it with a live replay, and
-fixed it. Then, while in there, it found a *second* break nobody was looking for: all eleven group
+fixed it. Then, while in there, it found a *second* break nobody was looking for: all twelve group
 tools were registered against the concierge dispatcher and would have returned "unknown tool" on
-every call. Fixing only the first bug would have converted 24 silent 401s into 11 working calls and
-11 confusing ones.
+every call. Fixing only the first bug would have converted 23 silent 401s into 11 working calls and
+12 confusing ones.
+
+The split is where it is for a reason you can check rather than take on trust. Open
+[`exports/telnyx-assistant.json`](../exports/telnyx-assistant.json): 23 of its 25 entries are
+webhook tools, and they point at two different places — the eleven concierge and routing tools at
+`/api/tools/<name>`, the twelve group tools at `/api/group/tool`. The remaining two are the
+platform's native `transfer` and `hangup`, which carry no webhook and so could not have returned a
+401 at all. The header fix reached every webhook; only the dispatcher fix reached the second twelve.
 
 **The proposals that were never saved.** The group engine kept proposals in a module-level `Map`,
 which is honest on a laptop and a lie on serverless. Three proposals generated, three PDFs in
@@ -112,9 +119,19 @@ it is atomic.
 It found things the first day could not. The browser mic had never once worked. A deliverable named
 a tool that did not exist. The group refusal promised an approver the schema cannot enforce. A
 malformed `session_id` bought a fully working but completely untraced conversation, which falsified
-a guarantee this README makes in writing. **None of those would have been caught by the tests,
-which passed throughout.** They were found by an agent whose only job was to disbelieve the other
-two.
+**G17** in `agent/sol.md`'s guardrail table — *"every tool call is recorded, masked"* — a guarantee
+the package makes in writing and that the supervisor dashboard and the audit trail both rest on.
+**None of those would have been caught by the tests, which passed throughout.** They were found by
+an agent whose only job was to disbelieve the other two.
+
+It kept finding them, and the later ones were quieter. Five separate guards turned out to be
+**passing while broken** — each one testing the shape of the single bug its author had in front of
+them rather than the rule its own header stated. The auto-triage sweep, a named deliverable, had
+**no test at all**, in a suite of fifty. And a sweep that checked every number in the deliverables
+for going stale walked straight past the one in this file that was simply wrong, because staleness
+was the only failure it was looking for. The pattern is consistent enough to be worth naming: **a
+check written from an example inherits the example's blind spots**, and the thing that finds those
+is another pass by something that does not already know the answer.
 
 **And the protocol produced a bug of its own, which is the part worth telling.** This file's
 sibling, `agents/README.md`, documented the mutex like this:

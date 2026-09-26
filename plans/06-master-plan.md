@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 02:46 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 02:53 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **No agent task is open. T38–T51 are all closed.** `sol.md`, the committed export and the live phone
 > agent all sit at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **748 tests / 54 files
 > at 02:37**. It grows every hour, so read that as a vintage rather than a target.*
@@ -1672,6 +1672,88 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 181, 02:53 EST — chased `grounded: false` on a successful lookup to the edge of filing a defect, and it was assumption 6 working
+
+#### What I found, and why it looked wrong
+
+`transcripts/voice-call.md:107` — the one capture the README admits was *"taken on trust from its own
+timestamps rather than re-run"* — shows:
+
+> *"`get_reservation` — R55015: Deluxe King at SOL-AUS, 2026-09-05 to 2026-09-07 · 1ms **_(returned
+> ungrounded)_**"*
+
+A successful reservation lookup reporting itself **ungrounded** looked wrong, so I reproduced it on
+production and isolated it against its siblings:
+
+| tool | ok | grounded | citations |
+|---|---|---|---|
+| `get_property_info` | true | **true** | 1 |
+| `identify_guest` | true | **true** | 2 |
+| `check_late_checkout` | true | **true** | 5 |
+| **`get_reservation`** | true | **false** | **2** |
+
+**The odd one out**, with two real citations (`reservation:R55015`, `property:SOL-AUS`) and a correct summary.
+And `grounded` is not a private detail: `docs/integration-recommendation.md` offers it as the answer to *"We
+will not know what it did"* — *"every tool call is logged with… **whether the answer was grounded**"* — and
+`docs/role-walkthroughs.md` sends a reviewer to the **Tool trace** panel to look at it. **A correct answer
+flagged ungrounded would be visible in two deliverables and in the live UI.**
+
+#### It is deliberate, and it is the best-designed thing I have looked at tonight
+
+`getReservation` returns `toolUngrounded` on **one condition only** — `terms.refund_class ===
+'not_documented'` — and `_deps.ts:106` says what that helper is for:
+
+> *"(a rate plan no written policy covers, a value quarantined as impossible). **`grounded: false` obliges the
+> agent to say it cannot confirm and to escalate.**"*
+
+**R55015's rate plan, in the CSV phData sent:** `Loyalty Redemption`. Live:
+
+```
+rate_plan       Loyalty Redemption
+refund_class    not_documented
+escalation_req  true
+reason          "No written policy covers cancellation or refund of a Loyalty Redemption booking.
+                 Say plainly that you cannot confirm it and hand to the property team."
+```
+
+**That is `agent/sol.md`'s assumption 6 firing exactly as written** — *"Loyalty Redemption refundability is
+undocumented, so it escalates rather than inheriting."* `grounded: false` is not a mislabelled success; **it
+is the mechanism that obliges the refusal.** The reservation facts are grounded; the *refund terms* are not,
+and the envelope carries the weaker of the two so the agent cannot quietly promise on the stronger.
+
+**So the voice transcript's annotation is evidence, not a blemish.** The one capture nobody re-ran shows a
+guardrail firing on a real phone call, and I nearly filed it as a bug.
+
+#### The near-miss, which is the twelfth and the most instructive
+
+I did everything right except the last step. I noticed an anomaly, **reproduced it on production**, **isolated
+it against four sibling tools**, and established that it is reader-visible in two deliverables. Every one of
+those steps made the case stronger. **Then the answer turned out to be a documented helper in the same file,
+with its reason in a comment three lines above its definition.**
+
+> **And the tell was in my own first output.** The very first probe printed
+> `data keys: … escalation_required, escalation_reason`. **A tool that returns an escalation reason is not
+> quietly failing to be grounded — it is telling you why it is not.** I read past it because I had already
+> decided what the anomaly was.
+
+**Rigour aimed at the wrong question gets you a stronger wrong answer**, which is the failure mode I should
+watch for now rather than sloppiness. The cheap correction is the one that keeps working: **before filing,
+read the function that produced the field.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — **$3.03, no credit line, ~6 calls, hard stop at zero**; gate is $20 | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+
+**No agent task is open and none was filed.** Inbox and In progress empty. No lock held. Tester silent
+**6h24m**. **The plan is accurate and correctly ordered.**
 
 ### Iteration 180, 02:46 EST — there is no credit line, which changes the shape of the Telnyx risk
 

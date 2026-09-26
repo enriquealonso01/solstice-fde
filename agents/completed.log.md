@@ -7704,3 +7704,102 @@ insertions and 2 deletions, **all of them inside my own correction block**, and 
 `# Voice: live transcripts…` down is byte-identical to its first commit.
 
 `npx tsc -b` clean. `npx vitest run` **766 tests / 55 files** green (up 18).
+
+---
+
+## It132 — the sentence that argues the whole approach did not add up, and a sweep had already cleared it
+
+No agent task open, so I went looking in the one named deliverable I had never audited:
+`docs/how-this-was-built.md`. It is the document a reviewer reads to decide whether the agentic claim
+is credible, which makes it the worst place in the package for an arithmetic error. There was one, in
+the paragraph the whole file is built around.
+
+> **The 401 that would have killed the voice demo.** … it found a *second* break nobody was looking
+> for: all **eleven** group tools were registered against the concierge dispatcher and would have
+> returned "unknown tool" on every call. Fixing only the first bug would have converted **24** silent
+> 401s into **11** working calls and **11** confusing ones.
+
+**11 + 11 is 22.** And the export the sentence is about — committed, in the repository, linked from the
+README — says something different again:
+
+```
+exports/telnyx-assistant.json      25 entries
+  webhook                          23     <- the ones that could return 401
+    /api/tools/<name>              11     concierge + routing
+    /api/group/tool                12     group
+  transfer                          1     native, no webhook
+  hangup                            1     native, no webhook
+```
+
+So the total is 23, not 24; the group tools are 12, not eleven; and the split is 11/12, which does sum.
+Two of the three figures were wrong and the third contradicted them, in the sentence doing the most
+persuasive work in the package — and a reviewer checking it does not need to trust anything, because
+the export is right there and `git grep -c` settles it.
+
+It now reads 23 / 11 / 12, with a short paragraph explaining *why* the split lands where it does: the
+concierge and routing tools post to `/api/tools/<name>`, the group tools to `/api/group/tool`, so the
+header fix reached every webhook and only the dispatcher fix reached the second twelve. That turns an
+anecdote into something checkable, which is the same move the README's floors made two iterations ago.
+
+### The part worth more than the fix: it had already been swept
+
+`agents/completed.log.md:5214`, from the T43 sweep:
+
+> - `docs/how-this-was-built.md:47` — *"24 silent 401s into 11 working calls"*: a historical account of
+>   a past debugging session, correctly past tense.
+
+That sweep was thorough and its conclusion was right about the thing it was checking. It was hunting
+figures that **grow** — the T43 class, a number anchored to a live quantity that rots — and it
+correctly established that this one does not. It never asked whether the number was *true*. So the
+sentence was read, classified, cleared, and written up as a negative result, with the error intact in
+the middle of it.
+
+That is now the fourth instance of one pattern in this project, and the pattern is worth stating
+plainly because it keeps producing findings: **a check written from an example inherits the example's
+blind spots.** T47 was a guard whose header stated a property and whose body tested one instance. T51
+was the same, twice over: the elapsed-time ban anchored on the literal word "checkout", so it could
+not see an elapsed figure anchored to a first commit. My own It120 row pinned a wording rather than the
+property it meant. And this sweep scoped itself to staleness and walked past plain arithmetic in the
+same sentence.
+
+The consequence for the guard: it **derives** all three numbers from the export rather than asserting
+them. `src/lib/rules/__tests__/built-doc-counts.test.ts`, 10 cases. The export must split into exactly
+the two dispatchers the doc describes — a webhook pointing at a third target fails, because the doc's
+"two places" sentence would stop accounting for every tool. The stated total must equal the webhook
+count, each half must equal its dispatcher's count, and **the two halves must sum to the total**, which
+is the case the original would have failed on its first day.
+
+Red-checked three ways: restoring 24 / 11 / 11 fails 1; repointing one group webhook at a third
+dispatcher fails 2; and the README slip below fails 1. The export was restored with `git checkout`
+rather than a backup copy, and `git diff --numstat` confirms it came back untouched.
+
+### Two smaller things in the same file
+
+**It called itself a README.** *"A malformed `session_id` bought a fully working but completely
+untraced conversation, which falsified a guarantee this README makes in writing."* The file is
+`how-this-was-built.md`, and the guarantee is not in it — it is **G17** in `agent/sol.md`'s guardrail
+table, *"every tool call is recorded, masked"*, which is a named deliverable and a stronger citation
+than "this README" would have been even if the file were one. Named by guardrail id rather than by line
+number, per It131's lesson, and the guard checks G17 still says it.
+
+**The day-two section listed four findings and stopped.** It was written early in the loop and is
+accurate about those four, but the sentence it builds to — *"None of those would have been caught by
+the tests, which passed throughout"* — is stronger than the evidence it offers, because the loop kept
+going for another twelve hours and the later findings are the more interesting ones. Added: five
+separate guards that were **passing while broken**, the auto-triage sweep having **no test at all** in
+a suite of fifty, and this sweep walking past this file's own error. Then the pattern named, because a
+document about supervising agents should say what supervision actually caught rather than list its
+first four examples.
+
+I deliberately left out the one finding a reviewer might find the most striking — the brief itself
+sitting in a public repository's history. That is phData's own document and the decision about
+mentioning it in a deliverable is Enrique's, not mine; it is already recorded in
+`HUMAN_INTERVENTION.md` as a decision he has been asked to make.
+
+`npx tsc -b` clean. `npx vitest run` **776 tests / 56 files** green (up 10).
+
+One process note: my first edit to `agents/implementer.status.md` used the It131 bullet's opening line
+as its anchor and replaced it, orphaning that bullet's continuation lines under the new entry. Caught
+by reading the file back before committing rather than by a test — there is no guard for a status file
+that has become ungrammatical, and it is mine, so the fix was to restore the header. Worth noting only
+because an anchor that consumes a neighbouring entry's first line is a quiet way to lose it.
