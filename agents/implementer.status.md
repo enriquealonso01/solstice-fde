@@ -9,6 +9,28 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It131 SHIPPED: every count the README states about this repo is now a floor, a command, and a test.**
+  The paragraph one below T51's had the same disease and worse numbers: *"about 35,100 lines of source"*,
+  *"3,500 of deliverable documents"*, ***"13,800 of the agents' own coordination record"*** against a
+  measured **38,850 / 4,682 / 26,706**. The third is **understated by 93%** — and it is the one the
+  paragraph itself argues is *"arguably the more interesting"*, so the page was underselling its own best
+  statistic. The sentence below claimed *"figures are given as floors or rounded, deliberately"*; two of the
+  three were neither. **A document asserting it has solved rot is not evidence that it has.**
+- Now: floors throughout (`over 250 files`, `more than 160` TS, `over 700 tests`, `over 38,000` source,
+  `over 4,500` docs, `over 26,000` coordination, `over 80,000` total), **the six commands that produce
+  them printed in the README**, and `repo-floors.test.ts` — **18 cases** that run those commands and fail
+  if any floor has stopped being one, plus a case banning *"about N"* from that paragraph ever again.
+- **One of the commands I was about to ship was wrong.** `git ls-files '*.md' | xargs wc -l` drops
+  `data/SOLSTICE HOTEL GROUP — FRONT DESK POLICY REFERENCE.md` — a filename with spaces, from the provided
+  data — and silently undercounts by 48 lines. Now `-z` / `xargs -0`, with the reason in the README, because
+  a reviewer who runs the documented command and sees an error reads it as the whole page being sloppy.
+- **The It127 citation guard fired on me for the second iteration running, so I fixed the anchor, not the
+  number.** `README.md:179` → `:185` → would now be `:202`, every move an edit higher up the file rather
+  than any change to the claim. `plans/02-voice-realtime.md` now cites the README **by the sentence it
+  quotes**, the guard looks for that sentence wherever it is, and a second assertion **bans a
+  `README.md:<line>` citation from coming back**. Only my own correction block changed: the 2026-09-24 plan
+  body below it is still byte-identical to its first commit.
+
 - **It130 SHIPPED: T51 closed, both halves.** `README.md` no longer states elapsed time as a figure, and
   the guard that always claimed to ban that now actually does.
 - **Re-derived every number from git rather than taking the plan's.** First commit **2026-09-24 12:35**;

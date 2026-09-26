@@ -7,8 +7,11 @@
 > On a live call the supervisor hears the **guest only**: Telnyx documents `monitor` as hearing
 > everything, but a leg running an AI assistant appears to inject Sol's synthesized speech rather
 > than stream it, so Sol's half never reaches the monitor. The live transcript carries both sides
-> regardless, so the supervisor is never blind -- `README.md:185` states that limit in the
-> deliverable rather than hiding it.
+> regardless, so the supervisor is never blind -- `README.md` states that limit in the deliverable
+> rather than hiding it, under *"Partly working, and stated precisely because it matters"*. Cited by
+> that sentence rather than by a line number: it was `:179` when this correction was written at
+> iteration 127 and `:185` by 130, and both moves were edits higher up the README, not changes to the
+> claim. A quotation survives what a line number does not.
 >
 > **"TEST FIRST" item 1 is answered, and the answer is yes.** `supervise_call_control_id` does work
 > against a leg running `ai_assistant_start`: the supervisor attaches, and `ai_assistant_stop`

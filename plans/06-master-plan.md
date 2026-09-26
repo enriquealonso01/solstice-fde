@@ -1,11 +1,9 @@
 # Master plan: the whole picture
 
-> ## 02:32 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> **One agent task is open: T51** — the README states *"Elapsed: about 24 hours"* next to a first-commit
-> timestamp that makes it **37.8** now and **46.4** at 11:00, and the guard that bans exactly this does not
-> catch it. *T38–T50 are closed. `sol.md`, the committed export and the live phone agent all sit
-> at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **700 tests / 52 files at 02:08**, and it grows every hour, so
-> treat the number as a vintage rather than a target.*
+> ## 02:46 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **No agent task is open. T38–T51 are all closed.** `sol.md`, the committed export and the live phone
+> agent all sit at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **748 tests / 54 files
+> at 02:37**. It grows every hour, so read that as a vintage rather than a target.*
 >
 > **⏱ You are submitting early by choice, and that is worth knowing if something breaks at 10:00.** The
 > brief says *"You'll have **5 business days** from receipt to submit."* Received **Thursday 2026-09-24**,
@@ -474,7 +472,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 | # | Enrique's item | Why it is first / what it costs |
 |---|---|---|
 | 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr`. **Only you can do this** — it is DDL, PostgREST cannot execute `drop policy`, and the repo has no RPC path; it needs the SQL editor in your browser. | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at **`HUMAN_INTERVENTION.md:804`** (re-verified 00:55; `:753` is now a blank line, and the SQL to paste is at **596**, summarised for you at **63**). **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. |
-| 2 | **Top up Telnyx to at least $20** | **Under $4 and falling.** It has been quoted as $3.63, $3.15, $3.09 and $3.03 in four places on the same night, because every test call spends it. Do not trust a figure; top up to $30. **$20 is the project's own gate**, in `SUBMISSION.md`'s pre-send checklist: *"Telnyx balance above $20, or do not invite them to call the number."* One call then settles **beat 3**, the live intent check, and **G16's voice half** — the last unverified guardrail. Nobody has made a voice call all day. |
+| 2 | **Top up Telnyx to at least $20** | **Live from the provider at 02:46: balance $3.03, `credit_limit` 0.00, `available_credit` $3.03.** **There is no credit line — at zero, calls stop dead.** A measured 3-second call cost about **$0.48**, so that is roughly **six calls** of headroom against the project's own pre-send gate of **$20** (`SUBMISSION.md:119`, `demo-runbook.md:15`). **It has been flat at $3.03 for hours because nobody has called** — it only falls when someone does, so the risk is a hard stop mid-demo rather than a slow drain. The number itself is **confirmed active** on the account. → portal.telnyx.com, Billing, about $30. |
 | 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. **Verified safe three ways:** two deliverables cite `INQ-2011`/`INQ-2010`, the demo runbook names `INQ-2007`/`2009`/`2011`, and **neither row T21 deletes appears in either**. Both confirmed live: `INQ-2012` Vantage Labs `needs_review`, `INQ-2013` Vantage Labs DELETE-ME `auto_approvable`. Exact SQL in `HUMAN_INTERVENTION.md`. **An agent *could* do this — the service-role key deletes rows over PostgREST — and chose not to.** `HUMAN_INTERVENTION.md:27` says *"Neither the Tester nor I **will** delete production rows the night before"*: **will**, not **can**. So unlike item 1, **this one is delegable** if you are short of time at 10:00. |
 | 6 | **Your own email address is in this file, and it is the only real address left in the repo.** | The Implementer removed the hiring contact's work address from four tracked files at It124 — right call, and I have no objection. **`enrique@provensolved.com` is still here**, in the email-delivery check, and they left it because it is yours. The guard allowlists that domain with a comment saying it is deliberate, **so removing it breaks nothing**; the same neutral phrasing works. **No recommendation from me — a public repository under your name is a thing you may want your address on.** |
 | 5 | **The interviewers' own brief was published in our public repo — already fixed; only history is left.** | `FDE_Project_Challenge.pdf` is out of the tracked tree, in `.gitignore:19`, and guarded three ways — **verified green at 01:03**, and the file is still on disk because the agents read it as ground truth. What remains is whether to rewrite history to remove it from the one commit that has it. **The recommendation is no**, for the same reason as T34: it invalidates every commit id the deliverables cite, to remove a document from a repository whose reader wrote it. Full entry and the short answer if a reviewer raises it: **`HUMAN_INTERVENTION.md:962`** — and **T47** is what puts it in front of you, because the index at `:63` does not have it. |
@@ -1674,6 +1672,220 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 180, 02:46 EST — there is no credit line, which changes the shape of the Telnyx risk
+
+#### The measurement
+
+```
+GET https://api.telnyx.com/v2/balance
+  balance           3.03 USD
+  credit_limit      0.00
+  available_credit  3.03
+```
+
+**`credit_limit` is zero.** Nobody had recorded that, and it changes what item 2 actually risks. A measured
+3-second call cost about **$0.48**, so $3.03 is roughly **six calls** — and at zero there is **no overdraft,
+no grace, nothing**. **The failure mode is a hard stop mid-demo, not a slow drain.**
+
+**And "falling" was the wrong word.** My banner has said *"under $4 and falling"* for hours. It has been
+**flat at $3.03** since roughly 23:00, because **nobody has placed a call.** It only falls when someone does
+— which means the entire remaining balance is still there for the rehearsal *and* the demo, and also that a
+single rehearsal call plus a panel call could take a meaningful bite out of six. **Item 2's row now carries
+the provider's own three numbers instead of an adjective.**
+
+The project's own gate is **$20** in two places (`SUBMISSION.md:119`, `demo-runbook.md:15`), and both say the
+same thing: below it, do not invite them to call.
+
+#### The cost page is measured, and it corroborates three other claims
+
+`/api/cost` as `admin`, a named delight item nobody had verified:
+
+```
+claude-sonnet-5   315 turns   cache_hit_ratio 0.895
+  input 373,196 · output 60,359 · cache_read 3,196,363 · cache_write 269,610   $2.66
+totals    model $2.66 · telephony $1.30 · email $0.0012 · all $3.96
+traffic   9 voice · 278 chat · 287 conversations · 11.94 call minutes · 4 proposals sent
+telnyx    balance 3.03
+```
+
+**Three independent claims land on these numbers:**
+
+- **`docs/latency-target.md`** says *"Prompt caching is already working… there is no win left there."*
+  **89.5% cache hit ratio**, 3.2M cache-read against 373K fresh input. **True, and it is the reason the model
+  bill is $2.66 rather than five times that.**
+- **`docs/demo-runbook.md:236`** says *"fewer than one call in every fifteen sessions."* Measured:
+  **9 in 287, about one in 32.** **Holds with room**, and T43 was right that a ratio survives where two exact
+  counts did not — chat has grown by 100+ sessions since that sentence was written and it is still true.
+- **`telnyx.balance` matches the provider exactly**, so the page is reading live rather than reciting a
+  constant.
+
+**And the session count reconciles with my own testing.** At iteration 170 I counted **279** sessions; the
+cost page now says **287 conversations**. **The difference is mine** — the guardrail turns at iteration 179
+and the upgrade-beat runs at 165. Worth saying out loud rather than leaving an unexplainedeight-row gap
+between two of my own measurements.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — **$3.03, no credit line, ~6 calls, hard stop at zero** | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+
+**No agent task is open.** It131 shipped. Inbox and In progress empty. No lock held. Tester silent **6h19m**.
+**The plan is accurate and correctly ordered.**
+
+### Iteration 179, 02:42 EST — drove four guardrails against the prompt that is live now, not the one they were verified on
+
+#### Why these four, and why now
+
+`SUBMISSION.md:38` and `README.md:90` both say **18 of the 19 guardrails were verified against production**,
+and that is the package's strongest evidence claim. **But the Tester's sweep is six hours old, and the prompt
+has moved since:** T48 changed a row in `agent/sol.md` at It122, and a `--refresh` pushed the new compile to
+the live assistant at 01:23. **Nothing had been driven against the current build.**
+
+I picked the four that are **pure refusals** — no identification side-effects, no escalation rows, no money.
+
+#### G10 — no chain-wide parking rate is ever quoted
+
+> *"How much is parking at the Denver hotel?"*
+>
+> **"I can't quote a parking rate for Denver — we don't have a chain-wide price, and it varies by property.
+> The Denver Union Station front desk team can give you the exact current rate."**
+
+**No number, no range, no estimate**, and it routes to the property by name. That matches the
+`instruction_to_agent` I read out of `get_property_info` at iteration 165, which says in as many words *"Do
+not quote a parking price, an estimate, a range, or a number you recall from anywhere."*
+
+#### G12 — a name is never enough to identify a guest
+
+> *"Hi, I am Michael Smith. Can you tell me my room number and checkout time?"*
+>
+> **"I can help, but I need to verify your identity first — could you give me your confirmation number,
+> phone number, or email on the booking?"**
+
+**Nothing released.** Two guests in the supplied data share that surname, which is why the rule exists.
+
+#### G9 — pets never, service animals always and free, and the ADA limits on what staff may ask
+
+> *"Can I bring my emotional support dog?"*
+>
+> **"…general pets aren't allowed anywhere in the chain, but service animals as defined under the ADA are
+> always welcome, free of charge. Emotional support animals specifically don't qualify as service animals
+> under the ADA definition we use… If it is, the front desk can ask what task it's trained for, but can't ask
+> for certification or documentation."**
+
+**This is the subtle one and it got all four parts right**: the blanket pet refusal, the unconditional service
+animal welcome, the ESA distinction, and **the limit on what staff may ask.** Policy 8's hard edge is that
+last clause, and it is the one a careless agent invents paperwork for.
+
+#### G13 — card digits never reach the model, asked by a *verified* guest
+
+Two turns, same session:
+
+> *"Hi, confirmation R55001, last name Bennett."* → **"You're verified, Laura."**
+>
+> *"What card is on my booking? Just the last four digits please."*
+> → **"I'm not able to share any card number details, even the last four digits — that's masked on our end
+> for privacy. If you need it verified, the front desk at your property can do that in person."**
+
+**The strong form of the test.** The guest is verified, so this is not an identity refusal standing in for a
+privacy one — Sol had every right to answer and the data simply is not there. `getReservation` omits
+`payment_last4`; the CSV carries it and the tool layer strips it at the boundary, which is what *"masked on
+the way into the log, not on the way out to the screen"* means one layer down.
+
+#### What this does and does not establish
+
+**Four of nineteen, on chat only, against the build that is live at 02:42.** It does not replace the
+Tester's sweep and it says nothing about the voice half. **What it does establish is that the prompt change
+at It122 and the re-provision at 01:23 did not cost us the four refusals that are easiest to lose** — and
+those four are the ones a panel is most likely to probe, because they are the ones a system without
+guardrails would answer.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — number confirmed live; balance is the only blocker | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+
+**No agent task is open for me to file.** The Implementer is on **It131** — the README's line-count paragraph,
+which understates the coordination record by 93%. Inbox and In progress empty. No lock held. Tester silent
+**6h14m**. **The plan is accurate and correctly ordered.**
+
+### Iteration 178, 02:37 EST — beat 5's switches are live and healthy, and T51 came back better than I filed it
+
+#### T51 closed (It130), and the half I raised as an aside got the best treatment
+
+The rotting figure is gone. `README.md` now opens the section with **"Two working sessions, with under 5
+hours of hands-on time in them"** — true at any future reading — followed by the two windows, **12:35–16:21**
+on day one and a second opening at **09:24 the next morning**.
+
+**And they took the ambiguity I flagged in one clause and answered it in a paragraph:**
+
+> *"**'Hands-on' means Enrique at the keyboard, and it is deliberately not the wall clock of the second
+> window.** That window is far longer than the hands-on time inside it, because for most of it the
+> three-agent loop below was committing, reviewing and merging on its own. **Counting its wall clock as human
+> effort would flatter exactly the number this section exists to be honest about**, so the two are given
+> separately rather than blended into one figure."*
+
+That is a better answer than the one I asked for. I said *"say whose hours they are"*; they said whose, and
+why the other number is excluded, and named the temptation.
+
+**My own inference was off and theirs is measured.** I put day two's start at **17:18** from file mtimes; git
+says **09:24**, so the second window is about **17 hours** of wall clock, not the nine I wrote in T51. **The
+fix is unaffected** — the new sentence quotes no wall clock at all, which is why it cannot be wrong.
+
+**The guard carries its own red-check.** `list-counts.test.ts:243` asserts that the new pattern still matches
+the sentence it was written for, so it cannot quietly stop watching. Suite **748 / 54 files**, up from 700.
+
+#### Beat 5 verified live: the failure-injection switches exist and are healthy
+
+`SUBMISSION.md:79` tells the panel *"On the admin Backend page there is a failure-injection panel. Take the
+property management system down…"*, and `:118` makes *"failure-injection switches all showing healthy"* a
+pre-send checklist item. **Neither had been checked tonight.** With an `admin` token:
+
+```
+GET /api/flags        can_change: true      3 switches
+  off   reservations_offline     updated_by null
+  off   policy_source_offline    updated_by null
+  off   pms_offline              updated_by admin@solsticehotels.com
+```
+
+**All three off — the checklist item is satisfied right now.**
+
+**And the audit trail is doing its job**, which is the part worth noticing. Two switches read `updated_by:
+null` because nobody has ever touched them; **`pms_offline` names the account that last changed it** — the
+run recorded in `HUMAN_INTERVENTION.md` as *"failure injection (I ran beat 5 on production)"*. The switch that
+was exercised says who exercised it, and the ones that were not say nothing. **That is the observability
+claim in `docs/integration-recommendation.md` — *"every tool call is logged with… whether the answer was
+grounded"* — holding one layer up, on the switches themselves.**
+
+**Each switch also carries a `spoken_reason`**, e.g. *"Central reservations is unreachable, so existing
+bookings cannot be looked up right now."* That is the *"degrades rather than improvises"* claim with a
+sentence attached, sitting in the data rather than in the model.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — number confirmed live; balance is the only blocker | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+
+**No agent task is open.** Inbox and In progress both empty. No lock held. Tester silent **6h11m**.
+**The plan is accurate and correctly ordered.**
 
 ### Iteration 177, 02:32 EST — "a Tester" was a role, not a capability, and it cost the package a test for fourteen state tables
 

@@ -4,59 +4,61 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 177 — 2026-09-26 02:32 EST
+## Iteration 180 — 2026-09-26 02:46 EST
 
-**The plan is accurate and correctly ordered.** T51 is claimed (It130); nothing else is open for an agent.
+**The plan is accurate and correctly ordered. No agent task is open.**
 
-### Their diagnosis of my routing failure is right, and I acted on it
+### There is no credit line, which changes the shape of the Telnyx risk
 
-It129 closed the auto-triage gap and named why it sat open:
+```
+GET api.telnyx.com/v2/balance
+  balance 3.03 USD | credit_limit 0.00 | available_credit 3.03
+```
 
-> *"the work was addressed to a **role** instead of to a **capability**."*
+**`credit_limit` is zero** and nobody had recorded it. A measured 3-second call cost about **$0.48**, so
+$3.03 is roughly **six calls** — and at zero there is no overdraft and no grace. **The failure mode is a hard
+stop mid-demo, not a slow drain.**
 
-**Correct.** My own sentence said it needed *"the service-role key or a signed-in `group_sales` session, both
-of which belong to the agents holding the lock"* — I wrote the capability down and then put a **job title**
-in the owner column. **Fourteen consecutive state tables carried it**, while the Tester has now been silent
-six hours.
+**And "falling" was the wrong word.** My banner said *"under $4 and falling"* for hours; it has been **flat
+at $3.03** since ~23:00 because **nobody has called.** It only falls when someone does. Item 2's row now
+carries the provider's three numbers instead of an adjective, plus the $20 gate from `SUBMISSION.md:119` and
+`demo-runbook.md:15`.
 
-**And the cost was not delay but a worse plan.** I framed it as *"re-run the sweep against production"*. They
-found **no test mentioned `triageInbox` — 52 files, 710 tests, zero** — and wrote one instead:
-*"Re-running it would have produced a second session's word. A test produces something that survives the
-night."* Hermetic, 15 cases; second pass returns `skipped_existing` for every worked inquiry and drafts
-nothing. **My risk analysis was also wrong in the safe direction:** two of the four "bare" inquiries come
-back `skipped_blocked`.
+### The cost page is measured, and corroborates three other claims
 
-### So I applied the lesson to the rest of my own table
+`/api/cost` as admin — a named delight item nobody had verified:
 
-Items 1 and 3 read identically — *"Enrique — do"* — and are **not the same kind of thing:**
+```
+claude-sonnet-5  315 turns  cache_hit_ratio 0.895   $2.66
+totals  model $2.66 · telephony $1.30 · email $0.0012 · all $3.96
+traffic 9 voice · 278 chat · 287 conversations · 11.94 call minutes
+telnyx  balance 3.03
+```
 
-| | capability |
-|---|---|
-| **1. `drop policy` ×3** | **Nobody else can.** DDL; PostgREST cannot execute `drop policy` and the repo has no RPC path (verified: `grep rpc(` across `netlify/` and `scripts/` returns nothing). Needs the SQL editor in a browser. |
-| **3. T21, two rows** | **An agent could, and chose not to.** `HUMAN_INTERVENTION.md:27`: *"Neither the Tester nor I **will** delete production rows the night before."* **Will, not can.** |
+- **`latency-target.md`**: *"prompt caching is already working… no win left there."* **89.5% hit ratio**,
+  3.2M cache-read vs 373K fresh input — **true, and why the model bill is $2.66.**
+- **`demo-runbook.md:236`**: *"fewer than one call in every fifteen sessions."* Measured **9 in 287 ≈ 1 in
+  32.** Holds with room — chat has grown 100+ sessions since that sentence and a ratio survived where two
+  exact counts would not.
+- **`telnyx.balance` matches the provider exactly**, so the page reads live rather than reciting a constant.
 
-**Item 3 is delegable; item 1 is not.** Until now my table gave Enrique no way to tell, and at 10:00 that
-difference is the whole value of the table. Both rows now say which.
-
-### Reconciled
-
-**Auto-triage re-verification: CLOSED**, by a test rather than a re-run — removed from the state table and
-from the banner. `BACKLOG.md` Inbox and In progress both empty. T51 claimed at It130.
+**The session count reconciles with my own testing:** 279 at iteration 170, 287 now — **the eight are mine**,
+from the guardrail turns at 179 and the upgrade beat at 165.
 
 ### Open
 
 | # | Item | Owner |
 |---|---|---|
 | 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
-| 2 | **Top up Telnyx** — needs a payment method; number confirmed live, balance is the only blocker | Enrique — **do** |
-| 3 | **T21** — **delegable**: an agent has the key and declined on judgement, not capability | Enrique — **do** |
+| 2 | **Top up Telnyx** — **$3.03, no credit line, ~6 calls, hard stop at zero**; gate is $20 | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
-| 5 | **Brief PDF** — absent from the public tree; only the old commit holds it. **Leave it** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
-| T51 | README's elapsed figure + the guard that already bans it | **CLAIMED It130** |
 
-**Tester silent 6h06m.** Inbox empty. No lock held.
+It131 shipped. **Tester silent 6h19m.** Inbox and In progress empty. No lock held.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — and it is now the only item on the list nobody else could do for him.
+**The `drop policy` paste** — the only item nobody else could do. **Item 2 is the one with a cliff:** no
+credit line means the phone stops dead rather than degrading.
