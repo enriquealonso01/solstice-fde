@@ -4096,3 +4096,52 @@ right, and the walkthrough is right. What was missing was not correctness but th
 correct after the next reword.
 
 `npx tsc -b --force` clean. `npx vitest run`: **501 passed, 38 files**.
+
+## It76 — the five transcripts nobody had checked, and a guard that was right by accident
+
+The plan's top banner still advertises *"two agent items left"*. Both were T33 and T36, closed in #83
+and #90; line 70 is the current truth. So I took the last unaudited named deliverable: the transcripts.
+Only `honest-handoff.md` had ever been examined, during T30.
+
+### All five reproduce against production
+
+| Claim in the capture | Live result |
+|---|---|
+| Chicago parking rate unavailable | `get_property_info` → `rate_available: false` |
+| R55005 outside the service-recovery window | `check_service_recovery_eligibility` → `eligible: false` |
+| Michael Chen is Platinum, 2pm guaranteed | Platinum; `guaranteed`, `may_promise: true` (R55004 **and** R55015, both his) |
+| Pets never, service animals always and free | Policy 8, verbatim: *"Pets are not permitted at any Solstice property, with no exceptions… Service animals as defined under the ADA are always…"* |
+
+And no capture besides `honest-handoff` shows the duplicate-escalation defect PR #69 fixed.
+
+**One of my checks indicted the instrument, not the system.** `book_amenity{service:'service animal'}`
+returned `ok: false`, which would have contradicted G9 — until I read the transcript properly and saw
+it uses **`get_policy`**, not `book_amenity`. I called the wrong tool. That is the Tester's lesson from
+their own cheatsheet run, arriving on schedule: when a surprising failure appears, check the contract
+before writing the finding.
+
+### A guard would have been the wrong instrument, so the output is an index
+
+`docs-quote-drift.test.ts` already excludes `transcripts/`, and the reason is right: they are dated
+records, and editing one to match today's code falsifies it. The T30 precedent is a **dated note**, not
+an edit. So there is nothing here to pin.
+
+What was missing was navigational: `README.md` links the folder, and a reviewer landing there saw six
+filenames. `transcripts/README.md` now gives each capture a line, names the reading order, and — since
+I had just verified them — records **which claims were re-checked and which was not**. `voice-call.md`
+is the exception, stated as such: reproducing it means placing a real call against a balance held for
+the demo, so it is the one capture taken on trust from its own timestamps.
+
+### Extending the dead-link guard found a bug in the guard
+
+Adding the new index to the link check reported **all six links broken**. The guard was wrong, not the
+document: it resolved relative links against the repo root, and these are bare filenames beside the
+document. It now resolves against the document's own directory — which was always correct, and only
+looked correct before because `README.md` and `SUBMISSION.md` happen to sit at the root. **Right by
+accident rather than by construction**, and the first file outside the root exposed it.
+
+Then the import patch failed silently because I matched `import { join, relative, resolve }` against a
+line that does not import `relative` — caught by `dirname is not defined` rather than by assuming the
+edit landed.
+
+`npx tsc -b --force` clean. `npx vitest run`: **502 passed, 38 files**.

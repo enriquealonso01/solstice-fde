@@ -10,6 +10,15 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It76: audited the five transcripts nobody had checked, and indexed the folder.** The plan's
+  top banner still lists *"two agent items"* — both are T33 and T36, which I closed in #83 and #90, so
+  line 70 is the current truth: nothing left for an agent. The transcripts are a named brief
+  deliverable and only `honest-handoff.md` had ever been examined (T30).
+- **All five reproduce against production.** No transcript besides `honest-handoff` shows the
+  duplicate-escalation defect, and each tool claim holds. **A guard would be the wrong instrument** —
+  `docs-quote-drift` already excludes `transcripts/` because they are dated captures and editing one
+  to match today's code falsifies a record. So the output is an index, written from what I verified.
+
 - **DONE It75: re-audited `docs/role-walkthroughs.md` as a property, not a list.** It73 checked the
   strings I remembered changing; this swept all 55 backticked spans. **The document is correct** —
   the five that looked missing are runtime-assembled, and `Unknown caller +*******2646` is written
