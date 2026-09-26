@@ -4,45 +4,45 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 137 — 2026-09-25 ~23:08 EST
+## Iteration 139 — 2026-09-25 ~23:16 EST
 
-### The paste in my own banner was missing the reason it is safe, and the recovery if it is not
+### Applied last iteration's rule to my own section, and it had the same flaw
 
-PR #132, while testing whether `demo_flags` has the same hole (**it does not** — 403 signed-in
-concierge, 401 anon, migration 003's write policy live), read the policy set and found this about
-**the paste Enrique performs by hand**:
+Iteration 138: *"every reassurance in a handoff document is a measurement someone took at a time you
+cannot see."* **`▶ IF THEY ASK` is a handoff document I wrote**, so I checked its numbers live.
 
-> *"Dropping a `FOR ALL` policy **also drops the read it granted**, so those three lines are safe
-> only because `schema.sql` declares `inq_read`, `prop_read` and `fup_read` separately. Migration
-> 004 restates them in a `do`-block; **the pasted lines do not carry it. Nothing asserted the reads
-> existed.**"*
+```
+                      22:46     23:16
+spend                 $3.07     $3.11
+conversations          181       186
+breakeven voice share  6.8%      6.8%
+```
 
-`rls-policies.test.ts` now pins it.
+**The totals moved in forty minutes. The ratio did not** — exactly as iteration 134 argued it
+would, because it is a ratio of per-unit costs. Three readings now, while the totals beside it
+drifted twice.
 
-### The gap was in my file, on the most important item in the package
+**Answer 6 now hands over the measurement.** The durable half keeps **6.8%** with a line saying why
+it is durable; the moving half says **read the totals off the Cost page**, and names both readings
+so the reader can see it moves.
 
-**My banner is the paste source.** It said *"Safe — nothing in the client writes these tables"* —
-true, and not the whole reason. It never said the safety rests on the reads being declared
-separately, and **it pointed at `HUMAN_INTERVENTION.md:753` for deleting the disclosure while saying
-nothing about :580**, where the recovery has sat all evening:
+### What these four iterations have been about
 
-> *"If the inbox goes blank after applying it, the read policies did not survive; re-run the
-> `do $$`."*
+The banner's SQL paste lacked the reason it was safe · T21 carried an hours-old cascade check ·
+T44's command works because I warmed a cache · my own panel answers froze numbers that move.
 
-Someone pasting three lines at 10:30 and watching the sales board empty needs the second pointer,
-not the first. **Fixed: the item now carries why it is safe, what the three lines omit that the
-migration file has, and what to run if the inbox goes blank.**
+> **None were wrong.** Each was a true sentence that would stop being true, or was true only under
+> conditions the reader could not see. **That is the failure mode of a handoff document, and every
+> guard in this project is blind to it** — they all check text against text.
 
-> **A correct instruction is not a sufficient instruction.** *"Safe, paste this"* is correct. It is
-> not enough for someone doing it alone, before a demo, with no way to tell a slow paste from a
-> broken one.
+The fix has been the same each time, and it is not "write more carefully": **give the reader the
+query, the command, or the reason.**
 
-### Also checked
+### Also landed
 
-README's setup block is complete — `npm install`, `cp .env.example .env`, then the four commands.
-**No missing step**, which is what I went looking for after T44.
+**PR #134** pins the two refusal strings the boundary walkthrough quotes — the section I verified by
+hand in iteration 103 with a live 403. **It can no longer drift without a test failing.**
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — now with its safety reason and its recovery. **T44** is the only agent
-item.
+**The `drop policy` paste.** **T44** is the only agent item.

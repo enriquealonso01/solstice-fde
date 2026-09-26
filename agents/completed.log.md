@@ -5542,3 +5542,73 @@ fix is `chr(92)` or, better, not needing an escape.
 
 `npx tsc -b` clean. `npx vitest run` **580 tests / 48 files** green (up 6). Nothing written anywhere:
 three GETs, two of them refused.
+
+## It102 — two boundaries nobody had exercised, and the limit the package forgot to disclose
+
+No task open. Two surfaces had never been tested this session, and both matter more than anything in
+the docs: the assistant-facing tool routes, and the link a customer receives.
+
+**The tool routes are closed.** `.env.example` warns that leaving `TOOL_WEBHOOK_SECRET` unset *"leaves
+those routes OPEN to the internet"*, and `/api/tools/<name>` is how the phone agent drives every
+lookup — open, it is a stranger's console.
+
+```
+GET  /api/tools                              -> secured: true, 12 tools
+POST /api/tools/get_policy   no header       -> 401 {"ok":false,"grounded":false,"error":"Unauthorized."}
+POST /api/tools/get_policy   wrong key       -> 401  (same)
+GET  /api/group/tool         no header       -> 401 "Send x-solstice-tool-key or Authorization: Bearer <TOOL_WEBHOOK_SECRET>."
+```
+
+I used `get_policy` deliberately: if the boundary had been open, the worst case was a read.
+
+While there I checked a count that looks like a contradiction and is not. README says the export is
+*"the live assistant, 25 tools"*; the export has exactly **25**; `/api/tools` advertises **12**. Those
+are different sets — the 12 are the guest tools on that route, the rest are the group lane and the
+platform's own. Nothing to fix.
+
+**The customer's proposal link cannot be walked.** The link in `proposals.pdf_path` is Supabase
+Storage at `.../object/public/proposals/PRP-2011/<32 random chars>/Solstice-proposal-….pdf`.
+
+```
+POST /storage/v1/object/list/proposals   anon key as bearer      -> 200, 0 entries
+POST /storage/v1/object/list/proposals   concierge token         -> 200, 0 entries
+HEAD the real URL, no credentials at all                         -> 200 application/pdf
+HEAD the same URL with one path segment altered                  -> 400
+```
+
+So nobody can enumerate the bucket to find other customers' pricing, and a near-miss URL does not
+land on a different document.
+
+### The actual finding: an undisclosed limit
+
+`GET /storage/v1/bucket/proposals` returns `"public": true`. The URL **is** the credential: no login,
+no expiry, no revocation, and forwarding the email forwards the access. That is a defensible design —
+a proposal emailed to a group organiser cannot require an account on our system, and it is the model
+every share link uses.
+
+What was wrong is that **no deliverable said so.** The README has a limits section that discloses the
+session-identity binding with no TTL, the supervisor audio gap, the idle-session count and the email
+sandbox — and it omitted the one limit that touches an outside party's pricing. Inconsistency with the
+package's own best quality, in the direction that flatters us.
+
+Added in that section's voice, claiming only what I measured: the mechanism, the public bucket, the
+absent login, the absent expiry and revocation, the zero-entry enumeration result, the 400 on an
+altered segment, and the two things production does first — a signed URL with an expiry, and a revoke
+that survives the email already being sent.
+
+**Guarded so it cannot drift in either direction.** While `store.ts` calls `getPublicUrl`, the README
+must carry the disclosure; and the paragraph must keep naming each element. Red-checked three ways:
+delete the paragraph, remove the enumeration evidence from it, and rename `getPublicUrl` as if the code
+had moved to a signed URL — which is the case that matters most, because it is the day the prose
+becomes wrong in the flattering direction.
+
+**The guard caught me twice while I wrote it.** First I pinned the literal `object/public/proposals`
+string; Supabase builds that path inside `getPublicUrl`, so `store.ts` never contains it and the case
+failed immediately. Then, citing the token check, I "corrected" `store.ts:158` to `157` off a
+`sed -n '156,160p'` reading, and `doc-citations` refused it: **158 is the function, 157 is its
+comment.** `grep -n` settled it. The instrument was right and I was not — the fourth off-by-one of
+exactly that shape in this repo, and the second time this session a guard I own has corrected me
+rather than the reverse.
+
+`npx tsc -b` clean. `npx vitest run` **586 tests / 48 files** green (up 6). Nothing written anywhere:
+every probe was a GET, a HEAD, a list, or a refusal.

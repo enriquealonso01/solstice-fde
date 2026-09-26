@@ -208,6 +208,23 @@ timeout that ends the session and writes the same `ended` state a hangup does, s
 the transcript agree without anyone running a script. Not built, because it changes the state
 machine behind the headline supervisor surface.
 
+**A stated limit: a customer's proposal link is a capability URL, not an authenticated download.**
+The PDF a customer receives lives in a Supabase Storage bucket that is **public**, at a path
+containing a 32-character random segment
+(`.../object/public/proposals/PRP-2011/<random>/Solstice-proposal-….pdf`). Anyone holding that URL
+can open it with no login, which is deliberate — a proposal emailed to a group organiser cannot
+require an account on our system — and it is the same model as any share link. What it means
+honestly: the link *is* the credential, so forwarding the email forwards the access, and there is no
+expiry and no revocation.
+
+Measured rather than assumed: the bucket cannot be enumerated — a `list` call returns **zero
+entries** both with the public anon key and with a signed-in staff token, so nobody can walk it to
+find other customers' pricing — and a URL with one path segment altered returns **400**, not a
+different customer's document. The `/api/group/pdf/<code>.pdf?t=<token>` fallback route does check a
+derived token in constant time (`netlify/functions/group/store.ts:158`). In production the first two
+changes are a signed URL with an expiry, and a revoke that survives the email already being sent;
+neither is built, because both change what an already-delivered link does.
+
 **Email:** proven end to end. Telnyx's shared sending domain is a sandbox that only delivers to the
 account's own verified address, so every send is routed there; verifying a real domain removes that
 limit and is a DNS change, not a code change.

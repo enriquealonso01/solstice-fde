@@ -9,24 +9,27 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It101: ran every `curl` the deliverables hand a reviewer. All three match, and the
-  Tester's last FIXED-PENDING item is now verified.**
-- **`docs/role-walkthroughs.md`'s "Proving the boundary, in ten seconds" is exact.** A concierge token
-  on `/api/group/proposals` returns **403** with the sentence the page prints **verbatim**; no header
-  returns **401** with *"Authorization: Bearer <supabase access token> is required."* verbatim. That
-  closes the Tester's iteration-60 item — the prose was fixed in PR #102 but nobody had re-run the
-  command since.
-- **The database underneath matches too:** concierge reading `inquiries` gets **0 rows of 13**,
-  `group_sales` reading `sessions` gets **0** of 180+. The page's *"not a filtered view — the rows are
-  not there to be had"* is accurate.
-- **The runbook's warm-up is accurate:** `/api/chat` 0.32s then **0.23s**, `/api/tools` 0.99s then
-  **0.22s**, against documented warm figures of ~0.21s and ~0.26s.
-- **Pinned the two refusals to `group/auth.ts`, message and status together.** The section's argument
-  is that the two refusals *differ* — "who are you" versus "you are not allowed" — so a guard that
-  checked only the text would miss a 403 quietly becoming a 401. Red-checked both ways.
-- **My own regex was broken by the heredoc** and printed `/status:s*403/`: a backslash level eaten
-  again. Replaced with a literal `toContain`. Same hazard as the `chr(92)` note, now on the sixth
-  occurrence — the tell was that both status cases failed while both text cases passed.
+- **SHIPPED It102: both unexercised boundaries hold — and the one real gap was a limit the package
+  never disclosed.**
+- **Tool routes are closed.** `/api/tools` reports `secured: true`; a call to a read-only tool returns
+  **401** with no header **and** with a wrong key; `/api/group/tool` refuses the same way. README's
+  *"25 tools"* matches the export exactly (25); the 12 at `/api/tools` are the guest subset, not a
+  contradiction.
+- **The customer's proposal link cannot be walked.** A storage `list` on the `proposals` bucket returns
+  **zero entries** with the public anon key *and* with a signed-in concierge token; one altered path
+  segment returns **400**, not another customer's PDF.
+- **But the bucket is `public: true` and the URL is the whole credential** — no login, no expiry, no
+  revocation, and forwarding the email forwards the access. Defensible, and the same model as any share
+  link. **No deliverable said it.** This README discloses the session-identity limit, the approval gate,
+  the supervisor audio gap and the idle-session count in that same section, and omitted the one limit
+  that touches an outside party's pricing. Added in the section's own voice, with the measurements.
+- **Guarded**: while `store.ts` calls `getPublicUrl`, the README must carry the disclosure, and the
+  paragraph must keep naming the mechanism, the public bucket, the absent login, the absent expiry and
+  the enumeration evidence. Red-checked three ways, including "the code moves to a signed URL".
+- **The guard caught me twice.** My first pin was the literal path — Supabase builds that inside
+  `getPublicUrl`, so `store.ts` never contains it. Then I "corrected" a citation from 158 to 157 off a
+  `sed` range print and `doc-citations` refused it: **158 is the function, 157 its comment.** The
+  instrument was right and I was not — fourth off-by-one of that kind here.
 
 ## Demo rehearsal coverage — what is actually verified
 
