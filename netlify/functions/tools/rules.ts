@@ -264,7 +264,7 @@ export const ESCALATION_MATRIX: Record<EscalationCategory, EscalationRoute> = {
     notify: ['Manager on duty', 'AGM'],
     mapped_assumption: false,
     human_reason:
-      'Policy 7 and Policy 15: comps over $50, or a full comped night, need AGM or GM sign-off the same day.',
+      `Policy 7 and Policy 15: comps over $${COMP_AUTHORITY.front_desk_max_cents / 100}, or a full comped night, need AGM or GM sign-off the same day.`,
   },
   other: {
     authority: 'agm',
@@ -519,7 +519,7 @@ export const POLICY_INDEX: PolicyIndexEntry[] = [
     title: 'Comp and service recovery authority',
     keywords: ['comp', 'comped', 'waive', 'goodwill', 'authority', '$50', 'manager approval', 'resort fee', 'minibar'],
     summary:
-      'Front desk associates can comp up to $50 per stay without manager approval, for example a waived resort fee, a minibar item or a parking charge. Anything above $50, or a full comped night, needs AGM or GM sign-off. Where a guest has two or three small issues over a multi-night stay that are each under $50, they are added up before deciding whether the front desk is still inside its own authority.',
+      `Front desk associates can comp up to $${COMP_AUTHORITY.front_desk_max_cents / 100} per stay without manager approval, for example a waived resort fee, a minibar item or a parking charge. Anything above $${COMP_AUTHORITY.front_desk_max_cents / 100}, or a full comped night, needs AGM or GM sign-off. Where a guest has two or three small issues over a multi-night stay that are each under $${COMP_AUTHORITY.front_desk_max_cents / 100}, they are added up before deciding whether the front desk is still inside its own authority.`,
     facts: {
       front_desk_max_cents: COMP_AUTHORITY.front_desk_max_cents,
       aggregate_per_stay: COMP_AUTHORITY.aggregate_per_stay,
@@ -584,7 +584,7 @@ export const POLICY_INDEX: PolicyIndexEntry[] = [
     title: 'ID verification and incidental hold',
     keywords: ['id', 'identification', 'photo id', 'deposit', 'incidental', 'hold', 'name mismatch', 'booked for my boss'],
     summary:
-      'Every guest presents a valid photo ID at check-in. Card-paying guests get a $50-per-night incidental hold; cash-paying guests leave a deposit of two times the nightly rate, refunded within 3 to 5 business days after checkout assuming no damage or extra charges. If the name on the ID does not match the reservation, do not turn the guest away: confirm the confirmation number and note the discrepancy in the reservation file.',
+      `Every guest presents a valid photo ID at check-in. Card-paying guests get a $${POLICY_RULES.incidental_hold_per_night_cents / 100}-per-night incidental hold; cash-paying guests leave a deposit of two times the nightly rate, refunded within 3 to 5 business days after checkout assuming no damage or extra charges. If the name on the ID does not match the reservation, do not turn the guest away: confirm the confirmation number and note the discrepancy in the reservation file.`,
     facts: {
       incidental_hold_per_night_cents: POLICY_RULES.incidental_hold_per_night_cents,
       cash_deposit_multiple: POLICY_RULES.cash_deposit_nightly_rate_multiple,
