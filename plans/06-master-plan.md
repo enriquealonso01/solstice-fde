@@ -1,8 +1,9 @@
 # Master plan: the whole picture
 
-> ## 04:20 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> **One agent task is open: T54** — the architecture diagram's Today page says *"Six calls transcribed"*;
-> there are **nine**, all transcribed. *T38–T53 are closed.* `sol.md`, the committed export and the live phone agent
+> ## 04:29 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **One agent task is open: T55** — six of my eight line pointers into `HUMAN_INTERVENTION.md` had
+> rotted by +13, including the one under item 1. **All corrected and re-anchored to quoted headings.**
+> *T38–T54 are closed.* `sol.md`, the committed export and the live phone agent
 > all sit at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **809 tests / 58 files at
 > 03:48**. It grows every hour, so read that as a vintage rather than a target.*
 >
@@ -18,7 +19,7 @@
 > asserting idempotency on both stores. It sat open for fourteen state tables because **I addressed it to a
 > role ("a Tester") instead of to a capability**, and the agent holding the key read past it. Iteration 177.*
 > **Six items are yours — three to do, and three decisions where the recommendation is to do nothing**
-> (T34 the SIP credential; the brief PDF in history, `HUMAN_INTERVENTION.md:962`; and your own email
+> (T34 the SIP credential; the brief PDF in history, `HUMAN_INTERVENTION.md:975`, heading ***"Your call: the interviewers' own brief"***; and your own email
 > address in this file, which removing breaks nothing and on which I have no recommendation).
 > *Seven likely panel questions are answered in `▶ IF THEY ASK` below.*
 >
@@ -33,7 +34,9 @@
 > **Fixed at 00:05** by an update block at **`HUMAN_INTERVENTION.md:63`**, sitting directly under the
 > 15:30 list and naming both this and T34. *Iteration 156 filed T45 asking for exactly that, half an
 > hour after it had already been done; the correction is in the log below.* The `drop policy` SQL is
-> at **lines 596–598** there (and again at 795–797); the full entry is at **563**.
+> at **lines 609–611** there, under the heading ***"### What to run"*** (and again at 808–810); the full entry
+> is at **576**, ***"A signed-in sales rep can approve their own flagged proposal"***. **Search the quoted
+> headings if the numbers have moved — they shifted by 13 between 01:05 and 04:26.**
 >
 > ### 1. The approval gate reads a column the browser can write
 >
@@ -75,13 +78,13 @@
 >
 > **If the sales inbox goes blank after you paste it**, the reads did not survive: run the `do $$`
 > block from `supabase/migrations/004_client_read_only_on_group_tables.sql`, which recreates them.
-> Recovery note at **`HUMAN_INTERVENTION.md:619`** — *"If the inbox goes blank after applying it…"*
+> Recovery note at **`HUMAN_INTERVENTION.md:632`** — search ***"If the inbox goes blank after applying it"***
 >
 > **Apply it and change nothing else, or apply nothing and weaken assumption 13**, which is the package's
 > best answer on authority. **If you apply it before submitting, the defect is disclosed in THREE places, not two** —
 > `README.md`'s *"One defect is open at the time of writing"* paragraph, `SUBMISSION.md:39`'s
 > **Known open defect** row, and a parenthesis in `docs/where-this-goes.md`. The full list and
-> wording are at **`HUMAN_INTERVENTION.md:804`** — *"The three places that mention it"*, re-verified
+> wording are at **`HUMAN_INTERVENTION.md:817`** — search ***"The three places that mention it"***, re-verified
 > at 00:55. It read `:753` here until now, and `:753` is a blank line. *(This banner also named only
 > the first two of the three until iteration 146.)*
 >
@@ -116,7 +119,7 @@
 
 >
 > **T34 — the SIP credential in git history. The decision record is
-> `HUMAN_INTERVENTION.md:715`** — *"Three options, and my recommendation is the first"*, re-verified
+> `HUMAN_INTERVENTION.md:728`** — search ***"Three options, and my recommendation is the first"***, re-verified
 > at 00:55; **summarised for you at `:63`** — **and it recommends *accepting it*.** I spent hours recommending the
 > opposite in this banner without having read it. Their three options, with their recommendation
 > first:
@@ -544,6 +547,74 @@ the `.drawio` as plain XML and is green; `docs/README-diagram.md` still describe
 *(Incidental, worth knowing: the two `taken_over` rows are the **supervisor ladder having been exercised**, which
 is what It125's D5 correction asserted. This is the data behind that claim.)*
 
+### T55. `intervention-routing.test.ts` resolves line pointers in one file's opening region. Six of mine into its body had rotted.
+
+*Extend the guard that already exists. **It would have caught the pointer under Enrique's number-one item**,
+which spent three hours aiming at the wrong line.*
+
+#### What happened
+
+`plans/06-master-plan.md`'s open region cites **eight** line numbers in `HUMAN_INTERVENTION.md`. Checked at
+04:26, three hours after I last verified them:
+
+| anchor | my file said | actually at | |
+|---|---|---|---|
+| T21's SQL | 27 | **27** | ✓ |
+| the update block | 63 | **63** | ✓ |
+| RLS entry heading | 563 | **576** | +13 |
+| *"### What to run"* | 592 | **605** | +13 |
+| **the first `drop policy` line** | **596** | **609** | **+13** |
+| inbox-blank recovery | 619 | **632** | +13 |
+| rotation options | 715 | **728** | +13 |
+| *"The three places that mention it"* | 804 | **817** | +13 |
+| brief-PDF decision | 962 | **975** | +13 |
+
+**Uniformly +13** — thirteen lines were appended between line 63 and line 563, and everything below shifted.
+
+**The two that survived are both in the opening region**, which is exactly the region
+`src/lib/rules/__tests__/intervention-routing.test.ts` guards. **The six that rotted are all in the body, which
+nothing guards.**
+
+#### Why this one mattered more than the others
+
+Enrique's item 1 read *"the SQL to paste is at **596**"*. **At 04:26, line 596 is prose about GM sign-off.** The
+single most important instruction in the package pointed at the wrong text, and he would have followed it at
+10:00.
+
+#### The guard already does this, for one file
+
+`intervention-routing.test.ts` has the machinery: *"points every `line N` at what it says is there"*, with a
+regex over `**line N**, under *"quoted heading"*` pairs **in `HUMAN_INTERVENTION.md`'s opening region.** Its
+own header says why: *"writing the update **shifted every line below it by 37**, so the numbers I had just
+verified against the old file were wrong by the time I saved it."*
+
+**That is the same failure, one file over.** The guard learned the lesson about the file it lives next to and not
+about the file that cites it.
+
+#### Do this
+
+**Extend the existing describe to resolve `HUMAN_INTERVENTION.md` pointers found in `plans/06-master-plan.md`'s
+open region** — everything above `## 0. Verification log`.
+
+- **Only the open region.** Everything below that heading is a dated log which quotes stale numbers on purpose,
+  exactly as `agents/` and `HUMAN_INTERVENTION.md` are already exempted from the elapsed-time and chat-pair bans.
+  **A log entry saying *"`:753` is now a blank line"* must not fire.**
+- **Resolve the pairs the plan now writes:** each pointer carries a quoted heading beside it —
+  ``**`HUMAN_INTERVENTION.md:817`**, heading ***"The three places that mention it"***`` — so assert that the
+  cited line contains the quoted text, whitespace-normalised.
+- **Red-check it** by decrementing one number by 13 and confirming it fires.
+
+#### And the reason the numbers are no longer the primary locator
+
+I fixed all six, **and changed the form**: every pointer in the open region now leads with the quoted heading and
+carries the number as a hint, with *"search the quoted headings, not the numbers — they shifted by 13 in the last
+three hours."* **A shifted number now degrades to a search rather than to wrong prose.**
+
+**So the guard is belt to that braces.** The form makes a stale pointer survivable; the test makes it loud.
+
+**Check when done:** the new assertion resolves every pointer in the plan's open region; the verification log is
+exempt; decrementing one pointer by 13 turns it red; `npx vitest run` green.
+
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
 *Each of these is a place where the system is **correct** and a reviewer will reasonably want to
@@ -587,10 +658,17 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 **3. "Why does a service-animal answer cite the no-show policy?"** — *iteration 118*
 
-> `get_policy` is a **search** when you give it a topic rather than a section number. Policy 8
-> grounded the answer; 4 and 5 are what the search also surfaced. **The transcript shows the whole
-> retrieval rather than a tidied list, because a citation list filtered after the fact is a claim
-> you cannot check.**
+> `get_policy` is a **search** when you give it a topic rather than a section number — the catalogue
+> shows both parameters, `query` and `section_id`. Policy 8 grounded the answer; 4 and 5 are what the
+> search also surfaced. **The transcript shows the whole retrieval rather than a tidied list, because a
+> citation list filtered after the fact is a claim you cannot check.**
+>
+> **And if they run it now they may get a different secondary set, which proves the point rather than
+> undermining it.** Re-run at iteration 194 with the transcript's own guest wording: the live query
+> returns **8, 5, 7** where the capture recorded **8, 4, 5**. **Section 8 is the same both times** — the
+> grounding is stable and the neighbours are not, which is what a search does. *Do not hand-edit the
+> capture to match: it says "every tool call below is real," so the only honest options are re-capture
+> or leave it. We left it.*
 
 **4. "Your latency doc says 5040ms, this transcript says 7450ms."** — *iteration 127*
 
@@ -621,14 +699,17 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 **6. "Your own bill says the model costs more than telephony — so why does telephony matter?"**
 — *iteration 133*
 
-> Because we are at about **5% voice** and telephony passes the model at **6.8%**. Per voice session
-> is **$0.144** against roughly **$0.0098** per conversation for the model, so the crossing point
-> sits under two points above where our own traffic is — and a real hotel group is far above that.
+> Because **telephony passes the model at about 6.6% voice, and our own traffic is nowhere near it.**
+> Per voice session is **$0.144** against **$0.0095** per conversation for the model, so the crossing
+> point sits several points above where we sit — and a real hotel group is far above that.
 > **Our bill is the misleading view; the projection is the honest one.**
 >
-> *The **6.8%** is durable: it is a ratio of two per-unit costs, so new chat traffic moves the
-> numerator and denominator together. Verified unchanged across three separate readings between
-> 22:46 and 23:16 while conversations went 181 → 186.*
+> *Re-measured at 04:24: **9 voice of 309 conversations = 2.9%**, telephony $1.2955 against model
+> $2.9294. **This panel said "about 5% voice" and "6.8%" from iteration 133's reading of 186
+> conversations** — the share has fallen because every test since has been chat, including dozens of
+> mine. **And the crossing point is not quite durable either:** 6.8% → 6.6% as the model's
+> per-conversation cost drifted with the traffic mix. **It moves slowly; it does not stand still.**
+> Quote the ratio and the date, never the share.*
 >
 > **Read the totals off the Cost page rather than from here.** Spend and conversation count move
 > every time anyone opens the widget — they were `$3.07 / 181` at 22:46 and `$3.11 / 186` at 23:16.
@@ -667,12 +748,12 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > filed T45 for.
 | # | Enrique's item | Why it is first / what it costs |
 |---|---|---|
-| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr`. **Only you can do this** — it is DDL, PostgREST cannot execute `drop policy`, and the repo has no RPC path; it needs the SQL editor in your browser. | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at **`HUMAN_INTERVENTION.md:804`** (re-verified 00:55; `:753` is now a blank line, and the SQL to paste is at **596**, summarised for you at **63**). **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. |
+| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr`. **Only you can do this** — it is DDL, PostgREST cannot execute `drop policy`, and the repo has no RPC path; it needs the SQL editor in your browser. | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at **`HUMAN_INTERVENTION.md:817`**, heading ***"The three places that mention it"*** (re-verified 04:26; the SQL to paste is at **609** under ***"### What to run"***, summarised for you at **63**). **Search the quoted headings, not the numbers — they shifted by 13 in the last three hours.**. **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. |
 | 2 | **Top up Telnyx to at least $20** | **Live from the provider at 02:46: balance $3.03, `credit_limit` 0.00, `available_credit` $3.03.** **There is no credit line — at zero, calls stop dead.** A measured 3-second call cost about **$0.48**, so that is roughly **six calls** of headroom against the project's own pre-send gate of **$20** (`SUBMISSION.md:119`, `demo-runbook.md:15`). **It has been flat at $3.03 for hours because nobody has called** — it only falls when someone does, so the risk is a hard stop mid-demo rather than a slow drain. The number itself is **confirmed active** on the account. → portal.telnyx.com, Billing, about $30. |
 | 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. **Verified safe three ways:** two deliverables cite `INQ-2011`/`INQ-2010`, the demo runbook names `INQ-2007`/`2009`/`2011`, and **neither row T21 deletes appears in either**. Both confirmed live: `INQ-2012` Vantage Labs `needs_review`, `INQ-2013` Vantage Labs DELETE-ME `auto_approvable`. Exact SQL in `HUMAN_INTERVENTION.md`. **An agent *could* do this — the service-role key deletes rows over PostgREST — and chose not to.** `HUMAN_INTERVENTION.md:27` says *"Neither the Tester nor I **will** delete production rows the night before"*: **will**, not **can**. So unlike item 1, **this one is delegable** if you are short of time at 10:00. |
 | 6 | **Your own email address is in this file, and it is the only real address left in the repo.** | The Implementer removed the hiring contact's work address from four tracked files at It124 — right call, and I have no objection. **`enrique@provensolved.com` is still here**, in the email-delivery check, and they left it because it is yours. The guard allowlists that domain with a comment saying it is deliberate, **so removing it breaks nothing**; the same neutral phrasing works. **No recommendation from me — a public repository under your name is a thing you may want your address on.** |
-| 5 | **The interviewers' own brief was published in our public repo — already fixed; only history is left.** | `FDE_Project_Challenge.pdf` is out of the tracked tree, in `.gitignore:19`, and guarded three ways — **verified green at 01:03**, and the file is still on disk because the agents read it as ground truth. What remains is whether to rewrite history to remove it from the one commit that has it. **The recommendation is no**, for the same reason as T34: it invalidates every commit id the deliverables cite, to remove a document from a repository whose reader wrote it. Full entry and the short answer if a reviewer raises it: **`HUMAN_INTERVENTION.md:962`** — and **T47** is what puts it in front of you, because the index at `:63` does not have it. |
-| 4 | **T34 — decide about the SIP credential. The recommendation is *accept it*.** | A credential *username* is in git history at `10b63e8` and `c09f04d`; the password never was. **`HUMAN_INTERVENTION.md:715` recommends option 1 — accept it and rotate *after* the demo** — and this row said "rotate" for hours against that advice. Rotating tonight changes `TELNYX_SIP_USERNAME`, the SIP URI **and the live assistant's transfer target**, and needs a re-provision plus a re-check of the supervisor WebRTC leg: that is the beat-3 path, hours before the demo. **Rewriting history is the one to avoid** — it invalidates commit ids the deliverables cite. **Doing nothing is the recommended option**, so this is the one item where no action is a decision. |
+| 5 | **The interviewers' own brief was published in our public repo — already fixed; only history is left.** | `FDE_Project_Challenge.pdf` is out of the tracked tree, in `.gitignore:19`, and guarded three ways — **verified green at 01:03**, and the file is still on disk because the agents read it as ground truth. What remains is whether to rewrite history to remove it from the one commit that has it. **The recommendation is no**, for the same reason as T34: it invalidates every commit id the deliverables cite, to remove a document from a repository whose reader wrote it. Full entry and the short answer if a reviewer raises it: **`HUMAN_INTERVENTION.md:975`, heading ***"Your call: the interviewers' own brief"***** — and **T47** is what puts it in front of you, because the index at `:63` does not have it. |
+| 4 | **T34 — decide about the SIP credential. The recommendation is *accept it*.** | A credential *username* is in git history at `10b63e8` and `c09f04d`; the password never was. **`HUMAN_INTERVENTION.md:728`, heading ***"Three options, and my recommendation is the first"***, recommends option 1 — accept it and rotate *after* the demo** — and this row said "rotate" for hours against that advice. Rotating tonight changes `TELNYX_SIP_USERNAME`, the SIP URI **and the live assistant's transfer target**, and needs a re-provision plus a re-check of the supervisor WebRTC leg: that is the beat-3 path, hours before the demo. **Rewriting history is the one to avoid** — it invalidates commit ids the deliverables cite. **Doing nothing is the recommended option**, so this is the one item where no action is a decision. |
 
 **G16 row: SHIPPED and re-provisioned** (PR #100) — compile === live at 29,363, margin 637, exactly
 the figure predicted when it was staged. *Original note below, kept because the process worked:*
@@ -1868,6 +1949,163 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 200, 04:29 EST — the pointer under Enrique's number-one item was aiming at the wrong line
+
+#### Six of eight had rotted, uniformly
+
+My open region cites eight line numbers in `HUMAN_INTERVENTION.md`. Checked at 04:26, three hours after I last
+verified them:
+
+| anchor | my file said | actually | |
+|---|---|---|---|
+| T21's SQL | 27 | **27** | ✓ |
+| the update block | 63 | **63** | ✓ |
+| RLS entry heading | 563 | **576** | +13 |
+| *"### What to run"* | 592 | **605** | +13 |
+| **the first `drop policy` line** | **596** | **609** | **+13** |
+| inbox-blank recovery | 619 | **632** | +13 |
+| rotation options | 715 | **728** | +13 |
+| *"The three places that mention it"* | 804 | **817** | +13 |
+| brief-PDF decision | 962 | **975** | +13 |
+
+**Uniformly +13.** Thirteen lines were appended between 63 and 563; everything below moved.
+
+#### The one that mattered
+
+Item 1 read *"the SQL to paste is at **596**"*. **At 04:26, line 596 is prose about GM sign-off.** **The single
+most important instruction in the package pointed at the wrong text**, and Enrique would have followed it at
+10:00 — the paste he cannot delegate, aimed three lines past the SQL.
+
+#### And the two that survived say exactly why
+
+**27 and 63 are both in the opening region** — the region
+`src/lib/rules/__tests__/intervention-routing.test.ts` already guards, pointer by pointer. **All six that rotted
+are in the body, which nothing guards.**
+
+The guard's own header explains the mechanism it was built for: *"writing the update **shifted every line below
+it by 37**, so the numbers I had just verified against the old file were wrong by the time I saved it."*
+
+> **It learned the lesson about the file it lives next to, and not about the file that cites it.** The same
+> shape as It125's eight corrections missing a ninth, and the 15:30 list nobody reopened: **a fix scoped to where
+> the pain was felt rather than to where the property holds.** Filed as **T55** — extend the existing describe to
+> resolve the plan's pointers too, with the verification log exempted because it quotes stale numbers on purpose.
+
+#### What I changed, which matters more than the numbers
+
+**Every pointer in the open region now leads with a quoted heading and carries the number as a hint:**
+
+> ``**`HUMAN_INTERVENTION.md:817`**, heading ***"The three places that mention it"***``
+
+plus, on item 1, the instruction in plain words: ***"Search the quoted headings, not the numbers — they shifted
+by 13 in the last three hours."***
+
+**A stale pointer now degrades to a search instead of to wrong prose.** That is the same move as floors instead
+of counts, a ratio instead of a share, and a date instead of an elapsed hour count: **when a figure cannot be
+kept true, carry the thing that finds it.**
+
+#### Verified after fixing
+
+Every pointer in the open region resolves to the text it claims:
+
+```
+27  "Neither the Tester nor I will delete production rows the night before"
+63  "## Update, 2026-09-26 — two decisions the 15:30 list above does not mention"
+609 "drop policy if exists prop_write on proposals;"
+632 "If the inbox goes blank after applying it, the read policies did not survive"
+728 "**Three options, and my recommendation is the first:**"
+817 "**The three places that mention it**, so none is left behind:"
+975 "## Your call: the interviewers' own brief was published in our public repo"
+```
+
+**Zero stale numbers left in the open region.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**. **Pointer corrected this iteration: the SQL is at 609, heading *"### What to run"*** | Enrique — **do** |
+| 2 | **Top up Telnyx** — $3.03, no credit line, ~6 calls, hard stop at zero | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T55 | Extend the pointer guard to cover the plan's citations | any agent |
+
+Inbox and In progress empty. No lock held. Tester silent **8h00m**.
+**The plan is accurate and correctly ordered.**
+
+### Iteration 199, 04:24 EST — audited my own panel answers, and the cost one had drifted 40%
+
+#### The section I had never swept
+
+`▶ IF THEY ASK` is seven prepared answers to questions the package invites — the most-read part of this file
+after the banner, and **written across iterations 114 to 145 and never re-checked.** I have corrected the banner
+five times and never once looked at these.
+
+**Four of seven hold exactly**, checked against the files and the live system:
+
+| answer | checked |
+|---|---|
+| **#1** *"how do you know it isn't inventing rates"* | `data:check` passes, 9 of 9 — iteration 196 |
+| **#4** *"your doc says 5040ms, this transcript says 7450ms"* | **both figures still exist where it places them**: `latency-target.md:37,44` and `honest-handoff.md:38`, and `SUBMISSION.md:40` does say *"start with `honest-handoff.md`"* |
+| **#5** *"how does the manager actually find out"* | escalations verified many times, incl. G14 |
+| **#7** *"it said it didn't know"* | six refusals driven |
+
+#### #6 had drifted, in the answer a commercial reviewer would probe
+
+It opened: *"Because we are at about **5% voice** and telephony passes the model at **6.8%**."* Re-measured:
+
+```
+9 voice of 309 conversations = 2.9%      (the panel said "about 5%")
+telephony $1.2955 · model $2.9294
+per voice session $0.1439                 (panel: $0.144 — exact)
+per conversation, model $0.0095           (panel: $0.0098)
+crossing point 0.0095/0.1439 = 6.6%      (panel: 6.8%)
+```
+
+**The share is wrong by 40%** — iteration 133 read it at 186 conversations; there are now 309, and **every one of
+those since has been chat, including dozens of mine.** The argument survives untouched: the crossing point is
+far above our traffic, so our bill is the misleading view. **Only the numbers rotted.**
+
+#### And the panel's own durability claim was the thing that was wrong
+
+It said: *"The **6.8%** is durable: it is a ratio of two per-unit costs, so new chat traffic moves the numerator
+and denominator together. **Verified unchanged** across three separate readings between 22:46 and 23:16."*
+
+**It is not durable. It is slow.** 6.8% → **6.6%**, because the model's per-conversation cost drifts with the
+traffic mix and the cache-hit ratio. **I verified stability over thirty minutes and called it durable** — and
+the only reason the claim looked safe is that I checked it over a window too short to move.
+
+> **A ratio is not automatically stable just because its inputs move together — they have to move
+> *proportionally*.** The panel now says *"it moves slowly; it does not stand still. **Quote the ratio and the
+> date, never the share.**"*
+
+#### #3 got stronger rather than corrected
+
+*"Why does a service-animal answer cite the no-show policy?"* explains that `get_policy` is a **search** on a
+topic, so 4 and 5 are neighbours the search surfaced. **That framing survived my iteration-194 finding** — the
+live query now returns **8, 5, 7** where the capture recorded **8, 4, 5**.
+
+**So I added the measurement, because it proves the answer instead of threatening it:** *"Section 8 is the same
+both times — the grounding is stable and the neighbours are not, which is what a search does."* Plus the standing
+instruction from iteration 194: **do not hand-edit a capture that says every tool call in it is real. Re-capture
+or leave it.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — $3.03, no credit line, ~6 calls, hard stop at zero. **Buys beat 3 and G16's voice half** | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+
+**No agent task is open — T38–T54 are all closed.** Inbox and In progress empty. Lock held by another agent; not
+mine to take and I did not. Tester silent **7h55m**.
+**The plan is accurate and correctly ordered.**
 
 ### Iteration 198, 04:20 EST — the one capture nobody could re-run is corroborated to the microsecond and the exact turn
 
