@@ -9,25 +9,23 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It115: the prompt's own sample transcript stated a stopwatch reading with no stop.**
-- `agent/sol.md` §8.3 showed `eligible: false, 312h after checkout` and had Sol say *"this is about two
-  weeks on"*. **Measured against production for the same reservation: 2,297.6 hours** — about three months.
-  True when captured, wrong by seven times now, and wronger every hour.
-- **Cause: `DEMO_NOW` is unset, so `now` is real time.** That is the right choice — pinning the clock would
-  make the 72-hour window a fiction — but it means any elapsed figure written down starts drifting
-  immediately.
-- **Measured behaviour before changing wording, three runs.** The live agent does **not** parrot it: it
-  grounds itself in the tool and says the window *"closed back on June 25th"*. So no behavioural defect —
-  but `chat.ts` reads this file raw, so the example the model sees said two weeks about a three-month-old
-  stay.
-- **Replaced with what the tool actually grounds: a fixed date.** Checkout 2026-06-22 11:00 plus 72 hours
-  is 25 June, which is true at any future reading and is word for word what the live agent says.
-- **Compile byte-identical at 29,655 and still equal to the live export** — §8 is inside `voice:exclude`,
-  so no re-provision. Verified rather than assumed.
-- **Guarded the class, with the policy constant carved out:** *"72 hours after checkout"* is the rule and
-  stays sayable; any other hour count attached to checkout is a measurement that grows. Also bans
-  *"about N weeks on"*. Scoped to reader-facing documents — it fired on my own status file, which quotes the
-  stale figure on purpose as a record of what the prompt used to say.
+- **SHIPPED It116: T45 — the two decisions that reached Enrique nowhere now open the page he is told to
+  read.**
+- **Verified the Planner's matrix before writing.** The short list is dated 15:30, and neither the RLS
+  `drop policy` paste nor the SIP rotation is in it, in `SUBMISSION.md`'s *Before sending*, or in the
+  runbook's *Before they join*. A correctly-written entry further down was the only record — on a page whose
+  own opening says *"the rest is history and evidence."*
+- **Two of T45's five line pointers were already stale** — `:512` pointed at a sentence about
+  `transcripts/honest-handoff.md`, `:753` at a blank line. Had I copied the task text, he would have followed
+  them at 08:00. The real targets are 563, 592/596, 715 and 804, each checked against its content.
+- **Then my own insertion shifted every one of them by 37 lines.** I committed the exact failure the task is
+  about while fixing it, caught it, and renumbered. That is why the guard exists rather than a note.
+- **`intervention-routing.test.ts` pins two properties:** every decision of his is reachable from the region
+  above `## Open`, and **every `line N` pointer in that region lands on the text it claims**. The second
+  red-check restores the old `678` and it now lands on a *different* "Three options" heading — a near-miss
+  that reads as correct, which is the worst kind.
+- The 15:30 block is byte-identical: the update is a separate dated block placed after it, and `git diff`
+  shows no removed lines.
 
 ## Demo rehearsal coverage — what is actually verified
 
