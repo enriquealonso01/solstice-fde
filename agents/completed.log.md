@@ -8624,3 +8624,116 @@ parts, not three — mutate, observe, restore, **re-run and read it.** Re-applie
 green, and name the copy for the state it holds.
 
 `npx tsc -b` clean. `npx vitest run` **828 tests / 58 files** green (up 3).
+
+---
+
+## It141 — swept all 25 nodes instead of one claim, because three passes had each found exactly one
+
+Nothing was open. What was open was a pattern: three separate passes over `docs/architecture.drawio`'s
+Today page had each found exactly one wrong thing — **It133** the six false statuses, **It135** the storage
+security overclaim, **It140** the call count that was my own `limit=6`. Three findings, three passes, and
+each pass had found only what it went looking for. That is the failure mode this project has punished more
+than any other, and the page has **25 nodes with detail lines**, of which I had verified three.
+
+So: all of them.
+
+### The result
+
+**22 held. 5 had never been checked and now are. 1 was an overclaim.**
+
+### The secret boundary, proven rather than asserted
+
+`y_env` is the node most worth checking, because It135 established that this page overclaims specifically
+about security:
+
+> **LIVE Secret boundary** — Only `SUPABASE_URL` and the anon key reach the bundle. Service role, Telnyx
+> and Anthropic keys stay server-side.
+
+Fetched every asset the deployed page loads, followed the one dynamic `import()` in the main bundle, and
+scanned the lot — **1.09 MB across three files**:
+
+```
+SUPABASE_SERVICE_ROLE_KEY   0 occurrences        JWTs in the bundle        1
+TELNYX_API_KEY              0                      its role               "anon"
+ANTHROPIC_API_KEY           0                    KEY……-shaped Telnyx keys  0
+TOOL_WEBHOOK_SECRET         0                    gencred… SIP usernames    0
+PROPOSAL_LINK_SECRET        0                    sk-ant-… keys             0
+DEMO_PASSWORD               0                    SUPABASE_URL present      yes
+TELNYX_SIP_PASSWORD         0                    anon key present          yes
+```
+
+Both halves of the claim, in both directions: the two things that should be there are, the seven that
+should not are not, and the single JWT in a megabyte of shipped JavaScript decodes to `role: anon` rather
+than `service_role`. That is a claim worth having proven for a public repository, and it was previously
+just written down.
+
+Worth noting a near-miss in my own instrument: my first scan grabbed only the assets linked from
+`index.html` and I printed *"blank = single bundle, nothing lazy"* — while the same command's output listed
+`import("./bundle-kkq2Y5OT.js")` directly above the label. A 270 KB chunk, unscanned, under a line saying
+there wasn't one. Caught on re-reading my own output, which is the fourth time a label I wrote has
+contradicted the data it was labelling.
+
+### Four more, each checked against the thing it describes
+
+| node | claim | how it was checked |
+|---|---|---|
+| `y_rtm` | `postgres_changes` on sessions, messages, tool_invocations, inquiries, proposals | the five `useRealtimeMerge` call sites — exactly those five |
+| `y_av` | stamped `simulated_inventory_service` | three occurrences in `availability.ts` |
+| `y_pg` | concierge cannot read inquiries | the Tester's measured **403** with that reason |
+| `y_build` | vite build, esbuild for functions, `/api/*` rewrite | `package.json` and `netlify.toml` |
+
+**`y_rtm` nearly became a fabricated finding.** My first grep — `table: '[a-z_]+'` across `src/` — returned
+**one** table, `sessions`. For a moment that read as the node claiming five where the app subscribes to one,
+which would have been the biggest find of the iteration. The hook takes the table as a *parameter*:
+`useRealtimeMerge<T>(table, …)`. Tracing its five call sites gives exactly the five the node names. The grep
+was measuring the literal rather than the subscription, and the difference between a finding and a
+fabrication was reading the code instead of the match count.
+
+### The one overclaim
+
+> **LIVE ToolResult envelope** — `ok`, `grounded`, `citations`, `masked_fields`, `latency_ms` **on every
+> tool without exception.**
+
+`shared/types.ts`:
+
+```ts
+export interface ToolResult<T = unknown> {
+  ok: boolean
+  grounded: boolean
+  citations?: Citation[]
+  masked_fields?: string[]
+  latency_ms?: number
+}
+```
+
+Three of the five are optional in the type, and two are genuinely absent in practice —
+`availability.ts` and `lookups.ts` return no citations at all, correctly, because a same-day inventory
+check has nothing to cite and an empty array would be noise.
+
+**`latency_ms` is the interesting one.** It is optional in the type and yet universal in fact: the registry
+wrapper stamps it on the success path, the error path and the spread path alike (`registry.ts` lines 265,
+279, 285, 290), and every `tool_invocations` row in production carries one — including `latency_ms: 0` for
+`transfer_to_human`, which is a measured zero rather than a missing value. So it earns "without exception"
+even though the type does not require it.
+
+The node now says: *"ok, grounded and latency_ms on every tool without exception — the wrapper stamps
+latency on success, failure and timeout alike. citations and masked_fields where there is something to cite
+or mask."*
+
+That is a smaller claim and a stronger one. The envelope exists so a reviewer can always tell whether an
+answer was grounded; a reviewer who finds one tool without citations after being told there are none such
+stops believing the part that is actually guaranteed. Checked that the overclaim had not propagated: one
+occurrence in the repository, in this node.
+
+### Guarded against the type rather than against a string
+
+The new case reads `shared/types.ts` and asserts that **whatever the node calls universal is not declared
+optional there**, plus that the three which are guaranteed are still claimed. So it tracks the code: if
+someone makes `citations` required, the node becomes free to say so and the guard stops objecting. A guard
+that would block a legitimate strengthening is a guard that gets deleted.
+
+Red-checked both ways: restoring the five-field version fails 1, and weakening it to *"ok and grounded"*
+— dropping a claim that is true and load-bearing — also fails 1. Snapshot taken **after** the fix was
+green, per It140.
+
+`npx tsc -b` clean. `npx vitest run` **829 tests / 58 files** green (up 1).

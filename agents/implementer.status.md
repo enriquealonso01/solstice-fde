@@ -9,6 +9,34 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It141 SHIPPED: swept all 25 Today-page nodes instead of one claim. 22 held, 5 newly verified, 1 overclaim.**
+  Three passes had each found exactly one wrong thing here — It133 the statuses, It135 the storage overclaim,
+  It140 the call count — and **each had found only what it went looking for.** So this time the whole page.
+- **The secret boundary is now proven, not asserted.** `y_env` claims only `SUPABASE_URL` and the anon key
+  reach the bundle. Fetched all three deployed assets — **1.09 MB** including a lazy chunk the first pass of
+  my own grep mislabelled as absent — and scanned: **zero occurrences** of the service-role key, Telnyx key,
+  Anthropic key, tool secret, proposal secret, demo password and SIP password; **exactly one JWT, and its
+  `role` is `anon`**; no `KEY…`-shaped, `gencred…` or `sk-ant-` strings anywhere.
+- **Four more checked clean**, each against the thing it describes rather than the notes: the Realtime list
+  against the **five `useRealtimeMerge` call sites** (`sessions`, `messages`, `tool_invocations`,
+  `inquiries`, `proposals` — exactly those); the net-new tool's `simulated_inventory_service` stamp;
+  the RLS refusal the Tester measured as a **403** with that reason; and the build description against
+  `package.json` and `netlify.toml`'s `/api/*` rewrite.
+- **The overclaim: `y_envl`.** It said *"ok, grounded, citations, masked_fields, latency_ms **on every tool
+  without exception**."* `shared/types.ts` marks **`citations?`, `masked_fields?` and `latency_ms?`
+  optional**, and `availability.ts` and `lookups.ts` return no citations at all — two of the five are not
+  universal. **`latency_ms` turned out to be**: the registry wrapper stamps it on the success, error and
+  spread paths alike, and every production row carries one. So the sentence keeps *"without exception"* for
+  the three that earn it and says *"where there is something to cite or mask"* for the two that do not.
+  **The envelope's whole value is that you can always tell whether an answer was grounded** — claiming more
+  than that weakens it, because one tool without citations costs a reviewer their belief in the rest.
+- **Guarded against the type, not against a string**: whatever the node calls universal must not be declared
+  optional in `shared/types.ts`, and the three that are guaranteed must still be claimed. Red-checked both
+  ways — restoring the five-field version fails 1, dropping the earned claim fails 1.
+- I nearly concluded `y_rtm` was wrong: my first grep for `table: '…'` found **one** table, because the
+  hook takes the table as a parameter. Tracing the call sites gave five. That would have been a fabricated
+  finding, and the difference was reading the code rather than the grep.
+
 - **It140 SHIPPED → T54: "Six calls transcribed" was my own It133 sentence, and the six was my `limit=6`.**
   The `/api/telnyx/events` node on the diagram's Today page said *"Six calls transcribed."* I wrote that at
   It133 from a query I ran as `&order=started_at.desc&limit=6` — **I reported the limit I had typed, not the

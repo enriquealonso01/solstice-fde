@@ -402,6 +402,56 @@ describe('the Today page says what actually runs', () => {
     ).toContain('Every voice session to date has a transcript')
   })
 
+  /**
+   * It141 swept all 25 Today-page nodes rather than one claim, because three passes had each found
+   * exactly one wrong thing here — statuses at 133, storage at 135, the call count at 140 — and each had
+   * found only what it went looking for.
+   *
+   * Twenty-two held. Five that had never been checked were verified: the secret boundary against 1.09 MB
+   * of deployed JavaScript (one JWT in it, `role: anon`, and zero occurrences of every server-side
+   * secret), the Realtime table list against the five `useRealtimeMerge` call sites, the net-new tool's
+   * `simulated_inventory_service` stamp, the RLS refusal the Tester measured as a 403, and the build
+   * description against `package.json` and `netlify.toml`.
+   *
+   * One was an overclaim. The ToolResult node said *"ok, grounded, citations, masked_fields, latency_ms
+   * **on every tool without exception**"* — but `shared/types.ts` marks `citations?`, `masked_fields?` and
+   * `latency_ms?` optional, and `availability.ts` and `lookups.ts` return no citations at all. Two of the
+   * five were not universal. `latency_ms` turned out to be, because the registry wrapper stamps it on the
+   * success, error and spread paths alike, so the honest sentence keeps "without exception" for the three
+   * that earn it and says "where there is something to cite or mask" for the two that do not.
+   *
+   * The envelope's whole value is that you can always tell whether an answer was grounded. Claiming more
+   * than that weakens it, because a reviewer who finds one tool without citations stops believing the rest.
+   */
+  it('claims universality only for the envelope fields that have it', () => {
+    const flat = decode(todayPage).replace(/\s+/g, ' ')
+    const envelope = flat.match(/ok, grounded[^.]*\./)
+    expect(envelope, 'the ToolResult envelope node is gone; update or remove this case').toBeTruthy()
+
+    const sentence = (envelope as RegExpMatchArray)[0]
+    const types = readFileSync(join(repoRoot, 'shared/types.ts'), 'utf8')
+
+    // Whatever the node claims is universal must not be optional in the type it describes.
+    for (const field of ['citations', 'masked_fields']) {
+      const optional = new RegExp(`\\b${field}\\?:`).test(types)
+      if (!optional) continue
+      const universal = new RegExp(`${field}[^.]{0,60}without exception`).test(sentence)
+      expect(
+        universal,
+        `the Today page says ${field} is on every tool "without exception", and shared/types.ts declares ` +
+          `it as ${field}?: — optional. availability.ts and lookups.ts return none. Claiming more than the ` +
+          `envelope guarantees is how a reviewer stops believing the part that is guaranteed.`,
+      ).toBe(false)
+    }
+
+    expect(
+      sentence,
+      'the node no longer claims ok, grounded and latency_ms without exception. Those three are ' +
+        'guaranteed — the first two by the type, latency_ms by the registry wrapper — and the claim is ' +
+        'worth making.',
+    ).toMatch(/ok, grounded and latency_ms on every tool without exception/)
+  })
+
   it('keeps the one bare count on the page tied to the export that fixes it', () => {
     // "25 tools" is allowed to be a number because it only moves on a re-provision. That is only an
     // argument if it is true, so it is checked against the committed export rather than trusted.
