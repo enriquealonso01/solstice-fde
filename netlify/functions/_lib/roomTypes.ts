@@ -19,7 +19,7 @@ export type RoomType = (typeof ROOM_TYPES)[number]
 /** CSV inventory column -> canonical label.
  *  ASSUMPTION: the CSV's generic `accessible_rooms` column is surfaced as `Accessible King`,
  *  because that is the only accessible room type that appears anywhere in the reservation
- *  data (R55016). Documented in data/generated/README.md. */
+ *  data (R55016). */
 export const INVENTORY_COLUMNS: Record<string, RoomType> = {
   standard_king_rooms: 'Standard King',
   standard_double_rooms: 'Standard Double',

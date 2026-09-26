@@ -255,13 +255,13 @@ They will. Have this one ready:
 
 > "Change Phoenix's discount ceiling from 15% to 12%."
 
-1. Open `src/lib/rules/thresholds.ts`.
-2. One line: `SOL-PHX` max discount 15 to 12.
-3. Re-run `INQ-2009`. The verdict, the threshold it cites, and the sentence a rep reads all move
+1. In `data/solstice-properties.csv`, row `SOL-PHX`: `max_discount_auto_approve_pct` 15 to 12.
+2. `npm run data:build`.
+3. `npm run verdict -- INQ-2009 --as-of 2026-07-01`. The verdict, the threshold it cites, and the sentence a rep reads all move
    together, and the price the customer asked for does not — because the ceiling changed, not the
    rate.
 
-Say while doing it: *the reason this is one line is that no threshold lives in a prompt. If it did,
+Say while doing it: *the reason this is one cell is that no threshold lives in a prompt. If it did,
 this change would be a prompt edit with no test and no audit trail.*
 
 ---

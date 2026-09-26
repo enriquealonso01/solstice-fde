@@ -58,8 +58,9 @@ data with tests. The model decides what to say and which tool to call; it never 
 policy is. That is why a threshold can be changed live during a conversation, and why two different
 models can run the two channels without the rules drifting apart.
 
-Thresholds are one table in `src/lib/rules/thresholds.ts`. A test mutates it and asserts the verdict,
-the human-readable sentence and all three regenerated options move with it.
+Every per-property threshold has one hand-edited home, `data/solstice-properties.csv`;
+`src/lib/rules/thresholds.ts` derives the rule table from the build output. A test edits one CSV
+cell in memory and asserts the ceiling and the verdict move with it.
 
 ## What this cost to build
 

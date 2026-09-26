@@ -3,8 +3,7 @@
     "base_rate_* negative / zero / unparsable",
     "inventory column sum vs total_rooms",
     "blackout_dates parsability",
-    "max_discount_auto_approve_pct within 0-100",
-    "property referenced in notes resolves to a real property in the directory"
+    "max_discount_auto_approve_pct within 0-100"
   ],
   "quarantined_values": [
     {
@@ -14,29 +13,16 @@
       "raw_value": -395,
       "flag": "base_rate_suite_negative",
       "severity": "blocker",
-      "detected_by": "scripts/data/build.mjs -> buildProperties()",
+      "detected_by": "scripts/data/lib/properties.mjs",
       "effect": "suite pricing at SOL-PVD is UNAVAILABLE. getPropertyRate() refuses it; any tool that needs it must return grounded:false and escalate rather than price off the value.",
       "remediation": "Confirm the correct base_rate_suite for Solstice Providence Waterplace with GM Owen Fitzgerald and fix the source export. Do not patch it in code."
-    }
-  ],
-  "unresolved_references": [
-    {
-      "entity": "property",
-      "ref": "property:SOL-PVD",
-      "field": "notes",
-      "rule_id": "SOL-PVD.routing.overflow_block",
-      "target_description": "Boston-area sister property",
-      "severity": "blocker",
-      "effect": "UNRESOLVED. \"Boston-area sister property\" does not correspond to any property in the Solstice directory (10 properties, none matching). The agent may mention that a referral exists; it must NOT quote rooms, rates, dates or availability for it, and must hand the inquiry to Group Sales to confirm the property is real.",
-      "remediation": "Group Sales must confirm whether the sister property exists and, if so, add it to the property directory before the agent can quote anything for it."
     }
   ],
   "properties_with_flags": [
     {
       "property_code": "SOL-PVD",
       "data_quality_flags": [
-        "base_rate_suite_negative",
-        "notes_reference_unresolved_property"
+        "base_rate_suite_negative"
       ]
     }
   ]

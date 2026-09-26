@@ -15,6 +15,5 @@ export * from './engine'
 export * from './alternates'
 export * from './options'
 
-// No data lives here. Properties and inquiries come from data/generated via
-// netlify/functions/_lib/data.ts; this package is pure logic so it stays browser-safe and
-// so there is exactly one copy of the hotel data in the repository.
+// The only data read here is data/generated/properties.json, in thresholds.ts. Everything else
+// arrives through netlify/functions/_lib/data.ts, which must not reach the browser.

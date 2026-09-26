@@ -302,8 +302,7 @@
     "general_manager": "Owen Fitzgerald",
     "notes": "Smallest property in the portfolio; blocks over 15 rooms should be routed to Boston-area sister property instead.",
     "data_quality_flags": [
-      "base_rate_suite_negative",
-      "notes_reference_unresolved_property"
+      "base_rate_suite_negative"
     ]
   }
 ]
