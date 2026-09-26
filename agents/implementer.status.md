@@ -9,6 +9,31 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It128 SHIPPED: `SUBMISSION.md`'s pre-send checklist, rehearsed end to end for the first time.**
+  Nothing was open — T38–T50 closed, `BACKLOG.md`'s inbox empty, the Tester's iteration 61 fixed its own
+  findings — so I ran the last gate in front of the package. **It passes**, on everything that is not
+  Enrique's:
+
+  | Item | Measured 2026-09-26 06:20Z |
+  |---|---|
+  | Deploy freshness script | **runs, prints `OK`, 3.7s.** Last commit `06:07:22Z`, last ready deploy `06:07:36Z` |
+  | Failure-injection switches | **all three healthy**, `any_active: false` |
+  | Live site + chat answers | **200 and answers.** Beat 2's *"What time is checkout?"* calls `get_policy` and the chip reads *"Policy 1, 2, 14"* — `demo-runbook.md:85`'s *"cites Policy 1"* is true **via the citation chip, not the prose**, which is worth knowing before saying it out loud |
+  | `npx vitest run` | **710 / 53 files** green |
+  | Repository visibility | **PUBLIC**, decided |
+  | Telnyx balance above $20 | **$3.03 — the one item that fails.** Enrique's, already filed |
+  | `npm run demo:tidy` | Enrique's last step; not run |
+
+- **The hole it found: the sweep's precondition was never a step.** `demo:tidy` is only durable once the
+  agent loop has stopped, and the checklist said so in a subordinate clause. Tidy first, stop the loop
+  after, and you have tidied nothing. **Stopping the loop is now its own line, above the sweep**, guarded.
+- **And the habit was mine.** "Verify your own deploy" had been a `POST /api/chat` every iteration — which
+  opens a `sessions` row marked `active` that the sweep's 30-minute default leaves on screen, while beat 3
+  opens on an *empty* supervisor dashboard. **257 active sessions right now; three of them I created while
+  measuring.** `agents/README.md` now says verify with `GET /api/chat` → **405**, which reaches the same
+  warm container and writes nothing (`chat.ts:227` runs before `:243` and `:579`). `docs/demo-runbook.md:60`
+  had told Enrique exactly this for days. Nobody had told the agents.
+
 - **It127 SHIPPED: the last four unread plans, audited and corrected.** A dated block prepended to each,
   nothing below it edited — 106 insertions, **0 deletions**, the shape used for `AGENTS.md` (It119) and the
   requirements audit (It125). Guarded by a new describe in `doc-paths.test.ts`, red-checked three ways.

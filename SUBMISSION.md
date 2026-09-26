@@ -106,6 +106,11 @@ Two things are built but not live, and claiming otherwise would be the worst pos
 ## Before sending, check
 
 - [ ] Repository visibility decided, reviewers can open it
+- [ ] **Stop the agent loop.** Its own step, because the next one is not durable until it is done:
+      each iteration deploys and verifies, and a verification chat opens a session the sweep below
+      will not close for thirty minutes. Measured 2026-09-26 06:20Z — **257 sessions still
+      `active`**, six of them under thirty minutes old and three of those from the iteration doing
+      the measuring. Tidy first and stop the loop after, and you have tidied nothing.
 - [ ] `npm run demo:tidy` — no phantom "active" sessions on the supervisor dashboard. **Do this
       last.** Every chat opened while testing leaves a session marked `active`, so running it
       early and then testing again undoes it. The default only closes sessions idle over thirty

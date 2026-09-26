@@ -1,17 +1,24 @@
 # Master plan: the whole picture
 
-> ## 02:05 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
-> *All agent work is closed — T38–T43 and T45, each re-verified against the live files at 00:55, not
-> from the log; **T44 shipped in It118 and T46 in It120**, each correcting a premise of mine while doing it.
-> **T47 shipped in It121 and T48 in It122, refresh and re-export included** — `sol.md`, the committed
-> export and the live phone agent are all **29,784** again, verified at 01:25. **One thing is left for an
-> agent: T49**, the guard nobody has — for twelve minutes tonight the source and the phone disagreed and
-> **677 tests stayed green**.
-> **And one thing only a Tester can do:** re-verify the auto-triage agent, `BACKLOG.md:50`'s open caveat —
+> ## 02:13 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> *Every agent task is closed — T38–T50. `sol.md`, the committed export and the live phone agent all sit
+> at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **700 tests / 52 files at 02:08**, and it grows every hour, so
+> treat the number as a vintage rather than a target.*
+>
+> **⏱ You are submitting early by choice, and that is worth knowing if something breaks at 10:00.** The
+> brief says *"You'll have **5 business days** from receipt to submit."* Received **Thursday 2026-09-24**,
+> so the real deadline is **~Thursday 2026-10-01**. I extracted that from the PDF myself this iteration.
+> *(Four planning files carried **~2026-09-27**, which is a **Sunday** — a deadline counted in business
+> days cannot land on one. The Implementer corrected all four in It127.)* **Nothing about tonight changes:
+> the demo is the binding event and the package ships at 11:00. But if a step fails at the last minute,
+> shipping is not lost.**
+>
+> **One thing only a Tester can do:** re-verify the auto-triage agent, `BACKLOG.md:50`'s open caveat —
 > it writes drafts, so it needs the service-role key or a signed-in rep. **The largest unverified surface in
 > the package**, and I explain in iteration 161 why I could not close it.*
-> **Five items are yours — three to do, and two decisions where the recommendation is to do nothing**
-> (T34 the SIP credential, and the brief PDF in history, `HUMAN_INTERVENTION.md:962`).
+> **Six items are yours — three to do, and three decisions where the recommendation is to do nothing**
+> (T34 the SIP credential; the brief PDF in history, `HUMAN_INTERVENTION.md:962`; and your own email
+> address in this file, which removing breaks nothing and on which I have no recommendation).
 > *Seven likely panel questions are answered in `▶ IF THEY ASK` below.*
 >
 > **This banner is rewritten, not appended.** It said *18:04* and *"two agent items left"* until
@@ -1589,6 +1596,148 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 173, 02:13 EST — the vision document is accurate about its own system, and my testing is in the escalations table
+
+#### `docs/where-this-goes.md` — Katie's "sell the vision" ask, never checked
+
+A roadmap is the easiest document to write dishonestly, because every claim is either about the future or
+about a present nobody verifies. This one rests its whole argument on **present-tense claims**, so those are
+checkable. The one I had not checked:
+
+> **`:33` — "Escalations are already structured packets. Route them to a worklist."**
+
+Read live with a `concierge` token:
+
+```
+escalations: category · severity · summary · packet (jsonb) · status · session_id
+packet: { escalation_id: "ESC-CDE2A04C", summary, category, severity, session_id,
+          policy_citations: [ {ref:"policy:15",  label:"Policy 15 — Escalation matrix"},
+                              {ref:"reservation:R55004", label:"Reservation R55004"} ] }
+```
+
+**True as written.** Not a text blob — a typed row with a cited packet.
+
+**And the half it says is missing really is missing**, which is the part that makes the sentence honest:
+**no admin component renders live escalations.** I searched every `.tsx` under `src/components/admin` and
+`src/pages`: zero. The only deliverable that mentions a queue at all is this one, and it says *"**Turn**
+escalations into a worklist"* — future tense, in the roadmap. **Nothing claims a queue that does not exist.**
+
+> That is the hard version of a roadmap to write: the present-tense claim is verifiable and true, and the
+> gap it names is really a gap. **No task.**
+
+#### Disclosure: some of those escalations are mine
+
+**67 escalations, all `open`.** The three most recent, by UTC timestamp:
+
+```
+05:53:17Z  authority_exceeded   Platinum guest G10004, reservation R55004, Suite sold out…
+05:35:35Z  other                Platinum guest R55004 requests Suite upgrade…
+05:35:26Z  authority_exceeded   Platinum guest R55004 requests suite upgrade; Suite class 0 avail…
+```
+
+**05:35 UTC is 01:35 EDT, which is when I drove the R55004 upgrade beat twice in iteration 165.** Those are
+mine. I recorded the transcript of those runs and did not record that they left rows behind.
+
+**It costs nothing, and here is the check rather than the reassurance.** `scripts/cleanup-phantom-sessions.mjs`
+reads and writes **`sessions` only** — `demo:tidy` does not touch escalations, and **nothing in `scripts/`
+does.** So these rows persist. **But no admin page renders them**, so they are not on any screen the panel
+sees. **This is not a second T21:** T21's junk is row one of a table beat 4 displays; this table has no
+display.
+
+**Recording it anyway, for two reasons.** Anyone who later wonders where 67 open escalations came from
+deserves the answer. And if the roadmap's worklist is ever built, **that queue opens on 67 rows of agents
+talking to themselves** — which is precisely the shape of the problem `demo:tidy` exists for, one table over.
+
+#### And a note passed to the Implementer rather than filed
+
+Their It128 status opens *"the package ships in about five hours."* It is **02:1x** and submission is
+**11:00** — that is **roughly nine hours, not five.** They are rehearsing `SUBMISSION.md`'s pre-send
+checklist, which is exactly the right call, and a four-hour underestimate is the kind of thing that turns a
+careful rehearsal into a rushed one. **Put in my status file, where `agents/README.md` says they will read
+it; not filed as a task, because it is their file and a sentence is not a defect.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Reads proven live; gate proven clean | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique — **do** |
+| 3 | **T21** — two rows, cascade count first. Inbox still holds **13** | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
+
+**No agent task is open.** Inbox empty. No lock held. Tester silent **5h47m**.
+**The plan is accurate and correctly ordered.**
+
+### Iteration 172, 02:08 EST — read the brief's own deadline sentence, and the package has three business days of buffer nobody was counting on
+
+#### The verification, done from the PDF rather than from the log
+
+The Implementer's It127 says four planning files carry the wrong deadline. **The brief is ground truth and my
+standing brief says to read it every iteration, so I extracted it myself** rather than repeat their fix:
+
+> *"You'll have **5 business days** from receipt to submit."*
+
+```
+received          Thursday  2026-09-24
++5 business days  Fri 25 · Mon 28 · Tue 29 · Wed 30 · Thu 01
+real deadline     Thursday  2026-10-01
+```
+
+**Their correction is right, and there is a tell they did not need:** the figure four files carried was
+**~2026-09-27**, which is a **Sunday**. **A deadline counted in business days cannot land on one.** The number
+was never derived from the sentence it claimed to come from.
+
+*(The repo's own PDF extractor returns font data, not prose — the Implementer hit this at It117 and stopped
+there. `pypdf` reads all four pages as 9,451 characters of clean text. Worth knowing for anyone who needs the
+brief again.)*
+
+#### What it changes, and what it does not
+
+**Nothing about tonight.** My standing instruction is that Enrique submits **2026-09-26 11:00 EST**, the demo
+is the binding event, and the package ships at 11:00. **I am not relitigating that and the plan is unchanged.**
+
+**What it changes is the cost of a failure at 10:00.** Several of my own recommendations are phrased *"hours
+out, don't risk it"* — T50(c)'s prompt clause, the SIP rotation, the database paste. **That reasoning is still
+right for the demo and was never right about the submission**, because the submission was never the cliff I
+was implicitly treating it as. **If a step fails at the last minute, shipping is not lost.** Added to the
+banner, worded so it cannot read as permission to slow down.
+
+**My own file carried no wrong date** — checked: it only uses relative phrases like *"hours before
+submission"*, which stay true because he submits early by choice.
+
+#### Three stale things on my own first screen, fixed
+
+The recurring failure, caught by re-reading the screen rather than by anything telling me:
+
+| said | is |
+|---|---|
+| *"One thing is left for an agent: T49"* | **T49 and T50 both shipped.** Every agent task is closed |
+| *"Five items are yours — three to do, two decisions"* | **Six** — three to do, **three** decisions |
+| *"`npx vitest run` is green at 684"* | **700 / 52 files** |
+
+**The test count is the interesting one.** 677 → 679 → 684 → 700 in about forty minutes, because every
+iteration adds guards. **An exact figure in a summary is a vintage, not a fact**, so the banner now says the
+number *and the time*, and says to treat it as a vintage. That is the PR #77 floors-not-counts lesson applied
+to the one number that moves fastest in this repository.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Reads proven live; gate proven clean; nothing has ever been sent that needed approval | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique — **do** |
+| 3 | **T21** — two rows, cascade count first. Inbox still holds **13** | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
+
+**No agent task is open.** Inbox empty. Lock held by another agent; not mine to take and I did not.
+Tester silent **5h43m**. **The plan is accurate and correctly ordered.**
 
 ### Iteration 171, 02:05 EST — the approval gate holds in the live data: nothing has ever been sent that needed approval
 

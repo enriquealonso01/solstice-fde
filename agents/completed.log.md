@@ -7255,3 +7255,116 @@ stripping `:122` from the `HUMAN_INTERVENTION.md` citation in all four plans fai
 `git diff --numstat` again to prove the mutations left nothing behind.
 
 `npx tsc -b` clean. `npx vitest run` **700 tests / 52 files** green (up 12).
+
+---
+
+## It128 — ran the pre-send checklist for the first time, and found the step it depends on is not a step
+
+Nothing was open. The Planner closed T38–T50, `BACKLOG.md`'s inbox is empty and its two "In progress"
+entries are both resolved (T29 closed 3 of 3; T4a shipped at PR #3, T4b/T4c deliberately never
+started), and the Tester's iteration 61 fixed both of its own findings. So I picked the thing that
+is about to matter most: the package ships in roughly five hours, and the last gate in front of it
+is `SUBMISSION.md`'s "Before sending, check" — **seven items, never once run end to end.** It127
+corrected `plans/04-unlock-checklist.md` on the grounds that checklists rot. This one is load-bearing
+at 10:55, so it deserved the same treatment, except that the way to audit a checklist is to do it.
+
+**It passes.** Everything that is mine to verify:
+
+| Item | Measured 2026-09-26 06:20Z |
+|---|---|
+| Deploy freshness script | runs verbatim, prints `OK`, **3.7s** — commit `06:07:22Z`, ready deploy `06:07:36Z` |
+| Failure-injection switches | all three healthy, `any_active: false` |
+| Live site and chat | 200; beat 2's opening question answers and cites |
+| `npx vitest run` | 710 / 53 files green |
+| Repository visibility | PUBLIC |
+| Telnyx balance above $20 | **$3.03 — fails.** Enrique's, long since filed |
+| `npm run demo:tidy` | Enrique's last step; deliberately not run |
+
+The deploy-freshness script deserves a note, because it is the most elaborate thing in the checklist
+and the easiest to have written without running. It works exactly as advertised: sources `.env`,
+reads the site id out of `.netlify/state.json`, pulls `listSiteDeploys`, and compares the newest
+`state: ready` deploy against `git log -1`. I also checked the failure mode it does not name — a
+**draft** deploy reaching `ready` and being mistaken for production. The API returned 100 deploys and
+every one of them is `context: production`, with zero drafts in the window, so I could not reproduce
+it and am not going to assert a hole I did not see. Worth knowing rather than worth fixing.
+
+**One item I checked more carefully than the checklist asks, and it changes what to say out loud.**
+`docs/demo-runbook.md:85` promises that beat 2's opening line — *"What time is checkout?"*, the first
+thing the panel ever sees — **"cites Policy 1"**. Production's prose does not: *"Standard checkout is
+11:00 AM. Let me know if you'd like to check about a late checkout for your stay."* No policy number
+in the sentence. Before calling that a regression I captured the whole event stream, and the citation
+is there — in the tool chip:
+
+```
+tool  get_policy  done  "Policy 1, 2, 14 — Check-in and check-out times"
+      citations: policy:1  "Policy 1 — Check-in and check-out times"
+                 policy:2  "Policy 2 — Standard cancellation window"
+                 policy:14 "Policy 14 — ID verification and incidental hold"
+```
+
+So the runbook is true as rendered, and the panel does see "Policy 1" on screen. It is true **via the
+chip, not the answer**, which is a different sentence to say while pointing at it. I nearly logged a
+demo-path defect five hours before the demo on the strength of reading the prose only. The tell was
+that the tool ran at all: `get_policy` fired, so the grounding was there and the question was where
+it surfaced, not whether it existed.
+
+### The hole: the sweep's precondition was never a step
+
+The checklist's `demo:tidy` item is right about everything except its own position in time:
+
+> The default only closes sessions idle over thirty minutes; **once the agent loop is stopped**,
+> `npm run demo:tidy -- --minutes 2` closes the rest.
+
+"Once the agent loop is stopped" is the load-bearing clause in the entire checklist and it is a
+subordinate clause in the middle of another step. Tidy first and stop the loop after, and you have
+tidied nothing — every iteration deploys, verifies, and can leave a fresh `active` session behind.
+`scripts/cleanup-phantom-sessions.mjs` already knows this; its header says *"docs/demo-runbook.md
+already warns that a tidy at 10:55 is undone by agent traffic at 10:56."* Two files know the hazard
+and the checklist that has to act on it does not list the action. **Stopping the agent loop is now
+its own line, immediately above the sweep.**
+
+### And the habit generating the traffic was mine
+
+I counted, expecting a handful. **257 sessions still marked `active`**, six of them under thirty
+minutes old — the age at which `demo:tidy`'s default gives up — and **three of those six were created
+by this iteration**, by me, while measuring.
+
+"Verify your own deploy minimally" has meant `POST /api/chat` every iteration since the loop started.
+It is the obvious verification and it is the wrong one: a POST opens a `sessions` row, and beat 3 of
+the demo opens by putting the supervisor dashboard on screen and saying it is empty. One live card
+contradicts the first sentence of that beat; two hundred and fifty-seven contradict the demo.
+
+`docs/demo-runbook.md:60` has told Enrique not to do this for days, in those words, with the reason:
+*"A GET to `/api/chat` returns 405 before any session is written and warms the identical container,
+which is why it is a `curl` and not a click."* Nobody ever told the agents. `agents/README.md` — the
+file every agent reads for the ship sequence — had no deploy-verification guidance at all, so each of
+us invented the same wrong one. It now carries the rule, the two-line `curl` that replaces it, and
+why the GET is safe: `netlify/functions/chat.ts:227` rejects a non-POST **before** `resolveSessionId`
+at `:243` and **before** the `sessions` insert at `:579`. Measured: `GET /api/chat` → **405**. I used
+it to verify this iteration's own deploy.
+
+That ordering is the whole guarantee, so it is now pinned rather than assumed. If someone moves the
+method guard below the session work the status code stays 405 and the rule silently becomes false —
+which is precisely the shape of the five guards in this project that passed while broken.
+
+### The guard
+
+New file, `src/lib/rules/__tests__/presend-checklist.test.ts`, ten cases in two halves.
+
+The checklist half requires the section and the `demo:tidy` step to still exist (or the rest is
+vacuous), requires stopping the agent loop to be named, and requires its **index in the file to be
+lower** than the tidy step's — ordering, not presence, because a correct step in the wrong place is
+the exact failure it prevents.
+
+The `chat.ts` half finds the three line indexes and asserts `guard < resolveSessionId < insert`, then
+checks the four `path:line` citations `agents/README.md` makes and, in reverse, that every entry in
+that table is still quoted from the README, so the table cannot rot into a list of things nobody
+references. Writing that reverse case is what caught my own prose: I had cited the second and third
+chat.ts lines as bare `:243` and `:579` after naming the file once, which reads fine and is invisible
+to a guard. Each is now spelled in full.
+
+Red-checked three ways, each restored: moving the stop-the-loop step below the sweep failed 1; moving
+the 405 block below `resolveSessionId` failed 3; prepending one line to `docs/demo-runbook.md` failed
+1. `git diff --numstat` afterwards to confirm the mutations left nothing behind.
+
+`npx tsc -b` clean. `npx vitest run` **710 tests / 53 files** green (up 10).
