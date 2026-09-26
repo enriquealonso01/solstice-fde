@@ -98,9 +98,13 @@ and this screen opens on dozens of cards reading "Sol is handling this", and the
 say about it is wrong. Check the ACTIVE NOW tile reads a small number before you dial.
 
 **The Archive panel underneath is a different thing, and it will not be empty.** `demo:tidy`
-closes live sessions; it does not delete ended ones. So the top of the screen reads "Nothing live
-right now" and below it sits a table of around a hundred ended conversations, which are ours —
-every chat and call the three of us made building this. If anyone asks, say so:
+closes live sessions; it does not delete ended ones — it moves them here. So the top of the screen
+reads "Nothing live right now" and below it sits a table of every conversation that has ended,
+which after a tidy is the better part of two hundred rows: every chat and call the three of us made
+building this. (Checked on the morning of the 26th, when it briefly read *empty* — the grid fetched
+only the hundred newest sessions and every one of them was still open, so the ended ones fell
+outside the window. The window is now 500 and `supervisor-archive.test.ts` holds it there.) If
+anyone asks, say so:
 
 > *"Those are our own test conversations. This has not been in front of a guest yet — what you're
 > looking at is the evidence we ran it hard."*

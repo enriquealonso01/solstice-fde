@@ -5034,3 +5034,73 @@ re-provision: compile === live === export still 29,411, margin 589.
 a gap rather than a defect and says not to capture one — it costs a live session, and G3 is already
 verified against production in the Tester's log, which is where that evidence belongs. Agreed, and
 the new guard's third case will catch any future title that claims the gap is filled when it is not.
+
+## It95 — no task open, so I ran the pre-send gate, and it found a live defect on a demo screen
+
+No agent task was open: T38–T42 are shipped, and **T32 turns out to need no work** — PR #79 already
+added the *"Where that queue is today"* paragraph to `agent/sol.md`, inside a `voice:exclude` block,
+which is precisely what T32 asks for. The plan simply never marked it closed. That is the Planner's
+file, so I am flagging it here rather than editing it.
+
+So I ran `SUBMISSION.md`'s own **"Before sending, check"** list. It is the literal gate before
+Enrique sends, five PRs have landed since it was last run end to end, and one of its items exists
+because a deploy once failed silently.
+
+| Item | Result |
+|---|---|
+| Repository visibility | **PUBLIC**, `github.com/enriquealonso01/solstice-fde` |
+| Failure-injection switches healthy | **all three healthy** — `pms_offline`, `reservations_offline`, `policy_source_offline`, read straight from `demo_flags` |
+| Telnyx balance above $20 | **$3.03 — FAILS.** Already Enrique's, item 2 in `HUMAN_INTERVENTION.md` |
+| Live site loads, chat answers | `/`, `/admin`, `/login`, `POST /api/chat` all **200** |
+| `npx vitest run` green | **540 / 46 files** |
+| Production serving the latest commit | **OK** — last commit `02:22:44Z`, last ready deploy `02:23:05Z` |
+| `npm run demo:tidy` | **not run, deliberately** — it is the last step and the agent loop is still creating sessions. Dry run: 0 phantoms, **151 stale sessions** it would close |
+
+### The defect the gate exposed
+
+That dry run is what made me look at the screen it is supposed to protect. Measured against
+production:
+
+```
+total sessions : 180      active 155   ended 23   taken_over 2
+newest 100 by started_at : 100 active, 0 ended
+what the dashboard renders -> Active now: 100   Archive: 0
+```
+
+**The supervisor Archive was showing the empty state "No ended sessions yet" while 23 ended
+conversations sat in the database.** `useSessions` fetched the 100 most recent rows by `started_at`.
+Nothing closes a chat session on the web — there is no hangup event the way there is on a call — so
+`active` rows accumulate with every test conversation any of the three of us runs, and the ended
+ones age out of the window. All 100 newest were active, so the page concluded "nothing has ended"
+from a slice it never said it had applied.
+
+`docs/demo-runbook.md:100` narrates that exact panel and says **"it will not be empty"**. It was.
+
+### What I changed, and what I deliberately did not
+
+`npm run demo:tidy` would have fixed the screen — it closes anything idle for 30 minutes, which
+moves 151 rows to `ended`. I did not run it: the runbook is explicit that tidying before the agent
+loop stops is undone by the next minute of traffic, and it is Enrique's last step. Running it would
+also have hidden the defect rather than fixed it.
+
+The fix is the window. `SESSION_FETCH_LIMIT = 500`, named and reasoned where it lives, with two
+honesty changes on the screen it feeds: the "Active now" hint says *"newest 500 only"* when the
+fetch really is a window, and the Archive's empty state now distinguishes *nothing has ended* from
+*nothing ended is in view*. An empty panel that cannot say which of those it means is how a
+presenter ends up explaining away a bug.
+
+`supervisor-archive.test.ts` reproduces the production distribution rather than asserting a
+constant, so it is pinned to the cause: put `100` back and it fails with the screen that was live —
+*"With 180 sessions and a window of 100, the Archive renders 'No ended sessions yet' while 23 ended
+conversations sit in the database."* Red-checked exactly that way.
+
+One more thing the measurement corrected: the runbook told the presenter the Archive holds *"around
+a hundred"* rows. After a tidy it will hold about **174**. Reworded to the mechanism, with the
+window failure named, so the next person who sees an empty Archive knows in one line whether it is
+real.
+
+`npx tsc -b` clean. `npx vitest run` **540 tests / 46 files** green (up 4). No prompt change, so no
+re-provision: compile === live === export still 29,411, margin 589.
+
+**Still open and not mine:** the Telnyx balance is the only checklist item that fails, and it is the
+same item that blocks beat 3 and G16 on voice.

@@ -1,7 +1,8 @@
 # Master plan: the whole picture
 
-> ## 22:14 — **ENRIQUE: the SQL paste is still #1.** One document fix is open: **T42**, a transcript H1.
-> *(T38, T39, T40 closed in PR #124; T41 fixed in the working tree, uncommitted.)*
+> ## 22:26 — **ENRIQUE: the SQL paste is #1, and it is now the whole list plus three.**
+> *All agent work is closed: T38–T40 in PR #124, T41 in #125, T42 in #126.* **Four items are yours.**
+> *Five likely panel questions are answered in `▶ IF THEY ASK` directly below.*
 >
 > **This banner is rewritten, not appended.** It said *18:04* and *"two agent items left"* until
 > iteration 123; there were five. Everything it used to carry about **closed** work is in the
@@ -59,7 +60,53 @@
 
 ---
 
-# ▶ OPEN WORK — four items are Enrique's, and one one-line fix is the agents'
+# ▶ IF THEY ASK — five answers to questions the package invites
+
+*Each of these is a place where the system is **correct** and a reviewer will reasonably want to
+know why it looks the way it does. Each was checked in the iteration named. **None is a defect.***
+
+**1. "How do you know it isn't inventing rates?"** — *iteration 115*
+
+> Guests, reservations, properties and policies are **compiled into the deployed bundle** from
+> `data/` — `netlify/functions/_lib/data.ts` imports the generated JSON directly, so the concierge
+> tools never query a database at all. `npm run data:check` proves those files match the CSVs you
+> sent, and the deploy check proves production is serving that build. **Two commands and the
+> concierge path is closed.** Only the group inquiries live in Postgres, and those were compared
+> field by field: 56 of 60 exact.
+
+**2. "Why does this quote 'around 25 rooms' instead of pricing it?"** — *iteration 114*
+
+> That is `INQ-2004`, and it is the one we refused to price. The customer said *"around 25"* and
+> gave no dates. We kept their exact words, marked `missing_fields` — including
+> `meeting_capacity_needed`, which they never mentioned and this enquiry needs — and did **not**
+> turn *"around 25"* into 25. **The moment you do that, the quote is fiction and nobody can see
+> where it came from.**
+
+**3. "Why does a service-animal answer cite the no-show policy?"** — *iteration 118*
+
+> `get_policy` is a **search** when you give it a topic rather than a section number. Policy 8
+> grounded the answer; 4 and 5 are what the search also surfaced. **The transcript shows the whole
+> retrieval rather than a tidied list, because a citation list filtered after the fact is a claim
+> you cannot check.**
+
+**4. "Your latency doc says 5040ms, this transcript says 7450ms."** — *iteration 127*
+
+> Different samples, and the table says so — six fresh turns, each a new session. The 7450ms turn
+> is the heaviest in the package: **three tool calls before the first word**, including the
+> escalation that makes the refusal honest. **We did not exclude it. It is in the transcript we tell
+> you to read first**, beside the sentence where Sol says no.
+
+**5. "So how does the manager actually find out?"** — *iterations 84 and 33*
+
+> Today a supervisor reads the table. **Nothing pages anyone** — `notify` is an inert string array,
+> `_delivery/` carries proposals only, and no screen lists escalations. Policy 15 specifies same-day
+> routing and that is what Sol reports; **what is missing is the notification layer, and the
+> architecture diagram already marks that FUTURE.** We did not want to claim a pager we had not
+> written.
+
+---
+
+# ▶ OPEN WORK — all four remaining items are Enrique's. Every agent item is closed.
 
 *Everything below this section is closed, or evidence.*
 
@@ -1343,6 +1390,116 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 129, 22:30 EST — verified every answer I put in `IF THEY ASK`. The plan is accurate and correctly ordered
+
+Iteration 124 set the rule that **claims I add to the front matter get verified in the iteration
+after I add them** — the rule that would have stopped the 18:04 banner rotting for four hours. Five
+answers went in last iteration, so here they are, each checked against source rather than against my
+own note.
+
+```
+1  concierge path compiled, not queried
+     no `from('reservations')` / `from('guests')` / `from('properties')` anywhere in the tools
+     or the data layer                                                                        ✓
+
+2  INQ-2004 refused rather than coerced
+     status needs_info
+     missing_fields ["arrival_date","departure_date","rooms_requested","meeting_capacity_needed"] ✓
+
+3  get_policy is a topic search returning several sections
+     policy.ts returns `sections:` — plural — and references query/topic nine times            ✓
+
+4  the 7450ms turn is the heaviest in the package
+     exactly three tool calls before the first token                                           ✓
+
+5  nothing pages anyone
+     _delivery/ = audit · config · index · telnyx, no escalation path
+     no component in src/ queries the escalations table
+     notify appears three times in escalation.ts, all as stored value                          ✓
+```
+
+**All five hold.** The section is grounded, and a reviewer following any of those answers back to
+the code finds what it says they will.
+
+#### Nothing else is open
+
+Every task T1–T42 is closed. The inbox is empty. The last five document fixes shipped in PRs #124,
+#125 and #126. **The four remaining items all require either money or an irreversible change to a
+live system, which is the boundary this loop has respected since the first lock was taken.**
+
+**The plan is accurate and correctly ordered.**
+
+#### State
+
+| # | Item |
+|---|---|
+| 1 | **`drop policy` ×3**, project `bcrivjgqrxahgxyiqlpr` — delete the disclosure if applied first |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03**; beat 3, the live intent check, G16's voice half |
+| 3 | **T21** — delete `INQ-2012`/`INQ-2013`, keep `INQ-2011` |
+| 4 | **T34** — rotate the SIP connection, after any rehearsal call, before the email |
+
+
+### Iteration 128, 22:26 EST — every agent item is closed, and the panel answers now live in one place
+
+#### T42 closed and verified, which clears the board
+
+```
+H1                        # Cancellation charge upheld, with a handoff that carries the context
+"service recovery"        gone from the whole file
+body still cites Policy 2 True
+filename                  unchanged — transcripts/README.md still links to it
+```
+
+**Exactly the fix specified, and nothing more.** The body was right throughout and was not touched.
+
+**All five document fixes are now closed**: T38, T39 and T40 in PR #124, T41 in #125, T42 in #126 —
+**five defects, three of them on the demo path, all shipped inside twenty minutes** once they were
+picked up.
+
+#### What I changed: the answers were scattered across 8,500 lines
+
+Over the last fifteen iterations I have four times concluded that the right output was **an answer
+rather than a task** — the system correct, the question predictable. Each went into the verification
+log at the point I found it, which means **they were spread across four entries separated by
+thousands of lines**, in a file whose front door I had to rewrite this evening because nobody
+scrolls.
+
+They are now a section — **`▶ IF THEY ASK`** — sitting between the banner and the open work, with
+the iteration that checked each one:
+
+1. **"How do you know it isn't inventing rates?"** — the concierge path is compiled into the bundle
+   from `data/`; `data:check` plus the deploy check closes it in two commands.
+2. **"Why does this quote 'around 25 rooms' instead of pricing it?"** — `INQ-2004`, kept verbatim,
+   `missing_fields` marked, not coerced.
+3. **"Why does a service-animal answer cite the no-show policy?"** — `get_policy` is a search on a
+   topic; the transcript shows the whole retrieval rather than a tidied list.
+4. **"Your latency doc says 5040ms, this transcript says 7450ms."** — different samples; the slowest
+   turn in the package is in the transcript we tell them to read first.
+5. **"So how does the manager actually find out?"** — nothing pages anyone; Policy 15's routing is
+   what Sol reports, and the notification layer is marked FUTURE.
+
+**Each is a place where the system is right and the appearance invites a question.** Answering those
+in advance is worth more now than looking for a sixth defect.
+
+#### The shape of the last thirty iterations, stated once
+
+The work moved through three phases without my planning it: **correcting claims** (mine, mostly),
+then **driving documents** rather than reading them, and now **anticipating questions** about things
+that are already correct. **The third phase only becomes available once the first two have run out
+of findings**, which is a reasonable definition of finished.
+
+#### State — four items, all Enrique's
+
+| # | Item |
+|---|---|
+| 1 | **`drop policy` ×3**, project `bcrivjgqrxahgxyiqlpr` — and delete the disclosure if applied first |
+| 2 | **Top up Telnyx to $20+** (balance **$3.03**) — beat 3, the live intent check, G16's voice half |
+| 3 | **T21** — delete `INQ-2012`/`INQ-2013`, keep `INQ-2011` |
+| 4 | **T34** — rotate the SIP connection, after any rehearsal call, before the email |
+
+Inbox empty. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 127, 22:20 EST — the slowest number in the package is in the transcript we tell people to read first, and that is fine
 
