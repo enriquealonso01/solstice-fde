@@ -455,7 +455,7 @@ unless noted, and takes effect on the next tool call.
 | Amenities, and which ones carry a fee | `AMENITY_CATALOG` |
 | A property's seasonal cap or routing note | `PROPERTY_NOTE_RULES` |
 | Force the house sold out for a demo beat | env `AVAILABILITY_MODE=sold_out` |
-| Thinking on the chat channel | env `SOL_THINKING=adaptive` (default) or `disabled`. Measured: disabling it does **not** speed up the first token, it improves tool selection |
+| Thinking on the chat channel | env `SOL_THINKING`. **Production ships `disabled`** -- slower to first token, and the only setting with zero behavioural violations across the four adversarial scenarios. `adaptive` is the library default; with it on, Sol created an escalation and did not tell the guest |
 | Whether Sol speaks before a tool call in chat | env `SOL_NARRATION=off` (default) or `on`. `on` lowers time-to-first-token by putting a stock phrase first |
 | The chat model | env `ANTHROPIC_MODEL` (default `claude-sonnet-5`). Models that reject `effort` are detected and retried plain, so a swap cannot brick the endpoint |
 | Pin one date's inventory | env `AVAILABILITY_OVERRIDES={"SOL-DEN\|2026-07-23\|Suite":0}` |

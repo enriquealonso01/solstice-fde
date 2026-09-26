@@ -6856,3 +6856,67 @@ The lesson is the same one as iteration 101: if the construct needs an escape, f
 
 `npx tsc -b` clean. `npx vitest run` **675 tests / 52 files** green (up 1 case, and the five needles kept
 because they pin wording a heading scan cannot see).
+
+## It122 — T48: the third copy, and the trap that looked like free margin
+
+It120 fixed the `SOL_THINKING` story in `chat.ts` and `.env.example` and missed the third copy — the
+third-of-three pattern that T41's invented phrase had too. This one is in `agent/sol.md`, which is both a
+named brief deliverable and the live voice prompt, so it is the copy a reviewer actually reads.
+
+**The row said:**
+
+> `SOL_THINKING=adaptive` (default) or `disabled`. Measured: disabling it does **not** speed up the first
+> token, it improves tool selection
+
+Two faults. It presents **adaptive** as the operative setting — true of the library and of `chat.ts:67`, but
+production ships `disabled`, which the other two files now say in as many words. And *"it improves tool
+selection"* has an ambiguous antecedent: `chat.ts` credits **adaptive** with better tool choice. Either way
+the row omits the only thing that matters, which is that `disabled` ships and the reason is behavioural.
+
+**The plan's arithmetic was exact and I checked it rather than trusting it:** +129 source characters,
+compiled **29,784**, margin **216**, not truncated — to the character.
+
+### The trap, verified independently
+
+The obvious way to pay for those 129 characters is to wrap `## 7. Changing a rule live` — 2.7KB of operator
+documentation a guest on a call never needs. I ran it on a copy:
+
+```
+as shipped            compiled 29,784   margin  216   truncated false
+section 7 wrapped     compiled 30,033   margin  -33   truncated TRUE
+```
+
+**Wrapping a section to take text out of the prompt made the prompt bigger and pushed it over the hard cap.**
+Section 7 already contains one opening `<!-- voice:exclude -->` and **no closing marker** — its partner is
+further down. `STRIP_BLOCK` pairs markers in document order, so the new opener pairs with the *existing*
+block's closer and every boundary after it inverts.
+
+**And the span is 7 → 9, not 7 → 8.** I wrote the latter from memory into the new guard's allowlist, and the
+case failed and told me the truth. Section **8 sits entirely inside** the block, which is exactly why its
+sample transcripts never reach the phone — the neighbouring case has asserted that for iterations without
+anyone knowing *why* it was true. Fifth time this session a test has corrected a guess of mine.
+
+The consequence is worth more than the margin: **"is this text in the voice prompt?" cannot be answered by
+looking at the section it is in.** Only `compileInstructions` answers it.
+
+### What I guarded, and what I deliberately did not
+
+Pinned: the markers must balance, and every block must open and close in one section **except the one known
+crossing**, which is named in the test so a second cannot hide behind it. Red-checked twice — a second
+spanning block fires it, and the first attempt at that red-check also took the guardrail section out of the
+compiled prompt, which the existing content case caught, proving the same point from the other side.
+
+I did **not** try to make the file free of spanning blocks. That means moving markers inside the live prompt
+for a structural tidy, costing a re-provision and a re-verification of everything §8 and §9 do, hours before
+submission. The hazard is now recorded where someone would hit it, which is the part that was missing.
+
+**My own It120 guard would have blocked this fix.** It pinned the row's exact sentence, *"does not speed up
+the first token"* — so the correct change failed the test I wrote one iteration earlier. Rewritten to check
+the property instead: the row must name what production ships and give the behavioural reason. A guard that
+pins wording forbids improving the wording.
+
+Re-provisioned after diffing the live prompt: the change is that one row and nothing else.
+`compile === export === live` at **29,784**, margin **216**, assistant id unchanged, 11 API calls, no
+telephony spend.
+
+`npx tsc -b` clean. `npx vitest run` **677 tests / 52 files** green (up 2).
