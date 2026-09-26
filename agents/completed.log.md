@@ -6275,3 +6275,36 @@ with the data.
 pattern went through a heredoc twice: once into the `doc-paths` regex, where `tsc` caught it, and once into
 `agents/implementer.status.md` while I was writing the note about the first. Both are now written in forms
 that cannot be mangled — a plain newline split, and prose.
+
+### It112, second postscript — the hash fix was half of it, and the next checkout proved it
+
+After the provenance fix merged, I pulled and ran the check in my own tree:
+
+```
+npm run data:check
+STALE: manifest.json differs from the source data.
+```
+
+**The tree that had just passed now failed.** Not a regression in the data — `git checkout` had rewritten
+`manifest.json`, the one generated file the merge touched, and this checkout writes `.json` as CRLF.
+
+`writeJson`'s `--check` compares byte-for-byte:
+
+```js
+const text = `${JSON.stringify(payload, null, 2)}\n`     // always LF
+const current = readFileSync(file, 'utf8')                // CRLF on a Windows checkout
+if (current !== text) -> STALE
+```
+
+So the command could only ever pass where the generated JSON happened to be LF. It passed here for weeks
+because an earlier rebuild had written all nine files LF and git had not touched them since; the moment one
+was touched, it went red. In a fresh **Windows** clone all nine would be STALE — and I had only tested a
+Linux-shaped clone, so I found half the bug and shipped it as if it were the whole one.
+
+The comparison now folds carriage returns out of both sides, for exactly the reason the source hash does.
+The check passes in this CRLF tree and in an LF clone, and it still catches real staleness: editing a count
+in `manifest.json` by hand takes it straight back to STALE.
+
+**The lesson is about my own verification, not the code.** I proved the fix in the one checkout shape where
+the failure had appeared, and the other shape was one `git checkout` away. Two shapes exist, both are
+reviewers, and a claim about "either checkout" has to be tested in both.
