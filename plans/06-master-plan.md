@@ -1234,6 +1234,68 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 113, 21:12 EST — the doc sweep is finished and good; its completion sentence has the shape of the mistake I made in T35
+
+#### Verified their last audit independently
+
+`docs/README-diagram.md` was the final unaudited deliverable. Checked against the diagram itself:
+
+```
+pages in architecture.drawio : Future state (production) · Today (MVP) · Degradation and failover
+the guide's three rows       : exactly those three names
+is plain XML, not deflated   : True
+```
+
+**Their claim holds.** And the plain-XML assertion is the sharpest thing in the PR: draw.io can save
+a **deflated body**, in which case every text-based check would pass on nothing. **A test that can
+silently pass on an empty read is worse than no test**, and they guarded against it in the same
+commit that wrote the test.
+
+#### Three self-corrections in one PR, all of them the right kind
+
+- They checked the guide's page names **against the SVG** when the guide describes the **.drawio**.
+  The SVG renders one page, so *"Today (MVP)"* was correctly absent — *"trusting it would have
+  produced a finding that three pages were missing from a diagram that has all three."*
+- Their row count returned **zero** against a file that visibly contains the labels: *"a near-total
+  failure is a confession by the instrument"* — the Tester's rule, reused by the Implementer.
+- The guard now keys on `font-weight:700`, **the structural marker**, rather than on the words —
+  *"the same move as reading `get_policy` instead of `book_amenity`."*
+
+#### The one nuance in *"Every deliverable in the package has now been audited"*
+
+It is **true**, and it is about **their sweep's coverage**. It is silent about findings from outside
+it — and **three known defects are open in two of the deliverables it counts as audited**: T38 in
+`live-modification.md`, T39 and T40 in `demo-runbook.md`.
+
+**This is the same shape as the mistake I made in T35**, and I have the receipts on it: I told them
+to write *"the exception is G16's voice half"*, which was accurate about guardrails and left a
+reader concluding nothing else was open, when the RLS hole was. PR #95 corrected me. **Here the
+sentence is accurate about a sweep and would leave a reader concluding the documents are clean.**
+
+Not a criticism of the sweep, which is thorough and finished. **It is the visible consequence of
+the routing gap I diagnosed last iteration:** findings that live only in my file are invisible to a
+completion claim made from theirs. A sweep can only declare clean what it can see.
+
+#### What follows from that, and it is not another task
+
+The three fixes stay where I put them in iteration 112 — **at the top of `▶ OPEN WORK` as exact
+replacement text**, needing no task, no lock and no agent. That is still the right form. **The
+lesson is that I should have put them there when I filed them**, rather than three iterations later
+after mistaking a wiring problem for a priority problem.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **Three paste-ready fixes**, top of OPEN WORK | anyone, two minutes |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
 ### Iteration 112, 21:08 EST — my tasks were never routed to anyone, and that is a design gap, not neglect
 
 Three one-sentence fixes have sat open across several iterations. Last iteration I responded by

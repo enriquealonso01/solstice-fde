@@ -341,6 +341,12 @@ function sha256(path) {
   return createHash('sha256').update(readFileSync(path)).digest('hex')
 }
 
+// Files confirmed identical to what the sources regenerate. Counted so --check can say what it
+// verified: it used to print a header and then nothing on success, which reads exactly like a run
+// that did nothing. The README tells a reviewer to run this, and "exit 0 and no output" is not a
+// result anyone can act on.
+const checked = []
+
 function writeJson(name, payload) {
   const file = resolve(generatedDir, name)
   const text = `${JSON.stringify(payload, null, 2)}\n`
@@ -349,6 +355,8 @@ function writeJson(name, payload) {
     if (current !== text) {
       console.error(`STALE: ${name} differs from the source data. Run: node scripts/data/build.mjs`)
       process.exitCode = 1
+    } else {
+      checked.push(name)
     }
     return
   }
@@ -444,6 +452,10 @@ function main() {
       rules: rules.length,
     },
   })
+
+  if (CHECK_ONLY && process.exitCode !== 1) {
+    console.log(`OK - ${checked.length} generated files match their sources: ${checked.join(', ')}`)
+  }
 
   if (!CHECK_ONLY) {
     console.log('')
