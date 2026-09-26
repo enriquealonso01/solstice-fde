@@ -6110,3 +6110,63 @@ are the evidence, stated as such.
 
 `npx tsc -b` clean. `npx vitest run` **613 tests / 49 files** green. No prompt change, so no
 re-provision: compile === export === live still 29,655, margin 345.
+
+## It111 — two audits came back clean, so I pinned them while they were known good
+
+No task open. Two cross-reference classes had never been checked, and both are the kind that rot
+silently: the data-quality report's claims about the supplied data, and the documents that cite numbered
+assumptions **by number**.
+
+### `data-quality.json` — accurate, complete for its scope, already disclosed
+
+It lists five checks. I ran all five independently against `data/generated/properties.json` rather than
+trusting the report:
+
+```
+base_rate_* negative/zero/unparsable     1 hit:  SOL-PVD.base_rate_suite = -395
+inventory column sum vs total_rooms       0 mismatches across all ten properties
+max_discount_auto_approve_pct in 0-100    0 out of range
+notes reference resolves to a property    1 unresolved: SOL-PVD "Boston-area sister property"
+blackout_dates parsability                 see below
+```
+
+The report's two findings are exactly those two, with severity, effect and a remediation that says *fix
+the source export, do not patch it in code*. Both are already disclosed to a reviewer as **README
+assumptions 6 and 7** and in `SUBMISSION.md`'s email draft, so the substance is surfaced and there is
+nothing to fix. Recording it as a negative result because "we checked their planted data defects and
+found the same two" is worth knowing.
+
+**One of my own checks was wrong before it was right.** My blackout test stringified each entry and
+reported eight properties with unparsable dates. `blackout_dates` is an array of `{start, end}` objects,
+so `String(x)` gave `[object Object]` — the data is fine and my instrument was not. That is the second
+time this iteration and the fourth this session that the instrument was the defect.
+
+### Numbered assumptions cited across documents — all four correct
+
+Two files carry numbered lists: `README.md` (9 items) and `agent/sol.md` §6 (16). Three documents cite
+into them by number, and `docs/role-walkthroughs.md` does it twice in one sentence:
+
+> *"It is assumption 3 in the README and assumption 13 in `agent/sol.md`."*
+
+Both are *"Approval authority is a named human, not a role tier"*. The runbook's *"Stated as assumption 3
+in the README"* is the same item, and `sol.md`'s own *"Assumption 16 is entirely about the CHAT runtime's
+prompt"* matches its item 16. Four for four.
+
+A numbered cross-reference is the classic thing that shifts when someone inserts an item above it, and
+nothing about the citing sentence looks wrong afterwards — the number is still a number, pointing at a
+different claim. Verified-correct is the cheapest moment to pin, so `assumption-numbers.test.ts` records
+what each cited number currently means.
+
+**Pinned by number and keyword, not number alone.** "Assumption 3 exists" is satisfied by any third item;
+"the thing cited for approval authority says *named human*" is the check with content. Red-checked by
+inserting an assumption above 3 and renumbering the rest: three cases fail, each naming what item 3 had
+become.
+
+**And the guard caught my own extractor first.** It matched bold leads with `.+?`, so README assumption 4
+— whose lead wraps across a line, *"…rehydrated into the inbox, contact still / masked."* — was silently
+missed: 8 items found of 9. The only reason I know is the can-it-see-anything case I wrote alongside it,
+which is the fourth time this session that case has earned its place. The extractor now uses `[\s\S]+?`
+and flattens whitespace, and its comment says why.
+
+`npx tsc -b` clean. `npx vitest run` **619 tests / 50 files** green (up 6). No prompt change, so no
+re-provision: compile === export === live still 29,655, margin 345.
