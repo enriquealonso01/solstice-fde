@@ -1,7 +1,9 @@
 # Master plan: the whole picture
 
-> ## 03:53 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> **No agent task is open. T38–T52 are all closed.** `sol.md`, the committed export and the live phone agent
+> ## 04:09 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **One agent task is open: T53** — the requirements audit marks **D1**, one of Katie's six asks, PARTIAL
+> for a gap that is filled: `docs/demo-runbook.md` opens by naming *"two audiences in one room."*
+> *T38–T52 are closed.* `sol.md`, the committed export and the live phone agent
 > all sit at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **809 tests / 58 files at
 > 03:48**. It grows every hour, so read that as a vintage rather than a target.*
 >
@@ -413,6 +415,56 @@ turn every check in that file into a silent pass.
 
 *(Worth a guard if it is cheap: no node marked **LIVE** may claim a mechanism the repo does not have. That is
 harder to express than the six status fixes, so the clause is the priority and the guard is optional.)*
+
+### T53. The requirements audit's D1 still says PARTIAL for a gap that is filled — the ninth of the eight It125 fixed
+
+*One row in the superseding block of `plans/05-requirements-audit.md`, the document `AGENTS.md`'s first line
+routes a reader to. It127 and It125 swept this file and corrected **eight** verdicts, every one an
+understatement. **D1 is a ninth and it was not in their list.** It covers one of Katie's six asks.*
+
+#### The row
+
+**`plans/05-requirements-audit.md:73`:**
+
+> `| D1 | Explain clearly to BOTH technical and non-technical stakeholders | **PARTIAL** | Backend map for
+> technical, cost page for commercial. **No rehearsed narrative tying them together** |`
+
+**D1 appears zero times in the superseding block.** It125 corrected A5, B6, C6, C8/D3, D2, D5, D6/P1-7 and E.
+**Not this one.**
+
+#### The gap it names is the one artifact that exists most explicitly
+
+**`docs/demo-runbook.md`, lines 3–4, first thing in the file:**
+
+> *"The order to show things in, what to say, and what to do when something breaks. **Written for two
+> audiences in one room: a director of engineering and a non-technical product owner.**"*
+
+**That is a rehearsed narrative tying them together, for exactly the two audiences D1 names**, and it says so
+in its own opening sentence. Supporting it:
+
+- **`docs/role-walkthroughs.md`** — *"Three roles, click by click… what to click, what appears, and — the part
+  that matters — **what each click proves**."* Promoted into the README's main deliverable table by PR #97.
+- The runbook carries **eight** *"Say: …"* / non-technical framing beats, so the narrative is scripted rather
+  than implied.
+- **The technical half is more than the Backend map:** `docs/how-this-was-built.md` and
+  `docs/integration-recommendation.md` are both aimed at the director of engineering.
+
+#### Do this — one row in the superseding block, not an edit below it
+
+Same shape as the eight already there:
+
+> `| **D1** explain to both audiences | **PARTIAL**, *"no rehearsed narrative tying them together"* | the
+> narrative exists and names its two audiences in its first sentence: `docs/demo-runbook.md` is *"written for
+> two audiences in one room: a director of engineering and a non-technical product owner"*, with eight scripted
+> *"Say:"* beats, and `docs/role-walkthroughs.md` walks three roles click by click. Technical side is the
+> Backend map plus `how-this-was-built.md` and `integration-recommendation.md`. **DONE** |`
+
+**If you think PARTIAL should survive, it needs a different reason.** The current text's reason is closed, and
+a verdict held up by a stale justification is worse than either verdict honestly argued. **Say what is still
+missing, or mark it DONE.**
+
+**Check when done:** the block names D1; the original row at :73 is untouched; the reason given for any
+surviving PARTIAL is not *"no rehearsed narrative"*.
 
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
@@ -1738,6 +1790,244 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 196, 04:09 EST — ran the command my own banner rests the concierge path on, and chased its manifest to a near-miss
+
+#### `data:check`, which my banner has claimed twice and I had never run
+
+```
+npm run data:check
+  Checking data/generated ...
+  OK - 9 generated files match their sources: properties.json, guests.json, reservations.json,
+       policies.json, policy-document.json, inquiries.json, data-quality.json, rules.json, manifest.json
+```
+
+**And my banner's wording about it is accurate**, which I checked rather than assumed. It says *"`npm run
+data:check` **proves those files match the CSVs you sent**"* — and `build.mjs:395-397` reads
+`SOURCE_FILES.properties`, `.guests` and `.inquiries`, parses them with `parseCsvObjects`, **regenerates every
+payload, and compares byte-for-byte** (`:373`). **Not a stored-hash check — a full rebuild.** *"Two commands
+and the concierge path is closed"* survives the reading.
+
+#### The manifest is a better artifact than anything points at
+
+One of the nine is `data/generated/manifest.json`, and it is the provenance record:
+
+```
+sources: sha256 for all four files phData sent, by path
+counts:  properties 10 · guests 24 · reservations 25 · policies 15 · inquiries 10 · rules 65
+```
+
+**That answers the sharpest challenge this package invites** — *"how do I know you didn't edit the CSVs?"* —
+with four hashes a reviewer can recompute. **And no deliverable mentions it.** Zero hits in `README.md`,
+`SUBMISSION.md` or any `docs/*.md`.
+
+*(Incidental corroboration: **guests 24, reservations 25**. That one-row gap is Michael Chen's second
+reservation — iteration 165's finding, encoded in the manifest's own counts.)*
+
+#### Then three of four hashes failed to match, and I nearly filed it
+
+```
+properties  *** MISMATCH ***
+guests      *** MISMATCH ***
+inquiries   *** MISMATCH ***
+policies    MATCH
+```
+
+**For a package whose central claim is *"we did not touch your data"*, three failing source hashes is the worst
+possible false signal.** And the shape was familiar: the `.md` matched, the three CSVs did not.
+
+**So I tested the hypothesis before writing it up:**
+
+```
+properties  recorded hash matches: LF-normalised | on disk has CR: true
+guests      recorded hash matches: LF-normalised | on disk has CR: true
+inquiries   recorded hash matches: LF-normalised | on disk has CR: true
+policies    recorded hash matches: as-on-disk    | on disk has CR: false
+```
+
+**And then read the function, which settles it:**
+
+> `build.mjs:356` — `const normalised = readFileSync(path,'utf8').split('\r\n').join('\n')`
+>
+> and the comment above it: *"…change a rate by a digit and it moves. It just stops moving for a reason that has
+> nothing to do with the data. **Found at iteration 112, the same class as the compile hash in iteration 96.**"*
+
+**The normalisation is deliberate, documented, and correct.** The hashes are over LF content *precisely so they
+do not move with a checkout's line endings — which is the property you want from a provenance hash.*
+**Seventeenth near-miss, caught the same way as the last several: by reading the function that produced the
+field.**
+
+#### What actually survives, and why I am still not filing it
+
+**One real thing is left:** the manifest records `sha256` with **no indication that it is LF-normalised.** The
+code explains it; the artifact does not. A reviewer running `sha256sum` or `Get-FileHash` on a Windows checkout
+gets three mismatches and no hint why.
+
+**And that is exactly why "just point a reviewer at the manifest" would be the wrong task.** The underclaim and
+the trap are the same file: **a pointer without a label would manufacture the false signal I just talked myself
+out of.**
+
+> **So both halves have to ship together or neither does**, and the labelling half is not a one-liner: it means
+> a new key in the payload and a regeneration of nine files, with `data:check`'s comparison following it, at
+> 04:1x on submission morning. **Nothing currently directs a reviewer to recompute those hashes**, so the trap
+> is unreachable by instruction. **Leaving both, and writing down that they are a pair** — so whoever revisits
+> this does not do the cheap half alone.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — $3.03, no credit line, ~6 calls, hard stop at zero. **Buys beat 3 and G16's voice half** | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T53 | One row in the audit's superseding block | **CLAIMED It139** |
+
+Inbox and In progress empty. No lock held. Tester silent **7h41m**.
+**The plan is accurate and correctly ordered.**
+
+### Iteration 195, 04:05 EST — the audit understates one of Katie's six asks, and it is the ninth of the eight already fixed
+
+#### T53
+
+`plans/05-requirements-audit.md` is where `AGENTS.md`'s first line routes a reader. **It125 corrected eight
+verdicts in it, every one an understatement**, and It127 audited the four plans around it. **D1 was not in
+either sweep.**
+
+**`:73`** — and D1 appears **zero times** in the superseding block:
+
+> `| D1 | Explain clearly to BOTH technical and non-technical stakeholders | **PARTIAL** | Backend map for
+> technical, cost page for commercial. **No rehearsed narrative tying them together** |`
+
+#### The named gap is the one artifact that exists most explicitly
+
+**`docs/demo-runbook.md`, lines 3–4, the first thing in the file:**
+
+> *"The order to show things in, what to say, and what to do when something breaks. **Written for two audiences
+> in one room: a director of engineering and a non-technical product owner.**"*
+
+**That is a rehearsed narrative tying them together, for exactly the two audiences D1 names, announcing itself
+in its opening sentence.** Around it: `docs/role-walkthroughs.md` walks three roles click by click and was
+promoted into the README's deliverable table by PR #97; the runbook carries **eight** scripted *"Say: …"* beats;
+and the technical half is more than the Backend map — `how-this-was-built.md` and
+`integration-recommendation.md` are both written for the director of engineering.
+
+**So one of Katie's six asks is marked PARTIAL in a reviewer-facing document for a reason that is closed.**
+
+#### The part of the task that matters more than the verdict
+
+T53 does not just say *"mark it DONE"*. It says:
+
+> **If you think PARTIAL should survive, it needs a different reason.** The current text's reason is closed, and
+> **a verdict held up by a stale justification is worse than either verdict honestly argued.** Say what is
+> still missing, or mark it DONE.
+
+That is the distinction this file has been learning all night in other forms — a true sentence that stops being
+true, a guard that tests a snapshot, an index nobody reopens. **A PARTIAL is a claim like any other, and it
+rots the same way.**
+
+#### Why this is worth filing at 04:05 when nothing else is open
+
+Because of where it sits. **`AGENTS.md`'s first line sends a reader here**, It125 established that this file
+understates the package, and **the row that understates it now is one of the six things Katie said she wanted
+to see.** The fix is one row in a block that already has eight siblings, in the project's established
+append-don't-edit shape. **It is cheap, it is in the right place, and nothing else is competing for the
+iteration.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — $3.03, no credit line, ~6 calls, hard stop at zero. **Buys beat 3 and G16's voice half** | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T53 | One row in the audit's superseding block — D1's reason is closed | any agent |
+
+Inbox and In progress empty. Lock held by another agent; not mine to take and I did not. Tester silent
+**7h36m**. **The plan is accurate and correctly ordered.**
+
+### Iteration 194, 04:01 EST — one sample transcript no longer reproduces, and the honest answer is to leave it
+
+#### The four transcripts I had never checked as documents
+
+I have verified the *behaviours* these captures show — G10 parking, G7 late checkout, G9 service animals, G3
+the recovery window — but never the **captures themselves**. A transcript is a claim about a past run, and the
+system has moved since.
+
+**Every tool they cite exists** (`get_property_info`, `check_late_checkout`, `identify_guest`, `get_policy`,
+`create_escalation`, `get_reservation` — I have called all six tonight), and **every policy number resolves to
+the right subject:**
+
+```
+1 Check-in and check-out times · 2 Standard cancellation window · 4 No-show policy
+5 Service recovery window · 6 Loyalty tier benefits at check-in · 8 Pets and service animals
+12 Parking and valet · 15 Escalation matrix
+```
+
+- **`parking-rate-refusal.md`** → Policy 12, Parking and valet ✓
+- **`platinum-late-checkout.md`** → Policies 1 and 6 ✓
+- **`refund-outside-window.md`** → Policies 2 and 15 ✓ — **and this is T42's fix holding**: it retitled the
+  file *"Cancellation charge upheld"* precisely because this is a **Policy 2 cancellation**, not Policy 5
+  service recovery.
+
+#### The finding: `service-animal.md`'s tool trace no longer reproduces
+
+The capture records:
+
+> `get_policy` — **Policy 8, 4, 5** — Pets and service animals *(cites: Policy 8 — Pets and service animals;
+> Policy 4 — No-show policy…)*
+
+**I re-ran it with the transcript's own guest wording**, which the file prints verbatim — *"Do your hotels allow
+dogs? I travel with a service animal."*
+
+```
+live:  sections 8, 5, 7   citations policy:8, policy:5, policy:7
+file:  sections 8, 4, 5   citations policy:8, policy:4, policy:5
+```
+
+**Same query, different secondary sections.** Policy 4 (No-show) is no longer returned; Policy 7 (Comp and
+service recovery authority) now is. **The operative section is 8 in both**, and the capture's headline, Sol's
+answer and its stated claim — *"Policy 8 encoded precisely, including the ADA limits on what staff may ask"* —
+are all still true; I verified that behaviourally at iteration 179.
+
+**And the drift is isolated.** `parking-rate-refusal.md` reproduces: the file cites the SOL-CHI property record
+and Policy 12, and live returns `property:SOL-CHI, policy:12`.
+
+#### Why I am not filing it, and the reason is the interesting part
+
+**The drift is in the harmless direction.** The citation that disappeared is **Policy 4, "No-show policy",
+cited for a question about a dog** — the odd-looking one. **The current system is tidier than the capture.** A
+reviewer re-running it gets a better answer than the one on file.
+
+**And the file is honest about its own vintage:** *"Captured from the deployed system … on **2026-09-24**."*
+A dated snapshot that no longer reproduces exactly is what a dated snapshot is.
+
+> **The decisive reason, though, is that there is no safe edit.** The header says *"**Every tool call and
+> timing below is real.**"* **You cannot hand-edit a document that claims to be a real capture** — changing
+> `8, 4, 5` to `8, 5, 7` by hand would make that sentence false in a way the current drift does not. The only
+> honest fixes are **re-capture or leave it**, and re-capturing would also change the timings and probably
+> Sol's wording, for a secondary citation list nobody's argument rests on.
+>
+> **Leave it.** If anyone disagrees, the instruction is: **re-capture, never retype.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — $3.03, no credit line, ~6 calls, hard stop at zero. **Buys beat 3 and G16's voice half** | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+
+**No agent task is open and none was filed.** Inbox and In progress empty. No lock held. Tester silent
+**7h30m**. **The plan is accurate and correctly ordered.**
 
 ### Iteration 193, 03:53 EST — the first transcript a reviewer is told to read holds verbatim, and it earned three verifications at once
 
