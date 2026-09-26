@@ -10283,3 +10283,91 @@ last time it was `SUBMISSION.md`.* The fix both times was the same: destructive 
 that restores in `finally`, not in a shell pipeline that can die between the write and the restore.
 
 `npx tsc -b` clean. `npx vitest run` **925 tests / 65 files** green (up 2).
+
+---
+
+## It158 — ran the last box on the checklist, and found it could pass while production was behind
+
+The board was empty again, and the Planner had named the gap themselves:
+
+> **The last box on `SUBMISSION.md`'s checklist is the one I cannot check for you:** *production is actually
+> serving your latest commit*. I have the other half — at 07:06 the published files were byte-identical to
+> this tree. Tree matches `main`; run the script so `main` matches production.
+
+I deploy every iteration and hold `.env`, so I am the one who can run it. Pasted verbatim:
+
+```
+last commit : 2026-09-26T11:40:51.000Z
+last ready  : 2026-09-26T11:41:53.738Z
+OK - production is serving your latest commit
+```
+
+**The box checks out, and the paste works** — env loading, a `node -e` through a pipe, the UTC-vs-local
+comparison. That was the assignment. Then I looked at what the script actually selects.
+
+### It took the first `state: 'ready'` deploy, and that list is not only production
+
+Measured against the real API rather than reasoned about:
+
+```
+deploys returned: 100                      (newest first)
+fields present: state, context, branch, created_at, published_at, commit_ref
+ready deploys whose context is NOT production: 2     newest a deploy-preview at 03:35
+```
+
+`listSiteDeploys` returns **every context in one list**, and a deploy preview is `state: 'ready'` like any
+other. **Opening a pull request builds one — this repository opens one per iteration.** So a preview newer
+than the last production deploy would have been compared against the commit and printed
+`OK - production is serving your latest commit` while production served an older build.
+
+That is the exact failure the box exists to catch, in the last check before sending, on a line whose own
+prose says *"Do not read a passing state alone as a pass."*
+
+Today it happens to be safe — the newest non-production deploy is from 03:35, hours behind — which is
+precisely why it would have gone unnoticed.
+
+**A second, smaller one:** it compared `created_at`, the moment the build started, not `published_at`, the
+moment that build began answering requests. A deploy can be ready and never published.
+
+### The fix, and the prose that undersold it
+
+`state === 'ready' && context === 'production' && published_at`, comparing `published_at`. Re-run verbatim:
+
+```
+last commit : 2026-09-26T11:40:51.000Z
+last ready  : 2026-09-26T11:42:05.436Z     <- the publish time now, 12s after the build
+OK - production is serving your latest commit
+```
+
+The surrounding paragraph said *"Two failures are covered"* and listed the errored deploy and the deploy
+that never happened. It now says **three** and explains the preview case — because a checklist whose
+explanation undersells it is how the next reader decides a filter is redundant and deletes it.
+
+### Guarded, five cases
+
+`presend-checklist.test.ts` already owns this checklist, so the new block went there: the script must keep
+all three filters, must compare `published_at` and not `created_at`, must still print a verdict rather than
+a timestamp to eyeball, and the prose must still say three. Each assertion runs against the **fenced block**
+rather than the file, so none of them can be satisfied by prose elsewhere.
+
+```
+the production filter tidied away                1 failed
+only the context filter dropped                  1 failed
+published_at dropped, created_at back            1 failed
+the ready filter dropped                         1 failed
+the verdict becomes a timestamp                  1 failed
+the prose back to two covered failures           1 failed
+restored                                        15 passed   SUBMISSION.md byte-identical
+```
+
+Six mutations, six cases, each firing exactly the one written for it, and **no skips** — the mutations were
+built by transforming the file's own text rather than by retyping anchors, which is the fix for the two
+skipped mutations of the last two iterations.
+
+### The instrument note is that there isn't one
+
+Both destructive steps ran from script files with the restore in `finally`, which is the rule It157 wrote
+after leaving a file in the wrong state twice. Nothing was left modified, no anchor was guessed, and the
+red-check needed no second attempt. First iteration in five without an instrument failure.
+
+`npx tsc -b` clean. `npx vitest run` **930 tests / 65 files** green (up 5).

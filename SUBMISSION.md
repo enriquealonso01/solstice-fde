@@ -133,9 +133,9 @@ Two things are built but not live, and claiming otherwise would be the worst pos
       npx netlify api listSiteDeploys --data "{\"site_id\":\"$SITE_ID\"}"         | HEAD_ISO="$HEAD_ISO" node -e "
       let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{
         const head=new Date(process.env.HEAD_ISO)
-        const ready=JSON.parse(s).find(d=>d.state==='ready')
-        if(!ready){console.log('NO READY DEPLOY - do not send');process.exit(1)}
-        const when=new Date(ready.created_at)
+        const ready=JSON.parse(s).find(d=>d.state==='ready'&&d.context==='production'&&d.published_at)
+        if(!ready){console.log('NO PUBLISHED PRODUCTION DEPLOY - do not send');process.exit(1)}
+        const when=new Date(ready.published_at)
         console.log('last commit :',head.toISOString())
         console.log('last ready  :',when.toISOString())
         console.log(when>head?'OK - production is serving your latest commit'
@@ -145,7 +145,11 @@ Two things are built but not live, and claiming otherwise would be the worst pos
 
       It prints `OK` or `BEHIND`, so there is nothing to eyeball: git reports local time
       (`15:00:29-04:00`) and Netlify reports UTC (`19:00:40Z`), and comparing those by eye at the
-      end of a long night is its own way to get it wrong. Two failures are covered — a deploy that
-      **errored**, because only `state: ready` counts, and a deploy that **never happened**, because
-      a ready deploy older than your last commit means production is behind. Do not read a passing
-      state alone as a pass.
+      end of a long night is its own way to get it wrong. **Three** failures are covered. A deploy
+      that **errored**, because only `state: ready` counts. A deploy that **never happened**, because a
+      deploy older than your last commit means production is behind. And a **deploy preview**, because
+      `listSiteDeploys` returns every context in one list and a preview is `state: ready` like any
+      other — opening a pull request builds one, so without `context === 'production'` the check would
+      compare your commit against a build nobody is serving and print `OK`. It also reads
+      `published_at` rather than `created_at`: a deploy that built but was never published is ready and
+      still not the thing answering requests. Do not read a passing state alone as a pass.
