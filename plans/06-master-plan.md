@@ -71,6 +71,10 @@
 
 *Everything below this section is closed, or evidence.*
 
+> **T39 is open too, same beat:** the runbook tells Enrique to say *"all three costed options move
+> together"* while `show-verdict.ts` prints **one price** — true about the system, false about the
+> screen. One sentence.
+>
 > **T38 is open and it is small and urgent.** `docs/live-modification.md` tells the presenter to
 > *"search for the second occurrence"* — which is **`SOL-AUS`, Austin**, not `SOL-PHX`. Editing it
 > changes the wrong hotel and the demo verdict does not move: the exact failure the warning was
@@ -98,6 +102,57 @@ slightly wrong about the test, the guardrail is verified and the behaviour is ri
 secondary list in `SUBMISSION.md`. Two README rows and one bullet. *Everything else an agent could
 take is closed; the four items above require spending money or an irreversible change to a live
 system, which is the boundary working.*
+
+### T39. The runbook says three costed options move; the script it points at prints one price
+
+*Same beat as T38 and the same kind of failure: a line Enrique **says out loud** while the panel
+looks at a screen that does not show it. One sentence. No code, no deploy.*
+
+**`docs/demo-runbook.md:215-218`:**
+
+> 1. Open `src/lib/rules/thresholds.ts`.
+> 2. One line: `SOL-PHX` max discount 15 to 12.
+> 3. Re-run INQ-2009. The verdict, the sentence a rep reads, and **all three costed options** move
+>    together.
+
+**`scripts/show-verdict.ts` — the script `docs/live-modification.md` tells him to run — prints one
+price and never three options.** It has exactly one price statement, at lines 52-53:
+
+```
+at the discount the customer asked for (17%): $7806.15
+(what they may actually be offered depends on the verdicts above)
+```
+
+Driven on both an inquiry that flags and one that does not, to rule out the options being suppressed
+by the flag:
+
+```
+INQ-2009  FLAG GRP-DISCOUNT-CEILING  ->  one price, $7806.15
+INQ-2001  every rule passes          ->  one price, $7095.60
+```
+
+**Three costed options are real**, and that is what makes this worth fixing rather than deleting:
+`netlify/functions/group/tools.ts:326` builds *"three costed choices instead of a yes/no"*, and
+`inquiries.test.ts:317` asserts it. **They live in the group sales surface, not in this script.**
+
+**Do this — the minimal honest version.** Make step 3 describe what is on screen:
+
+> 3. Re-run `INQ-2009`. The verdict, the threshold it cites, and the sentence a rep reads all move
+>    together, and the price the customer asked for does not — because the ceiling changed, not the
+>    rate.
+
+**If the three options are wanted in the demo**, they need the sales screen rather than the script,
+and that is a second beat rather than a wording change — **do not add it this close in** unless
+someone has driven it.
+
+**Two things already verified for you, so this does not need re-deriving:** the script needs no
+network and runs in under a second, and `docs/live-modification.md` reproduces both its Before and
+After blocks verbatim (Tester iteration 61).
+
+**Check when done:** step 3 names only what `npx vite-node scripts/show-verdict.ts -- INQ-2009`
+prints; `grep -c "console.log" scripts/show-verdict.ts` still shows a single price statement, so the
+claim and the script agree.
+
 
 ### T38. "Search for the second occurrence" points at the wrong hotel — one phrase, on the beat the panel watches
 
@@ -130,6 +185,9 @@ confusing thirty seconds, now produced by the warning itself.**
 Note the doc is internally inconsistent: *"around line 106"* is correct while *"the second
 occurrence"* is not, so a reader who scrolls is fine and a reader who searches — which is what the
 sentence tells them to do — is not.
+
+**The correct wording already exists in this project.** `docs/demo-runbook.md:216` says *"One line:
+`SOL-PHX` max discount 15 to 12"* — it names the property. Copy that rather than inventing phrasing.
 
 **Do this.** Replace the ordinal with the property, which is also robust against anyone reordering
 the file:
@@ -1059,6 +1117,139 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 106, 20:38 EST — drove the README's "Try it", and watched a third agent reach the same lesson about predicted enumerations
+
+#### The first thing a reviewer executes, verified
+
+`README.md`'s *"Try it"* tells a reviewer the group sales console holds *"**the ten inquiries from
+the provided data** plus any Sol has taken on a call."* Both halves, measured:
+
+```
+data/solstice-group-inquiries.csv   10 rows   INQ-2001 … INQ-2010
+live database                       13 rows   by source: { portal: 10, voice: 3 }
+```
+
+**Exactly right.** The ten portal-sourced rows are the provided data; the three voice-sourced rows
+are ones Sol took on calls. And it **stays** right after T21: deleting `INQ-2012` and `INQ-2013`
+leaves 10 portal + `INQ-2011` voice, which is precisely what `README.md:127` calls *"the live
+example, captured on a real call."*
+
+Worth noting the deleted rows are `source: voice` too — they are not junk that appeared from
+nowhere, they are **test calls**, which is why T21 removes two and keeps the one with a real
+conversation behind it.
+
+#### Three agents, three routes, one lesson
+
+PR #107 redid the walkthrough quote check and said why the first version was weak:
+
+> *"I checked it against a list of strings I knew I had changed. It found two real bugs, so it felt
+> like it worked — but it was a **predicted enumeration** and could only ever have found rewordings
+> I remembered. Other agents reworded the inbox chips three times today."*
+
+**That is the third independent arrival at the same failure**, and the routes were different:
+
+| | Who | How it surfaced |
+|---|---|---|
+| PR #81 | Implementer | *"the scan looked for a list of things I predicted, and a SIP URI is none of them"* |
+| iteration 89 | **me** | I bounded a credential sweep with **five hand-picked `.env` variables**; `TELNYX_SIP_USERNAME` was not among them |
+| PR #107 | Implementer | a quote sweep that could only find rewordings its author remembered |
+
+Redone as a property rather than a list: **all 55 backticked spans, filtered to the 24 that look
+like on-screen prose, each checked against source.** The document came back correct, including five
+that looked wrong — they are assembled at runtime.
+
+**And the subtler half, which is the part I would have got wrong too:** *"my sweep assumed on-screen
+text lives in `src/`."* `Unknown caller +*******2646` is written **server-side** into `guest_label`
+and rendered verbatim — confirmed against all eight recent voice sessions in production. A sweep
+scoped to the front end would have called a correct document wrong.
+
+> A predicted enumeration finds what you already suspect. **It cannot distinguish "nothing is wrong"
+> from "I did not think of it"** — and it returns a clean result either way.
+
+#### T38 and T39 are both still open
+
+One phrase each, both on the live-change beat. `live-modification.md:22` still says *"second
+occurrence"*; `demo-runbook.md:217` still says *"all three costed options"*.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Telnyx top-up, $3.09 | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T38**, **T39** | Agents — one sentence each |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
+### Iteration 105, 20:34 EST — I drove the runbook's live-change step and it claims something the script does not print
+
+I took the Tester's method from PR #104 — **drive the document as written** — and pointed it at the
+one document that tells Enrique what to *say* while the panel watches.
+
+#### T39: "all three costed options move together"
+
+`docs/demo-runbook.md:217` instructs him to re-run `INQ-2009` and narrate that *"the verdict, the
+sentence a rep reads, and **all three costed options** move together."*
+
+`scripts/show-verdict.ts` — the script `live-modification.md` tells him to run — **has exactly one
+price statement**, at lines 52-53. I drove it on both a flagging and a passing inquiry, to rule out
+the options being suppressed by the flag:
+
+```
+INQ-2009  FLAG GRP-DISCOUNT-CEILING  ->  one price, $7806.15
+INQ-2001  every rule passes          ->  one price, $7095.60
+```
+
+**Three costed options are real** — `netlify/functions/group/tools.ts:326` builds *"three costed
+choices instead of a yes/no"* and `inquiries.test.ts:317` asserts it — **but they live in the group
+sales surface, not in this script.** So the sentence is true about the system and false about the
+screen he will be looking at, which is the worst combination for something said out loud.
+
+T39 rewrites step 3 to describe what is actually printed, and explicitly **declines** to add a
+second beat showing the sales screen this close to the demo unless somebody drives it first.
+
+#### The runbook already contains T38's fix, one document over
+
+While I was there: the runbook's step 2 reads *"One line: `SOL-PHX` max discount 15 to 12"* — it
+**names the property**, which is exactly the correction T38 asks for in `live-modification.md`.
+The short document is right and the detailed one is wrong. **Whoever takes T38 can copy the
+runbook's phrasing rather than invent it.** Added to the task.
+
+#### Two smaller things worth knowing
+
+`show-verdict.ts` resolves **INQ-2001 to INQ-2010 only** — it reads the `data/` fixtures, which is
+why it needs no network. `INQ-2011`, which the README and runbook both cite and which T21 preserves,
+is a **live database row the script cannot see**. Not a defect; a boundary worth knowing before
+someone types `INQ-2011` into it during a demo and gets *"No inquiry INQ-2011."*
+
+And T38 is still open in `live-modification.md:22`.
+
+#### What this run of iterations has actually been
+
+Four defects in four iterations — the cheatsheet's AGM claim, the walkthrough's redirect, T38's
+ordinal, and now this — and **none of them were found by reading.** Every one came from executing
+the instruction: running the command, pasting the curl, following the search. The documents had all
+been read many times, including by me.
+
+> **Reading a document tells you whether it is coherent. Driving it tells you whether it is true.**
+> These are different properties and this project has been much better at the first.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Telnyx top-up, $3.09 | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T39** runbook step 3 · **T38** the `SOL-PHX` phrase | **Agents — both open, both one sentence** |
+
+Inbox empty. No lock held.
+
 
 ### Iteration 104, 20:30 EST — the fix for the live-demo trap points at the wrong hotel
 

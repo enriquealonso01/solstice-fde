@@ -4,49 +4,51 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 104 — 2026-09-25 ~20:30 EST
+## Iteration 106 — 2026-09-25 ~20:38 EST
 
-### T38 filed: the fix for the live-demo trap points at the wrong hotel
+### The plan is accurate and correctly ordered. T38 and T39 remain open, one sentence each.
 
-PR #104 found a real trap — `thresholds.ts` quotes the demo snippet in its header comment at line
-10, so a search lands there before the real entry, and the only tell is *"allowed 15"* staying 15.
-The Tester hit it themselves and named their own mistake in the warning.
+Inbox empty. No lock held.
 
-**The instruction is wrong.** The string occurs **four** times:
+### Drove the README's "Try it" — the first thing a reviewer executes
+
+It claims the group console holds *"the ten inquiries from the provided data plus any Sol has taken
+on a call."*
 
 ```
- 10  header comment  (the trap)
- 54  SOL-AUS  Austin        <- "the second occurrence"
- 93  SOL-TPA  Tampa
-106  SOL-PHX  Phoenix       <- what the demo needs
+data/solstice-group-inquiries.csv   10 rows   INQ-2001 … INQ-2010
+live database                       13 rows   { portal: 10, voice: 3 }
 ```
 
-Following *"search for the second occurrence"* edits **Austin**; `INQ-2009` is **Phoenix**, so the
-verdict does not move — **the exact failure the warning exists to prevent.** The doc is internally
-inconsistent: *"around line 106"* is right, the ordinal is not. **T38 replaces it with `'SOL-PHX'`.**
+**Exactly right**, and it **stays** right after T21: removing `INQ-2012`/`INQ-2013` leaves 10 portal
+plus `INQ-2011`, which `README.md:127` calls *"the live example, captured on a real call."* The two
+deleted rows are `source: voice` as well — **test calls, not junk**, which is why T21 keeps the one
+with a real conversation behind it.
 
-### Two things I looked at and misread
+### Three agents, three routes, one lesson
 
-**Iteration 102:** I read that header comment and called it a point in the file's favour — *"the
-file even has the change instruction in its own header comment."* It is a footgun, and the Tester
-walked into it within the hour. I saw the duplication and registered it as helpfulness.
+PR #107 redid the walkthrough quote sweep and explained why version one was weak: *"it was a
+**predicted enumeration** and could only ever have found rewordings I remembered."*
 
-**Iteration 103:** I confirmed the boundary curl returns 403 with `-w "HTTP %{http_code}"`, which
-prints the status and not the protocol. PR #104 found the response block claimed **HTTP/2 403**
-while the curl negotiates **HTTP/1.1**, by **re-testing their own fix rather than assuming their
-half was right.**
+Third independent arrival at the same failure:
 
-Same shape both times: I checked what I set out to check and not what was beside it. **Their method
-— drive the document as written, then re-drive your own correction — found three defects today that
-reading found none of.**
+- **PR #81** (Implementer): *"the scan looked for a list of things I predicted, and a SIP URI is
+  none of them."*
+- **Iteration 89** (**me**): I bounded a credential sweep with five hand-picked `.env` variables;
+  `TELNYX_SIP_USERNAME` was not among them.
+- **PR #107** (Implementer): a sweep that could only find rewordings its author remembered.
 
-### Now verified end to end
+Redone as a property: **all 55 backticked spans → the 24 that look like on-screen prose → each
+checked against source.** Document correct, including five that looked wrong and are assembled at
+runtime.
 
-`live-modification.md`'s **After** block — the one step I could not confirm in iteration 102, since
-editing `thresholds.ts` is not mine — reproduces verbatim, including *"5 points over"* and the
-unchanged **$7806.15**. PR #106 pins the code block against drift.
+**The subtler half, which I would also have got wrong:** *"my sweep assumed on-screen text lives in
+`src/`."* `Unknown caller +*******2646` is written **server-side** into `guest_label`. A front-end
+sweep would have called a correct document wrong.
+
+> A predicted enumeration finds what you already suspect. **It cannot distinguish "nothing is wrong"
+> from "I did not think of it"** — and it returns clean either way.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** **T38 is the only agent item and it is one phrase**, but it is on the
-beat the panel watches him type, so it should go first among agent work.
+**The `drop policy` paste.** Among agent work, **T38 and T39** — both on the beat the panel watches.

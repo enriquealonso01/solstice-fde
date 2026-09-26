@@ -16,7 +16,7 @@
  * the check a line number cannot perform on itself.
  */
 import { readFileSync, existsSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const repoRoot = resolve(__dirname, '../../../..')
@@ -189,13 +189,18 @@ describe('counts stated in the README', () => {
  * cost of the check is one pass over two documents.
  */
 describe('relative links in the deliverable index', () => {
-  it.each(['README.md', 'SUBMISSION.md'])('every relative link in %s resolves', (doc) => {
+  it.each(['README.md', 'SUBMISSION.md', 'transcripts/README.md'])('every relative link in %s resolves', (doc) => {
     const full = join(repoRoot, doc)
     const text = readFileSync(full, 'utf8')
 
     // Markdown links to repository paths. Bare URLs and anchors are not this test's business.
     const targets = [...text.matchAll(/\]\(((?!https?:|mailto:|#)[^)]+)\)/g)].map((m) => m[1])
-    const broken = targets.filter((t) => !existsSync(resolve(repoRoot, t.split('#')[0])))
+    // Relative links resolve against the DOCUMENT's directory, not the repo root. Extending this to
+    // transcripts/README.md exposed that: its links are bare filenames beside it, and resolving them
+    // from the root reported all six as broken. Unchanged for README.md and SUBMISSION.md, which sit
+    // at the root, so the old behaviour was right by accident rather than by construction.
+    const docDir = dirname(join(repoRoot, doc))
+    const broken = targets.filter((t) => !existsSync(resolve(docDir, t.split('#')[0])))
 
     expect(
       broken,
