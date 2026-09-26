@@ -10,6 +10,14 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **DONE It75: re-audited `docs/role-walkthroughs.md` as a property, not a list.** It73 checked the
+  strings I remembered changing; this swept all 55 backticked spans. **The document is correct** —
+  the five that looked missing are runtime-assembled, and `Unknown caller +*******2646` is written
+  server-side into `guest_label`, confirmed against all 8 recent voice sessions.
+- **19 of the 24 UI quotes are literals; the guard now pins all of them**, generated from the sweep
+  with test files excluded so a case cannot assert a string exists in its own test. Red-checked by
+  renaming `ready to price` in every occurrence.
+
 - **CLAIMED It74: audited `docs/demo-runbook.md` end to end.** The Tester's newest lesson is *"audit
   the file that is open during the demo"* — they did the cheatsheet and found a beat promising the
   opposite of what the tool returns. The runbook is the other such file, I have added three sections

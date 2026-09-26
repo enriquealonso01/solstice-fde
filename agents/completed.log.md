@@ -4053,3 +4053,46 @@ that watching a guard refuse has mattered, and the first time the flaw was in th
 than the guard.
 
 `npx tsc -b --force` clean. `npx vitest run`: **487 passed, 38 files**.
+
+## It75 — the second audit of the same document, done as a property this time
+
+In It73 I checked `docs/role-walkthroughs.md` against **a list of strings I knew I had changed**. It
+found two real bugs, so it felt like it worked. It was a predicted enumeration — the mistake this
+session has paid for four times — and it could only ever have found rewordings I remembered making.
+Other agents reworded the inbox chips three times today (#51, #52, #55).
+
+So I did it as a property: **every backticked span in the document**, 55 of them, filtered to the 24
+that look like on-screen prose, each checked against source.
+
+### The document is correct — including the five that looked wrong
+
+The naive check reported five quotes missing from `src/`. All five are **assembled at runtime**, and
+all five are accurate:
+
+| Quote | Why it is not a literal | Verified |
+|---|---|---|
+| `Unknown caller +*******2646` | set server-side as `guest_label`, not UI text | **live database: all 8 recent voice sessions carry exactly that string** |
+| `Delivery: branded email + PDF` | `InquiryDetail.tsx:207` renders `Delivery: ` + a branch | reads exactly that for email |
+| `22% 15%`, `3 missing`, `N voice · N chat` | explicitly illustrative — *"e.g."*, *"means"*, and the doc's own placeholder | fine as written |
+
+**The first of those is the interesting one.** My sweep assumed on-screen text lives in `src/`. Some
+of it is written by `netlify/functions/` into the database and rendered verbatim — so the check was
+shaped by an assumption about *where*, having just been fixed for being shaped by an assumption about
+*which*. I only caught it because "the walkthrough is wrong about the Guest column" was a big enough
+claim to check against production before writing it down.
+
+### So the deliverable is coverage, not a fix
+
+19 of the 24 quotes are literals that a reword breaks silently, and the guard covered five. It now
+covers all 19 — generated from the sweep rather than typed, with test files excluded as sources so a
+case cannot assert that a string exists in the test asserting it.
+
+Red-checked on a newly pinned string, replacing **all** occurrences after last iteration's lesson
+about a mutation that did not mutate: renaming `ready to price` in `GroupInbox.tsx` fails with the
+doc, the file and both sides named.
+
+**Two clean audits in a row.** Worth stating rather than manufacturing a change: the runbook was
+right, and the walkthrough is right. What was missing was not correctness but the thing that keeps it
+correct after the next reword.
+
+`npx tsc -b --force` clean. `npx vitest run`: **501 passed, 38 files**.
