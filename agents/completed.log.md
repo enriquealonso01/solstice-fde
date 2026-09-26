@@ -8316,3 +8316,117 @@ clone, `describe.skipIf(!isGitClone(root))` it and say so in the title.
 
 `npx tsc -b` clean. `npx vitest run` **809 tests / 58 files** green in the clone, **804 passed / 5 skipped
 / 0 failed** without `.git`.
+
+---
+
+## It138 — the setup instructions told a reviewer to do something impossible, and the third step crashed
+
+Nothing was open, so I stayed on It137's angle: what a reviewer actually *does*, rather than what the
+documents claim. After the test suite, the next thing they do is `README.md`'s "Running it locally":
+
+```bash
+npm install
+cp .env.example .env     # then fill it in
+npm run db:schema
+npm run db:seed
+npm run seed:users
+npm run dev
+```
+
+**Step two is impossible for them.** There is nothing in this repository to fill `.env` in with, and
+deliberately so — no Supabase project, no Anthropic key, no Telnyx account. So three of the six steps
+cannot work, and the block said nothing about it. A reviewer following it in order watches three
+commands fail and reasonably concludes the project does not run, while the deployed site sits at the top
+of the same page, working.
+
+### Measured in their state, not mine
+
+`db:seed` against a filled-in `.env` writes to the production database, so this could not be tested from
+my working tree. I ran it only in the scratch copy of the tracked files, where `.env` is gitignored and
+therefore absent — the reviewer's exact state, and a directory with no credentials in it to reach
+anything with.
+
+```
+npm run db:schema   prints the three ways to apply the schema                        fine
+npm run db:seed     "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are not set" + where  good
+npm run seed:users  file:///…/scripts/seed-users.mjs  ENOENT …  Node.js v24.13.1     a stack trace
+```
+
+The third is the defect. And the shape of it is the interesting part: `seed-users.mjs` **already had the
+right checks** — it names both variables, and it has a careful comment about why `DEMO_PASSWORD` has no
+default in a public repository. They sat two lines below an unguarded `readFileSync(resolve(root,
+'.env'))`, so the file threw during module evaluation and never reached its own good answer.
+
+`scripts/data/lib/env.mjs` has solved this since the beginning: `loadEnv()` returns quietly when `.env`
+is absent and falls back to the shell. The fix was to use it.
+
+### The guard found three more that my grep did not
+
+I wrote the guard, expecting it to pin the two files I had found by grepping. It failed on three more:
+
+```
+scripts/check-email-domain.mjs
+scripts/cleanup-phantom-sessions.mjs      <- npm run demo:tidy
+scripts/export-voice-transcript.mjs
+```
+
+**`cleanup-phantom-sessions.mjs` is `demo:tidy`**, named in `SUBMISSION.md`'s pre-send checklist and run
+minutes before submitting — the step I rehearsed at It128 and made its own checklist line. Enrique's
+`.env` exists so this was never live risk for him, but "the last command before you send, with a stack
+trace instead of a sentence" is the right thing for a guard to refuse.
+
+`telnyx/export-assistant.mjs` deserves a mention too, because its own header says it exists *"so a
+reviewer can see the actual agent configuration rather than our description of it"* — and it threw
+ENOENT for exactly that reviewer.
+
+All five now call `loadEnv()`. Four of the five kept every downstream `env.SUPABASE_URL` reference by
+becoming `const env = process.env`, which is the smallest possible diff and leaves no chance of missing
+one. And because fixing the read only got them as far as their own `throw new Error(...)`, which is still
+a stack trace, the three that threw now `console.error` the variable name and `process.exit(1)`, matching
+what `db:seed` already did.
+
+### Two of three red-checks passed, and this time the guard was at fault
+
+Worth recording carefully, because the diagnosis went the other way from the last three occasions.
+
+**`guarded` tested `src.includes('loadEnv')`.** My mutation removed the import and the call — and the
+case still passed, because **the comment explaining `loadEnv` contains the word `loadEnv`**. The guard
+was satisfied by the sentence describing the fix rather than by the fix.
+
+**The early return required a quoted `'.env'` or `process.env.` with a trailing dot.** After its reader
+became `const env = process.env`, `cleanup-phantom-sessions.mjs` matched neither — the `.env` in its help
+text is inside a string, not quoted on its own, and `process.env` has no trailing dot. So the file
+**exempted itself**, and a mutation that deleted every `process.exit` in it passed.
+
+Both are the same error I have been finding in other people's guards all night: **a condition written
+from the one example in front of the author.** The first now matches an import (`from '…env.mjs'`), which
+is code and cannot appear in prose about code; the second matches `.env` or `process.env` with no
+trailing punctuation. All three mutations fire now: the unguarded read fails 1, `demo:tidy` throwing
+fails 1, and `README.md` listing `db:seed` as a no-credential command fails 2.
+
+Four red-checks this session have come back green when they should not have. Three were my probe
+(a PATH shim Node ignored, a `dashed=0` outside the page, a `node_modules` rule `.gitignore` re-added)
+and one was the guard. Telling them apart is the whole skill, and the way to do it is to find out *why*
+it passed rather than adjusting until it fails.
+
+### The documentation now matches what works
+
+`README.md` splits into two blocks. First, **"You do not need to"** — the deployed site is the system,
+and `npm install`, `npm run typecheck`, `npx vitest run` and `npm run data:check` all exit 0 on a bare
+checkout with no credentials, which I verified rather than assumed. Then the credential-dependent steps,
+under a sentence saying you need your own Supabase project, Anthropic key and Telnyx account, with the
+note that each refuses by naming what it wants. Two guards pin the split: the no-credential list must
+contain those commands, and it must **not** contain `db:seed`, `seed:users` or `db:schema`.
+
+### And the knock-on, caught by an older guard
+
+Adding lines to `cleanup-phantom-sessions.mjs` moved `docs/demo-runbook.md`'s citation of
+`cleanup-phantom-sessions.mjs:109`, and `doc-citations.test.ts` said so — including what the line had
+become and what it looked like now. Renumbering to `:111` was not right either: 111 is the comment
+mentioning `STALE_MINUTES`, and the sentence means the value. It now cites **`:113`, the
+`const STALE_MINUTES` declaration**, with the `EXPECTED` entry tightened from `STALE_MINUTES` to
+`const STALE_MINUTES` so it cannot drift back onto the prose line. A declaration moves only when the
+code does.
+
+`npx tsc -b` clean. `npx vitest run` **822 tests / 58 files** in the clone, and **817 passed, 5 skipped,
+0 failed** on a bare checkout with neither `.env` nor `.git`.

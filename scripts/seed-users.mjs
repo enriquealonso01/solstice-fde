@@ -1,28 +1,39 @@
 // Creates the three scoped demo logins and their profile rows.
 // Idempotent: re-running updates the password and role rather than erroring.
 //   node scripts/seed-users.mjs
-import { readFileSync, writeFileSync } from 'node:fs'
+import { writeFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { loadEnv } from './data/lib/env.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const env = Object.fromEntries(
-  readFileSync(resolve(root, '.env'), 'utf8')
-    .split(/\r?\n/)
-    .filter((l) => l && !l.startsWith('#') && l.includes('='))
-    .map((l) => {
-      const i = l.indexOf('=')
-      return [l.slice(0, i).trim(), l.slice(i + 1).trim()]
-    }),
-)
 
-const URL_ = env.SUPABASE_URL
-const KEY = env.SUPABASE_SERVICE_ROLE_KEY
-if (!URL_ || !KEY) throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY required in .env')
+// `loadEnv` tolerates a missing .env and falls back to the shell. The hand-rolled reader that used to
+// live here did not: it called readFileSync on .env unguarded, so anyone following README.md's
+// "Running it locally" block without credentials -- which is every reviewer, because the block says to
+// fill in .env and they have no Supabase project -- got an unhandled ENOENT and a stack trace with an
+// absolute path, while the two checks below sat there holding the actual answer. `db:schema` and
+// `db:seed` both explain themselves in that situation; this one crashed.
+loadEnv()
+
+const URL_ = process.env.SUPABASE_URL
+const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+const missing = [!URL_ && 'SUPABASE_URL', !KEY && 'SUPABASE_SERVICE_ROLE_KEY'].filter(Boolean)
+if (missing.length > 0) {
+  console.error('')
+  console.error(`${missing.join(' and ')} ${missing.length === 1 ? 'is' : 'are'} not set.`)
+  console.error('  Add them to .env (see .env.example). Both are in Supabase > Project Settings > API.')
+  console.error('  SUPABASE_SERVICE_ROLE_KEY bypasses row-level security: keep it out of the browser bundle.')
+  console.error('')
+  console.error('  Reviewing rather than running it? The deployed site needs none of this, and')
+  console.error('  `npx vitest run` and `npm run data:check` both work with no credentials at all.')
+  console.error('')
+  process.exit(1)
+}
 
 // No default. A literal here ends up in git history, and this repository is public, so the
 // password would be permanently published even after being removed from the working tree.
-const PASSWORD = env.DEMO_PASSWORD
+const PASSWORD = process.env.DEMO_PASSWORD
 if (!PASSWORD) {
   console.error('Set DEMO_PASSWORD in .env before seeding users. It is deliberately not defaulted.')
   process.exit(1)

@@ -10,24 +10,28 @@
 //
 //   node scripts/cleanup-phantom-sessions.mjs            # dry run, prints what it would delete
 //   node scripts/cleanup-phantom-sessions.mjs --delete   # actually deletes
-import { readFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { loadEnv } from './data/lib/env.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const env = Object.fromEntries(
-  readFileSync(resolve(root, '.env'), 'utf8')
-    .split(/\r?\n/)
-    .filter((l) => l && !l.startsWith('#') && l.includes('='))
-    .map((l) => {
-      const i = l.indexOf('=')
-      return [l.slice(0, i).trim(), l.slice(i + 1).trim()]
-    }),
-)
+// loadEnv tolerates a missing .env and falls back to the shell. The reader that used to be here
+// called readFileSync on .env unguarded, so with no .env this file threw ENOENT while it was
+// still being evaluated -- before the checks below could name what was missing.
+loadEnv()
+const env = process.env
 
 const URL_ = env.SUPABASE_URL
 const KEY = env.SUPABASE_SERVICE_ROLE_KEY
-if (!URL_ || !KEY) throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY required')
+if (!URL_ || !KEY) {
+  // Named in SUBMISSION.md's pre-send checklist as `npm run demo:tidy`, so it is run under time
+  // pressure minutes before submitting. A stack trace is the wrong answer at that moment.
+  console.error('')
+  console.error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are not set.')
+  console.error('  Add them to .env (see .env.example). Both are in Supabase > Project Settings > API.')
+  console.error('')
+  process.exit(1)
+}
 const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'content-type': 'application/json' }
 
 const execute = process.argv.includes('--delete')

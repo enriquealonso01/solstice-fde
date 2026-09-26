@@ -5,23 +5,25 @@
 //
 //   node scripts/check-email-domain.mjs
 //   node scripts/check-email-domain.mjs --send   # once verified, sends a real test email
-import { readFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { loadEnv } from './data/lib/env.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const env = Object.fromEntries(
-  readFileSync(resolve(root, '.env'), 'utf8')
-    .split(/\r?\n/)
-    .filter((l) => l && !l.startsWith('#') && l.includes('='))
-    .map((l) => {
-      const i = l.indexOf('=')
-      return [l.slice(0, i).trim(), l.slice(i + 1).trim()]
-    }),
-)
+// loadEnv tolerates a missing .env and falls back to the shell. The reader that used to be here
+// called readFileSync on .env unguarded, so with no .env this file threw ENOENT while it was
+// still being evaluated -- before the checks below could name what was missing.
+loadEnv()
+const env = process.env
 
 const KEY = env.TELNYX_API_KEY
-if (!KEY) throw new Error('TELNYX_API_KEY required')
+if (!KEY) {
+  console.error('')
+  console.error('TELNYX_API_KEY is not set.')
+  console.error('  Add it to .env (see .env.example). Mission Control > API Keys.')
+  console.error('')
+  process.exit(1)
+}
 // slice(2): argv[0] is the node binary, whose path contains dots and matched the old check.
 const DOMAIN = process.argv.slice(2).find((a) => a.includes('.') && !a.startsWith('-')) ?? 'enriquecodes.com'
 

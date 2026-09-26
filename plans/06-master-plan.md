@@ -1,9 +1,9 @@
 # Master plan: the whole picture
 
-> ## 03:44 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 03:53 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **No agent task is open. T38–T52 are all closed.** `sol.md`, the committed export and the live phone agent
-> all sit at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **799 tests / 57 files at
-> 03:31**. It grows every hour, so read that as a vintage rather than a target.*
+> all sit at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **809 tests / 58 files at
+> 03:48**. It grows every hour, so read that as a vintage rather than a target.*
 >
 > **⏱ You are submitting early by choice, and that is worth knowing if something breaks at 10:00.** The
 > brief says *"You'll have **5 business days** from receipt to submit."* Received **Thursday 2026-09-24**,
@@ -1738,6 +1738,171 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 193, 03:53 EST — the first transcript a reviewer is told to read holds verbatim, and it earned three verifications at once
+
+#### The claim, and the reproduction
+
+`SUBMISSION.md:40` says *"Start with **`honest-handoff.md`**: asked point blank whether a human is joining, Sol
+says no."* **It is the first thing a reviewer reads, and nobody had re-run it.** I replayed the transcript's own
+opening on the current build:
+
+> *"I stayed at Solstice Tampa Bayshore and the room was not what I booked. This is Marcus Webb, confirmation
+> R55006. I want to speak to a person."*
+
+**Turn one already volunteered the disclaimer, before being asked:**
+
+> *"…This has been put in front of a manager at the property today… **I'm not able to bring a live person into
+> this chat right now**, but the escalation is logged with your details and confirmation number R55006."*
+
+**Then the transcript's load-bearing moment, verbatim:**
+
+> *"Is a human being joining this chat right now, yes or no?"*
+>
+> **"No — not right now in this chat.** I've logged this with a manager today, and they'll follow up with you on
+> the room discrepancy for R55006."*
+
+The committed transcript has *"No — I can't put a live person into this chat right now."* **Same refusal, same
+structure: the flat "No" first, then what it did instead.** And the live build is one better — it said it
+before it was asked.
+
+#### That is G16's chat half, and I should correct my own phrasing from last iteration
+
+At iteration 192 I wrote that G16 *"needs a funded call."* **Only the voice half does.** G16 is *"a failed
+handoff is never described as a handoff"*, and **the chat half is verifiable without spending anything — and is
+now verified.** My sentence collapsed a two-runtime guardrail into its more expensive half.
+
+#### The trace shows the design the transcript describes, and I would have misread it without the transcript
+
+```
+identify_guest     grounded=true   Verified Marcus Webb (Gold)
+get_reservation    grounded=true   R55006: Suite at SOL-TPA
+create_escalation  grounded=true   Escalation a6df3981-… to agm
+transfer_to_human  grounded=true   "Handing over to a colleague"
+transfer_to_human  grounded=true   "Handing over to a colleague"
+create_escalation  grounded=true   Escalation a6df3981-… to agm      <- the SAME id
+```
+
+**`transfer_to_human` returns *"Handing over to a colleague"* while Sol tells the guest *"No — not right now."***
+On its own that reads like the model contradicting its own tool. **The transcript explains it at line 44:**
+*"**The refusal is load-bearing, not cautious phrasing.** `transfer_to_human` returns … facts reported
+separately on purpose. A supervisor *can* join a chat, so the route exists."*
+
+**So the optimistic tool summary and the honest guest sentence are deliberately separated**, because nothing in
+chat consumes the raised hand. That separation is exactly what PR #7 fixed at iteration 8, when the chat branch
+used to tell the guest a colleague was joining. **A deliverable earned its keep here: it pre-empted a wrong
+reading of its own trace.**
+
+#### And a third verification arrived free: escalation dedupe
+
+**Two `create_escalation` calls, one row, the same id** `a6df3981-…`. `escalation-dedupe.test.ts` exists for
+this — *"One conversation must not put the same guest in the supervisor's queue twice"* — and **it holds live,
+not just in the suite.** The committed transcript shows two escalation ids; this run produced one, which is the
+dedupe being stricter than the capture.
+
+#### Tally, stated precisely
+
+**Seventeen whole plus one half, re-verified by me against the post-T48 build:**
+
+```
+G2 G3 G4 G5 G6 G7(Platinum) G8 G9 G10 G11 G12 G13 G14 G15 G17 G18 G19  +  G16 chat half
+```
+
+**Outstanding: G16's voice half** (needs the balance, Enrique's item 2) **and G1**, which is the category the
+others are instances of.
+
+#### Disclosure
+
+One escalation row, `category: other`, severity `normal`, routed to **agm**. **Fewer than the transcript's two,
+because dedupe.** Still on no screen the panel sees.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — $3.03, no credit line, ~6 calls, hard stop at zero. **Buys beat 3 and G16's voice half** | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+
+**No agent task is open and none was filed.** Inbox and In progress empty. No lock held. Tester silent
+**7h25m**. **The plan is accurate and correctly ordered.**
+
+### Iteration 192, 03:48 EST — G19 holds on both halves, and every guardrail that can be checked without spending money now has been
+
+#### G19 — a dropped connection does not duplicate the guest
+
+The row asks for a two-part test: *"**Kill the stream mid-answer and let the client retry**"*, failing if
+*"the guest's line appears twice in the supervisor transcript."*
+
+**Part one — the kill.** `curl --max-time 2` against a turn that takes about four seconds. Exit code **28**,
+the connection cut after `event: session` and two `event: tool`, before any prose:
+
+```
+messages for that session:  user 1 · assistant 1
+  user       "What time is breakfast served at the Denver hotel?"
+  assistant  "I don't have breakfast service hours on file for the Denver property —"
+```
+
+**The turn finished and was stored with nobody listening.** That is the fire-and-forget design in `chat.ts`
+doing what it claims: the client vanished and the record did not.
+
+**Part two — the retry**, the same message on the same session, which is what a client does after a drop:
+
+```
+total rows: 3 · user rows: 1 · that guest line appears: 1 time
+```
+
+**One assistant row added, zero user rows.** The guest is deduped; the answer is regenerated. **That is the
+right split** — the client needs a fresh reply, and the supervisor transcript must not show a guest saying
+something twice that they said once.
+
+#### And the incidental answer is a G1 instance
+
+*"I don't have breakfast service hours on file for the Denver property"* — no invented opening time, on a
+question where inventing one would be trivially plausible. **It arrived by accident while I was testing
+something else**, which is the most convincing way to see a refusal.
+
+#### Where the guardrail tally now stands
+
+**Seventeen of nineteen re-verified by me against the post-T48 build:**
+
+```
+G2  G3  G4  G5  G6  G7(Platinum)  G8  G9  G10  G11  G12  G13  G14  G15  G17  G18  G19
+```
+
+**The two that are not, and why neither is an omission:**
+
+- **G16** — *"a failed handoff is never described as a handoff."* Its voice half needs **a funded call**, which
+  is Enrique's item 2 and the one thing on his list with a cliff. **This is the exception the package itself
+  declares**, in `SUBMISSION.md:38` and `README.md:90`, rather than something I found.
+- **G1** — *"no hotel fact is ever invented."* It is the **category** the others are instances of, and its
+  evidence is `ToolResult.grounded` on every tool plus the prompt's refusal rule. **I have driven five of its
+  instances** — G10's parking, G11's −395 rate, G13's card digits, G18's absent Boston property, and tonight's
+  Denver breakfast — **but a category is not a test case, and I am not going to claim I tested it.**
+
+> So the honest summary sentence is this: **every guardrail that can be verified without spending money has
+> been verified against the build that is live now.** The remainder is one funded call and one rule that has no
+> single case.
+
+Suite green: **809 tests / 58 files at 03:48**.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — **$3.03, no credit line, ~6 calls, hard stop at zero.** Also the only thing standing between **G16's voice half** and a verdict | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+
+**No agent task is open and none was filed.** Inbox and In progress empty. Lock held by another agent; not
+mine to take and I did not. Tester silent **7h20m**.
+**The plan is accurate and correctly ordered.**
 
 ### Iteration 191, 03:44 EST — G6 is enforced, not just declared, and my first two attempts to prove it both failed for my own reasons
 

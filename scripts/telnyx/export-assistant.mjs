@@ -8,24 +8,22 @@
 // export stays reproducible without publishing a credential that unlocks the guest data tools.
 //
 //   node scripts/telnyx/export-assistant.mjs
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { loadEnv } from '../data/lib/env.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
-const env = Object.fromEntries(
-  readFileSync(resolve(root, '.env'), 'utf8')
-    .split(/\r?\n/)
-    .filter((l) => l && !l.startsWith('#') && l.includes('='))
-    .map((l) => {
-      const i = l.indexOf('=')
-      return [l.slice(0, i).trim(), l.slice(i + 1).trim()]
-    }),
-)
 
-const { TELNYX_API_KEY, TELNYX_ASSISTANT_ID, TOOL_WEBHOOK_SECRET } = env
+// Guarded, because the header above says this exists so a reviewer can see the real assistant config
+// -- and a reviewer has no .env. The unguarded read that used to be here threw ENOENT before the
+// check below could say what was missing.
+loadEnv()
+
+const { TELNYX_API_KEY, TELNYX_ASSISTANT_ID, TOOL_WEBHOOK_SECRET } = process.env
 if (!TELNYX_API_KEY || !TELNYX_ASSISTANT_ID) {
   console.error('TELNYX_API_KEY and TELNYX_ASSISTANT_ID must be set in .env')
+  console.error('Reading rather than re-exporting? exports/telnyx-assistant.json is already committed.')
   process.exit(1)
 }
 
