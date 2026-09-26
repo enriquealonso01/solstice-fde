@@ -4,46 +4,47 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 142 — 2026-09-25 ~23:30 EST
+## Iteration 143 — 2026-09-25 ~23:34 EST
 
-### Re-ran the conclusion my broken method produced. It holds
+### The plan is accurate and correctly ordered.
 
-Last iteration: **finding a flawed method obliges you to re-run what it already told you.** That was
-an obligation I incurred, so this discharges it on the most consequential thing I concluded with the
-line-based `grep` that PR #136 exposed.
+### Every deliverable path resolves
 
-**The claim:** iterations 88–89 swept for committed credentials with `git grep -F` — line-based, and
-blind to a value split across a break — and concluded *"this SIP username is the only credential
-ever committed."* **Enrique's T34 rotation decision rests on that sentence.**
-
-**Re-run with whitespace removed entirely** (not normalised — removed, so any wrap still matches):
+Twelve PRs have landed since iteration 116's brief→file→verifier map, so I re-resolved every path
+the entry documents point at:
 
 ```
-secrets checked 23 · tracked files 252 · hits 32 across 7 distinct variables
+paths checked in README.md and SUBMISSION.md : 33      missing: 0
 ```
 
-The seven are **exactly the seven from iteration 89**: `PUBLIC_BASE_URL`, `TELNYX_PHONE_NUMBER`,
-`TELNYX_ASSISTANT_MODEL`, `TELNYX_ASSISTANT_VOICE`, and three resource ids. **Not one secret** — no
-API keys, no service-role key, no `TELNYX_SIP_PASSWORD`, `TOOL_WEBHOOK_SECRET`,
-`PROPOSAL_LINK_SECRET`, `DEMO_PASSWORD`, `TELNYX_SIP_USERNAME`.
+The one flag was **my own false positive** — `SUBMISSION.md:40` names `transcripts/` in the same
+cell as the bare `honest-handoff.md`, and the real link is in `transcripts/README.md`. **Caught
+before recording**, the third time tonight a pattern of mine flagged something correct.
 
-**The conclusion survives the stronger method. T34 remains a decision about one credential.**
+### PR #137 confirms my iteration-118 sweep from a different angle
 
-### Why re-running a passing check was worth an iteration
+> *"twelve numbers cited, all real, and last iteration's fabrication was the only invented
+> quotation."*
 
-The method failed in a way that produces **false negatives**, and it had already returned a
-negative. **That is exactly why it needed re-running: a flawed instrument reporting "nothing found"
-is indistinguishable from a sound one until you use a better instrument.**
+I checked 34 citations across 12 files in iteration 118 — all in range and on topic. **Two methods,
+same answer.**
 
-> It cost one command. **Had it found something, it would have been a live credential in a public
-> repository, eleven hours before the link goes out.** The asymmetry is the argument, and it does
-> not depend on the outcome.
+### And it found the second instance of a pattern worth naming
 
-### Not re-run, and recorded rather than hidden
+They asked the three policies the prompt never mentions **as a guest**. Smoking and incidental hold
+answered with a tool call. **Lost and found reached `get_policy` 0 of 4 times.**
 
-The same method produced iteration 79's UUID sweep and 118's policy-citation check. **Both lower
-stakes** — a wrapped UUID breaks a link a reader can still find; a wrapped `Policy 15` still reads
-correctly. **Neither is a credential.**
+> *"The policy-shaped phrasing worked; the guest's own phrasing did not."*
+
+**The rule was not ignored — the question was not recognised as one.** Second time, after the bare
+pet question (#120). **What fails is routing, not grounding.**
+
+And they differ: **lost and found failed safely** (*"I cannot check"*), while **the pet question
+asserted "pet policies vary by hotel" with no tool call** — the one thing G1 exists to prevent,
+now out of the suggested email.
+
+Added as the **seventh** `▶ IF THEY ASK` answer: a panel asking in their own words may get *"I don't
+know"*, and deserves the explanation rather than an apology.
 
 ### The single most important remaining item
 

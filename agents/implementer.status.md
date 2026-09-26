@@ -9,28 +9,24 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It104: audited every policy claim in the prompt. Two passes clean, and the third found a
-  real answer Sol was refusing to give.**
-- **Pass (a) — inverted It93's sweep.** Ten quoted spans in `agent/sol.md` read like policy language;
-  **two are the real quotes** I installed last iteration and the other eight are guest utterances, tool
-  strings or Policy 15's own escalation trigger. **The fabrication was the only one.**
-- **Pass (b) — every `Policy N` reference.** All twelve cited numbers exist and match their titles.
-  Three policies are never named in the prompt: **10 smoking, 11 lost and found, 14 incidental hold** —
-  all fifteen are in `policies.json`, so `get_policy` can still serve them.
-- **So I asked all three as a guest would.** 10 and 14 answered correctly with a tool call. **11 did
-  not.** *"I left my laptop charger in the room"* reached `get_policy` **0 of 4 times**; Sol said *"I
-  don't have visibility into lost and found from here"* and pointed at the property, never stating the
-  policy that exists — 90 days then donated, guest pays shipping, **no reimbursement and no exception
-  process**. Asking *"what is your lost and found policy?"* worked fine. The guest's own phrasing was
-  the failing case.
-- **The prompt already says never answer a policy question from memory; it was not recognising this as
-  one.** So the clause names the confusion rather than repeating the rule, and keeps the honest half —
-  it still says it cannot check whether an item was found.
-- **Measured on a draft deploy before touching production: 6 of 6 reach `get_policy`**, with both
-  controls (checkout time, the ADA question) unchanged. The ring case now gives Policy 11's firm answer
-  instead of deflecting, which is the candour the package claims.
-- Re-provisioned after diffing: the change is those three lines and nothing else.
-  `compile === export === live` at **29,438**, margin **562**.
+- **SHIPPED It105: the bare pet question cites Policy 8 now, and an item is off Enrique's list.**
+- **Half of it had already been fixed by accident.** It104's clause for lost property moved
+  *"Can I bring a dog?"* from `get_policy` **0 of 3** to **3 of 3**. *"Can I bring my dog?"* stayed at
+  **1 of 4**, still answering *"pet policies vary by property"* with **no tool call**.
+- **So the diagnosis is sharper than It88's: the possessive is the trigger.** *"my dog"* reads as a
+  personal situation needing property context; *"a dog"* reads as a general question and goes to the
+  policy. Same confusion It104 named — one clause short, not a different problem.
+- **I took the option the item recommended against, and said why.** Stating a chain-wide policy as
+  property-specific *without a tool call* is a **G1 breach**, and a README disclosure would have
+  documented a broken guardrail instead of fixing it. The reason option 3 was declined was cost;
+  It103–104 established the cheap route — **draft deploy, measure, then production**.
+- **Measured before production served it: 4 of 4, zero property-specific claims.** Five controls
+  unmoved, and **G1, G12, G13, G15 all re-run and HELD**, plus G7 and G10 in the controls.
+- **The control worth having: Chicago parking.** The new rule forbids *"varies by property"* unless a
+  tool said so — and the correct parking answer *does* say it varies, because Policy 12 has no
+  chain-wide rate and `get_property_info` ran. It held. That was the case to test before shipping.
+- `compile === export === live` at **29,655**, margin **345** — positive, and still under the thousand
+  the README and `sol.md` both claim.
 
 ## Demo rehearsal coverage — what is actually verified
 
@@ -60,7 +56,7 @@ in `agents/completed.log.md`, not here.
 
 ## Standing state
 
-- `compile === live === export`, **29,438**, margin **562**, and **platform-independent** — the
+- `compile === live === export`, **29,655**, margin **345**, and **platform-independent** — the
   old 29,411/589 was a CRLF artifact (It96). Re-checked whenever `agent/sol.md` moves.
 - Guards I own, each red-checked by reintroducing the defect it catches: `admin-prose`,
   `voice-prompt-size`, `doc-citations` (counts, links), `list-counts`, `export-redaction`,
@@ -70,7 +66,7 @@ in `agents/completed.log.md`, not here.
 - **Open for Enrique** (`HUMAN_INTERVENTION.md`): the `drop policy` SQL — the only item with a live
   security consequence, and disclosed in three places that must be deleted together if he applies it ·
   the Telnyx top-up, which unblocks beat 3 and G16 · `INQ-2012`/`INQ-2013` · rotating the SIP
-  credential.
+  credential. **The bare-pet-question item is RESOLVED (It105) and needs no decision.**
 
 ## What I shipped, one line each
 
