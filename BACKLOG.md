@@ -20,22 +20,26 @@ _(empty — all items triaged into `plans/06-master-plan.md`)_
 
 ## In progress
 
-- **Dashboards should not feel technical** (Enrique, 2026-09-25) → master plan **T29**. Triaged
-  16:48. Read as: remove engineering vocabulary a hotel manager would not use, **without removing
-  the substance or the honesty underneath it**. Three user-visible instances found, listed in T29.
-  The Implementer is on it and reached the same reading independently.
-
-- **Click-by-click tutorial per admin role, spotlight the relevant area, grey the rest** → master
-  plan **T4a / T4b / T4c**. Split deliberately: T4a writes the three walkthroughs as text
-  (`docs/role-walkthroughs.md`), T4b builds the in-app spotlight overlay and wires one role, T4c
-  does the other two. With submission at 11:00 tomorrow, T4a is the piece that will realistically
-  ship; the overlay only happens if T1–T3 come back clean. Flagging that now rather than at 10:00.
+_(empty — both entries resolved and moved to Done at It129. This section had said "the Implementer
+is on it" for hours after the Implementer finished, which is the one thing a file read at the top of
+every iteration must not do.)_
 
 ---
 
 ## Done
 
 _(Newest first, with what changed and anything worth knowing.)_
+
+- **Dashboards should not feel technical** (Enrique, 2026-09-25) → master plan **T29**, **CLOSED
+  3 of 3**, PRs #50, #53 and #54. Engineering vocabulary a hotel manager would not use is gone from
+  the three user-visible places it appeared, with the substance underneath it left alone.
+
+- **Click-by-click tutorial per admin role, spotlight the relevant area, grey the rest** → **T4a
+  SHIPPED** (PR #3, `0de4608`): the three walkthroughs as text in `docs/role-walkthroughs.md`,
+  pinned by `walkthrough-quotes.test.ts`. **T4b and T4c — the in-app spotlight overlay — were
+  deliberately never started**, on the reasoning written here at the time: they were conditional on
+  T1–T3 coming back clean, and building an overlay the night before submission buys less than it
+  risks. Recorded as a decision rather than as a loose end.
 
 - **"Talk to Sol" mic on the landing page** — FIXED and live, PR #1 / commit `efe1226`. The hook
   pinned opus by handing `setCodecPreferences` a hand-written descriptor; Chrome only accepts a
@@ -47,7 +51,17 @@ _(Newest first, with what changed and anything worth knowing.)_
 - **Auto-triage agent** — shipped as `/api/group/triage`: sweeps every inquiry, drafts a follow-up
   when data is missing and a proposal when it is complete, sends nothing, idempotent, audited, and
   refuses the two inquiries inside blackout windows. Confirmed deployed (401 anonymous, not 404).
-  Caveat worth knowing: verified by the session that built it, not yet re-checked by the Tester.
+  **Caveat CLOSED at It129 (PR #166), and it had no test at all** — 52 test files, not one mention.
+  `src/lib/rules/__tests__/triage.test.ts` now runs the real sweep twice against the real dataset,
+  with no database, and asserts all of the above: 7 proposals and 1 follow-up on the first pass,
+  every one of them `skipped_existing` on the second, INQ-2003 and INQ-2010 refused **both times**
+  with the blackout window named, and no reachable path from the sweep to a send.
+
+  **Do not run the sweep against production before the demo.** Measured with the service-role key
+  at 06:35Z: of the 13 inquiries in the live inbox, INQ-2012 and INQ-2013 are the only ones a run
+  would write to, and those are the two queued for deletion — so the sweep would draft follow-ups
+  onto rows that are about to disappear. INQ-2003 and INQ-2010 look bare and are not: the sweep
+  refuses them, which is why they have no artifact. Nothing needs running to believe any of this.
 
 ---
 
