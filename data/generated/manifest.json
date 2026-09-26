@@ -23,7 +23,6 @@
     "guests": 24,
     "reservations": 25,
     "policies": 15,
-    "inquiries": 10,
-    "rules": 65
+    "inquiries": 10
   }
 }

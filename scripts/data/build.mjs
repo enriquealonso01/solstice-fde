@@ -17,77 +17,12 @@ import { createHash } from 'node:crypto'
 import { resolve } from 'node:path'
 
 import { parseCsvObjects, str, num, bool } from './lib/csv.mjs'
-import { parseDateRanges } from './lib/calendar.mjs'
-import { buildRules } from './lib/rules.mjs'
+import { propertiesFromCsv } from './lib/properties.mjs'
 import { generatedDir, SOURCE_FILES } from './lib/paths.mjs'
 import { maskEmail, maskPhone, last4 } from '../../netlify/functions/_lib/mask.ts'
 import { phoneLookupKey, emailLookupKey } from '../../netlify/functions/_lib/lookup.ts'
-import { INVENTORY_COLUMNS } from '../../netlify/functions/_lib/roomTypes.ts'
 
 const CHECK_ONLY = process.argv.includes('--check')
-
-// --------------------------------------------------------------------------- properties
-
-function buildProperties(rows) {
-  return rows.map((row) => {
-    /** @type {string[]} */
-    const flags = []
-
-    /** @type {Record<string, number>} */
-    const inventory = {}
-    for (const [column, label] of Object.entries(INVENTORY_COLUMNS)) {
-      const value = num(row[column])
-      if (value === null) flags.push(`inventory_${column}_unparsed`)
-      inventory[label] = value ?? 0
-    }
-
-    const totalRooms = num(row.total_rooms) ?? 0
-    const inventorySum = Object.values(inventory).reduce((a, b) => a + b, 0)
-    if (inventorySum !== totalRooms) flags.push('inventory_sum_mismatch')
-
-    const rates = {
-      standard: num(row.base_rate_standard),
-      deluxe: num(row.base_rate_deluxe),
-      suite: num(row.base_rate_suite),
-    }
-    for (const [key, value] of Object.entries(rates)) {
-      if (value === null) flags.push(`base_rate_${key}_missing`)
-      else if (value < 0) flags.push(`base_rate_${key}_negative`)
-      else if (value === 0) flags.push(`base_rate_${key}_zero`)
-    }
-
-    const { ranges, unparsed } = parseDateRanges(row.blackout_dates)
-    if (unparsed.length > 0) flags.push('blackout_dates_unparsed')
-
-    const maxDiscount = num(row.max_discount_auto_approve_pct)
-    if (maxDiscount === null || maxDiscount < 0 || maxDiscount > 100) {
-      flags.push('max_discount_auto_approve_pct_out_of_range')
-    }
-
-    return {
-      property_code: row.property_code,
-      property_name: row.property_name,
-      city: row.city,
-      state: row.state,
-      market_type: row.market_type,
-      total_rooms: totalRooms,
-      inventory,
-      base_rate_standard: rates.standard ?? 0,
-      base_rate_deluxe: rates.deluxe ?? 0,
-      base_rate_suite: rates.suite ?? 0,
-      meeting_space_sqft: num(row.meeting_space_sqft) ?? 0,
-      max_meeting_capacity: num(row.max_meeting_capacity) ?? 0,
-      group_block_auto_approve_max_rooms: num(row.group_block_auto_approve_max_rooms) ?? 0,
-      max_discount_auto_approve_pct: maxDiscount ?? 0,
-      blackout_dates: ranges,
-      general_manager: row.general_manager,
-      notes: row.notes,
-      data_quality_flags: flags,
-      // stripped before writing; the rule builder wants the raw cells for provenance
-      __raw: row,
-    }
-  })
-}
 
 // --------------------------------------------------------------- guests and reservations
 
@@ -248,7 +183,7 @@ function buildInquiries(rows) {
       meeting_capacity_needed: num(row.meeting_capacity_needed),
       special_requests: str(row.special_requests),
       missing_fields: [],
-      // ---- beyond the GroupInquiry interface, see data/generated/README.md
+      // ---- beyond the GroupInquiry interface
       date_received: str(row.date_received),
       nights: num(row.nights),
       stated_budget_per_night: num(row.stated_budget_per_night),
@@ -284,7 +219,7 @@ function buildInquiries(rows) {
 
 // -------------------------------------------------------------------------- data quality
 
-function buildDataQuality(properties, rules) {
+function buildDataQuality(properties) {
   const quarantined = []
   for (const p of properties) {
     for (const flag of p.data_quality_flags) {
@@ -298,26 +233,12 @@ function buildDataQuality(properties, rules) {
         raw_value: p[field],
         flag,
         severity: 'blocker',
-        detected_by: 'scripts/data/build.mjs -> buildProperties()',
+        detected_by: 'scripts/data/lib/properties.mjs',
         effect: `${m[1]} pricing at ${p.property_code} is UNAVAILABLE. getPropertyRate() refuses it; any tool that needs it must return grounded:false and escalate rather than price off the value.`,
         remediation: `Confirm the correct ${field} for ${p.property_name} with GM ${p.general_manager} and fix the source export. Do not patch it in code.`,
       })
     }
   }
-
-  const unresolved = rules
-    .filter((r) => r.kind === 'routing' && r.referral && !r.referral.resolved)
-    .map((r) => ({
-      entity: 'property',
-      ref: `property:${r.property_code}`,
-      field: 'notes',
-      rule_id: r.rule_id,
-      target_description: r.referral.target_description,
-      severity: 'blocker',
-      effect: r.referral.resolution_note,
-      remediation:
-        'Group Sales must confirm whether the sister property exists and, if so, add it to the property directory before the agent can quote anything for it.',
-    }))
 
   return {
     checks_run: [
@@ -325,10 +246,8 @@ function buildDataQuality(properties, rules) {
       'inventory column sum vs total_rooms',
       'blackout_dates parsability',
       'max_discount_auto_approve_pct within 0-100',
-      'property referenced in notes resolves to a real property in the directory',
     ],
     quarantined_values: quarantined,
-    unresolved_references: unresolved,
     properties_with_flags: properties
       .filter((p) => p.data_quality_flags.length > 0)
       .map((p) => ({ property_code: p.property_code, data_quality_flags: p.data_quality_flags })),
@@ -392,74 +311,25 @@ function writeJson(name, payload) {
 function main() {
   mkdirSync(generatedDir, { recursive: true })
 
-  const propertyRows = parseCsvObjects(readFileSync(SOURCE_FILES.properties, 'utf8'))
+  const properties = propertiesFromCsv(readFileSync(SOURCE_FILES.properties, 'utf8'))
   const guestRows = parseCsvObjects(readFileSync(SOURCE_FILES.guests, 'utf8'))
   const inquiryRows = parseCsvObjects(readFileSync(SOURCE_FILES.inquiries, 'utf8'))
   const policyMarkdown = readFileSync(SOURCE_FILES.policies, 'utf8')
 
-  const properties = buildProperties(propertyRows)
-  const { rules, coverage } = buildRules(properties)
-
-  // A note that points at a property we do not have is a data-quality problem, not just a rule.
-  for (const rule of rules) {
-    if (rule.kind === 'routing' && rule.referral && !rule.referral.resolved) {
-      const p = properties.find((x) => x.property_code === rule.property_code)
-      if (p && !p.data_quality_flags.includes('notes_reference_unresolved_property')) {
-        p.data_quality_flags.push('notes_reference_unresolved_property')
-      }
-    }
-  }
-
   const { guests, reservations } = buildGuestsAndReservations(guestRows)
   const { sections, document } = buildPolicies(policyMarkdown)
   const inquiries = buildInquiries(inquiryRows)
-  const dataQuality = buildDataQuality(properties, rules)
-
-  const cleanProperties = properties.map(({ __raw, ...rest }) => rest)
+  const dataQuality = buildDataQuality(properties)
 
   console.log(CHECK_ONLY ? 'Checking data/generated ...' : 'Building data/generated ...')
 
-  writeJson('properties.json', cleanProperties)
+  writeJson('properties.json', properties)
   writeJson('guests.json', guests)
   writeJson('reservations.json', reservations)
   writeJson('policies.json', sections)
   writeJson('policy-document.json', document)
   writeJson('inquiries.json', inquiries)
   writeJson('data-quality.json', dataQuality)
-  writeJson('rules.json', {
-    schema_version: 1,
-    generator: 'scripts/data/build.mjs -> lib/rules.mjs',
-    resolution: {
-      discount_ceiling: 'most_restrictive_wins',
-      note: 'When several discount_ceiling rules match the same stay, the LOWEST constraint.value is the effective ceiling. Report the winning rule_id in RuleVerdict.rule_id so the rep can see which rule bit.',
-    },
-    predicate_semantics: {
-      absent_key: 'A predicate key that is absent does not constrain the rule; the rule applies.',
-      match: '"any_night" means the predicate fires if ANY night of the stay falls inside the window.',
-      months: 'Calendar months, 1-12.',
-      weekdays: 'Three-letter names. WEEKDAYS.indexOf(name) equals JS Date#getDay().',
-      min_rooms: 'Inclusive. min_rooms:26 means "26 or more", i.e. the CSV phrase "over 25".',
-      text_match: 'Case-insensitive substring match of any_of[] against any of fields[].',
-    },
-    evaluation_context_fields: [
-      'rooms_requested (number)',
-      'requested_discount_pct (number)',
-      'arrival_date, departure_date (ISO dates)',
-      'stay_dates ({start,end}) derived from arrival/departure',
-      'lead_time_days (arrival_date - date_received, in days)',
-      'meeting_capacity_needed (number)',
-      'room_type_preference (canonical room type, see roomTypes.ts)',
-      'documents_on_file (string[])',
-      'event_type, special_requests, company_name (strings, for text_match)',
-    ],
-    counts: {
-      total: rules.length,
-      by_kind: rules.reduce((acc, r) => ({ ...acc, [r.kind]: (acc[r.kind] ?? 0) + 1 }), {}),
-      parsed_from_notes: rules.filter((r) => r.provenance.extraction === 'parsed_from_notes').length,
-    },
-    rules,
-    notes_coverage: coverage,
-  })
   writeJson('manifest.json', {
     schema_version: 1,
     sources: Object.fromEntries(
@@ -469,12 +339,11 @@ function main() {
       ]),
     ),
     counts: {
-      properties: cleanProperties.length,
+      properties: properties.length,
       guests: guests.length,
       reservations: reservations.length,
       policies: sections.length,
       inquiries: inquiries.length,
-      rules: rules.length,
     },
   })
 
@@ -484,9 +353,9 @@ function main() {
 
   if (!CHECK_ONLY) {
     console.log('')
-    console.log(`  properties ${cleanProperties.length}   guests ${guests.length}   reservations ${reservations.length}`)
-    console.log(`  policies   ${sections.length}   inquiries ${inquiries.length}   rules ${rules.length}`)
-    const flagged = cleanProperties.filter((p) => p.data_quality_flags.length > 0)
+    console.log(`  properties ${properties.length}   guests ${guests.length}   reservations ${reservations.length}`)
+    console.log(`  policies   ${sections.length}   inquiries ${inquiries.length}`)
+    const flagged = properties.filter((p) => p.data_quality_flags.length > 0)
     for (const p of flagged) {
       console.log(`  ! ${p.property_code}: ${p.data_quality_flags.join(', ')}`)
     }

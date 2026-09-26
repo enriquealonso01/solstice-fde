@@ -1,21 +1,18 @@
-// The rules the hotel buried in free text.
+// The rules that exist only as prose in the `notes` column of data/solstice-properties.csv.
 //
-// The properties export carries four operational rules that exist only as English prose in the
-// `notes` column. A prompt that "reads the notes carefully" will apply them inconsistently, so
-// they are lifted here into structured data with the original sentence attached as `source_note`.
-// The engine reads the structure; the sentence is kept so a human can audit the translation.
+// Every other per-property number comes from the CSV's own columns (see thresholds.ts). These
+// are hand-coded because no column holds them; each carries its CSV note verbatim as
+// `source_note`, and single-source.test.ts fails if the CSV note, the source_note and the
+// numbers here stop agreeing. get_property_info reads them through describeNoteRules().
 //
-//   SOL-DEN  "Ski-season weekends (Dec-Feb, Thu-Sun) run at reduced group discount ceiling of 8%."
-//   SOL-SAC  "State-legislature session weeks (Jan-May, weekdays) run at reduced discount ceiling of 8%."
-//   SOL-CHI  "group requests over 25 rooms need 2+ weeks lead time."
-//   SOL-PVD  "blocks over 15 rooms should be routed to Boston-area sister property instead."
-//   SOL-CMH  "verify insurance certificate for youth groups."
-//   SOL-PHX  "Rate drops ~20% June-Aug (off-peak)."  <- advisory only, never auto-applied
+// Notes deliberately not encoded: SOL-AUS "SXSW week is a hard blackout" is already enforced
+// by its blackout_dates column, and the SOL-NSH, SOL-TPA and SOL-CLT notes state no rule.
 
 import { monthOf, stayNights, weekdayOf } from './dates'
 import type {
   LeadTimeRule,
   OverflowRoutingRule,
+  PropertyRuleSet,
   RequiredDocumentRule,
   SeasonalDiscountRule,
   SeasonalRateNote,
@@ -77,6 +74,63 @@ export const COLUMBUS_YOUTH_INSURANCE: RequiredDocumentRule = {
   label: 'certificate of insurance for the youth group',
   applies_when_matches: ['youth', 'student', 'school', 'marching band', 'minor'],
   source_note: 'Popular with university-affiliated group travel; verify insurance certificate for youth groups.',
+}
+
+// ---------------------------------------------------------------- which property carries which
+
+/** The note rules a property carries. Limited to these fields so a note rule can never
+ *  override a number that comes from a CSV column. */
+export type NoteRules = Partial<
+  Pick<
+    PropertyRuleSet,
+    'seasonal_discount_rules' | 'seasonal_rate_notes' | 'lead_time' | 'overflow_routing' | 'required_documents'
+  >
+>
+
+export const NOTE_RULES: Record<string, NoteRules> = {
+  'SOL-CHI': { lead_time: CHICAGO_LEAD_TIME },
+  'SOL-DEN': { seasonal_discount_rules: [DENVER_SKI_WEEKENDS] },
+  'SOL-PHX': { seasonal_rate_notes: [PHOENIX_OFF_PEAK] },
+  'SOL-SAC': { seasonal_discount_rules: [SACRAMENTO_LEGISLATURE_WEEKS] },
+  'SOL-CMH': { required_documents: [COLUMBUS_YOUTH_INSURANCE] },
+  'SOL-PVD': { overflow_routing: PROVIDENCE_OVERFLOW },
+}
+
+export interface NoteRuleSummary {
+  kind: 'seasonal_discount_cap' | 'seasonal_rate_note' | 'required_document' | 'group_lead_time' | 'overflow_referral'
+  rule: string
+  detail: object
+}
+
+/** A property's note rules as get_property_info shows them to the model, so chat and voice
+ *  state the same numbers the group engine enforces. */
+export function describeNoteRules(propertyCode: string): NoteRuleSummary[] {
+  const r = NOTE_RULES[propertyCode] ?? {}
+  const out: NoteRuleSummary[] = []
+  for (const s of r.seasonal_discount_rules ?? []) {
+    const rule = `The group discount ceiling is ${s.max_discount_pct}% on a ${s.label}.`
+    out.push({ kind: 'seasonal_discount_cap', rule, detail: s })
+  }
+  for (const s of r.seasonal_rate_notes ?? []) {
+    const size = `${Math.abs(s.approx_change_pct)}% ${s.approx_change_pct < 0 ? 'lower' : 'higher'}`
+    const rule = `${s.label}: rates run about ${size}. Directional only: never compute a quoted rate from it.`
+    out.push({ kind: 'seasonal_rate_note', rule, detail: s })
+  }
+  for (const d of r.required_documents ?? []) {
+    const rule = `A ${d.label} must be on file before the block is confirmed.`
+    out.push({ kind: 'required_document', rule, detail: d })
+  }
+  if (r.lead_time) {
+    const rule = `Group requests over ${r.lead_time.over_rooms} rooms need at least ${r.lead_time.min_days} days of lead time.`
+    out.push({ kind: 'group_lead_time', rule, detail: r.lead_time })
+  }
+  if (r.overflow_routing) {
+    const rule =
+      `Blocks over ${r.overflow_routing.over_rooms} rooms are routed to ${r.overflow_routing.refer_to}. ` +
+      'It is NOT in our directory: refer without quoting inventory, rates or availability for it.'
+    out.push({ kind: 'overflow_referral', rule, detail: { ...r.overflow_routing, target_in_directory: false } })
+  }
+  return out
 }
 
 // ---------------------------------------------------------------- evaluators

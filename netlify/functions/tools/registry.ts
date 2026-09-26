@@ -71,7 +71,7 @@ const CONCIERGE_SPECS: ToolSpec[] = [
       'Look up the front desk policy reference. Returns the operative rule, machine-readable facts, and a citation. If nothing matches, it says so and you must not answer from memory.',
     parameters: {
       query: { type: 'string', description: 'What the guest asked about, in their words.' },
-      section_id: { type: 'string', description: 'A specific policy section number, 1 to 15.' },
+      section_id: { type: 'string', description: 'A specific policy section number.' },
     },
   },
   {
@@ -80,7 +80,7 @@ const CONCIERGE_SPECS: ToolSpec[] = [
       'Decide a late checkout request against Policy 1 and the Policy 6 tier benefits, including same-day availability. Returns whether the time may be promised or only offered.',
     parameters: {
       reservation_id: { type: 'string', description: 'Reservation or confirmation number.', required: true },
-      requested_time: { type: 'string', description: 'The time the guest asked for, e.g. "1pm" or "14:00".' },
+      requested_time: { type: 'string', description: 'The clock time the guest asked for, as "h:mm pm" or "HH:MM".' },
     },
   },
   {
@@ -104,7 +104,7 @@ const CONCIERGE_SPECS: ToolSpec[] = [
   {
     name: 'check_service_recovery_eligibility',
     description:
-      'Work out whether a stay problem is still inside the Policy 5 service recovery window. The 72 hours runs from checkout; a complaint the guest raised during the stay counts as made and does not expire because they followed up later.',
+      'Work out whether a stay problem is still inside the Policy 5 service recovery window (its length is returned by this tool). The window runs from checkout; a complaint the guest raised during the stay counts as made and does not expire because they followed up later.',
     parameters: {
       reservation_id: { type: 'string', description: 'Reservation or confirmation number.', required: true },
       issue_reported_at: { type: 'string', description: 'When the guest first raised the issue, ISO date or timestamp.' },
@@ -114,7 +114,7 @@ const CONCIERGE_SPECS: ToolSpec[] = [
   {
     name: 'check_comp_authority',
     description:
-      'Decide whether a proposed comp is inside the $50-per-stay front desk authority in Policy 7. Pass EVERY issue on the stay: several small ones are summed before the limit is tested. A full comped night always needs a manager.',
+      'Decide whether a proposed comp is inside the Policy 7 front-desk comp authority (returned by this tool). Pass EVERY issue on the stay: several small ones are summed before the limit is tested. A full comped night always needs a manager.',
     parameters: {
       items: { type: 'array', description: 'List of {description, amount} in dollars, one per issue on this stay.' },
       amount: { type: 'number', description: 'A single amount in dollars, when there is only one issue.' },
