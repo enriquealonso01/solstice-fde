@@ -207,12 +207,23 @@ describe('the thinking configuration a reviewer would copy', () => {
   })
 
   it('agrees with the row in agent/sol.md, which a reviewer reads beside it', () => {
+    // The row said *"`SOL_THINKING=adaptive` (default) or `disabled`. Measured: disabling it does not speed
+    // up the first token, it improves tool selection"* until iteration 122. Two problems: it presented
+    // adaptive as the operative setting when production ships disabled, and "it improves tool selection" has
+    // an ambiguous antecedent -- chat.ts credits *adaptive* with better tool choice. This case used to pin
+    // that exact sentence, so the fix to the row would have failed it. What matters is not the phrasing but
+    // that the row names what production runs and gives the behavioural reason, so that is what it checks.
     const sol = readFileSync(join(repoRoot, 'agent/sol.md'), 'utf8').replace(/\s+/g, ' ')
     expect(sol).toContain(VAR)
+    const row = sol.slice(sol.indexOf('Thinking on the chat channel'))
     expect(
-      sol,
-      `agent/sol.md's row must keep saying that disabling does not buy speed, or it contradicts ` +
-        `.env.example and docs/latency-target.md.`,
-    ).toMatch(/does \*\*not\*\* speed up the first token/)
+      row.slice(0, 400),
+      `agent/sol.md's row must say production ships 'disabled'. It is the live voice prompt and a named ` +
+        `deliverable, so a reviewer reading adaptive as the operative setting reads the wrong system.`,
+    ).toMatch(/ships `disabled`/)
+    expect(
+      row.slice(0, 400),
+      `and it must give the behavioural reason, not a latency one -- the whole point of the setting.`,
+    ).toMatch(/behavioural violations/)
   })
 })

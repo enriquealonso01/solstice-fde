@@ -1,11 +1,14 @@
 # Master plan: the whole picture
 
-> ## 01:12 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
+> ## 01:25 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
 > *All agent work is closed — T38–T43 and T45, each re-verified against the live files at 00:55, not
 > from the log; **T44 shipped in It118 and T46 in It120**, each correcting a premise of mine while doing it.
-> **Two things are left for an agent: T47**, one item in `HUMAN_INTERVENTION.md`'s index plus the guard that
-> should have caught it, and **T48**, one row in `agent/sol.md` — the third and last sibling of the
-> `SOL_THINKING` fix, measured at +129 chars, margin 345 → 216.*
+> **T47 shipped in It121. Two things are left for an agent: T48** (claimed, It122 — the row is already in
+> the file, the `--refresh` is not) and **T49**, the guard nobody has: **677 tests are green right now while
+> `agent/sol.md` compiles to 29,784 and the live phone agent is still on 29,655.**
+> **And one thing only a Tester can do:** re-verify the auto-triage agent, `BACKLOG.md:50`'s open caveat —
+> it writes drafts, so it needs the service-role key or a signed-in rep. **The largest unverified surface in
+> the package**, and I explain in iteration 161 why I could not close it.*
 > **Five items are yours — three to do, and two decisions where the recommendation is to do nothing**
 > (T34 the SIP credential, and the brief PDF in history, `HUMAN_INTERVENTION.md:962`).
 > *Seven likely panel questions are answered in `▶ IF THEY ASK` below.*
@@ -116,7 +119,7 @@
 > **All five of the document fixes this banner used to list here — T38, T39, T40, T41, T42 — are
 > done**, along with T43 and T45. Checked at 00:55 against the live files with a whitespace-normalised
 > match rather than `grep`, because each of those phrases can wrap a line. **What is left for an agent
-> is T47 and T48**, both immediately below.
+> is T48 and T49**, both immediately below.
 >
 > ### Two constraints anyone editing should know
 >
@@ -173,58 +176,18 @@ production before you edit"* because I could not — `/api/flags` is 401 anonymo
 zero rows to the anon key, and the Netlify CLI is lock work. **The third sibling is `agent/sol.md:458` and it
 is still wrong: filed as T48.**
 
-### T47. A sixth decision reached `HUMAN_INTERVENTION.md` but not its index — and the guard cannot see it
+### T47 — SHIPPED (It121), both parts, and the guard now derives its list from the file
 
-*This is T45 recurring one level up, and the interesting half is the test. **Low urgency, stated plainly:**
-the live state is already fixed and the recommendation is to do nothing. What is missing is that Enrique
-knows the decision exists.*
+**Part A:** `HUMAN_INTERVENTION.md:63`'s update block carries **item C** — the brief PDF, what is already
+fixed, the decision that remains, the recommendation, and the pointer to line 962.
 
-**What happened.** It117 found `FDE_Project_Challenge.pdf` — the interviewers' own brief — tracked in a
-public repository, fixed the live state, guarded it three ways, and wrote it up properly at
-**`HUMAN_INTERVENTION.md:962`**, *"## Your call: the interviewers' own brief was published in our public
-repo"*. **That is the last section of a 990-line file**, and the file's opening still says *"Read this
-block; the rest is history and evidence."*
+**Part B is the one that matters:** the guard no longer checks five hardcoded needles. Their own It121 log
+names it as their mistake *one iteration after fixing the same class* — It116 routed four decisions into the
+block a reader is told to read, It117 then appended the fifth to the end of a 990-line file, and the guard
+passed because it tested the snapshot its author could see.
 
-**The update block at line 63 exists precisely to catch this**, and it did not, because the PDF was found
-at ~00:45 and the block was written at **00:05**. Verified by reading the whole file rather than its index:
-`HUMAN_INTERVENTION.md` has **one** update block, the opening 99 lines mention no PDF, and the only other
-`## Your call:` headings are the SIP credential (653, reachable) and the bare pet question (819, marked
-**RESOLVED** at 879).
-
-**The live state is genuinely fixed, and I checked it without git.** `npx vitest run
-src/lib/rules/__tests__/no-committed-credentials.test.ts src/lib/rules/__tests__/intervention-routing.test.ts`
-→ **17 tests green**; `.gitignore:19` names the file; the PDF is still on disk at 94,544 bytes, which the
-agents need because the plan reads it as ground truth.
-
-#### Part A — one item in the update block
-
-Append **C** to the block at line 63, in the same shape as A and B:
-
-> **C. The interviewers' own brief was published in our public repo — already fixed, a decision only about
-> history.** `FDE_Project_Challenge.pdf` is out of the tracked tree, in `.gitignore`, and guarded three ways.
-> What is left is whether to rewrite history to remove it from the one commit that has it. **The
-> recommendation is no: it invalidates every commit id the deliverables cite**, to remove a document from a
-> repository whose reader already wrote it. Full entry, alternatives, and the short answer if a reviewer
-> raises it: **line 962**.
-
-#### Part B — the guard states a property it does not test, which is why this got through
-
-`src/lib/rules/__tests__/intervention-routing.test.ts` opens with exactly the right sentence: *"Enrique has
-to be able to reach every decision that is his, from the page he is told to read."* **But it checks a
-hardcoded list of five needles** — `drop policy`, `bcrivjgqrxahgxyiqlpr`, `SIP credential`, `Top up Telnyx`,
-`INQ-2012` — the five that existed at 00:05. **A sixth decision passes silently**, which is what happened.
-
-**Derive the list from the file instead:** every `## Your call:` heading must be reachable from the opening
-region. That is the form that catches the *next* one, which is the same reasoning It117 used for *"no PDF may
-be tracked at all"*.
-
-**The wrinkle that will bite you, so it is named here:** a `## Your call:` followed later by a `## RESOLVED:`
-for the same item is closed and must not fire — the bare pet question at 819 is exactly that, resolved at
-879, and the opening region already says so. Keep the five explicit needles as well; they pin wording that
-the heading scan would not.
-
-**Check when done:** deleting item C from the update block turns the new test red; the suite is green with
-it; the pet-question item does not fire; `npx vitest run` passes overall.
+**Their framing is better than mine.** I filed it as a routing gap with a test attached; they filed it as
+**a guard whose opening sentence claimed a property it did not test**, which is the part that generalises.
 
 ### T48. `agent/sol.md:458` is the third sibling of the `SOL_THINKING` fix, and it is the one a reviewer reads
 
@@ -286,6 +249,71 @@ boundaries stop meaning what you think.
 **Check when done:** the row names `disabled` as what production ships and gives the behavioural reason;
 `compileInstructions` reports **29,784, margin 216, not truncated**; a `--refresh` has run; the committed
 export matches live again.
+
+### T49. 677 tests are green while `agent/sol.md` no longer describes the agent that answers the phone
+
+*The highest-value guard left, and it is a few lines. Measured at **01:22**, not inferred.*
+
+```
+agent/sol.md  -> compileInstructions  29,784
+exports/telnyx-assistant.json         29,655
+LIVE Telnyx assistant (GET /v2/ai/assistants/…)  29,655
+   live === export  : true
+   live === compile : FALSE
+npx vitest run      : 677 passed / 52 files, ALL GREEN
+```
+
+**The source has moved ahead of the phone.** T48's row landed in `agent/sol.md` and the `--refresh` has not
+run yet, which is ordinary in-flight state — **the defect is not the divergence, it is that nothing can see
+it.** 677 tests pass, including a whole file dedicated to the voice prompt, and `SUBMISSION.md`'s pre-send
+checklist says *"`npx vitest run` is green"*, which is true and does not protect this.
+
+**This project has already been bitten by exactly this outcome.** `voice-prompt-size.test.ts`'s own header:
+*"`agent/sol.md` calls itself the single agent definition, but the phone agent carried none of four hours of
+edits to it."* That test catches the **truncation** route to that outcome. **The edit-without-re-provision
+route is uncovered**, and it is the more likely one now that the margin is healthy.
+
+**Why it matters beyond tidiness.** `exports/telnyx-assistant.json` is a **named brief deliverable**
+(`SUBMISSION.md:43`, *"Native platform export"*) and its entire value is being the live agent's own config.
+`README.md` and this plan both claim the three artifacts agree — **iteration 158 verified all three
+byte-identical and that verification is protected by nothing.**
+
+#### Do this
+
+Add to `src/lib/rules/__tests__/voice-prompt-size.test.ts` (it already imports `compileInstructions` from the
+provisioning script, which is the right call and should stay):
+
+> ```ts
+> it('the committed export is the compile of the file it claims to export', () => {
+>   const exported = JSON.parse(readFileSync(join(repoRoot, 'exports/telnyx-assistant.json'), 'utf8'))
+>   expect(
+>     exported.instructions,
+>     'agent/sol.md has changed without a --refresh and a re-export, so the committed export -- a named ' +
+>       'deliverable whose whole value is being the live agent\'s own config -- describes an agent that ' +
+>       'no longer exists. Run the provision refresh and re-export in the SAME change.',
+>   ).toBe(compiled.instructions)
+> })
+> ```
+
+Assert the **greeting** the same way if it is cheap; it is compiled from the same file and diverges for the
+same reason.
+
+#### The honest limit of this guard, which the message should carry
+
+**A test cannot see Telnyx.** This pins *compile === committed export*. It implies *source === live* only
+because the export is produced by `scripts/telnyx/export-assistant.mjs` **from the live assistant** — so the
+guard enforces the workflow the banner already prescribes (**edit `sol.md` → `--refresh` → re-export, in one
+change**) rather than observing production. **Say that in the comment.** A guard that is quietly believed to
+watch production is worse than one whose reach is written down.
+
+**And it will be red between the edit and the re-export.** That is the point, not a flaw: it makes the two
+halves land together. Whoever adds it should expect it red until It122's refresh runs, and **must not "fix"
+it by regenerating only the export from a stale live assistant** — that makes all three agree on the old
+text and silently reverts T48.
+
+**Check when done:** with `sol.md` edited and no refresh, the test is red and names the refresh; after
+`--refresh` plus re-export, `compile === export === live` and the suite is green; the comment states that the
+test does not reach Telnyx.
 
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
@@ -388,7 +416,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 ---
 
-# ▶ OPEN WORK — three things for Enrique to DO, two decisions where the recommendation is *nothing*, and T47/T48 for an agent.
+# ▶ OPEN WORK — three things for Enrique to DO, two decisions that need no action, and T48/T49 for an agent.
 
 *Everything below this section is closed, or evidence.*
 
@@ -404,7 +432,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > edits this next: **when you close a task, delete its entry from this screen in the same edit.** The
 > record lives in the verification log; it does not need a second home above the work.
 >
-> **What remains for an agent is T47 and T48.** What remains for Enrique is the items in the
+> **What remains for an agent is T48 and T49.** What remains for Enrique is the items in the
 > table below, and every one of them now also appears in `HUMAN_INTERVENTION.md` — items 1 and 4
 > reached it at 00:05 in the update block at **line 63**, which closed the routing gap iteration 156
 > filed T45 for.
@@ -1611,6 +1639,187 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 162, 01:25 EST — 677 tests green while the source and the phone agent disagree, and a guard born from my last finding fired during the edit it was written for
+
+#### The finding, measured at 01:22
+
+```
+agent/sol.md -> compileInstructions   29,784
+exports/telnyx-assistant.json         29,655
+LIVE Telnyx assistant (GET)           29,655     live === export: TRUE
+                                                 live === compile: FALSE
+npx vitest run                        677 passed / 52 files, ALL GREEN
+```
+
+**`agent/sol.md` no longer describes the agent that answers the phone.** T48's row landed and the
+`--refresh` has not run, which is ordinary in-flight state. **The defect is not the divergence — it is that
+nothing can see it.** A whole test file is dedicated to the voice prompt and none of its assertions compares
+the compile to the committed export; `SUBMISSION.md`'s pre-send checklist says *"`npx vitest run` is green"*,
+which is true right now and does not protect this.
+
+**The project has been bitten by this exact outcome before.** `voice-prompt-size.test.ts`'s own header:
+*"`agent/sol.md` calls itself the single agent definition, but the phone agent carried none of four hours of
+edits to it."* That test covers the **truncation** route. **The edit-without-re-provision route is
+uncovered**, and with the margin healthy it is now the likelier of the two. **Filed as T49**, with the honest
+limit written into the task: a test cannot see Telnyx, so it pins compile-against-export and thereby enforces
+the workflow, rather than observing production.
+
+#### My iteration-160 hazard is now a guard, and it fired on the edit it was written for
+
+`voice-prompt-size.test.ts` has a new block: **`voice:exclude block structure > opens and closes each block in
+the same section, except the one known crossing`**, with the message *"Wrapping a region near either end of it
+changes what gets stripped — measure `compileInstructions` before and after, every time."* That is iteration
+160's finding turned into an assertion, by someone who took a paragraph of mine and made it executable.
+
+**I watched it work.** At **01:20:06** it was the single red test in the suite, during It122's edit to the
+very section it guards. At **01:21:05** the suite was green again. **I did not report the red**, because a
+guard going red during the edit it exists for is the guard doing its job, not a defect — and the fix landed in
+under a minute.
+
+> **Worth stating as a rule for my own future iterations: a red suite is only a finding if it survives the
+> next look.** Two runs a minute apart is a cheaper test of "is this real" than any amount of reasoning about
+> whether an agent is mid-flight.
+
+#### T47 shipped, and their framing was better than mine
+
+Both parts. `HUMAN_INTERVENTION.md:63` now carries **item C** — the brief PDF, what is fixed, what is left,
+the recommendation, the pointer to 962 — and the guard derives its list from the file instead of a hardcoded
+five.
+
+**I filed it as a routing gap with a test attached. They filed it as a guard whose opening sentence claimed a
+property it did not test**, and named it as their own mistake one iteration after fixing the same class:
+It116 routed four decisions into the block a reader is told to read, It117 appended the fifth to the end of a
+990-line file, and the guard passed because it tested the snapshot its author could see. **That framing
+generalises and mine did not.**
+
+#### T48 is landing, and my measurements held exactly
+
+The replacement row is in `agent/sol.md:458` **verbatim as filed**, and the compile is **29,784, margin 216,
+not truncated** — the numbers I handed over in iteration 160, reproduced by them independently before they
+edited. **The remaining half is the `--refresh` and the re-export**, which is what T49 exists to make
+impossible to forget.
+
+They also caught a dependency I missed: **their own It120 guard pins the phrase the replacement removes**
+(*"does not speed up the first token"*). A task of mine broke a guard of theirs, and they spotted it before
+running it rather than after. **The guard has to move with the wording, not block it** — their words, and
+right.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Last valid check 20:26 (Tester); **not re-provable by me** — see iteration 161 | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique — **do** |
+| 3 | **T21** — two rows, cascade count first | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| T48 | Row shipped; **`--refresh` + re-export outstanding** | **CLAIMED It122** |
+| T49 | Pin compile === committed export. **Nothing watches it today** | any agent |
+| — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
+
+Tester silent **4h55m**. Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+### Iteration 161, 01:12 EST — RETRACTION: my "non-destructive" RLS probe measured nothing, and I recommended it as the replacement for the one that works
+
+#### The retraction, because it is the most important thing in this entry
+
+In iterations 157 and 158 I reported **"Migration 004 still not applied — thirteenth consecutive check, and
+the first one that touched no data"**, on this evidence:
+
+```
+PATCH /rest/v1/proposals?id=eq.00000000-0000-0000-0000-000000000000   -> 200
+PATCH /rest/v1/inquiries?id=eq.000...                                 -> 204
+PATCH /rest/v1/follow_ups?id=eq.000...                                -> 204
+```
+
+and this reasoning: *"a policy-blocked write returns 403 whether or not a row matches, so this separates the
+two without writing."*
+
+**That sentence is false.** Under Postgres RLS, an UPDATE whose filter matches **zero rows** updates nothing
+and **succeeds** — `WITH CHECK` is evaluated only for rows actually being written, and `USING` simply filters
+an empty set to an empty set. **200/204/204 is what that request returns in both worlds**, migration applied
+or not. The probe is a **constant function**. It could never have failed and it told me nothing.
+
+> **And I did not merely report it — I recommended it.** *"The previous twelve checks PATCHed a real proposal
+> to `approved` — this is the method to use from now on, hours before a demo."* **That would have replaced a
+> valid instrument with a broken one**, in the one check that decides whether the package's only open security
+> defect is still open. Both sites in this file are now struck through and annotated.
+
+#### Confirmed by reading the policies, which is what I should have done first
+
+```sql
+-- supabase/schema.sql:183-185
+create policy inq_read   on inquiries  for select using (my_role() in ('group_sales','admin'));
+create policy prop_read  on proposals  for select using (my_role() in ('group_sales','admin'));
+create policy fup_read   on follow_ups for select using (my_role() in ('group_sales','admin'));
+-- supabase/migrations/002_follow_ups.sql:32-33
+create policy fup_write  on follow_ups for all    using (my_role() in ('group_sales','admin'))
+                                              with check (my_role() in ('group_sales','admin'));
+```
+
+**The write policies are role-scoped to `group_sales`/`admin`.** A bare anon key is not authorised at all, so
+my probe was not even exercising the role the defect is about. **The deliverables are right and were always
+right:** the hole is *"a **signed-in** `group_sales` rep can PATCH `status` to `approved`"* — which is exactly
+how `README.md` and `SUBMISSION.md:39` word it.
+
+**And there is no read-only version of this check.** PostgREST exposes no policy catalogue to a non-superuser,
+and every zero-row write is a constant. **The only valid test writes a real row and reverts it** — which is
+precisely why the Tester did it that way twelve times. I tried to improve on an instrument I had not
+understood.
+
+#### So what is the actual status of migration 004?
+
+**Unverified by me.** The last valid check is the **Tester's twelfth, at ~20:26**, and it is 4h50m old. Nothing
+since could have applied it — applying needs database access no agent has, which is the whole reason it is
+Enrique's item 1 — so it is almost certainly still open. **But "almost certainly" is what I now have, not
+"re-proved at 00:47", and the difference is the entire point of this entry.**
+
+#### The same flaw, smaller, in the same iteration's read probe
+
+Iteration 157 also logged *"read probe (should be 200) → HTTP 200"* for `proposals?select=id&limit=1`. Measured
+properly now with `Prefer: count=exact`: **`inquiries`, `proposals` and `follow_ups` all return `*/0` to the
+anon key.** **200 with zero rows** — because the read policies require `group_sales`. So that probe also proved
+only that the endpoint exists. **It is designed behaviour and nothing is wrong**; my instrument was again
+coarser than my claim.
+
+#### What I set out to verify and could not: the auto-triage agent
+
+`BACKLOG.md:50` still carries the open caveat: *"verified by the session that built it, **not yet re-checked by
+the Tester**."* That is the **agentic group workflow** — a named brief deliverable — and it is the largest
+unverified surface in the package.
+
+**I cannot close it, and here is exactly why.** `triageInbox` writes: for any inquiry with neither a proposal
+nor a follow-up it **creates a draft**. Idempotency is structural and real — `findProposalByInquiry` /
+`findFollowUpByInquiry` run first and return `skipped_existing` — so a second run over worked inquiries is a
+no-op. **But I cannot establish that precondition**: the anon key returns zero rows from all three tables, so
+I cannot see which inquiries are bare. Running it blind could add draft rows to the board the panel opens on.
+**Not mine to risk.** It needs the service-role key or a signed-in `group_sales` session, both of which belong
+to the agents holding the lock.
+
+**Stated as the coverage gap it is**, rather than dressed up as a task: T47 and T48 are one-line fixes; **this
+is the thing a Tester should do if one comes back.**
+
+#### Verified clean
+
+`agent/sol.md` unchanged in substance since iteration 158 — **compile 29,655, margin 345, `truncated: false`,
+and `compile === export` still `true`** after the 01:08 re-export. **T48's target row is still exactly as
+filed**, so its measured +129 / margin 216 numbers hold.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Status: **last valid check 20:26 (Tester), not re-provable by me** | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique — **do** |
+| 3 | **T21** — two rows, cascade count first | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| T47 | Index item + the guard that tests a snapshot | **CLAIMED It121** |
+| T48 | One row in `agent/sol.md`, +129 chars measured | any agent |
+| — | **Auto-triage re-verification** — needs service-role or a signed-in rep. **Not a task I can write for myself** | a Tester |
+
+Tester silent **4h50m**. Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
 ### Iteration 160, 01:12 EST — verified four deliverables nobody had checked, found one contradiction, and measured a "budget win" that would have truncated the live prompt
 
 #### Verified and clean — four brief deliverables, no task needed
@@ -1968,11 +2177,15 @@ prop_write HUMAN_INTERVENTION.md` would have ended the finding before it was fil
   Three fresh sessions: first signal **742 / 794 / 919ms** (median **794ms**, committed ≤ 1500ms,
   published p50 905 and 1009ms); first prose token **2062 / 2164 / 2278ms** (median **2164ms**,
   committed ≤ 4000ms, published p50 2589 and 2246ms). `docs/latency-target.md` is accurate.
-- **Migration 004 still not applied — thirteenth consecutive check, and the first one that touched no
-  data.** Zero-row PATCH with the **public anon key**: `proposals` **200**, `inquiries` **204**,
-  `follow_ups` **204**. A policy-blocked write returns 403 whether or not a row matches, so this
-  separates the two without writing. **The previous twelve checks PATCHed a real proposal to
-  `approved`** — this is the method to use from now on, hours before a demo.
+- ~~**Migration 004 still not applied — thirteenth consecutive check, and the first one that touched no
+  data.**~~ **RETRACTED IN ITERATION 161 — THIS PROBE MEASURED NOTHING.** I claimed *"a policy-blocked
+  write returns 403 whether or not a row matches."* **That sentence is false.** Under RLS a PATCH whose
+  filter matches zero rows updates nothing and returns success *whether or not the policy would have
+  permitted it* — `WITH CHECK` is only evaluated for rows actually updated. So `proposals` 200,
+  `inquiries` 204, `follow_ups` 204 is what a zero-row PATCH returns **in both worlds**, applied or not.
+  The probe is a constant function. **And I recommended it as the method to replace the Tester's twelve
+  real-row checks**, which would have swapped a valid instrument for a broken one. Full correction in
+  iteration 161.
 
 #### The Tester has not written in 4h15m, and here is what that does and does not cost
 
@@ -2058,7 +2271,7 @@ block, which is exactly what the banner tells editors to do.)*
 
 | # | Item | Owner |
 |---|---|---|
-| 1 | **`drop policy` ×3** — re-proved open at 00:47. Now in `HUMAN_INTERVENTION.md:63`, **line 596** | Enrique |
+| 1 | **`drop policy` ×3** — *"re-proved open at 00:47"* **RETRACTED; see iteration 161 — that probe proved nothing.** Last valid check is the Tester's twelfth, ~20:26. `HUMAN_INTERVENTION.md:63`, **line 596** | Enrique |
 | 2 | **Top up Telnyx** — portal.telnyx.com, Billing, about $30 | Enrique |
 | 3 | **T21** — delete `INQ-2012`/`INQ-2013`, cascade count first | Enrique |
 | 4 | **T34** — accept, rotate after the demo. Now at `:63`, options **715** | Enrique |

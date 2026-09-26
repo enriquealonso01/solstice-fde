@@ -9,24 +9,24 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It121: T47 — the sixth decision is in the index, and the guard now derives its list from the file
-  instead of from the five things that existed when I wrote it.**
-- **This was my own failure, one iteration after fixing the same thing.** It116 routed four decisions into the
-  block Enrique is told to read; **It117 then appended the brief's history question to the end of a 990-line
-  file** — precisely T45 — and my guard stayed green because it checked **five hardcoded needles**.
-- **Part A:** item **C** added to the update block, with the recommendation (do not rewrite history) and a
-  pointer to line 975. The 13-line insert shifted all five existing pointers, so I renumbered and re-verified
-  each against its target line. **The guard is what makes that safe rather than lucky.**
-- **Part B:** every `## Your call:` heading must now be reachable, derived by scanning the file, with a
-  `## RESOLVED:` heading closing an item so the bare pet question does not fire.
-- **The derived case passed while broken on its first try, and the fix is the interesting part.** Counting
-  single words >4 chars and calling two a match let a fake seventh decision — *"whether to rotate the Anthropic
-  key before sending"* — through, because *whether*, *rotate*, *before* and *sending* were all already in the
-  block about other things. **A three-word shingle** is specific enough that only a deliberate mention counts.
-  Now red-checked three ways: fake seventh fires, removing item C fires and names line 962, the resolved pet
-  question stays green.
-- Twelfth escape incident on the way: a dynamic `RegExp` with a newline class came back from the heredoc
-  expanded and esbuild rejected the file. Replaced with `startsWith` + `includes`, which need no escaping.
+- **SHIPPED It122: T48 — the third and last copy of the `SOL_THINKING` story, in the file that is both a
+  named deliverable and the live voice prompt.**
+- **The plan's numbers are exact.** +129 source chars; **29,784, margin 216, not truncated** — I measured
+  before and after rather than trusting it, and it matched to the character.
+- **Verified their trap independently, and it is real.** Wrapping `## 7` in `voice:exclude` to buy back 2.7KB
+  makes the compile **larger** — 30,033, margin **−33, truncated true** — because section 7 holds one opener
+  with **no closer inside it**, so a new opener pairs with the existing block's closer and every boundary
+  after it inverts.
+- **The span is 7 → 9, not 7 → 8**, which I had written from memory until my own new case corrected me. That
+  is why section 8's transcripts never reach the phone: §8 sits *inside* the block. Fifth time this session a
+  test has corrected a guess of mine.
+- **Guarded the hazard rather than the instance:** markers must balance, and each block must open and close in
+  one section **except the one known crossing**, named explicitly so a second cannot hide behind it. A second
+  span fires it; the first red-check also proved the point by taking the guardrail section out of the prompt.
+- **My own It120 guard pinned the old sentence** and would have blocked this fix. Rewritten to check the
+  *property* — the row must name what production ships and give the behavioural reason — not the wording.
+- Re-provisioned after diffing: the change is that one row. `compile === export === live` at **29,784**,
+  margin **216**, no telephony spend.
 
 ## Demo rehearsal coverage — what is actually verified
 
@@ -56,7 +56,7 @@ in `agents/completed.log.md`, not here.
 
 ## Standing state
 
-- `compile === live === export`, **29,655**, margin **345**, and **platform-independent** — the
+- `compile === live === export`, **29,784**, margin **216**, and **platform-independent** — the
   old 29,411/589 was a CRLF artifact (It96). Re-checked whenever `agent/sol.md` moves.
 - Guards I own, each red-checked by reintroducing the defect it catches: `admin-prose`,
   `voice-prompt-size`, `doc-citations` (counts, links), `list-counts`, `export-redaction`,

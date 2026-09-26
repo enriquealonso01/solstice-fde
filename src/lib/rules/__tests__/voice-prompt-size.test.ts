@@ -151,3 +151,74 @@ describe('the head-room the deliverable claims', () => {
     expect(markdown, 'agent/sol.md is back to claiming head-room in KB').not.toMatch(/[0-9.]+ ?KB from a hard/i)
   })
 })
+
+/**
+ * A `voice:exclude` block that spans a section boundary is a trap, and there is exactly one.
+ *
+ * At iteration 122 the obvious way to buy prompt margin looked like wrapping `## 7. Changing a rule live` —
+ * 2.7KB of operator documentation a guest on a call never needs. Measured instead of assumed:
+ *
+ *     as shipped            compiled 29,784   margin  216   truncated false
+ *     section 7 wrapped     compiled 30,033   margin  -33   truncated TRUE
+ *
+ * **Wrapping a section to remove text from the prompt made the prompt bigger and pushed it over the cap.**
+ * The cause: section 7 already contains **one opening `<!-- voice:exclude -->` and no closing marker** — its
+ * partner lives further down the file. `STRIP_BLOCK` is a non-greedy pair-in-document-order regex, so a new
+ * opener at the section head pairs with the *existing block's* closer and every boundary after it inverts.
+ *
+ * The consequence is worth more than the margin: **"is this text in the voice prompt?" cannot be answered by
+ * looking at the section it sits in.** Only `compileInstructions` can answer it.
+ *
+ * This pins the known spanning block so it cannot multiply. Making the file free of them would mean moving
+ * markers inside the live prompt, which costs a re-provision for a structural tidy — not a change to make
+ * hours before a submission. What must not happen is a *second* one arriving unnoticed, since each makes the
+ * next person's reasoning about the prompt wronger.
+ */
+describe('voice:exclude block structure', () => {
+  /** Top-level section heading each marker falls under, in document order. */
+  function markerSections(): { marker: 'open' | 'close'; section: string }[] {
+    const out: { marker: 'open' | 'close'; section: string }[] = []
+    let section = '(before the first heading)'
+    for (const line of markdown.split(/\r?\n/)) {
+      if (/^## /.test(line)) section = line.trim()
+      if (line.includes('<!-- voice:exclude -->')) out.push({ marker: 'open', section })
+      if (line.includes('<!-- /voice:exclude -->')) out.push({ marker: 'close', section })
+    }
+    return out
+  }
+
+  it('has balanced markers, so the compile is not silently inverted', () => {
+    const m = markerSections()
+    expect(m.filter((x) => x.marker === 'open').length).toBe(m.filter((x) => x.marker === 'close').length)
+    expect(m.length, 'no voice:exclude markers found at all; this test would then prove nothing').toBeGreaterThan(2)
+  })
+
+  it('opens and closes each block in the same section, except the one known crossing', () => {
+    const m = markerSections()
+    const spanning: string[] = []
+    for (let i = 0; i + 1 < m.length; i += 2) {
+      const [open, close] = [m[i], m[i + 1]]
+      // Pairs are in document order, exactly as STRIP_BLOCK reads them.
+      if (open.marker !== 'open' || close.marker !== 'close') {
+        spanning.push(`markers out of order near ${open.section}`)
+        continue
+      }
+      if (open.section !== close.section) spanning.push(`${open.section} -> ${close.section}`)
+    }
+
+    // The one that exists, named so a second cannot hide behind it.
+    //
+    // Measured, after I wrote "-> ## 8. Sample transcripts" from memory and this case corrected me: the
+    // block opens in section 7 and closes in section **9**, so section 8 sits entirely inside it. That is
+    // why the transcripts never reach the voice prompt -- the case above asserts exactly that -- and it is
+    // the mechanism T48 measured when wrapping section 7 pushed the compile to 30,033 and truncated it.
+    const KNOWN = ['## 7. Changing a rule live -> ## 9. Where this runs']
+    expect(
+      spanning,
+      `A voice:exclude block that starts in one section and ends in another makes "is this in the prompt?" ` +
+        `unanswerable from the section. One such block exists and is allowed; a new one is not. Wrapping a ` +
+        `region near either end of it changes what gets stripped -- measure compileInstructions before and ` +
+        `after, every time.`,
+    ).toEqual(KNOWN)
+  })
+})
