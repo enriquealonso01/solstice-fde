@@ -6646,3 +6646,46 @@ could have noticed the working copy was gone.
 
 `agents/README.md` now says it: the last step of untracking something the agents still read is `test -f`, not
 the merge, with the one-line recovery.
+
+## It118 — T44: the install cost disclosed, and the task's premise did not hold for its reader
+
+`SUBMISSION.md`'s last pre-send step runs `npx netlify api listSiteDeploys` to prove production is serving the
+latest commit. T44's point: `netlify-cli` is not in `package.json`, so `npx` fetches it first — minutes, in the
+one command whose job is to say *"safe to send"*, at 10:55.
+
+**Both halves checked.** The dependency really is absent (20 deps, no `netlify` entry). **But it is installed
+globally on this machine** — `netlify-cli@26.0.2`, on `PATH` — and that is the machine Enrique runs the
+checklist on. Measured rather than reasoned:
+
+```
+netlify --version        1.267s   netlify-cli/26.0.2
+npx netlify --version    1.774s   netlify-cli/26.0.2   <- same build, so npx resolved it from PATH
+```
+
+No download. **So T44's proposed clause — *"give it a few minutes the first time"* — would have told him to
+expect a wait he will not have.** That is not harmless: a warning about a non-event either makes him sit
+through nothing or makes him distrust the one check standing between a stale deploy and the send.
+
+The clause covers both readers instead: about two seconds here because the CLI is global, minutes on a machine
+without it, with the measurement named as a measurement. The command is unchanged, as T44 asked — it is
+correct and it caught a real silent deploy failure at 18:45 on 2026-09-25.
+
+**I did not add `netlify-cli` as a devDependency**, which would have removed the ambiguity entirely. It is a
+large install and `npm ci` is the first thing a reviewer runs; iteration 112 measured that path clean and
+slowing it by a hundred megabytes hours before submission is a worse trade than a sentence.
+
+**Swept the class rather than fixing the instance.** Every `npx` in the deliverables, against the dependency
+list:
+
+```
+npx netlify      NOT a project dependency   SUBMISSION.md
+npx vite-node    vite                       docs/live-modification.md
+npx vitest       vitest                     README.md, SUBMISSION.md
+```
+
+One offender, now disclosed. `documented-commands.test.ts` pins the pairing: any `npx` tool named in a
+deliverable must be a project dependency **or** the document must say the first run installs it. Red-checked
+both ways — remove the clause and it names `netlify`; add a fictional `npx some-other-tool` to the README and
+it names that instead.
+
+`npx tsc -b` clean. `npx vitest run` **667 tests / 52 files** green (up 5).

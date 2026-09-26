@@ -1,20 +1,22 @@
 # Master plan: the whole picture
 
-> ## 22:26 — **ENRIQUE: the SQL paste is #1, and it is now the whole list plus three.**
-> *All agent work is closed: T38–T40 in PR #124, T41 in #125, T42 in #126, T43 in #129.*
-> **Four items are yours.** *Six likely panel questions are answered in `▶ IF THEY ASK` below.*
-> *Five likely panel questions are answered in `▶ IF THEY ASK` directly below.*
+> ## 00:55 — **ENRIQUE: the SQL paste is #1, and the list is now yours alone plus one clause.**
+> *All agent work is closed — T38–T43 and T45, each re-verified against the live files at 00:55, not
+> from the log. **T44** is the only thing left for an agent: one clause in `SUBMISSION.md`.*
+> **Four items are yours.** *Seven likely panel questions are answered in `▶ IF THEY ASK` below.*
 >
 > **This banner is rewritten, not appended.** It said *18:04* and *"two agent items left"* until
 > iteration 123; there were five. Everything it used to carry about **closed** work is in the
 > verification log below, dated and untouched. **What follows is only what is open.**
 >
-> **⚠ Read this item here, because `HUMAN_INTERVENTION.md`'s "Start here" block does not have it.**
-> That short list is dated **2026-09-25 15:30**; this hole was found at **17:52** (PR #62), two and a
-> half hours later, and `prop_write` appears only at lines 559 and 758 — deep in the body. **The
-> short list also says *"Read this block; the rest is history and evidence"***, which routes a reader
-> away from the one item with a live security consequence. The full entry and its recovery are real
-> and correct; they are just not where that file tells you to look.
+> **✅ This is now also in `HUMAN_INTERVENTION.md`, which is where you should read it.** It was not,
+> for nine hours: that file's *"Start here"* short list is dated **2026-09-25 15:30**, this hole was
+> found at **17:52** (PR #62), and the list says *"Read this block; the rest is history and
+> evidence"* — which routed a reader away from the one item with a live security consequence.
+> **Fixed at 00:05** by an update block at **`HUMAN_INTERVENTION.md:63`**, sitting directly under the
+> 15:30 list and naming both this and T34. *Iteration 156 filed T45 asking for exactly that, half an
+> hour after it had already been done; the correction is in the log below.* The `drop policy` SQL is
+> at **lines 596–598** there (and again at 795–797); the full entry is at **563**.
 >
 > ### 1. The approval gate reads a column the browser can write
 >
@@ -44,19 +46,22 @@
 >
 > **If the sales inbox goes blank after you paste it**, the reads did not survive: run the `do $$`
 > block from `supabase/migrations/004_client_read_only_on_group_tables.sql`, which recreates them.
-> Recovery note at `HUMAN_INTERVENTION.md:580`.
+> Recovery note at **`HUMAN_INTERVENTION.md:619`** — *"If the inbox goes blank after applying it…"*
 >
 > **Apply it and change nothing else, or apply nothing and weaken assumption 13**, which is the package's
 > best answer on authority. **If you apply it before submitting, the defect is disclosed in THREE places, not two** —
 > `README.md`'s *"One defect is open at the time of writing"* paragraph, `SUBMISSION.md:39`'s
 > **Known open defect** row, and a parenthesis in `docs/where-this-goes.md`. The full list and
-> wording are at `HUMAN_INTERVENTION.md:753`. *(My banner named only the first two until iteration
-> 146.)*
+> wording are at **`HUMAN_INTERVENTION.md:804`** — *"The three places that mention it"*, re-verified
+> at 00:55. It read `:753` here until now, and `:753` is a blank line. *(This banner also named only
+> the first two of the three until iteration 146.)*
 >
-> ### 2–4, then the five fixes
+> ### 2–4, and then the one clause that is left
 >
 > **Telnyx — top up to at least $20** → **portal.telnyx.com, Billing; about $30** (their number,
-> from `HUMAN_INTERVENTION.md`, and the *where* my version was missing). The balance is **$3.03**, and `SUBMISSION.md`'s own pre-send
+> from `HUMAN_INTERVENTION.md`, and the *where* my version was missing). The balance is **under $4
+> and falling** — quoted as $3.63, $3.15, $3.09 and $3.03 in four places on the same night, because
+> every test call spends it, so **do not trust a figure** — and `SUBMISSION.md`'s own pre-send
 > checklist says *"above $20, or do not invite them to call the number."* One call then settles
 > **beat 3**, the live intent check, and **G16 on voice**, the last unverified guardrail. It also
 > removes T40's failure mode rather than documenting a way round it.
@@ -82,7 +87,8 @@
 
 >
 > **T34 — the SIP credential in git history. The decision record is
-> `HUMAN_INTERVENTION.md:678`, and it recommends *accepting it*.** I spent hours recommending the
+> `HUMAN_INTERVENTION.md:715`** — *"Three options, and my recommendation is the first"*, re-verified
+> at 00:55; **summarised for you at `:63`** — **and it recommends *accepting it*.** I spent hours recommending the
 > opposite in this banner without having read it. Their three options, with their recommendation
 > first:
 >
@@ -102,8 +108,10 @@
 > rule and no mention that it takes out the supervisor leg as well as the transfer — **advice
 > contrary to the file Enrique actually works from, on a decision that touches beat 3.**
 >
-> **Then the five document fixes below** — T38, T39, T40, T41, T42. Two files plus the README and
-> one transcript, all paste-ready, no task or lock required.
+> **All five of the document fixes this banner used to list here — T38, T39, T40, T41, T42 — are
+> done**, along with T43 and T45. Checked at 00:55 against the live files with a whitespace-normalised
+> match rather than `grep`, because each of those phrases can wrap a line. **What is left for an agent
+> is one clause: T44**, immediately below.
 >
 > ### Two constraints anyone editing should know
 >
@@ -124,94 +132,47 @@
 
 ---
 
-### T43. The runbook's session split is stale, in the sentence that warns a sceptic will check it
+### T44. `npx netlify` in the final pre-send check will download the CLI — one clause
 
-*Same class PR #127 just fixed in this file — a document claim about a **live quantity**, which no
-text guard watches — and #127 corrected one such number 195 lines earlier while this one stayed.
-One clause. Demo path.*
+*The only open agent item. It sits in the **last** step before Enrique sends, where a surprise is
+most expensive.*
 
-**`docs/demo-runbook.md:215`:**
-
-> Our own traffic is almost all chat — **about 148 chat sessions to 9 calls** — so on the measured
-> figures the model and telephony come out near-equal… **A sceptic who reads the split while you
-> claim telephony dominates has caught you.**
-
-**Measured now:**
+**`SUBMISSION.md:125`** ends the *"Before sending"* checklist with a command that proves production
+is serving the latest commit. It is a good check and it prints `OK` or `BEHIND`. But it calls:
 
 ```
-sessions  total 180   { chat: 171, voice: 9 }
+npx netlify api listSiteDeploys --data "{\"site_id\":\"$SITE_ID\"}"
 ```
 
-**171 to 9, not 148 to 9** — and **172 to 9 four minutes later**, measured again in iteration 132.
-**The number is drifting under the document as it sits there.** The argument is untouched and in
-fact stronger — the split is *more*
-lopsided toward chat than the sentence claims, which is exactly what the beat needs. **But the
-number is wrong by 23 in the one sentence that invites the audience to check the number.**
+**`netlify-cli` is not in `package.json`** — verified, no `netlify` entry in dependencies or
+devDependencies. So on any machine that has not installed it globally, `npx` **fetches it first**:
+a large install, minutes not seconds, with a prompt to confirm. **Run last, at 10:55, that reads as
+a hang in the one command whose job is to say "safe to send."**
 
-**Do this — and make it a form that cannot go stale again.** Chat sessions accumulate whenever
-anyone opens the widget; calls do not, because they cost money. An exact count was wrong within
-hours and will be wrong again by 11:00:
+**Do this — add one clause where the command is introduced:**
 
-> Our own traffic is almost all chat — **fewer than one call in every fifteen sessions** — so on the
-> measured figures…
+> Run this last, after any final change. **The first run installs the Netlify CLI via `npx`, so give
+> it a few minutes the first time; after that it is seconds.**
 
-That stays true as chat grows, which an exact pair does not. **The same reasoning PR #77 applied to
-the README's file counts**, where floors have now survived thirteen new files without rotting.
+**Do not replace the command.** It is correct, it covers two real failures, and one of them actually
+happened at 18:45 on 2026-09-25. The defect is only that the cost of the first run is undisclosed.
 
-**Leave the argument alone.** *"Point at the **projection** inputs instead"* is the right move and
-the reason this beat works; only the measured figure needs to stop being a hostage.
+**Check when done:** the sentence introducing the block warns that the first `npx netlify` run
+installs the CLI; the command itself is unchanged.
 
-**Check when done:** the sentence carries a ratio or a floor rather than two exact counts; the
-projection advice is unchanged; the split still supports the claim that our own traffic is almost
-all chat.
+---
 
+**Closed in iteration 157, all verified against the live files rather than the log:**
+**T38** (`live-modification.md:22` now says *"Edit the `SOL-PHX` entry, not the first match"* and
+names the three wrong lines and the right one) · **T39** (the *"all three costed options"* phrase is
+gone, 0 occurrences) · **T40** (the phone-failure row at `demo-runbook.md:273` is the replacement
+text verbatim) · **T41** (*"subject to same-day availability"*, 0 occurrences in `README.md`) ·
+**T42** (the transcript H1 is now *"Cancellation charge upheld, with a handoff that carries the
+context"*) · **T43** (`demo-runbook.md:236` carries the ratio, *"fewer than one call in every fifteen
+sessions"*, not two exact counts) · **T45** (`HUMAN_INTERVENTION.md:63`).
 
-### T45. Two of Enrique's four decisions exist only in a file he is never told to read
-
-*The highest-value thing left, and it is not a defect in anything — it is a routing gap. **I own
-`plans/06-master-plan.md` and cannot fix it**, because the fix belongs in `HUMAN_INTERVENTION.md`,
-which the Implementer and Tester append to.*
-
-**The matrix.** Four items Enrique must decide before sending, against the three documents he is
-actually directed to:
-
-| | `HUMAN_INTERVENTION` short list | `SUBMISSION` "Before sending" | runbook "Before they join" | this plan |
-|---|---|---|---|---|
-| **1. `drop policy` ×3 (RLS)** | — | — | — | **only here** |
-| 2. Telnyx top-up | yes | yes | yes | yes |
-| 3. T21, delete two rows | yes | — | — | yes |
-| **4. SIP credential decision** | — | — | — | **only here** |
-
-**Item 2 is in all four. Items 1 and 4 are in none of his.**
-
-**Why it happened, and it is nobody's mistake.** The short list is dated **2026-09-25 15:30**. The
-RLS hole was found at **17:52** (PR #62) and the SIP credential at **~22:30**. Both were written up
-properly — `prop_write` at `HUMAN_INTERVENTION.md:559` and `:758`, the rotation options at `:678` —
-**but the short list was never reopened**, and it tells the reader *"Read this block; the rest is
-history and evidence."*
-
-**Do this: append a dated update to `HUMAN_INTERVENTION.md`'s short list.** Not an edit of the 15:30
-block — that file is append-only by protocol and its history is worth keeping. Something like:
-
-> **Update, 2026-09-26 — two items found after the 15:30 list above.**
->
-> **A. The approval gate can be bypassed from the browser.** A signed-in `group_sales` rep can
-> PATCH `status` to `approved` with the public anon key; the gate then stops refusing. **Three
-> lines in the Supabase SQL editor, project `bcrivjgqrxahgxyiqlpr`** — the `drop policy`
-> statements at line 559. **Full entry, safety reasoning and recovery at line 512 onward; if you
-> apply it, delete the three disclosures listed at line 753.**
->
-> **B. A Telnyx SIP credential *username* is in git history.** Three options at line 678; **the
-> recommendation is option 1, accept it and rotate after the demo**, because rotating tonight
-> takes out the warm transfer *and* the supervisor WebRTC leg, which are both beat 3.
-
-**Keep it to that.** The detail already exists further down and is good; **the short list's job is
-to make sure he knows the decisions exist**, not to restate them.
-
-**Check when done:** `HUMAN_INTERVENTION.md`'s short list names the RLS paste and the SIP decision,
-with line pointers into the existing entries; the 15:30 block is unchanged; nothing is duplicated.
-
-
+Each checked with the whitespace-normalised match this file recommends, not `grep`, because every one
+of these phrases can wrap a line.
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
 *Each of these is a place where the system is **correct** and a reviewer will reasonably want to
@@ -313,95 +274,32 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 ---
 
-# ▶ OPEN WORK — four items are Enrique's; **T45** routes two of them to where he will see them.
+# ▶ OPEN WORK — all four items are Enrique's. One clause, T44, is the only agent work left.
 
 *Everything below this section is closed, or evidence.*
 
-> ### ⚡ THE FIXES, READY TO PASTE — three in two files, plus T41 in the README
+> ### ⚡ NOTHING IS LEFT TO PASTE — rewritten at iteration 157, and this is why
 >
-> **T42 (new, iteration 119) — the likeliest to be spotted, by the people best placed to spot it.**
-> `transcripts/refund-outside-window.md:1` is titled *"Refund request outside the **service
-> recovery** window"*. It is a **Policy 2 cancellation** scenario — the transcript cites Policies 2
-> and 15 and never mentions Policy 5 — and *"outside the window"* is backwards: she cancelled
-> **inside** the 72 hours, which is why she was charged. **Change the H1 only.** Full text in T42.
+> **This block listed five paste-ready fixes — T38, T39, T40, T41, T42. All five are done**, and so
+> are T43 and T45. Verified against the live files at 00:55 with the whitespace-normalised match,
+> not `grep`. The list of what was checked and what each file now says is in **T44's section above**.
 >
-> **T41 (iteration 117):** `README.md:133` quotes *"subject to same-day availability"* from
-> Policies 1 and 6. **Neither contains it** — Policy 1 says *"same-day room availability"*, Policy 6
-> says *"same-day inventory"*. Substance right, quotation wrong, and **the accurate version is the
-> better argument**: two policies reaching for the same missing data in different words is why it
-> belongs behind one service. Full replacement text in T41 below.
+> **This is the fifth time this file's first screen has gone stale while the dated log below stayed
+> true** — iterations 108, 112, 119, 123, and now. The failure is always the same shape: a summary
+> written when it was accurate, appended to, and never re-read top-down. So the rule, for whoever
+> edits this next: **when you close a task, delete its entry from this screen in the same edit.** The
+> record lives in the verification log; it does not need a second home above the work.
 >
-> *Whoever reads this next, including Enrique: these do not need a task, a lock or a plan. They are
-> three replacements. **Iteration 112 established that the protocol never routes plan tasks to
-> anyone** — `agents/README.md:35` says only *"read the other agents' status files and pick
-> something disjoint"* — so these have sat open not through anyone's neglect but because nothing
-> tells anyone to take them.*
->
-> **1 — `docs/live-modification.md:22`** · replace *"Search for the second occurrence, not the
-> first."* with:
->
-> > **Edit the `SOL-PHX` entry, not the first match.** The header comment quotes this same snippet
-> > and two other properties share the same 15% ceiling, so a search for
-> > `max_discount_auto_approve_pct: 15` finds three wrong lines before the right one. Search for
-> > `'SOL-PHX'` and change the value on the entry below it, around line 106. The tell that you
-> > edited the wrong line is that "allowed 15" stays 15.
->
-> **2 — `docs/demo-runbook.md:217`** · replace *"and all three costed options move together"* with:
->
-> > the verdict, the threshold it cites, and the sentence a rep reads all move together, and the
-> > price the customer asked for does not — because the ceiling changed, not the rate.
->
-> **3 — `docs/demo-runbook.md`, the "phone call fails" row** · replace with:
->
-> > **If it is a carrier or signal problem:** use the mic in the chat bubble — same agent, same
-> > tools, say so and move on. **If Telnyx is out of credit the mic fails too** (same account, same
-> > balance), so fall back to the **text** chat bubble, which runs on Anthropic and does not touch
-> > Telnyx.
->
-> **To check whether these are done, use a whitespace-normalised match, not `grep`.** Every one of
-> these phrases can wrap across a line break — T41's does, at `README.md:133-134` — and a
-> line-oriented `grep` then reports the phrase as absent, which reads as *fixed*. This caught me in
-> iteration 122:
->
-> ```bash
-> python -c "import io,re,sys; t=re.sub(r'\s+',' ',io.open(sys.argv[1],encoding='utf-8').read()); print(sys.argv[2] in t)" README.md "subject to same-day availability"
-> ```
->
-> *And one more line in the same file, the tidy item, which says "run it with no flag" without ever
-> giving the command: the dry run is `node scripts/cleanup-phantom-sessions.mjs`; `npm run
-> demo:tidy` is the same script with `--delete`.*
-
-> **Ordering, stated because it is my job to state it — iteration 111.** **T38, T39 and T40 come
-> before any further guard work.** They are three sentences, all in documents Enrique reads *while
-> presenting*, and T38 in particular costs thirty seconds of visible confusion in front of the panel
-> if it is followed as written.
->
-> This is not a complaint about the guards. The suite has gone **476 → 516 tests** in about an hour
-> and every one of those guards was written after something actually rotted, which is the right
-> reason to write one. But a guard protects against **the next** regression, and these three are
-> **current defects on the demo path** with roughly fourteen hours left. **Fix the live documents,
-> then guard them.**
-
-> **T40 is open:** the runbook's recovery row sends Enrique to the browser mic when the phone
-> fails — **same Telnyx account, same balance**, so if the phone failed for lack of credit the mic
-> fails identically. The balance-independent fallback is the **text** chat bubble (Anthropic, not
-> Telnyx). One clause.
->
-> **T39 is open too, same beat:** the runbook tells Enrique to say *"all three costed options move
-> together"* while `show-verdict.ts` prints **one price** — true about the system, false about the
-> screen. One sentence.
->
-> **T38 is open and it is small and urgent.** `docs/live-modification.md` tells the presenter to
-> *"search for the second occurrence"* — which is **`SOL-AUS`, Austin**, not `SOL-PHX`. Editing it
-> changes the wrong hotel and the demo verdict does not move: the exact failure the warning was
-> written to prevent. One phrase.
-
+> **What remains for an agent is one clause, T44.** What remains for Enrique is the four items in the
+> table below, and every one of them now also appears in `HUMAN_INTERVENTION.md` — items 1 and 4
+> reached it at 00:05 in the update block at **line 63**, which closed the routing gap iteration 156
+> filed T45 for.
 | # | Enrique's item | Why it is first / what it costs |
 |---|---|---|
-| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr` | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at `HUMAN_INTERVENTION.md:753`. **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. |
-| 2 | **Top up Telnyx to at least $20** | **Not "add $3.09" — the balance IS $3.03**, measured this iteration and drifting down from $3.09. **$20 is the project's own gate**, in `SUBMISSION.md`'s pre-send checklist: *"Telnyx balance above $20, or do not invite them to call the number."* One call then settles **beat 3**, the live intent check, and **G16's voice half** — the last unverified guardrail. Nobody has made a voice call all day. |
+| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr` | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at **`HUMAN_INTERVENTION.md:804`** (re-verified 00:55; `:753` is now a blank line, and the SQL to paste is at **596**, summarised for you at **63**). **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. |
+| 2 | **Top up Telnyx to at least $20** | **Under $4 and falling.** It has been quoted as $3.63, $3.15, $3.09 and $3.03 in four places on the same night, because every test call spends it. Do not trust a figure; top up to $30. **$20 is the project's own gate**, in `SUBMISSION.md`'s pre-send checklist: *"Telnyx balance above $20, or do not invite them to call the number."* One call then settles **beat 3**, the live intent check, and **G16's voice half** — the last unverified guardrail. Nobody has made a voice call all day. |
 | 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. **Verified safe three ways:** two deliverables cite `INQ-2011`/`INQ-2010`, the demo runbook names `INQ-2007`/`2009`/`2011`, and **neither row T21 deletes appears in either**. Both confirmed live: `INQ-2012` Vantage Labs `needs_review`, `INQ-2013` Vantage Labs DELETE-ME `auto_approvable`. Exact SQL in `HUMAN_INTERVENTION.md`. |
-| 4 | **T34 — rotate the Telnyx SIP connection** | A credential *username* is in git history at `10b63e8` and `c09f04d`. **Rotate rather than rewrite history** — rewriting invalidates commit ids the deliverables cite, to remove something that authenticates nothing on its own. **Timing: after any rehearsal call, before the email.** |
+| 4 | **T34 — decide about the SIP credential. The recommendation is *accept it*.** | A credential *username* is in git history at `10b63e8` and `c09f04d`; the password never was. **`HUMAN_INTERVENTION.md:715` recommends option 1 — accept it and rotate *after* the demo** — and this row said "rotate" for hours against that advice. Rotating tonight changes `TELNYX_SIP_USERNAME`, the SIP URI **and the live assistant's transfer target**, and needs a re-provision plus a re-check of the supervisor WebRTC leg: that is the beat-3 path, hours before the demo. **Rewriting history is the one to avoid** — it invalidates commit ids the deliverables cite. **Doing nothing is the recommended option**, so this is the one item where no action is a decision. |
 
 **G16 row: SHIPPED and re-provisioned** (PR #100) — compile === live at 29,363, margin 637, exactly
 the figure predicted when it was staged. *Original note below, kept because the process worked:*
@@ -1676,6 +1574,69 @@ Filesystem says the last entry was written **2026-09-26 00:26:34Z**. It is label
 09-26 ran on 09-25. **Not a deliverable, so not a task** — but it is the file I reconcile against, and
 anyone ordering the two logs by their own timestamps will get the order wrong.
 
+#### Every agent task in the file was already closed, so the first screen was rewritten
+
+I checked **T38, T39, T40, T41, T42, T43** against the live files with the whitespace-normalised match
+this plan recommends — not `grep`, because each of those phrases can wrap a line and a line-oriented
+search then reports the phrase absent, which reads as *fixed*. **All six are done**, and so is T45:
+
+| | live text now |
+|---|---|
+| **T38** | `live-modification.md:22` — *"Edit the `SOL-PHX` entry, not the first match"*, naming the comment near 10, Austin 54, Tampa 93, and the real entry ~106 |
+| **T39** | *"and all three costed options move together"* — **0 occurrences** |
+| **T40** | `demo-runbook.md:273` is the replacement row verbatim, *"…does not touch Telnyx"* |
+| **T41** | *"subject to same-day availability"* in `README.md` — **0 occurrences** |
+| **T42** | H1 is now *"Cancellation charge upheld, with a handoff that carries the context"* |
+| **T43** | `demo-runbook.md:236` carries the ratio, *"fewer than one call in every fifteen sessions"* |
+
+**So the whole first screen was describing finished work** — a banner advertising five paste-ready
+fixes, two open task sections, and three ordering notes about priorities that no longer exist.
+**Rewritten, not appended.** This is the **fifth** time this has happened in this file (iterations 108,
+112, 119, 123, now), so the block that replaced it states the rule instead of the symptom: **when you
+close a task, delete its entry from the first screen in the same edit.** The record belongs in the
+dated log, which has never been the thing that rots.
+
+**Four stale line pointers went with it**, all in text addressed to Enrique: `:753` → **804** (twice;
+`:753` is a blank line), `:580` → **619**, `:678` → **715**, and *"`prop_write` at 559 and 758"* →
+**596–598**. And the T34 row still said **"rotate the Telnyx SIP connection"** while the banner six
+inches above said the recommendation is to **accept** it — the same contradiction I corrected in the
+banner at iteration 146 and never traced into the table. It now leads with *accept*, and says plainly
+that **doing nothing is the recommended option**, which is the one thing a checklist row can hide.
+
+#### Two of my writes to this file were silently lost, and a forward reference was the only tell
+
+The first-screen rewrite and a table fix both reported success and **did not land.** I found out
+because the banner I wrote afterwards said *"T44, immediately below"* and **there was no T44 section**
+— a dangling reference in the one screen a reader starts on.
+
+**Mechanism not identified**, and I am not going to spend the remaining hours on it: one of the edits
+crashed mid-write with the file already open for writing, and the file came back whole but at an
+earlier state. **What is worth keeping is the check, not the diagnosis:** the rewrite was re-applied
+with the read-back in the *same command*, and it is verified — T43 and T45 gone, T44 at line 135,
+10,670 lines, every landmark present.
+
+> **This is the fifth time an unchanged file has been the only signal that an instrument did nothing**
+> — the Tester logged four (a PDF sweep over zero files, an append that wrote nothing, a revert that
+> never applied, an edit to a comment). **Mine is the first where the tool said it succeeded.** So the
+> rule is not "check the tool's word", it is **read the file back in the same breath you wrote it.**
+
+#### And a near-miss I should record, because I nearly raised a false alarm on a hard limit
+
+I hand-rolled the `voice:exclude` strip to check the voice prompt's margin and got **30,121 characters
+— 121 over the 30,000 hard cap.** That is an alarm about a truncated live prompt hours before a demo.
+
+**It was wrong.** `provision.mjs` **exports** `compileInstructions`, and the real function also
+normalises CRLF, drops front matter, drops all HTML comments and collapses blank-line runs. Running it:
+**29,655, margin 345, `truncated: false`** — exactly what the banner claims. My approximation was off
+by 466 characters in the dangerous direction.
+
+**The rule, and it is the same one as the hand-built storage URL in iteration 131: when the project
+exports the function, call the function.** An approximation of a compiler is not a measurement of it.
+
+*(Incidental, and it is the discipline working: `agent/sol.md` grew 80 characters between two reads
+this iteration and the compiled length did not move — the addition went inside a `voice:exclude`
+block, which is exactly what the banner tells editors to do.)*
+
 #### State
 
 | # | Item | Owner |
@@ -1691,6 +1652,13 @@ Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
 
 
 ### Iteration 156, 00:36 EST — two of the four decisions exist only in a file Enrique is never told to read
+
+> **⚠ CORRECTED BY ITERATION 157, above. This finding was already false when I wrote it.** The fix
+> landed in `HUMAN_INTERVENTION.md` at **00:05**, thirty-one minutes before I filed T45 asking for it —
+> an update block at **line 63**, directly under the 15:30 list, naming both items with **correct** line
+> pointers where mine were stale. I read that file's index and not the file. **The reasoning below is
+> sound and the matrix is wrong;** it is left standing because the reasoning is what was worth having,
+> and because the next person to build a matrix of four documents should see what happened to this one.
 
 #### The matrix, which is the whole finding
 
