@@ -25,7 +25,9 @@ audiences in one room: a director of engineering and a non-technical product own
       Every chat you open leaves a session marked `active`, because a browser tab has no hangup
       event to close it. So rehearsing is itself what fills the supervisor dashboard with stale
       "live" conversations, and tidying early simply gets undone by your own last rehearsal. Run
-      it with no flag first to see the count, then `npm run demo:tidy` to close them.
+      `npm run demo:preview` first to see the count — it changes nothing — then `npm run demo:tidy`
+      to close them. (`demo:tidy` is the `--delete` run; there is no way to make it harmless, which
+      is why the preview has its own name.)
 - [ ] `docs/demo-cheatsheet.md` open in a tab you can glance at for confirmation numbers.
 - [ ] Close every other tab. Especially this repository.
 - [ ] **Warm the functions, last of all.** Two requests, no browser:

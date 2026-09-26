@@ -4,46 +4,51 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 113 — 2026-09-25 ~21:12 EST
+## Iteration 114 — 2026-09-25 ~21:18 EST
 
-### The doc sweep is finished and good. I verified its last audit independently
+### Completed the data verification chain. The third link had never been checked
 
 ```
-pages in architecture.drawio : Future state (production) · Today (MVP) · Degradation and failover
-the guide's three rows       : exactly those three
-is plain XML, not deflated   : True
+data/*.csv -> data/generated/*.json    npm run data:check   OK, 9 files match
+data/*.csv -> Supabase (what the demo shows)                nobody had checked this
 ```
 
-**Their claim holds.** The plain-XML assertion is the sharpest part: draw.io can save a **deflated
-body**, and every text-based check would then pass on nothing. **A test that can silently pass on an
-empty read is worse than no test** — guarded in the same commit that wrote it.
+`data:check` proves the **build artefacts** match the CSVs. **The demo reads Supabase, not those
+artefacts.** So I compared all ten portal inquiries field by field:
 
-Three self-corrections in one PR, all the right kind: they caught themselves checking page names
-against the **SVG** when the guide describes the **.drawio**; their row count returned zero and they
-applied the Tester's rule — *"a near-total failure is a confession by the instrument"*; and the
-guard now keys on `font-weight:700`, **the structural marker**, not the words.
+```
+rows compared 10   ·   fields checked 60   ·   mismatches 4
+```
 
-### The nuance in "Every deliverable has now been audited"
+**Fifty-six of sixty byte-identical** to the provided data.
 
-**True, and about their sweep's coverage.** Silent about findings from outside it — and **three
-known defects are open in two deliverables it counts as audited**: T38 in `live-modification.md`,
-T39 and T40 in `demo-runbook.md`.
+### The four differences are the brief's ambiguity test, handled properly
 
-**Same shape as my own T35 mistake**, which I have the receipts on: I told them to write *"the
-exception is G16's voice half"* — accurate about guardrails, leaving a reader to conclude nothing
-else was open when the RLS hole was. PR #95 corrected me. Here the sentence is accurate about a
-sweep and would leave a reader concluding the documents are clean.
+`INQ-2004` as provided: `rooms_requested = "around 25"`, no dates, no discount. In the database:
 
-**Not a criticism of the sweep.** It is the visible consequence of the routing gap: findings that
-live only in my file are invisible to a completion claim made from theirs. **A sweep can only
-declare clean what it can see.**
+```
+status         : needs_info
+missing_fields : ["arrival_date","departure_date","rooms_requested","meeting_capacity_needed"]
+payload        : "around 25" preserved verbatim
+```
 
-### What follows — not another task
+Four things right, each of which could have been wrong: *"around 25"* was **not coerced to 25**; the
+row is **not priced**; `missing_fields` names exactly what is absent, **including
+`meeting_capacity_needed`, which the CSV never mentions**; and the guest's **original words are
+kept** for a human to read.
 
-The three fixes stay at the top of `▶ OPEN WORK` as **exact replacement text**, needing no task, no
-lock, no agent. **The lesson is that I should have put them there when I filed them**, instead of
-three iterations later, after mistaking a wiring problem for a priority problem.
+**"Handle ambiguity" is one of Katie's named asks, and it is working end to end in the database.**
+Nobody had verified it in a hundred and fourteen iterations, including me.
+
+### Ready ammunition, not a new beat
+
+**I am not filing a demo change at 21:18** — the runbook is settled. But if the panel asks about
+vague or incomplete requests, `INQ-2004` is already on the group sales board and needs no setup:
+
+> *"That one we refused to price. They said 'around 25 rooms' and gave no dates. We kept their exact
+> words, marked what was missing, and did not turn 'around 25' into 25 — the moment you do, the
+> quote is fiction and nobody can see where it came from."*
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** The three document fixes are paste-ready and need nobody's permission.
+**The `drop policy` paste.** The three document fixes remain paste-ready at the top of OPEN WORK.

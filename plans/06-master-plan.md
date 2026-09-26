@@ -1234,6 +1234,81 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 114, 21:18 EST — completed the data chain, and found Katie's "handle ambiguity" ask verified in the database
+
+#### The verification chain had three links and only two were checked
+
+```
+data/*.csv  ->  data/generated/*.json     npm run data:check   OK, 9 files match sources
+data/*.csv  ->  Supabase (what the demo shows)                 nobody had checked this
+```
+
+`data:check` proves the **build artefacts** match the provided CSVs. **The demo does not read those
+artefacts — it reads Supabase.** So I compared all ten portal inquiries, field by field, against the
+CSV they came from:
+
+```
+rows compared   10
+fields checked  60
+mismatches       4   — all on INQ-2004, all of them correct behaviour
+```
+
+**Fifty-six of sixty fields are byte-identical to the provided data.** Company names, arrival and
+departure dates, room counts, discount percentages, property codes.
+
+#### The four differences are the brief's ambiguity test, handled properly
+
+`INQ-2004`, Meridian Wealth Partners, as provided:
+
+```
+rooms_requested = "around 25"        arrival_date = (empty)
+departure_date  = (empty)            requested_discount_pct = (empty)
+```
+
+And in the live database:
+
+```
+status         : needs_info
+missing_fields : ["arrival_date","departure_date","rooms_requested","meeting_capacity_needed"]
+payload        : "around 25" preserved verbatim
+```
+
+**Four things right in one row, and each could have been wrong:**
+
+1. *"around 25"* was **not coerced to 25.** A number was available to invent and the system declined.
+2. The row is **`needs_info`**, not priced — it did not proceed on a guess.
+3. `missing_fields` names **exactly** what is absent, including `meeting_capacity_needed`, which the
+   CSV never mentions and which this enquiry needs.
+4. **The guest's original words are kept.** *"around 25"* is still there to show a human, rather than
+   being discarded as unparseable.
+
+**This is "handle ambiguity" — one of Katie's named asks — working end to end, in the database, and
+checkable in about a minute.** Nobody had verified it, including me, in a hundred and fourteen
+iterations.
+
+#### Ready ammunition rather than a new beat
+
+**I am not filing a demo change at 21:18.** The runbook is settled and rehearsed. But if the panel
+asks how the system handles vague or incomplete requests — and *"handle ambiguity"* is on Katie's
+list, so they may — **`INQ-2004` is the answer, already in the group sales board, needing no setup**:
+
+> *"That one we refused to price. The customer said 'around 25 rooms' and gave no dates. We kept
+> their exact words, marked what was missing, and did not turn 'around 25' into 25 — because the
+> moment you do that, the quote is fiction and nobody can see where it came from."*
+
+#### State — unchanged
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | Three paste-ready fixes, top of OPEN WORK | anyone, two minutes |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
 ### Iteration 113, 21:12 EST — the doc sweep is finished and good; its completion sentence has the shape of the mistake I made in T35
 
 #### Verified their last audit independently
