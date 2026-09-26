@@ -21,7 +21,20 @@ const argOf = (name) => {
   const i = argv.indexOf(name)
   return i >= 0 ? argv[i + 1] : null
 }
-const BASE = argOf('--base') || env.PUBLIC_BASE_URL || 'https://solstice-hotel-group.netlify.app'
+// Which site these captures are evidence ABOUT. No default host.
+//
+// This ended in `|| 'https://solstice-hotel-group.netlify.app'`. That host is the right one, so nothing
+// ever broke -- but the transcripts in transcripts/ are evidence in the submission, and "captured from
+// production" has to be a fact rather than a guess. With a default, an operator whose PUBLIC_BASE_URL is
+// missing or pointing at a draft deploy gets files that look identical and describe a different system.
+// Iteration 114 removed the same pattern from provision.mjs, where the literal was a host that 404s.
+const BASE = argOf('--base') || env.PUBLIC_BASE_URL
+if (!BASE) {
+  throw new Error(
+    'No base URL. Set PUBLIC_BASE_URL in .env (see .env.example) or pass --base https://your-site. ' +
+      'These captures are evidence about a specific deploy, so the target is not something to assume.',
+  )
+}
 const ONLY = argOf('--only')
 
 const SCENARIOS = [

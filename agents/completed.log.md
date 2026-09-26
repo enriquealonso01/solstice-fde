@@ -6370,3 +6370,69 @@ Red-checked by removing the two fallbacks: the source case fails with the whole 
 
 `npx tsc -b` clean. `npx vitest run` **624 tests / 51 files** green (up 5). No prompt change, so no
 re-provision: compile === export === live still 29,655, margin 345.
+
+## It114 — fetched every URL in the repository, and found a webhook base that 404s
+
+`doc-citations` checks that *relative* links resolve. **No external link had ever been opened**, and the
+email draft Katie receives is made of them. So I extracted every absolute URL from the deliverables and
+requested each one.
+
+```
+https://app.diagrams.net                                       200
+https://github.com/enriquealonso01/solstice-fde                200
+https://solstice-hotel-group.netlify.app                       200
+https://solstice-hotel-group.netlify.app/api/tools             200
+https://solstice-hotel-group.netlify.app/api/chat              405   POST-only; the runbook says so
+https://solstice-hotel-group.netlify.app/api/group/proposals   401   the documented boundary
+```
+
+Six for six, with both non-200s being the documented behaviour rather than breakage. That would have been
+the whole iteration — except I also counted hosts across the source, and found **two** distinct
+`*.netlify.app` hosts where there should be one.
+
+### The find
+
+`scripts/telnyx/provision.mjs:1172`:
+
+```js
+const baseUrl = (flags.baseUrl || env.PUBLIC_BASE_URL || process.env.PUBLIC_BASE_URL || env.URL
+                 || 'https://solstice-fde.netlify.app').replace(/\/+$/, '')
+```
+
+```
+curl -L https://solstice-fde.netlify.app   ->  404
+```
+
+That host does not exist. The site is `solstice-hotel-group.netlify.app`. And `baseUrl` is what the script
+bakes into the assistant: `TOOLS_BASE_URL`, `GROUP_TOOL_URL`, the call-control webhook, and the SIP
+connection's `webhook_event_url`.
+
+**The literal has never fired**, because `.env` carries `PUBLIC_BASE_URL` and `.env.example` documents it.
+That is precisely what made it dangerous rather than harmless: a provisioning run without that key —
+a reviewer reproducing the setup, a regenerated `.env`, Enrique on a different machine — would have written
+a dead host into all 23 webhook tools, printed the same green `15 reused` summary it always prints, and
+left the phone agent with nothing that works and nothing on screen to say so. The failure mode is a silent,
+confident misconfiguration, which is the worst shape available.
+
+**A wrong default is worse than no default.** Both resolvers now refuse, naming `PUBLIC_BASE_URL` and the
+flag, because every webhook is built from that value and guessing one points the agent at a host that may
+not exist. Verified both branches without provisioning anything: with the key present the resolver returns
+the real site, with nothing it throws. `provision.mjs --check` still prints
+`base url: https://solstice-hotel-group.netlify.app`.
+
+### The guard found a second one I had not gone looking for
+
+`scripts/capture-transcripts.mjs` defaulted to the **correct** host, so nothing was ever broken there. Same
+class though, and it matters for a different reason: the files in `transcripts/` are **evidence** in the
+submission, and *"captured from production"* has to be a fact rather than an assumption. An operator whose
+`PUBLIC_BASE_URL` is missing or pointing at a draft deploy would get captures that look identical and
+describe a different system. It refuses too, and still honours `--base`.
+
+The guard bans a quoted `*.netlify.app` host in any script outside a comment, across the five scripts, and
+separately requires `provision.mjs` to keep resolving from `PUBLIC_BASE_URL` and to keep the refusal — so
+the fix cannot be "delete the resolver". Red-checked by putting the 404 literal back: it fails and names the
+file and line.
+
+`npx tsc -b` clean. `npx vitest run` **630 tests / 51 files** green (up 6). No prompt change and no
+re-provision — the resolver change does not alter what a configured run produces, which is why
+`--check` was worth running before shipping.

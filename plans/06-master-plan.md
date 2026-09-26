@@ -9,6 +9,13 @@
 > iteration 123; there were five. Everything it used to carry about **closed** work is in the
 > verification log below, dated and untouched. **What follows is only what is open.**
 >
+> **⚠ Read this item here, because `HUMAN_INTERVENTION.md`'s "Start here" block does not have it.**
+> That short list is dated **2026-09-25 15:30**; this hole was found at **17:52** (PR #62), two and a
+> half hours later, and `prop_write` appears only at lines 559 and 758 — deep in the body. **The
+> short list also says *"Read this block; the rest is history and evidence"***, which routes a reader
+> away from the one item with a live security consequence. The full entry and its recovery are real
+> and correct; they are just not where that file tells you to look.
+>
 > ### 1. The approval gate reads a column the browser can write
 >
 > `agent/sol.md` **§6, assumption 13** — a numbered assumption in a named deliverable; *note the file has no section 13, its sections run 1–9* — says a flagged proposal
@@ -48,7 +55,8 @@
 >
 > ### 2–4, then the five fixes
 >
-> **Telnyx — top up to at least $20.** The balance is **$3.03**, and `SUBMISSION.md`'s own pre-send
+> **Telnyx — top up to at least $20** → **portal.telnyx.com, Billing; about $30** (their number,
+> from `HUMAN_INTERVENTION.md`, and the *where* my version was missing). The balance is **$3.03**, and `SUBMISSION.md`'s own pre-send
 > checklist says *"above $20, or do not invite them to call the number."* One call then settles
 > **beat 3**, the live intent check, and **G16 on voice**, the last unverified guardrail. It also
 > removes T40's failure mode rather than documenting a way round it.
@@ -1543,6 +1551,68 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 155, 00:32 EST — the human's entry point does not contain the top item, and tells him the rest is history
+
+Last iteration I found my banner contradicting `HUMAN_INTERVENTION.md`. **The generalisation is to
+check all four items against it, not the one I got caught on.** That turned up something worse in
+the other direction.
+
+#### The short list predates the most important finding
+
+```
+"## Start here — the short list, 2026-09-25 15:30"
+the RLS hole was found at 17:52 (PR #62)
+mentions of drop policy / prop_write / migration 004 in that block: 0
+prop_write appears only at lines 559 and 758 — deep in the body
+```
+
+**Two and a half hours separate them.** So the block Enrique is told to read first lists Telnyx, the
+two junk inquiries and `demo:tidy` — and **not the one item with a live security consequence.**
+
+And the block does not merely omit it. It says:
+
+> *"Read this block; the rest is history and evidence."*
+
+**That sentence actively routes a reader away from it.** The full RLS entry and its recovery exist
+further down and are correct; they are simply not where the file tells him to look.
+
+**I cannot edit that file.** So my banner now opens item 1 by saying exactly this — where the entry
+is, why it is not in the short list, and that the short list's own instruction points the other way.
+
+#### And their list had something mine did not
+
+Their Telnyx item ends: **"→ portal.telnyx.com, Billing. About $30."**
+
+Mine said *"top up to at least $20"* and never said **where**. Last iteration I read item 2 as a
+stranger and **judged it fine** — it names the target, the balance, the gate and what one call buys.
+**It does not say how to do it.** Taken and credited.
+
+> **Two files, each holding the half the other was missing**, and neither reader would know. **The
+> short list has the portal link and not the security item; my banner had the security item and not
+> the portal link.**
+
+#### The symmetry is the point
+
+Iteration 154: my file **contradicted** the record.
+Iteration 155: the record **omits** what my file leads with.
+
+> **Neither file is wrong. Together they are incomplete in both directions**, and the only way I
+> found either was reading one while holding the other. **Two summaries of the same state do not
+> converge by being written carefully; they converge by being read against each other.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **and it is not in the short list; read it here** | Enrique |
+| 2 | **Top up Telnyx to $20+** — **portal.telnyx.com, Billing, about $30** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — the record's three options; recommendation is accept and rotate after the demo | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 154, 00:28 EST — my banner had been contradicting the decision record for hours
 

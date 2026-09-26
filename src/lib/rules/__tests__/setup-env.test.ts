@@ -83,3 +83,53 @@ describe('the documented local setup', () => {
     }
   })
 })
+
+/**
+ * No script may carry a hard-coded site host as a fallback.
+ *
+ * `scripts/telnyx/provision.mjs` resolved the base URL for every webhook it bakes into the assistant as
+ * `flags.baseUrl || env.PUBLIC_BASE_URL || process.env.PUBLIC_BASE_URL || env.URL ||
+ * 'https://solstice-fde.netlify.app'`. That last host **does not exist** — fetching it returns 404. The
+ * site is `solstice-hotel-group.netlify.app`, and the discrepancy surfaced at iteration 114 by requesting
+ * every absolute URL in the repository instead of reading them.
+ *
+ * It never fired, because `.env` carries `PUBLIC_BASE_URL` and `.env.example` lists it — which is precisely
+ * what made it dangerous. Provisioning without that key would have written a dead host into
+ * `TOOLS_BASE_URL`, `GROUP_TOOL_URL`, the call-control webhook and the SIP connection's event URL, printed
+ * its usual green summary, and left the phone agent with 23 tools pointing nowhere.
+ *
+ * A wrong default is worse than no default, so the script now refuses. This keeps any host literal from
+ * coming back as a convenience: the value has to be configured or passed, and `.env.example` documents it.
+ */
+describe('hard-coded site hosts in scripts', () => {
+  const SCRIPTS = [
+    'scripts/telnyx/provision.mjs',
+    'scripts/telnyx/export-assistant.mjs',
+    'scripts/cleanup-phantom-sessions.mjs',
+    'scripts/data/build.mjs',
+    'scripts/capture-transcripts.mjs',
+  ]
+
+  it.each(SCRIPTS)('%s names no site host outside a comment', (script) => {
+    const full = join(repoRoot, script)
+    if (!existsSync(full)) return
+    const offending = readFileSync(full, 'utf8')
+      .split('\n')
+      .map((line, i) => ({ line: line.trim(), n: i + 1 }))
+      .filter(({ line }) => !line.startsWith('//') && !line.startsWith('*') && !line.startsWith('/*'))
+      .filter(({ line }) => /['"`]https?:\/\/[a-z0-9-]+\.netlify\.app/i.test(line))
+
+    expect(
+      offending.map((o) => `${script}:${o.n}  ${o.line.slice(0, 90)}`),
+      `A site host written into a script is a default that is wrong the moment the site is renamed, and ` +
+        `it hides a missing configuration behind a plausible value. Take it from PUBLIC_BASE_URL, or ` +
+        `refuse. ${script} had one that 404s.`,
+    ).toEqual([])
+  })
+
+  it('still resolves the base URL from somewhere, so provisioning is not simply broken', () => {
+    const src = readFileSync(join(repoRoot, 'scripts/telnyx/provision.mjs'), 'utf8')
+    expect(src).toContain('PUBLIC_BASE_URL')
+    expect(src, 'the resolver must refuse rather than guess').toMatch(/No base URL/)
+  })
+})

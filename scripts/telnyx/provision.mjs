@@ -1163,13 +1163,42 @@ async function stepVerifyTools(assistantId, expectedHeader) {
 
 // ---------------------------------------------------------------------------- main
 
+/**
+ * Where every webhook this script bakes into the assistant will point.
+ *
+ * This used to end in `|| 'https://solstice-fde.netlify.app'`, which **does not exist** -- a 404. The real
+ * site is `solstice-hotel-group.netlify.app`, and it was found at iteration 114 by fetching every absolute
+ * URL in the repository rather than reading them.
+ *
+ * The literal never fired, because `.env` carries `PUBLIC_BASE_URL` and `.env.example` lists it. That is
+ * exactly what made it dangerous: provisioning without that key would have written a dead host into
+ * `TOOLS_BASE_URL`, `GROUP_TOOL_URL`, the call-control webhook and the SIP connection's event URL, and
+ * reported success. The phone agent would have had 23 tools pointing nowhere, and nothing on screen would
+ * have said so.
+ *
+ * A wrong default is worse than no default. Refusing costs one line in a setup step; a silently
+ * misconfigured assistant costs a demo.
+ */
+function resolveBaseUrl(env) {
+  const candidate =
+    flags.baseUrl || env.PUBLIC_BASE_URL || process.env.PUBLIC_BASE_URL || env.URL || null
+  if (!candidate) {
+    throw new Error(
+      'No base URL. Set PUBLIC_BASE_URL in .env (see .env.example) or pass --base-url https://your-site. ' +
+        'Every webhook baked into the assistant is built from it, so guessing one would point the phone ' +
+        "agent's tools at a host that may not exist.",
+    )
+  }
+  return String(candidate).replace(/\/+$/, '')
+}
+
 async function main() {
   console.log('Solstice FDE — Telnyx provisioning')
   console.log(`repo: ${REPO_ROOT}`)
   if (flags.dryRun) console.log('MODE: --dry-run, no network calls will be made')
 
   const { values: env } = await readEnvFile()
-  const baseUrl = (flags.baseUrl || env.PUBLIC_BASE_URL || process.env.PUBLIC_BASE_URL || env.URL || 'https://solstice-fde.netlify.app').replace(/\/+$/, '')
+  const baseUrl = resolveBaseUrl(env)
   console.log(`base url: ${baseUrl}`)
 
   const pre = await stepPreflight(env)

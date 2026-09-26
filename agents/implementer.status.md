@@ -9,24 +9,23 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It113: `npm run dev` with an unfinished `.env` was a white screen — including the guest site,
-  which does not need Supabase at all.**
-- **The chain, each link verified separately:** `createClient('')` throws *"supabaseUrl is required"*
-  (run against the installed library) · `src/lib/supabase.ts` called it at **module scope** ·
-  `vite.config.ts` defines the URL as `env.SUPABASE_URL ?? ''` · **`App.tsx` imports all seven admin pages
-  eagerly**, so that module evaluates before React mounts · `main.tsx` mounts after the graph loads. So the
-  landing page and the chat widget died for a dependency neither uses — chat is a Netlify function.
-- **README step 6 is `npm run dev` right after *"cp .env.example .env # then fill it in"*.** A reviewer who
-  wants a quick look at the guest experience has no reason to own a Supabase project.
-- **Fails soft now:** a placeholder URL when unconfigured, plus `isSupabaseConfigured` and one console
-  warning. The degraded state is the one this app already designs for — `readOrMock` falls back to sample
-  rows and `SourceChip` already renders **Sample data** rather than Connected — so it says which state it
-  is in on screen. Verified at the bundle: an unconfigured build now contains `supabase.invalid` and the
-  warning instead of an empty string.
-- **My own first test asserted the wrong thing and failed for the right reason.** I wrote
-  `expect(isSupabaseConfigured).toBe(false)` — but vitest loads vite's config, so `.env` fills it here and
-  it is **true** on my machine and false in a clone. An environment-dependent assertion, which is the exact
-  class of bug this file exists for. Now it asserts the *fix* from source, which holds in either checkout.
+- **SHIPPED It114: fetched every absolute URL in the repository. All six documented links are fine — and
+  the sweep found a hard-coded host in `provision.mjs` that 404s.**
+- **The six documented URLs:** `app.diagrams.net` 200 · the GitHub repo 200 · the site 200 ·
+  `/api/tools` 200 · `/api/chat` **405** (POST-only, and the runbook says the 405 is the point) ·
+  `/api/group/proposals` **401** (the documented boundary). Nothing dead.
+- **`scripts/telnyx/provision.mjs:1172` ended in `|| 'https://solstice-fde.netlify.app'` — fetched: 404.**
+  The site is `solstice-hotel-group.netlify.app`. That literal is the base for `TOOLS_BASE_URL`,
+  `GROUP_TOOL_URL`, the call-control webhook and the SIP event URL.
+- **It never fired, which is exactly what made it dangerous.** `.env` carries `PUBLIC_BASE_URL` and
+  `.env.example` lists it, so provisioning has always resolved correctly — but provisioning **without** that
+  key would have written a dead host into all 23 webhook tools, printed its usual green summary, and left
+  the phone agent with nothing that works and nothing that says so.
+- **A wrong default is worse than no default.** Both resolvers now refuse with a message naming
+  `PUBLIC_BASE_URL` and `--base-url`. `provision.mjs --check` still reports the right base URL.
+- **The guard found a second one I had not looked for:** `capture-transcripts.mjs` defaulted to the
+  *correct* host — same class, and those files are **evidence** in the submission, so "captured from
+  production" has to be a fact rather than a guess. It refuses too.
 
 ## Demo rehearsal coverage — what is actually verified
 
