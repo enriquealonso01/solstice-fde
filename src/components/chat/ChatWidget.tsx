@@ -295,7 +295,7 @@ export default function ChatWidget() {
   const suggestions = turns.length <= 1 && !busy ? SUGGESTIONS : []
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
+    <div className="pointer-events-none fixed bottom-3 right-3 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
       <div className="pointer-events-auto">
         {open ? (
           <ChatPanel

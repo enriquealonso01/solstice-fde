@@ -48,7 +48,7 @@ const PROMISES = [
 
 const FACTS = [
   { value: '140', label: 'houses' },
-  { value: '72h', label: 'free cancellation on flexible rates' },
+  { value: '72h', label: 'free cancellation' },
   { value: '2pm', label: 'guaranteed Platinum check-out' },
   { value: '24/7', label: 'a person, or Sol' },
 ]
@@ -66,7 +66,10 @@ export default function Landing() {
         Skip to content
       </a>
 
-      <div className="bg-canvas pb-[4.5rem]">
+      {/* Footer clearance for the fixed Ask Sol pill: keeps the page end readable above the
+          launcher. On phones the launcher itself collapses to a 44px mark so it never sits on
+          the stats band; on sm+ there is 22px of clear background to the fourth stat column. */}
+      <div className="bg-canvas pb-24">
         <SiteHeader phoneHref={phoneHref} phoneDisplay={phoneDisplay} />
 
       <main id="main">
