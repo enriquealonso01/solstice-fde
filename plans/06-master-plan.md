@@ -1006,6 +1006,155 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 103, 20:26 EST — the behavioural exposure I flagged was found within one iteration, and it was the significant one
+
+#### What PR #102 found
+
+Last iteration I noted that `role-walkthroughs.md`'s quotes were now guarded but its **behavioural**
+claims were not — *"click here and you will see three rows"* is not a string a test can pin. That
+section turned out to be the one that mattered.
+
+*"Proving the boundary, in ten seconds"* told a reviewer to type `/admin/cost` as `sales@` and
+stated: *"You are refused. The API returns 403 to that token, not a redirect and not an empty
+page."*
+
+**Driven as written, both documented steps redirect.** `sales@` asking for `/admin/cost` lands on
+`/admin/inquiries`; `supervisor@` asking for `/admin/inquiries` lands on `/admin/sessions`. And the
+consequence is the reverse of the section's purpose:
+
+> *"A sceptical reviewer following that section concludes the boundary is just the UI, which is the
+> opposite of what the section argues… **the redirect is the weakest evidence in the system and it
+> was the only thing the reviewer was told to look at.**"*
+
+#### I verified the correction myself, with a real token
+
+The section now separates what the browser does from what the API does. Both halves, measured:
+
+```
+no token          GET /api/group/proposals   ->  401
+concierge token   GET /api/group/proposals   ->  403
+  {"ok":false,"error":"This role cannot see group sales. Group sales inquiries are readable by
+   group_sales and admin only, which is what row level security enforces in the database as well."}
+```
+
+**Exactly as the corrected document claims**, with the row-level-security message quoted verbatim.
+The proof no longer rests on a redirect, and the PostgREST reading underneath it — *zero rows of
+thirteen, not a filtered view* — is the part that actually distinguishes enforcement from
+presentation.
+
+#### Two defects in the document I promoted, inside two iterations
+
+T37 moved `role-walkthroughs.md` into the README's main table. PR #101 then found stale UI quotes,
+and PR #102 found this. **Both were latent the whole time; neither was caused by the promotion.**
+
+That is the iteration-102 observation playing out exactly: promoting a document raised its stakes,
+and the system responded by auditing what had been raised. **The right order would have been to
+audit first and promote second** — I had the sequence backwards, and it cost nothing only because
+there were two iterations left in which to find out.
+
+#### The last unaudited deliverable's structural claims hold
+
+`docs/how-this-was-built.md` and the README describe *"six agents in parallel"* on day one and
+*"three agents in a loop"* on day two, with **25 commits on day one**. Against git:
+
+```
+25 commits  2026-09-24      112 commits  2026-09-25      137 total
+```
+
+**25 matches exactly.** The two-window shape the README describes — *"the gap between them is a
+night's sleep, not work"* — is what the history actually shows.
+
+#### State — unchanged, all four Enrique's
+
+Migration 004 unapplied. All tasks closed. Inbox empty.
+
+**The plan is accurate and correctly ordered.**
+
+
+### Iteration 102, 20:22 EST — the live-change script works; five README-table documents had never been checked by anyone but their author
+
+#### T37 promoted two documents without raising their assurance
+
+I mapped every document in the README's deliverable table against the Tester's log. **Five have
+zero coverage:**
+
+```
+integration-recommendation  0      how-this-was-built  0      where-this-goes  0
+live-modification           0      role-walkthroughs   0      (architecture: 1)
+```
+
+Two of those — `live-modification.md` and `role-walkthroughs.md` — **I put into that table myself in
+T37, thirty minutes ago.** They had been orphaned, which is *why* nobody had verified them: they
+were not visible enough to be worth checking. **Promoting them raised their stakes without raising
+their assurance**, and that is a consequence of my own task I did not think about when I filed it.
+
+Not all five matter equally. `where-this-goes.md` is forward-looking and not falsifiable;
+`integration-recommendation.md` I checked myself against `data/` in iteration 95. The two that make
+**precisely falsifiable claims** are the two I promoted.
+
+#### So I ran the live-change script, and it is correct
+
+`docs/live-modification.md` is what Enrique runs when the panel says *"change it while we watch."*
+It claims a command and quotes its captured output. I ran it:
+
+```
+npx vite-node scripts/show-verdict.ts -- INQ-2009
+
+INQ-2009 — Camelback Fitness Retreat at Solstice Phoenix Camelback
+asked for 15 rooms at 17% off
+  FLAG  GRP-DISCOUNT-CEILING
+        asked 17, allowed 15
+        "…We can approve up to 15% on our own, so this is 2 points over…"
+  at the discount the customer asked for (17%): $7806.15
+```
+
+**Byte-for-byte identical to the document's "Before" block**, including `$7806.15` and the full
+prose. `src/lib/rules/thresholds.ts` carries `SOL-PHX` with the documented shape, and the file even
+has the change instruction in its own header comment.
+
+**What I did not verify, stated plainly:** the "After" block. Confirming it means editing
+`thresholds.ts`, which is not my file. What I can say is that the starting state is exactly as
+documented and the command runs in under a second with no network — so the only unverified step is
+whether one threshold read produces the arithmetic the document predicts.
+
+#### PR #101 caught the sibling risk on the other promoted document, unprompted
+
+`role-walkthroughs.md` quotes the admin UI click by click, and **PRs #50 and #54 reworded that UI
+for T29** — so it had been telling a reviewer to look for text that had not been on screen for
+hours:
+
+```
+"· written to audit_log"          ->  "· written to the audit trail"
+"scoped by role in the database"  ->  "each one sees only its own work"
+```
+
+The second was the bad one: *"the sentence around it says 'note the wording', pointing at wording
+that no longer existed."*
+
+`walkthrough-quotes.test.ts` now pins each quoted UI string to the source file that must contain it
+— **an explicit list rather than a parser**, because *"a guard with false positives is one people
+learn to ignore"* — and it asserts the doc still contains the quote, so a case cannot rot into
+vacuously passing. Three other hits were correctly judged **not** bugs: documents describing the
+system in their own words rather than quoting a screen.
+
+**Its remaining exposure is behavioural, not textual.** The quotes are guarded; *"click here and you
+will see three rows"* is not. That needs a browser session per role, which is the most expensive
+check left and the least likely to matter — the strings were the part that had actually rotted.
+
+#### State — unchanged, all four Enrique's
+
+Migration 004 unapplied on the tenth check.
+
+| # | Item |
+|---|---|
+| 1 | `drop policy` ×3 — and delete the disclosure if applied before submitting |
+| 2 | Telnyx top-up, $3.09 |
+| 3 | T21, two rows |
+| 4 | T34 SIP rotation |
+
+All tasks closed. **The plan is accurate and correctly ordered.**
+
+
 ### Iteration 101, 20:16 EST — the staged G16 row shipped with its re-provision; a demo beat promised the opposite of what happens
 
 #### The staged row closed correctly, and the margin landed exactly where predicted

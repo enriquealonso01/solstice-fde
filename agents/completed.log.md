@@ -4003,3 +4003,53 @@ It also asserts the doc still contains the quote, so a case cannot rot into vacu
 rewrites the walkthrough instead of the UI.
 
 `npx tsc -b --force` clean. `npx vitest run`: **481 passed, 38 files**.
+
+## It74 — audited the runbook end to end; it holds, and the one unguarded thing is now guarded
+
+The Tester's newest lesson is *"audit the file that is open during the demo"* — they read the
+cheatsheet end to end and found a beat promising the opposite of what the tool returns. **The runbook
+is the other file open during the demo**, I have added three sections to it this session, and nobody
+had checked the whole thing.
+
+### Every checkable claim in it holds
+
+| Claim | Checked against |
+|---|---|
+| R55004 → Michael Chen, **Platinum**, 2pm `guaranteed`, `may_promise: true` | `identify_guest` + `check_late_checkout`, live |
+| INQ-2009 → the Phoenix retreat, **SOL-PHX**, `GRP-DISCOUNT-CEILING: flag` | `evaluate_group_rules`, live |
+| *"they asked 17%, the property's ceiling is 15%"* | the verdict's own `human_reason`, verbatim |
+| **$7,994.25** at 15% | correct — and **already pinned** by `inquiries.test.ts:356` |
+| INQ-2007 → Providence, Boston referral + quarantined suite rate | verified in It68 |
+| INQ-2011 → **Cypress Ridge Reunion**, `source: voice` | the database |
+| `/admin/inquiries/INQ-2009` renders *"Inquiry not found"* | the route is `:id`; `InquiryDetail` has that empty state |
+| `thresholds.ts` snippet in `live-modification.md` | matches **lines 102–106 exactly**, field for field |
+
+Nothing to correct. Worth saying plainly rather than hunting for something to change: the two demo
+documents are now both audited, and this one was already right.
+
+### So the deliverable is a guard on the thing with no protection
+
+`docs/live-modification.md` is the rehearsed answer to the one thing the brief says the panel **will**
+ask, and PR #97 moved it into the README's main table. It quotes a code block with a
+`// <- change to 12` marker. The risk is not that it is wrong now — it is that renaming
+`max_discount_auto_approve_pct` breaks it **silently**, and the person who finds out is standing in
+front of the panel with the file open. One pass over one file against that.
+
+### My first red-check passed, and the red-check was the thing that was wrong
+
+I renamed the field with `str.replace(old, new, 1)` — one occurrence — and the test stayed green. The
+guard was right: `thresholds.ts:10` carries the same text **in a comment**, so the first occurrence is
+not the data, and the SOL-PHX line was untouched. There are **four** occurrences.
+
+Replacing all four produced the failure I was looking for:
+
+> *"docs/live-modification.md tells the presenter to edit `max_discount_auto_approve_pct: 15,` in
+> src/lib/rules/thresholds.ts, and it is not there. The live-modification demo would fail with the
+> file open in front of the panel."*
+
+**A red-check that does not actually introduce the defect proves nothing**, and it fails in the
+reassuring direction — green, which is what you wanted to see. That is the fifth time this session
+that watching a guard refuse has mattered, and the first time the flaw was in the mutation rather
+than the guard.
+
+`npx tsc -b --force` clean. `npx vitest run`: **487 passed, 38 files**.
