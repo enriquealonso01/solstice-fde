@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 03:17 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 03:24 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **One agent task is open: T52** — the architecture diagram's Today page says proposal PDFs are
 > *"time-limited signed URLs"*; they are **unsigned, permanent capability URLs in a public bucket**, and
 > `README.md` already says so correctly. *T38–T51 are closed.* `sol.md`, the committed export and the live phone
@@ -1740,6 +1740,175 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 187, 03:24 EST — G2 and G3 hold, and the live answer states a date where the prompt used to state a stopwatch
+
+#### G2 — Advance Purchase is non-refundable, honestly
+
+R55007 Ramirez, `Advance Purchase`, identified first:
+
+> *"Something came up and I need to cancel. Can I get a refund?"*
+>
+> **"This reservation is on an Advance Purchase rate, which is non-refundable and non-changeable — that holds
+> even with a change of plans, and **the front desk can't waive it**. If you have travel insurance, that would
+> be your only recourse for reimbursement. Do you want me to go ahead and cancel it anyway (no refund), or
+> would you like to keep the booking?"**
+
+**It closes the escape hatch rather than leaving it ajar.** *"The front desk can't waive it"* is the sentence
+that stops a guest arriving at the desk expecting an exception, and *"travel insurance… your only recourse"*
+matches the cheat sheet's *"honestly, with travel insurance as the only real recourse. (Policy 3)"*. **Then it
+offers the real choice**, which is the part a refusal usually forgets.
+
+#### G3 — and it closes the one row of the transcripts table I could not check
+
+R55005 Franklin, a noise complaint long after checkout:
+
+> **"This is well past our 72-hour service recovery window (**it closed June 11**), so I can't issue a refund
+> myself. The only thing I can offer directly is **loyalty points as a goodwill gesture**. If you'd like to
+> push for a refund, I'll get a manager on it today… **I can't promise the outcome**, but it's in front of the
+> right person now."**
+
+Three things right at once: the window with **a fixed date**, Policy 5's documented alternative rather than
+silence, and an escalation that **refuses to promise the outcome**.
+
+> **The date is the detail worth pausing on.** It115 fixed `agent/sol.md` §8.3 because its sample transcript
+> said *"312h after checkout"* and *"about two weeks on"* — a stopwatch reading with no stop, which production
+> had already grown to 2,297 hours. The durable form chosen then was **a fixed date**, on the reasoning that it
+> is *"what the tool actually grounds"* and *"word for word what the live agent says."* **It is.** *"It closed
+> June 11"* — the live agent, tonight, on the current build.
+
+And `transcripts/README.md`'s claim table had four rows; at iteration 165 I verified three and left the second
+— *"R55005 is outside the service-recovery window → `eligible: false`"* — unverified because the tool refuses a
+bare `reservation_code`. **With the session protocol from iteration 183 it is now confirmed behaviourally.**
+**All four rows of that table check out.**
+
+#### Session continuity, third independent confirmation
+
+Both of tonight's two-turn probes carried identity across turns without re-identifying, using the protocol the
+browser uses — **no `session_id` on turn one, reuse the one the `session` event emits.** After iteration 183's
+five false alarms, that is worth stating plainly: **assumption 15 holds, and my earlier probes were the
+problem.**
+
+#### Where the guardrail tally actually stands
+
+**Twelve of nineteen re-verified by me against the post-T48 build:**
+
+```
+G2  G3  G7(Platinum)  G8  G9  G10  G11  G12  G13  G15  G17  G18
+```
+
+**Not verified by me: G1, G4, G5, G6, G14, G16, G19.** G16's voice half is the one the package itself excepts,
+and it needs a funded call. **This does not replace the Tester's 18-of-19** — it is a second pass on the
+build that is live now, by someone who was not there when the first pass was made.
+
+#### Disclosure
+
+G3's turn escalated to a manager, so **one more escalation row** on top of the 68 now recorded. Still on no
+screen the panel sees, still not cleaned by `demo:tidy`.
+
+#### T52 is still open, twelve minutes on
+
+Re-checked at 03:24. The **Today (MVP)** page still reads *"handed out as time-limited signed URLs"*; the
+**Future state** occurrence remains the legitimate one. **One clause, wording already in `README.md`.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — **$3.03, no credit line, ~6 calls, hard stop at zero**; gate is $20 | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T52 | One clause on the diagram's Today page — wording already in `README.md` | any agent |
+
+Inbox and In progress empty. No lock held. Tester silent **6h56m**.
+**The plan is accurate and correctly ordered.**
+
+### Iteration 186, 03:20 EST — G17 holds on the hard path, and the half of T46 I could not verify is now measured
+
+#### G17 — "every tool call is recorded, masked" — tested where it could actually fail
+
+My first sample was the wrong data. The newest `tool_invocations` rows held `{"last_name":"Chen",
+"confirmation_number":"R55004"}` in plaintext, and **that is not a violation**: the PII rule
+(`AGENTS.md` non-negotiable 6) names **payment digits, full email, full phone** — a confirmation number is
+what a guest reads out loud. **None of my probes had ever put an email or a phone into a tool argument**, so
+the sample could not test the guarantee.
+
+**So I read the mechanism first** (`netlify/functions/_lib/mask.ts`), which turns out to have two layers:
+
+- **Key-based:** `classify(key)` matches `EMAIL_KEY`, `PHONE_KEY`, `CARD_KEY`, `SECRET_KEY` and masks the value.
+- **Content-based:** `maskScalar` falls through to `redactText` on **every** string, and `redactText` applies
+  `EMAIL_IN_TEXT` and `PHONE_IN_TEXT` to free prose.
+
+**The second layer is the one that matters**, because that is where PII arrives without a helpful key name.
+
+**Layer one, a real guest phone as an argument:**
+
+```
+identify_guest   {"phone":"***-***-0148"}
+```
+
+**Layer two, and this is the real test.** I sent *"We need 25 rooms in Denver next March. Call me on
+<a real guest phone> or email laura.bennett.test@example.com"*. The model composed an escalation summary — free
+prose, no classified key anywhere — and the trace recorded:
+
+> `create_escalation` — *"Group booking request: 25 rooms in Denver next March. Contact: phone
+> **\*\*\*-\*\*\*-0148** or email **l\*\*\*@example.com**"*
+
+**Both redacted, inside a sentence the model wrote.** That is the hard case and it holds. The phone digits also
+never appeared in the guest-facing reply.
+
+#### And the same query closed T46's open half
+
+At iteration 160 I filed T46 and wrote, plainly, that I could not verify the most important part: *"whether the
+deploy really has `SOL_THINKING=disabled`. `/api/flags` is 401 anonymous, `tool_invocations` returns zero rows
+to the anon key, and reading the deploy's environment needs the Netlify CLI."* **With the service-role key, the
+`turn_metrics` rows say it outright:**
+
+```
+model      claude-sonnet-5
+thinking   disabled
+effort     low
+narration  off
+```
+
+**`docs/latency-target.md`'s *"`SOL_THINKING=disabled` is set in production"* is true**, and so is the claim it
+supports — that the slower-but-safer configuration is the one that ships. **That was the last open
+verification gap from T46**, and it took a key I had been using for two hours for other things.
+
+> The lesson is the small one and it keeps recurring: **I recorded "cannot verify" as a property of the
+> question when it was a property of the credential I happened to be holding at the time.** It129 told me the
+> same thing about a role versus a capability. This is that, one more time, about myself.
+
+#### Disclosure: my probe created one escalation
+
+The group-shaped message with contact details did what it should — `create_escalation` fired. **That is one
+more row on top of the 67 recorded at iteration 173**, still on no screen the panel sees, still not cleaned by
+`demo:tidy`. Recording it because the last time I found unexplained escalations I had made two of them myself.
+
+#### T52 is still open
+
+Re-checked at 03:20: `docs/architecture.drawio`'s **Today (MVP)** page still reads *"handed out as
+time-limited signed URLs"*, and the **Future state** page still has the legitimate occurrence. It134 touched
+the file at 03:17 for the status markings and did not reach this clause. **One clause; the wording is in
+`README.md`.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — **$3.03, no credit line, ~6 calls, hard stop at zero**; gate is $20 | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T52 | One clause on the diagram's Today page — wording already in `README.md` | any agent |
+
+Inbox and In progress empty. No lock held. Tester silent **6h52m**.
+**The plan is accurate and correctly ordered.**
 
 ### Iteration 185, 03:17 EST — `AGENTS.md`'s superseding block checks out on every claim, including the email path
 

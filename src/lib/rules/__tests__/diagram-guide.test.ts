@@ -169,4 +169,71 @@ describe('the Today page says what actually runs', () => {
         'submission" was never the binding fact -- nothing was ever registered.',
     ).not.toContain('cannot clear before submission')
   })
+
+  /**
+   * T52. Every other error found on this page understated the build. This one overstated it, and it
+   * overstated a **security** property: the Storage node said proposal PDFs are handed out as
+   * *"time-limited signed URLs"*.
+   *
+   * Measured with no credentials of any kind at iteration 135 — `/object/public/proposals/PRP-2011/
+   * <32 chars>/<file>.pdf` returns **200, 2,570 bytes, application/pdf**, with no `token=` and no
+   * `/sign/`. `store.ts` calls `getPublicUrl`, not `createSignedUrl`. So nothing is signed and nothing
+   * expires; the protection is an unguessable path that never stops working.
+   *
+   * `README.md` already says that correctly, which is the part that made it worth stopping for: the
+   * package volunteered the weakness in one deliverable and claimed the stronger mechanism in another,
+   * and a reviewer reading both would have had to decide which to believe.
+   *
+   * The Future-state node says "signed" correctly, marked FUTURE with an explicit "Today: Supabase
+   * Storage" contrast. So the guard cannot simply ban the phrase; it bans the claim on the Today page
+   * unless the code actually signs, which leaves the real improvement open and fails only if the
+   * wording runs ahead of it again.
+   */
+  it('does not claim signed or expiring PDF links while the code serves public ones', () => {
+    const store = readFileSync(join(repoRoot, 'netlify/functions/group/store.ts'), 'utf8')
+    const signsForReal = store.includes('createSignedUrl')
+
+    if (!signsForReal) {
+      for (const overclaim of ['time-limited', 'signed URL', 'signed url']) {
+        expect(
+          todayPage,
+          `the Today page says "${overclaim}" about storage while store.ts still calls getPublicUrl. ` +
+            `A public capability URL has no signature and no expiry, so that wording claims revocation ` +
+            `the system does not have -- and README.md states the real limit, so the two deliverables ` +
+            `would disagree about a security property.`,
+        ).not.toContain(overclaim)
+      }
+    }
+
+    expect(
+      store,
+      'store.ts no longer calls getPublicUrl. If PDFs are genuinely signed now, say so on the Today ' +
+        'page and in README.md, and delete this branch.',
+    ).toContain(signsForReal ? 'createSignedUrl' : 'getPublicUrl')
+  })
+
+  it('names the capability-URL model on the Today page, in the same terms as the README', () => {
+    expect(
+      todayPage,
+      'the Today page no longer describes the PDF link as a capability URL. That is the honest name for ' +
+        'it and the one README.md uses; leaving it unnamed is how "signed" got back in last time.',
+    ).toContain('capability URL')
+
+    const readme = readFileSync(join(repoRoot, 'README.md'), 'utf8')
+    expect(
+      readme,
+      'README.md no longer states the capability-URL limit. The diagram now points at the same claim, ' +
+        'so if the README drops it the two disagree again -- in the other direction.',
+    ).toContain('capability URL, not an authenticated download')
+  })
+
+  it('keeps the future-state node saying signed, because it is the contrast', () => {
+    // Deleting the Future node would "fix" the case above and lose the point: signed URLs are the
+    // recommendation, and the Today node borrowed their language a page early.
+    expect(
+      drawio,
+      'the future-state Object storage node no longer offers signed URLs. It is the recommendation and ' +
+        'the thing the Today page must not pretend to be.',
+    ).toContain('Amazon S3 with time-limited signed URLs for proposal PDFs. Today: Supabase Storage.')
+  })
 })

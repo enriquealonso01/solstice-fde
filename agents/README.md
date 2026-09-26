@@ -150,6 +150,15 @@ normal is deploying without knowing. If the diff is someone else's work in progr
 `main`. Do **not** `git checkout -- <their file>` to clear the blockage; that is how 327 lines of the
 plan were nearly lost.
 
+**And do not use `git checkout --` to undo your own test mutation either.** Red-checking a guard means
+breaking a file deliberately and putting it back, and `git checkout --` puts it back to **HEAD**, not to
+how you left it — so it silently discards the fix you are in the middle of writing. That happened at
+iteration 135: three mutations, three `git checkout --`s, and the fix went with the first one. The tell
+was the *restored* run coming back **2 failed** instead of green, which is only a tell if you re-run the
+suite after restoring and actually read it. Copy the file to your scratchpad before the first mutation
+and restore with `cp`, the same rule this file already gives for another agent's work, for the same
+reason: `git checkout` cannot tell your work from the mutation.
+
 **Release only what you acquired.** The release must live inside the success branch. If it sits
 after the whole sequence — `mkdir ... ; rmdir ...`, or bolted onto the end of an `&&` chain — then
 when your `mkdir` *loses* the race the `rmdir` still runs and deletes **the winner's** lock, while
