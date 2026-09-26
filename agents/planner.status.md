@@ -4,43 +4,39 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 218 — 2026-09-26 06:33 EST
+## Iteration 219 — 2026-09-26 06:39 EST
 
-**The plan is accurate and correctly ordered.** **T59 is the only open agent task.**
+**The plan is accurate and correctly ordered.** **T59 is the only open agent task. Nothing new filed.**
 
-### T58 closed
+### What I checked
 
-Both remaining one-line items landed at 06:30 and I verified them in the file rather than from a log entry:
+It150 swept the `indexOf`-judges-by-the-first-occurrence defect across eight guards and fixed two more, one of
+them **`doc-paths.test.ts`**, which I run over my own file every iteration. Verified in place: its gitignore
+exemption now walks **every** mention, with the measurement recorded — *"SUBMISSION.md names `DEMO_LOGINS.md`
+three times and only the first two say it is gitignored."* 28 green; unchanged in what it does for me.
 
-- `:181` counts `property_code:` occurrences inside the SOL-PHX slice instead of `not.toContain('SOL-TPA')` —
-  *"Counting `property_code:` catches both mistakes and needs no story."*
-- `:242` uses `m.index` instead of looking the phrase up again.
+Its dropped hypothesis was worth generalising: could the suite be **red for anyone who cloned the repository**?
+`README.md` invites a reviewer to run it, and the brief says they dig into the code.
 
-Both comments record the old error rather than quietly replacing it. **Suite green: 872 tests, 61 files.**
+**It cannot, and I checked rather than assumed:**
 
-### A brief deliverable re-driven rather than re-read
+- `.gitignore` hides exactly two files the tests name — `DEMO_LOGINS.md` and `FDE_Project_Challenge.pdf` — and
+  both are asserted **absent from tracking** and **present in `.gitignore`**, never asserted to exist on disk.
+- `vitest.setup.ts` strips credentials from the environment, so nothing depends on a local `.env`.
+- `data/generated/*.json`, which several tests read, is tracked rather than ignored.
 
-Six transcripts, all listed in `transcripts/README.md`, all present, **no count stated anywhere** — nothing there
-can rot. It149 rewrote every group verdict's wording tonight, so I checked for leftovers: **`general manager`
-appears in none of `transcripts/`, `docs/`, `README.md` or `SUBMISSION.md`.**
+**And the harder version was already solved at iteration 137**, before I thought to ask: `shipped-files.test.ts`
+exists because the invitation broke for **Download ZIP** rather than `git clone` — three files that
+*"did not fail an assertion; they failed to collect"*, reporting a git error in place of twelve credential
+assertions. `shippedFiles` prefers git and falls back to walking the tree with `.gitignore` applied, with a
+subset case proving the fallback faithful. **6 green.** With iteration 112's fresh LF clone run, both directions
+are covered by guards that run on every pass.
 
-Then I drove `parking-rate-refusal.md` against production, because a transcript's value is that it is real:
-
-```
-"How much is parking per night at your Chicago Riverwalk hotel?"
-  get_property_info {"topic":"parking rate","property_code":"Chicago Riverwalk"}
-    -> SOL-CHI: no chain-wide parking rate     grounded: true, 1 tool call
-  "I can't quote a parking rate - there's no chain-wide price and this property's current rate isn't in
-   what I can see. The Chicago Riverwalk front desk can confirm it directly for you."
-```
-
-**The trace matches the transcript line for line** — same tool, same result summary, same refusal, same handoff.
-The prose differs from the capture, which is what a language model does and why the file says *"Captured from
-the deployed system on 2026-09-24"* instead of claiming determinism. 2852ms to first token, 3751ms for the turn;
-the original capture was 2637 / 3197ms.
-
-> **Worth saying on stage:** the guest typed *"Chicago Riverwalk"*, not a property code, and the tool resolved it
-> to **SOL-CHI** by itself. The refusal is the beat; the resolution is what shows the data layer is real.
+> **The lesson is about sequence, not content.** I had a real submission-risk hypothesis and the right move was
+> to look for the existing answer before writing the task. Three times in a few iterations the gap I found
+> already had a name elsewhere in the package — *Escalation queue* when I grepped for *notif*,
+> `integration-recommendation.md` for the jobs bonus, now this. **Search the package for the answer before
+> filing the question.**
 
 ### Open
 
@@ -54,11 +50,11 @@ the original capture was 2637 / 3197ms.
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
 
-Tester silent since 20:26 (**10h07m**); no open findings. Inbox and In progress empty. No lock held; I took none.
-Plan guards re-run after my edits: **104 green**.
+Suite green at **872 / 61 files**. Tester silent since 20:26 (**10h13m**); no open findings. Inbox and In
+progress empty. No lock held; I took none. Plan guards re-run after my edits: **104 green**.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** T58 and T60 are closed, the suite is green, the demo path and the group gate are
-verified against production, and the last agent task is a test for code that already works. **The SQL is the
-only thing left that nobody else can do for him.**
+**The `drop policy` paste.** Unchanged, and everything around it is now verified: the demo path end to end, the
+group gate across every proposal, the brief's deliverable list against the PDF text, and the suite from a clone
+or a ZIP.

@@ -9631,3 +9631,101 @@ one latent when written, each one waiting for someone to reorder a document.
 
 `npx tsc -b` clean. `npx vitest run` **872 tests / 61 files** green (unchanged; these fixes make
 existing cases correct rather than adding new ones). Three subject files restored and `cmp`-identical.
+
+---
+
+## It151 — T59: the net-new tool had five reader-facing mentions and nothing that ran it
+
+`netlify/functions/tools/availability.ts` is the one capability this project **added** rather than derived
+from the provided exports. Policies 1 and 6 both hang on same-day availability; the exports carry room
+counts and no inventory-by-date. It is named in `README.md` twice, `SUBMISSION.md`, `agent/sol.md`,
+`docs/architecture.drawio` and the in-app Backend map. The two tests that mentioned it were about
+**strings** — `tool-naming` says so in its own scope note.
+
+**Not a repair.** I read every branch first and the module is correct; `availability.ts` is byte-identical
+after this iteration, as the plan required. 26 cases, hermetic, no network and no database.
+
+### The case that justifies the other twenty-five
+
+`check_upgrade_eligibility` asks this service whether a Suite is free. **R55004** — Platinum, SOL-DEN, a
+Deluxe King, so the next class up is a Suite — gets no Suite on its stay date, so Policy 6's guarantee
+meets the gap Policy 6 itself admits to, and the tool refuses and escalates. The cheat sheet calls that
+*"the better moment of the two"*.
+
+Measured before writing anything, in default mode with no environment variables set:
+
+```
+SOL-DEN 2026-07-20   Standard Double  13 of 45     Standard King  12 of 60
+                     Deluxe King       1 of 30     Suite           0 of 20   <- the beat
+R55004 default    -> policy_gap_manager_decision   may_promise: false
+R55004 wide_open  -> guaranteed                    may_promise: true
+R55004 sold_out   -> policy_gap_manager_decision   may_promise: false
+```
+
+**The inversion is the point.** The same reservation returns a guarantee when the service says there is a
+room, which proves the decision is driven by inventory rather than by the tier — and is exactly what would
+happen on stage if the sold-out branch regressed. It would not fail loudly. Sol would confirm a suite.
+
+The red-check makes that concrete. Dropping the occupancy floor from `0.55` to `0.15` — one number, the
+kind of change someone makes while tuning a demo:
+
+```
+MUT 4  occupancy floor 0.55 -> 0.15
+  x  the Platinum upgrade refusal ... > refuses and escalates in the mode the demo actually runs in
+     1 failed
+```
+
+Nothing else in 898 tests notices that edit. It is the only case standing between a tuning change and Sol
+promising a room the hotel does not have.
+
+### The rest of the red-check
+
+```
+MUT 1  sold_out returns the whole house            3 failed   (the plan's own check)
+MUT 2  wide_open empties it                        2 failed   (the switch AND the inversion case)
+MUT 3  the override clamp removed                  1 failed
+MUT 5  the seed takes Date.now()                   1 failed
+MUT 6  the override stops saying it was pinned     1 failed
+restored                                           26 passed
+cmp against the original availability.ts           identical
+```
+
+**MUT 5 is worth reading closely: the behavioural determinism case did not catch the clock.** Calling the
+function twice in the same millisecond returns the same number, so "identical snapshot twice" stayed green.
+What caught it was the source-level case asserting the file contains no `Math.random`, `Date.now` or
+`new Date(`. A contract like *"stable across runs and platforms, so a supervisor sees the figure the guest
+was told"* cannot be proved by calling something twice in a row — the two cases test different claims and I
+would have shipped only the weaker one if the mutation had not named which case fired.
+
+### What the other cases pin
+
+- **Bounds**, over all ten properties × four ladder classes: `0 ≤ rooms_available ≤ total_rooms`,
+  `total_rooms` equal to the figure on the property record rather than anything the simulation chose, and
+  `occupancy_pct` consistent with the pair. Anti-vacuity in both directions — at least 32 pairs checked, and
+  **more than half must have rooms**, so a fixture that silently emptied could not make the bounds trivially
+  true.
+- **Both stage switches**, plus a nonsense `AVAILABILITY_MODE` falling back to the simulation rather than
+  throwing in front of an audience, and the mode echoed on every snapshot.
+- **The override**: the exact `PROPERTY|DATE|CLASS` key, the looser `PROPERTY|DATE` key, clamped up to the
+  real total, clamped down to zero, malformed JSON ignored across six shapes, and **the documented
+  precedence that an override beats the mode** — a realistic mid-demo state where both knobs are set.
+- **Provenance** on all four paths, including the override, whose assumption must still say the figure was
+  *pinned*. A number a human chose, presented as a simulation output with no note, is the one dishonest
+  thing this service could do.
+- **`houseOccupancy`**, which gates late checkout: a fraction, and equal to the by-class figures it is built
+  from to ten decimal places.
+
+### Two notes on instruments
+
+**The plan warned that `npx tsx -e` against this module produced no output, ran past ten minutes and was
+killed for running the machine low on memory.** I did not retry it. `npx vite-node` on a `.mjs` probe file
+returned in about two seconds, which is what I used to measure everything above.
+
+**The CRLF anchor bit again, and this time the aftermath was instructive.** MUT 2's multi-line anchor used
+`\n` against a CRLF file, so the mutation never applied — and the run that followed printed `26 passed`,
+which reads exactly like *"the guard does not catch wide_open"*. The `assert count == 1` said `anchor count
+0` on the line above it. **Third heredoc/escape casualty in three iterations, and the third time the count
+assertion is what stopped a false conclusion.** Retried with a single-line anchor: 2 failed, and it names
+the inversion case.
+
+`npx tsc -b` clean. `npx vitest run` **898 tests / 62 files** green (up 26). `availability.ts` unmodified.
