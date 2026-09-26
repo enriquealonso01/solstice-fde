@@ -376,13 +376,18 @@ describe('the Today page says what actually runs', () => {
   it('states no bare count of anything that moves when someone dials', () => {
     const flat = decode(todayPage).replace(/\s+/g, ' ')
     const hits = [...flat.matchAll(new RegExp(String.raw`\b${NUMBER}\s+${QUANTITY}\b`, 'gi'))]
-      .map((m) => m[0])
       // A figure that dates itself, or one attached to an invariant, is not the failure mode.
-      .filter((phrase) => {
-        const at = flat.indexOf(phrase)
+      //
+      // `m.index`, not `flat.indexOf(m[0])`. Looking the phrase up again judges every match by the FIRST
+      // occurrence's sentence, and this page is precisely where that bites: the fix for the original
+      // defect was to write a DATED version of the same count. Two "nine calls" -- one dated, one bare --
+      // and the dated one's context would exempt the bare one.
+      .filter((m) => {
+        const at = m.index ?? 0
         const sentence = flat.slice(Math.max(0, at - 160), at + 160)
         return !/as of|at the time of writing|every |all nine|nine of nine/i.test(sentence)
       })
+      .map((m) => m[0])
 
     expect(
       hits,
