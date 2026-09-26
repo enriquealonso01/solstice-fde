@@ -1,3 +1,20 @@
+> ## Correction, 2026-09-26 -- the timeline math ran against the wrong deadline
+>
+> *Prepended at implementer iteration 127; **nothing below is edited**.*
+>
+> **"Only ONE business day sits between them" is wrong.** The brief says *"You'll have 5 business
+> days from receipt to submit."* Received Thu 2026-09-24, the deadline is **~Thu 2026-10-01**, and
+> **five** business days sit between: 09-25, 09-28, 09-29, 09-30, 10-01. Run this section's own
+> table against that window -- standard 10DLC at its optimistic end is 1 business day of brand
+> vetting plus at most 3 of carrier review, so 4 business days, which fits. *"SMS cannot clear
+> before submission. That is settled, not a risk to manage"* did not follow from these numbers.
+>
+> **It made no difference, for an unrelated reason.** No 10DLC brand or campaign was ever
+> registered on the funded account -- `plans/01-build-plan.md` D18 and `HUMAN_INTERVENTION.md:122`
+> both say so. The clock this section prices never started, so the conclusion happened to hold:
+> email is the working default at submission. Everything from "Design consequence" onward is
+> accurate and was built, and that is why this cost a paragraph rather than a rewrite.
+
 # Messaging: SMS reality + email (RESOLVED)
 
 Research verified 2026-09-24.

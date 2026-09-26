@@ -7137,3 +7137,121 @@ compare and swap, fail loudly, and say in the log that you touched it. The windo
 which is the reason the rule starts with "do not".
 
 `npx tsc -b` clean. `npx vitest run` **688 tests / 52 files** green (up 4).
+
+---
+
+## It127 — the last four plans nobody had re-read, and a deadline that was wrong in four files
+
+Nothing was open. `plans/06-master-plan.md` closed T50 in It126 and the backlog had no unclaimed
+task, so I took the thing I had been putting off: `plans/01-build-plan.md`, `02-voice-realtime.md`,
+`03-messaging.md` and `04-unlock-checklist.md`. 320 lines, written 2026-09-24, never re-read, in a
+public repository. It124 did that to `00-requirements.md` and found the hiring contact's email.
+It125 did it to `05-requirements-audit.md` and found eight verdicts understating the package. The
+pattern was holding, so I finished it.
+
+**The find is one fact with three consequences.** Every one of the four files, plus
+`00-requirements.md`, dates the submission to `~2026-09-27` or "~72h from receipt". The brief says
+something else. I extracted it:
+
+> "You'll have 5 business days from receipt to submit."
+
+Received Thu 2026-09-24, so the real deadline is **~Thu 2026-10-01**. Enrique is submitting today
+at 11:00 EST — five days early, by choice, not because a clock is running out.
+
+I want to record how I got that sentence, because the first two attempts produced nothing and the
+third nearly produced a confident guess. `plans/06-master-plan.md` already carries a row saying the
+Planner re-read the PDF and found "five business days", and it would have been easy to cite that
+row and move on. The whole history of this project argues against it: the guards that passed while
+broken, the live-prompt probe that read the wrong field and reported 0 characters — every one of
+those was a restated claim nobody re-derived. So I went to the PDF. The repo's own
+`scratchpad/pdftext.mjs` returned 74,698 characters of font-table binary and not one word of prose;
+a rewrite that filtered to content streams carrying `Tj`/`TJ` operators returned **five characters**,
+because this PDF has none. `Read` on the PDF failed too — no poppler on this machine. `pypdf` parsed
+it in one line: 4 pages, 9,451 characters, and the sentence above. The Planner was right. I now
+know it rather than believe it.
+
+**Consequence 1 — `03-messaging.md` derived a conclusion from the wrong date.** Its timeline math
+reads *"Only ONE business day (Fri 09-25) sits between them"* and concludes *"SMS cannot clear
+before submission. That is settled, not a risk to manage."* Against 2026-10-01 there are **five**
+business days — 09-25, 09-28, 09-29, 09-30, 10-01 — and the section's own table prices standard
+10DLC at 1-7 days of brand vetting plus at most 3 of carrier review. At the optimistic end that is
+four business days, inside the window. The conclusion did not follow from the numbers.
+
+It was still the right call, for a reason the section never mentions: **the clock it prices never
+started.** D18 in `01-build-plan.md` says no brand or campaign exists on the funded account, and
+`HUMAN_INTERVENTION.md:122` still lists 10DLC as not started. So a strategy that looked derived was
+actually correct by accident, and everything from "Design consequence" onward — the channel adapter
+that makes email-vs-SMS a configuration change — is accurate and was built. That is why this cost a
+paragraph and not a rewrite.
+
+**Consequence 2 — `04-unlock-checklist.md` is worse than stale.** Every box in it is unticked,
+which reads as "none of this has been unblocked", when §2 (credentials), §3 (Netlify, GitHub, the
+SIP connection, Telnyx Email) and §4 (the number, the assistant, the webhooks, Supabase) are all
+done and have been for two days. And §1 asserts 10DLC was *"Started 2026-09-24"*, which the line
+above shows is false of the account that matters. An unticked box that is done wastes a reader's
+time; an asserted "started" that never started makes them wait for something that is not coming.
+Its §5 then dates the submission to "Sunday 2026-09-27" — wrong against the brief and wrong against
+Enrique's own choice, on the morning of that choice.
+
+**Consequence 3, and the one a panel would actually catch — `02-voice-realtime.md` states a
+capability a live call disproved.** Its ladder table promises, for the Listen rung, *"Supervisor
+hears both sides, nobody hears them."* `README.md:179` says what actually happened: verified on a
+live call, the supervisor hears the **guest** only. Telnyx documents `monitor` as hearing
+everything, but a leg running an AI assistant appears to inject its synthesized speech rather than
+stream it, so Sol's half never reaches the monitor. The deliverable states that limit plainly; the
+plan a reader is sent to for "the verified Telnyx API details" still promises both sides.
+
+The same section has an open **"TEST FIRST"** list calling the assumption behind it *"the single
+riskiest assumption in the voice path"* — and it has been answered. `supervise_call_control_id`
+**does** work against a leg running `ai_assistant_start`; the supervisor attaches and
+`ai_assistant_stop` genuinely silences Sol while the call stays up. So the conference fallback is
+no longer needed for the reason the plan gives. It is now the documented fix for the audio gap
+instead, written up in `netlify/functions/voice/supervisor.ts:13` onward and deliberately not
+built, because it would rework the inbound flow that currently answers the phone reliably. I left
+that source comment alone: its advice is conditional ("if `listen` returns an error"), the fallback
+itself really is untested, and the README carries the live result authoritatively.
+
+**`01-build-plan.md`** got the remaining five: the deadline; D4's "registration started
+2026-09-24", superseded four rows later by D18 in its own table; D11, still headed **"NEEDS
+ENRIQUE'S CONFIRMATION"** when it was confirmed and built and is now pinned by a test that compares
+the voice compile to the committed export; the seven-item "Deliverables owed to phData" checklist,
+every box unticked and every item delivered; and the net-new tool, still called
+`availability_service`, a name `tool-naming.test.ts` bans.
+
+Two things in that checklist were not what I expected and are worth writing down rather than
+quietly asserting. The plan promises the diagram as **`.drawio` + rendered PNG**; there is no PNG
+in the repository and never was — `docs/architecture.svg` is what shipped, and it is what
+`README.md:19` and `SUBMISSION.md:41` both link. And I nearly wrote "seven sample transcripts",
+because `ls transcripts/*.md` counts seven. One of them is `transcripts/README.md`. There are
+**six**. That is the same class of error as the guard that counted a fix file as evidence of the
+bug it fixed; the fix is the same one, which is to look at the list instead of the number.
+
+**Shape of the correction.** Four dated blocks, prepended, nothing below them edited:
+**106 insertions, 0 deletions** across the four files. Same reasoning as It119 and It125 — these
+plans are the record of what was decided on 2026-09-24 and they are worth keeping exactly as
+written, so the correction goes on top and travels with the file rather than into an errata page
+nobody opens. Within each file I cite the original by quotation and never by line number, because
+prepending a block shifts every line under it; only cross-file references are given as `path:line`.
+
+`plans/01-build-plan.md` and `04-unlock-checklist.md` are CRLF in this checkout, `02` and `03` are
+LF. `.gitattributes` pins `*.mjs` and `*.sh` but not `*.md`, so a block written with LF endings
+into a CRLF file produces a mixed file and a diff nobody can read. The prepend script detects each
+file's endings and matches them; `git diff --numstat` afterwards confirms `38 0`, `23 0`, `17 0`,
+`28 0` — insertions only, which is the check that the originals really are untouched.
+
+**The guard**, a new `describe('the four build-phase plans')` in `doc-paths.test.ts`, in three
+parts. Each file must **still contain the stale claim** — otherwise the case is vacuous and guards
+nothing, which is exactly how five guards in this project passed while broken. Each file must carry
+a dated correction while that claim stands. And every `path:line` the corrections cite must still
+say what it is cited for: `HUMAN_INTERVENTION.md:122`, `README.md:179`,
+`netlify/functions/voice/supervisor.ts:13`. That third case is the one that will actually fire —
+the first two files are appended to all night, and a citation into a moving file is a live wire. A
+fourth case checks the reverse direction, that every entry in the citation table is still quoted
+from a plan, so the table cannot rot into a list of things nobody references.
+
+Red-checked three ways, each restored afterwards: renaming `02`'s correction heading to "Note"
+failed 1; prepending a single blank line to `README.md` failed 1, catching the moved citation; and
+stripping `:122` from the `HUMAN_INTERVENTION.md` citation in all four plans failed 1. Then
+`git diff --numstat` again to prove the mutations left nothing behind.
+
+`npx tsc -b` clean. `npx vitest run` **700 tests / 52 files** green (up 12).
