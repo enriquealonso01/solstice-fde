@@ -27,7 +27,7 @@ import {
   type ToolArgs,
   type ToolContext,
 } from './helpers'
-import { findGuestById, findPropertyByCode, findReservationById, pickRelevantReservation, reservationsForGuest } from './lookups'
+import { findGuestById, findPropertyByCode, reservationOfVerifiedGuest, reservationsForGuest } from './lookups'
 import { sameDayAvailability } from './availability'
 import { AMENITY_CATALOG, ANIMAL_RULES, POLICY_RULES, TIER_BENEFITS } from './rules'
 
@@ -41,27 +41,14 @@ interface StayContext {
 }
 
 async function resolveStay(args: ToolArgs, ctx: ToolContext): Promise<StayContext | string> {
-  const reservationId = optString(args, 'reservation_id') ?? optString(args, 'confirmation_number')
-  const guestId = optString(args, 'guest_id') ?? ctx.guest_id
+  const owned = await reservationOfVerifiedGuest(args, ctx)
+  if ('error' in owned) return owned.error
+  const { reservation } = owned
   const now = nowFrom(ctx)
 
-  let reservation: Reservation | null = null
-  if (reservationId) {
-    reservation = await findReservationById(reservationId)
-    if (!reservation) return `No reservation found for ${reservationId}.`
-  } else if (guestId) {
-    reservation = pickRelevantReservation(await reservationsForGuest(guestId), now)
-    if (!reservation) return `No reservations found for guest ${guestId}.`
-  } else {
-    return 'Need a reservation id or a verified guest id. Identify the guest first.'
-  }
-
   // A note on one stay can restrict another (R55004's "Suite upgrade is NOT guaranteed" covers
-  // R55015), so the guest's other stays' notes come along once the caller is verified as that guest.
-  const otherStays =
-    ctx.guest_id === reservation.guest_id
-      ? (await reservationsForGuest(reservation.guest_id)).filter((r) => r.reservation_id !== reservation.reservation_id)
-      : []
+  // R55015), so the verified guest's other stays' notes come along.
+  const otherStays = (await reservationsForGuest(reservation.guest_id)).filter((r) => r.reservation_id !== reservation.reservation_id)
 
   return {
     reservation,

@@ -17,10 +17,13 @@ import { createHash } from 'node:crypto'
 import { resolve } from 'node:path'
 
 import { parseCsvObjects, str, num, bool } from './lib/csv.mjs'
+import { loadEnv } from './lib/env.mjs'
 import { propertiesFromCsv } from './lib/properties.mjs'
 import { generatedDir, SOURCE_FILES } from './lib/paths.mjs'
 import { maskEmail, maskPhone, last4 } from '../../netlify/functions/_lib/mask.ts'
 import { phoneLookupKey, emailLookupKey } from '../../netlify/functions/_lib/lookup.ts'
+
+loadEnv()
 
 const CHECK_ONLY = process.argv.includes('--check')
 

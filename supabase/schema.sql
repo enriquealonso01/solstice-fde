@@ -83,6 +83,14 @@ create table inquiries (
   created_at     timestamptz not null default now()
 );
 
+-- Raw inquiry email and phone; payload keeps only the masked pair. Service role only.
+create table inquiry_contacts (
+  inquiry_code text primary key references inquiries(inquiry_code) on delete cascade,
+  email        text,
+  phone        text,
+  created_at   timestamptz not null default now()
+);
+
 create table proposals (
   id          uuid primary key default gen_random_uuid(),
   inquiry_id  uuid not null references inquiries(id) on delete cascade,
@@ -146,6 +154,7 @@ alter table messages         enable row level security;
 alter table tool_invocations enable row level security;
 alter table escalations      enable row level security;
 alter table inquiries        enable row level security;
+alter table inquiry_contacts enable row level security;
 alter table proposals        enable row level security;
 alter table follow_ups       enable row level security;
 alter table audit_log        enable row level security;
@@ -179,12 +188,14 @@ create policy inq_read   on inquiries for select using (my_role() in ('group_sal
 create policy prop_read  on proposals for select using (my_role() in ('group_sales','gm','admin'));
 create policy fup_read   on follow_ups for select using (my_role() in ('group_sales','gm','admin'));
 create policy audit_read on audit_log for select using (my_role() in ('group_sales','gm','admin'));
-create policy audit_ins  on audit_log for insert with check (auth.uid() is not null);
 
--- Reference data is readable by any signed-in staff member; writes go through service role.
+-- No policy on inquiry_contacts: only the service role reads or writes it.
+revoke all on inquiry_contacts from anon, authenticated;
+
+-- Reference data: properties and policies for any signed-in staff, guests and reservations for concierge and admin.
 create policy ref_props on properties   for select using (auth.uid() is not null);
-create policy ref_guest on guests       for select using (auth.uid() is not null);
-create policy ref_resv  on reservations for select using (auth.uid() is not null);
+create policy ref_guest on guests       for select using (my_role() in ('concierge','admin'));
+create policy ref_resv  on reservations for select using (my_role() in ('concierge','admin'));
 create policy ref_pol   on policies     for select using (auth.uid() is not null);
 
 -- Live dashboard feeds

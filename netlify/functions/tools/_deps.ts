@@ -10,7 +10,6 @@
  * keeps this boundary stable if the data layer ever moves behind a network call.
  */
 import {
-  findGuestsByName,
   getGuest,
   getGuestByEmail,
   getGuestByPhone,
@@ -43,7 +42,7 @@ export type { GeneratedGuest, GuestLookup, PolicySection, RateLookup }
  *  - `getPropertyRate` is the ONLY sanctioned path to a nightly rate; it is what quarantines
  *    SOL-PVD's -395 suite rate. Reading `property.base_rate_*` directly is a bug.
  */
-export { findGuestsByName, getGuest, getGuestByEmail, getGuestByPhone, getProperty, getPropertyRate, getReservation, listReservationsForGuest }
+export { getGuest, getGuestByEmail, getGuestByPhone, getProperty, getPropertyRate, getReservation, listReservationsForGuest }
 
 export async function loadGuests(): Promise<Guest[]> {
   return await getGuests()

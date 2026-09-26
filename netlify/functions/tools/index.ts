@@ -21,7 +21,7 @@
 // which is not ours to edit (AGENTS.md rule 3).
 
 import type { Context } from '@netlify/functions'
-import type { Channel } from '../../../shared/types'
+import type { Channel, ToolResult } from '../../../shared/types'
 import { getDatabase } from './_deps'
 import type { ToolArgs, ToolContext } from './helpers'
 import {
@@ -48,7 +48,7 @@ function lastSegment(pathname: string): string {
 }
 
 /** Keys that steer the call rather than being arguments to the tool itself. */
-const CONTROL_KEYS = new Set(['tool', 'name', 'args', 'session_id', 'channel', 'guest_id', 'now', 'call_control_id', 'telnyx_conversation_id'])
+const CONTROL_KEYS = new Set(['tool', 'name', 'args', 'session_id', 'channel', 'call_control_id', 'telnyx_conversation_id'])
 
 export default async function handler(req: Request, _context: Context): Promise<Response> {
   const route = lastSegment(new URL(req.url).pathname)
@@ -86,17 +86,18 @@ export default async function handler(req: Request, _context: Context): Promise<
   if (!hasTool(name)) return unknownTool(name)
 
   const args = extractArgs(body)
-  const callControlId = str(body.call_control_id)
+  // The session, and the guest it verified, come from the call leg and never from the body.
+  const sessionId = await sessionForCall(str(body.call_control_id))
   const ctx: ToolContext = {
-    session_id: str(body.session_id) ?? (await sessionForCall(callControlId)),
+    session_id: sessionId,
     // A call arriving with a call_control_id is voice by definition; otherwise trust the caller,
     // and default to voice because that is who reaches this endpoint over HTTPS.
     channel: resolveChannel(body.channel),
-    guest_id: str(body.guest_id),
-    now: str(body.now),
+    guest_id: await verifiedGuestFor(sessionId),
   }
 
   const result = await runTool(name, args, ctx)
+  if (name === 'identify_guest' && sessionId) await bindVerifiedGuest(sessionId, result)
   await recordToolInvocation(ctx, name, args, result)
   // Telephony reaches the tools here rather than through `chat.ts`, so the intent write has to
   // happen on this path too or a phoned-in session stays labelled "classifying…" forever.
@@ -166,6 +167,35 @@ async function sessionForCall(callControlId: string | undefined): Promise<string
   }
 }
 
+/** The guest identify_guest verified on this session, or undefined. */
+async function verifiedGuestFor(sessionId: string | undefined): Promise<string | undefined> {
+  if (!sessionId) return undefined
+  try {
+    const db = getDatabase()
+    if (!db) return undefined
+    const { data, error } = await db.from('sessions').select('guest_id').eq('id', sessionId).maybeSingle()
+    if (error || !data) return undefined
+    return str(data.guest_id)
+  } catch {
+    return undefined
+  }
+}
+
+/** A verified identify_guest binds its guest to the session, as chat.ts does. Best effort. */
+async function bindVerifiedGuest(sessionId: string, result: ToolResult): Promise<void> {
+  if (!result.ok) return
+  const data = result.data as { verified?: boolean; guest?: { guest_id?: string; first_name?: string; last_name?: string } } | undefined
+  if (data?.verified !== true || !data.guest?.guest_id) return
+  const label = [data.guest.first_name, data.guest.last_name].filter(Boolean).join(' ') || null
+  try {
+    const db = getDatabase()
+    if (!db) return
+    await db.from('sessions').update({ guest_id: data.guest.guest_id, guest_label: label }).eq('id', sessionId)
+  } catch {
+    // the call matters more than the label
+  }
+}
+
 /** Optional shared secret. Configured -> enforced. Unconfigured -> open, and the catalogue says so. */
 function authorized(req: Request): boolean {
   const expected = process.env.TOOL_WEBHOOK_SECRET
@@ -192,8 +222,8 @@ function catalogue(): Response {
     ok: true,
     service: 'tools',
     usage: {
-      'POST /api/tools/<tool>': 'call one tool; body is the arguments, plus optional call_control_id / session_id',
-      'POST /api/tools': 'call one tool; body is { tool, args, session_id?, call_control_id? }',
+      'POST /api/tools/<tool>': 'call one tool; body is the arguments, plus optional call_control_id',
+      'POST /api/tools': 'call one tool; body is { tool, args, call_control_id? }',
       'GET /api/tools/<tool>': 'the contract for one tool',
     },
     secured: Boolean(process.env.TOOL_WEBHOOK_SECRET),

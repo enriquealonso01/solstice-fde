@@ -128,9 +128,9 @@ describe('the schema behind the gate', () => {
     }
   })
 
-  it('keeps audit_log insert-only, which is why the blocked sends survived a delete attempt', () => {
-    expect(sql).toMatch(/create policy \S+\s+on audit_log for insert/i)
-    expect(sql).not.toMatch(/create policy \S+\s+on audit_log for (all|update|delete)/i)
+  it('gives the browser no write on audit_log, which is why the blocked sends survived a delete attempt', () => {
+    expect(sql).toMatch(/create policy \S+\s+on audit_log for select/i)
+    expect(sql).not.toMatch(/create policy \S+\s+on audit_log for (all|insert|update|delete)/i)
   })
 
   it('ships a migration that actually drops the three policies', () => {

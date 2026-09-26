@@ -1,7 +1,7 @@
 // AGENTS.md #6: never log or expose unmasked PII. Masking happens in the data layer, which
 // means it has to be true of the data AT REST, not just of what a prompt remembers to hide.
 
-import { describe, it, expect } from 'vitest'
+import { afterEach, describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -125,5 +125,28 @@ describe('identifying a caller without storing their number', () => {
   it('every guest hashes to a unique key even where last four collide', () => {
     const keys = listGuests().map((g) => g.phone_lookup)
     expect(new Set(keys).size).toBe(keys.length)
+  })
+})
+
+describe('the lookup pepper', () => {
+  const saved = { pepper: process.env.LOOKUP_PEPPER, vitest: process.env.VITEST }
+  afterEach(() => {
+    for (const [key, value] of [['LOOKUP_PEPPER', saved.pepper], ['VITEST', saved.vitest]] as const) {
+      if (value === undefined) delete process.env[key]
+      else process.env[key] = value
+    }
+  })
+
+  it('comes from LOOKUP_PEPPER, so a different pepper gives a different key', () => {
+    const before = phoneLookupKey('312-555-0148')
+    process.env.LOOKUP_PEPPER = 'another-pepper'
+    expect(phoneLookupKey('312-555-0148')).not.toBe(before)
+  })
+
+  it('is required outside the test runner: a missing pepper fails loudly instead of never matching', () => {
+    delete process.env.LOOKUP_PEPPER
+    delete process.env.VITEST
+    expect(() => phoneLookupKey('312-555-0148')).toThrow(/LOOKUP_PEPPER/)
+    expect(() => getGuestByPhone('+1 312 555 0148')).toThrow(/LOOKUP_PEPPER/)
   })
 })

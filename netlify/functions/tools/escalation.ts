@@ -18,7 +18,7 @@ import {
   type ToolArgs,
   type ToolContext,
 } from './helpers'
-import { findGuestById, findReservationById } from './lookups'
+import { attachableReservation, findGuestById, foreignGuestId } from './lookups'
 import { ESCALATION_MATRIX, ESCALATION_TRIGGERS, type EscalationCategory } from './rules'
 
 const CATEGORIES: EscalationCategory[] = ['refund', 'dispute', 'medical', 'legal', 'safety', 'authority_exceeded', 'other']
@@ -82,10 +82,13 @@ export async function createEscalation(args: ToolArgs, ctx: ToolContext): Promis
 
   const route = ESCALATION_MATRIX[category]
 
-  const reservationId = optString(args, 'reservation_id')
-  const guestId = optString(args, 'guest_id') ?? ctx.guest_id
-  const reservation = reservationId ? await findReservationById(reservationId) : null
-  const guest = guestId ? await findGuestById(guestId) : reservation ? await findGuestById(reservation.guest_id) : null
+  const foreign = foreignGuestId(args, ctx)
+  if (foreign) return toolFail(foreign)
+  // Never refused for want of verification; it attaches only records this conversation has proven.
+  const reservation = await attachableReservation(args, ctx)
+  // Kept for the manager on the stored packet only, marked unverified; never looked up.
+  const claimed = reservation ? undefined : (optString(args, 'reservation_id') ?? optString(args, 'confirmation_number'))
+  const guest = ctx.guest_id ? await findGuestById(ctx.guest_id) : null
 
   const citations: Citation[] = [policyCitation(15)]
   if (reservation) citations.push(reservationCitation(reservation.reservation_id))
@@ -128,7 +131,11 @@ export async function createEscalation(args: ToolArgs, ctx: ToolContext): Promis
         packet.escalation_id = existingId
         const { error } = await db
           .from('escalations')
-          .update({ severity: route.severity, summary, packet })
+          .update({
+            severity: route.severity,
+            summary,
+            packet: claimed ? { ...packet, claimed_reservation_id_unverified: claimed } : packet,
+          })
           .eq('id', existingId)
         if (error) persistenceError = error.message
         else {
@@ -143,7 +150,7 @@ export async function createEscalation(args: ToolArgs, ctx: ToolContext): Promis
             category,
             severity: route.severity,
             summary,
-            packet,
+            packet: claimed ? { ...packet, claimed_reservation_id_unverified: claimed } : packet,
             status: 'open',
           })
           .select('id')

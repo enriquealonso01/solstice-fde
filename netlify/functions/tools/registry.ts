@@ -12,7 +12,7 @@ import type { ToolResult } from '../../../shared/types'
 import { getDatabase, maskArgs, toolFail } from './_deps'
 import type { ToolArgs, ToolContext } from './helpers'
 
-import { getReservation, identifyGuest } from './identity'
+import { getReservation, identifyGuest, NOT_VERIFIED } from './identity'
 import { getPolicy, getPropertyInfo } from './policy'
 import { bookAmenity, checkLateCheckout, checkUpgradeEligibility } from './stayBenefits'
 import { checkCompAuthority, checkServiceRecoveryEligibility } from './recovery'
@@ -46,23 +46,22 @@ const CONCIERGE_SPECS: ToolSpec[] = [
   {
     name: 'identify_guest',
     description:
-      'Find the guest we are speaking to. A name alone is never enough to verify anyone: call this with a confirmation number, or the phone number or email on the booking. Returns masked contact details only. Call this before any tool that reveals stay detail.',
+      'Verify the guest before revealing anything about a booking. Verified only when both factors of one of these pairs match the same booking: ' +
+      NOT_VERIFIED.accepted_factor_pairs.join('; ') +
+      '. One factor on its own never verifies, and a failed check does not say whether the booking exists. Returns masked contact details only.',
     parameters: {
       confirmation_number: { type: 'string', description: 'Reservation or confirmation number, e.g. R55004.' },
-      last_name: { type: 'string', description: "The guest's surname." },
-      first_name: { type: 'string', description: "The guest's first name." },
+      last_name: { type: 'string', description: 'The last name on the booking.' },
       phone: { type: 'string', description: 'Phone number the guest gave, or the caller ID on a voice call.' },
       email: { type: 'string', description: 'Email address the guest gave.' },
-      guest_id: { type: 'string', description: 'Internal guest id, when already known.' },
     },
   },
   {
     name: 'get_reservation',
     description:
-      'Read one stay: dates, room type, rate plan, status, and the cancellation terms that follow from the rate plan. Never returns card details. Use it before answering anything about a specific booking.',
+      "Read one of the verified guest's stays: dates, room type, rate plan, status, and the cancellation terms that follow from the rate plan. Refuses until identify_guest has verified the guest, and refuses a booking that is not theirs. Never returns card details.",
     parameters: {
-      reservation_id: { type: 'string', description: 'Reservation or confirmation number.' },
-      guest_id: { type: 'string', description: 'Verified guest id; returns the most relevant stay.' },
+      reservation_id: { type: 'string', description: 'Reservation or confirmation number. Leave out for the most relevant stay.' },
     },
   },
   {
@@ -338,11 +337,9 @@ export function summarize(name: string, result: ToolResult): string {
 
   switch (name) {
     case 'identify_guest': {
-      if (data.verified === true) {
-        const guest = data.guest as Record<string, unknown> | undefined
-        return `Verified ${guest?.first_name ?? 'guest'} ${guest?.last_name ?? ''} (${guest?.loyalty_tier ?? 'no tier'})`.trim()
-      }
-      return data.ambiguous === true ? `${data.matches} records match, needs a confirmation number` : 'Not verified yet'
+      if (data.verified !== true) return 'Not verified'
+      const guest = data.guest as Record<string, unknown> | undefined
+      return `Verified ${guest?.first_name ?? 'guest'} ${guest?.last_name ?? ''} (${guest?.loyalty_tier ?? 'no tier'})`.trim()
     }
     case 'get_reservation': {
       const r = data.reservation as Record<string, unknown> | undefined
