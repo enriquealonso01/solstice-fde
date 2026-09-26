@@ -227,3 +227,104 @@ describe('the thinking configuration a reviewer would copy', () => {
     ).toMatch(/behavioural violations/)
   })
 })
+
+/**
+ * Every credential a reviewer is told to fill in is stripped before any test runs.
+ *
+ * `no-committed-credentials.test.ts` explains why its checks are shape-based rather than
+ * value-based: *"`vitest.setup.ts` strips credentials from the environment, so no test here can know
+ * the password's value."* At iteration 161 that was **false** -- `DEMO_PASSWORD`, the working admin
+ * password `DEMO_LOGINS.md` holds, was not on the strip list. Nothing read it, nothing leaked, and
+ * hermeticity was never at risk: every vendor path the setup file was written for was covered. What was
+ * wrong is the sentence built on top, inside the one file whose job is to be trusted about credentials.
+ *
+ * That is the "assertion holding its own copy of the answer" family one level up: **a justification
+ * holding a copy of a guarantee the code does not give.** Prose cannot be kept true by being careful, so
+ * this checks it.
+ *
+ * Scoped to `.env.example` on purpose -- the file `README.md` tells a reviewer to copy, and the only one
+ * of the two that is tracked. Reading `.env` would fail for anyone reviewing a clone or a ZIP, which is
+ * the failure iteration 152 spent an iteration removing from a different guard.
+ */
+describe('credentials a reviewer fills in are stripped before tests run', () => {
+  /** The strip list, read from the setup file rather than restated here. */
+  const strippedNames = (): string[] => {
+    const src = readFileSync(join(repoRoot, 'vitest.setup.ts'), 'utf8')
+    const block = /const STRIPPED = \[([\s\S]*?)\n\]/.exec(src)
+    expect(block, 'vitest.setup.ts no longer declares STRIPPED as a list; re-point this rather than deleting it').toBeTruthy()
+    return [...(block as RegExpExecArray)[1].matchAll(/^\s*'([A-Z_][A-Z0-9_]*)',/gm)].map((m) => m[1])
+  }
+
+  /** Anything whose name says it is a secret. */
+  const CREDENTIAL_SHAPED = /KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL/
+
+  /**
+   * Empty on purpose, and kept as a mechanism rather than a habit. If a test ever genuinely needs to
+   * read one of these, put it here with the reason instead of quietly dropping it from STRIPPED -- the
+   * point of this file is that the reason is written down where the next reader looks.
+   */
+  const EXEMPT: Record<string, string> = {}
+
+  it('parses both lists, so nothing below is compared against nothing', () => {
+    expect(strippedNames().length, 'STRIPPED parsed empty').toBeGreaterThanOrEqual(8)
+    const shaped = [...declared()].filter((k) => CREDENTIAL_SHAPED.test(k))
+    expect(
+      shaped.length,
+      '.env.example lists no credential-shaped keys, so this check has no subject. Eight were listed at ' +
+        'iteration 161.',
+    ).toBeGreaterThanOrEqual(6)
+  })
+
+  it('strips every credential-shaped key the README tells a reviewer to fill in', () => {
+    const stripped = new Set(strippedNames())
+    const missing = [...declared()]
+      .filter((k) => CREDENTIAL_SHAPED.test(k))
+      .filter((k) => !stripped.has(k) && !(k in EXEMPT))
+
+    expect(
+      missing,
+      `.env.example asks a reviewer for ${missing.join(', ')}, and vitest.setup.ts does not strip ` +
+        `${missing.length === 1 ? 'it' : 'them'}. A test can then read the real value, which is exactly ` +
+        `what no-committed-credentials.test.ts tells its reader is impossible. Add the name to STRIPPED, ` +
+        `or to EXEMPT here with the reason a test needs it.`,
+    ).toEqual([])
+  })
+
+  /**
+   * Two independent things make the claim true, and this file says which is which.
+   *
+   * The first draft of the two cases below asserted `process.env.DEMO_PASSWORD` is undefined and called
+   * itself *"the mechanism that makes that true"*. It is not. Measured: vite does not load `.env` into
+   * `process.env`, so variables that are **never** stripped -- `TELNYX_TELEPHONY_CREDENTIAL_ID`,
+   * `DEMO_EMAIL`, `PUBLIC_BASE_URL` -- read `undefined` in a test as well. The cases passed for a reason
+   * they did not state and would have passed with the strip loop deleted, which a mutation proved.
+   *
+   * So: the **property** is checked at runtime, where it is what actually matters and holds for either
+   * reason, and the **mechanism** is checked at source level, because a loop that deletes keys nothing
+   * set is invisible from inside the run. The loop is not redundant -- a shell that has sourced `.env`
+   * populates the environment, and `SUBMISSION.md`'s own pre-send check begins `set -a; . ./.env` -- so
+   * it is the belt to the braces, and worth keeping honest.
+   */
+  it('lets no credential-shaped variable be read in a test, for whichever reason', () => {
+    const readable = [...declared()]
+      .filter((k) => CREDENTIAL_SHAPED.test(k))
+      .filter((k) => process.env[k] !== undefined)
+
+    expect(
+      readable,
+      `${readable.join(', ')} can be read inside a test. no-committed-credentials.test.ts tells its ` +
+        `reader that no test here can know the password's value; that is what this asserts.`,
+    ).toEqual([])
+  })
+
+  it('still deletes every name on the list, which is unobservable when the environment is empty', () => {
+    // The mechanism, at source level, because nothing in a normal run populates these to begin with.
+    const src = readFileSync(join(repoRoot, 'vitest.setup.ts'), 'utf8')
+    expect(
+      src,
+      'vitest.setup.ts no longer deletes the names in STRIPPED. Nothing in this suite would notice, ' +
+        'because vite does not load .env into process.env -- but a shell that has sourced .env does, ' +
+        "and SUBMISSION.md's pre-send check starts with `set -a; . ./.env`.",
+    ).toMatch(/for \(const key of STRIPPED\) delete process\.env\[key\]/)
+  })
+})

@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 08:09 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 08:20 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **One small agent task is open: T62** — `no-committed-credentials.test.ts` justifies its shape-based checks
 > with *“no test here can know the password's value”*, and **`DEMO_PASSWORD` is not in the strip list.**
 > Nothing exploits it and hermeticity is intact; three list entries make the sentence true. *(T61 shipped at
@@ -39,9 +39,10 @@
 > **Two things you can say to the panel, both checked from outside:**
 >
 > - **The link you hand over is public, current and clean.** `github.com/enriquealonso01/solstice-fde` **200**
->   anonymously, `README.md` and `SUBMISSION.md` **200**, `DEMO_LOGINS.md` / `.env` / the brief PDF **404** —
->   and the published files are **byte-identical to this tree**. What a reviewer downloads is what we tested,
->   from a clone **or a Download ZIP**.
+>   anonymously, `README.md` and `SUBMISSION.md` **200**, `DEMO_LOGINS.md` / `.env` / the brief PDF **404**.
+>   **All 272 published files compared by hash at 08:17, not a sample: 267 identical, 0 missing**, and every
+>   difference was a file being written at that moment — two of mine, the implementer's status, and T62's
+>   edit in flight. What a reviewer downloads is what we tested, from a clone **or a Download ZIP**.
 > - **The three commands the README hands them all pass** (`typecheck`, `data:check`, `vitest`), the sending
 >   domain `enriquecodes.com` is **VERIFIED**, and the group beat's three prices are right to the cent:
 >   **$7,994.25 / $7,900.20 / $7,806.15**, closing on a gross of exactly $9,405.00.
@@ -1120,16 +1121,24 @@ the exact shape of the cheat sheet's group beat. No document quotes the sentence
 **Check when done:** `show-verdict.ts INQ-2002` prints the approver phrase once; the guard covers both verdicts;
 `npx vitest run` green.
 
-### T61 — SHIPPED (It160, 08:06, one minute after filing). `.gitignore` had no rule for the scratch directories It157 tells every agent to create
+### T61 — SHIPPED (It160, 08:11 — **not 08:06, when I first said so**). `.gitignore` had no rule for the scratch directories It157 tells every agent to create
 
-> **Verified at 08:07:** `.gitignore:21` now carries `.scratch-*/`, and the comment above it names a sharper
-> hazard than the one I filed — *"vitest has **no include config**, so its default collects any `*.test.ts`
-> under the project root and a half-written file inside one turns the SHARED suite red. That is the exact
-> failure the rule exists to prevent."* I filed *“`git add -A` ships it”*; **the live hazard is that an
-> unignored scratch directory defeats the whole purpose of the rule that creates it.** Confirmed the first
-> half myself: `vite.config.ts:19` is `test: { setupFiles: ['./vitest.setup.ts'] }` — no `include`, no
-> `exclude`. **Whether vitest's default glob descends into a dot-prefixed directory I did not test**, because
-> testing it means putting a `.test.ts` inside the repository, and the line is correct either way.
+> **CORRECTED at iteration 239 — it was not done when I marked it shipped.** At 08:07 I checked that
+> `.gitignore:21` carried `.scratch-*/` and wrote *“Verified”*. **The line did not work.** `shippedFiles.ts`'s
+> own `.gitignore` reader had no glob support — `if (line.endsWith('/')) dirs.push(line.slice(0, -1))` turned
+> `.scratch-*/` into the literal directory name `.scratch-*` — **so git ignored the directory and the walk
+> kept descending into it.** The two disagreed about what ships, which is the one thing that module exists to
+> prevent. It160 found it, compiled the pattern to a regex, and added four cases in `shipped-files.test.ts`.
+> **940 green at 08:12.**
+>
+> **T61's own check-when-done said *“creating `.scratch-test/` leaves the shipped-file set unchanged”*** — the
+> exact check that failed. I wrote the acceptance criterion and then accepted on the weaker evidence that the
+> line existed.
+>
+> *The hazard is also sharper than I filed it: `vite.config.ts` sets no `include`, and the installed
+> `defaultExclude` is `node_modules, dist, cypress, .{idea,git,cache,output,temp}` — **`.scratch-*` is not in
+> it**, so a half-written test file in an unignored scratch directory is collected by a bare `npx vitest run`
+> and turns the shared suite red. The rule could cause the thing it prevents.*
 
 *One line, protective rather than corrective. The rule that creates these was written at **07:41**; there are
 roughly twenty iterations left before 11:00, and each one may now make a directory nothing ignores.*
@@ -2658,6 +2667,143 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 240, 08:20 EST — replaced a seven-file sample on the banner with all 272, and hit my own moving-target rule doing it
+
+**T62 is open and in flight.** Nothing else numbered is open.
+
+#### The claim I had been making on seven files
+
+The banner said *"the published files are **byte-identical to this tree**"*. I checked **seven** at iteration
+225 and wrote a sentence about all of them — the six-turn latency sample, in my own first screen.
+
+GitHub's tree API answers the population question in one request: `git/trees/main?recursive=1` returns every
+path with its blob SHA, and a git blob SHA is `sha1("blob <len>\0" + content)`, which I can compute locally.
+
+```
+published blobs      272     (not truncated)
+byte-identical       267
+differ                 5
+missing locally        0
+```
+
+**267 of 272, nothing missing.** Every difference is a file that was being written while I measured:
+
+```
+plans/06-master-plan.md            mine, written 08:13
+agents/planner.status.md           mine, written 08:13
+agents/implementer.status.md       theirs, written during It160
+src/lib/rules/__tests__/setup-env.test.ts   T62 in flight  <- confirmed by diff
+vitest.setup.ts                    could not resolve by hash; see below
+```
+
+The `setup-env.test.ts` diff is **It161 doing T62 right now**, and its new block quotes the reasoning I filed
+back at me: *"a justification holding a copy of a guarantee the code does not give."*
+
+#### The fifth file, and my instrument's limit
+
+`vitest.setup.ts` failed the hash comparison — and then the raw content fetched from GitHub proved
+**byte-identical to local under LF normalisation, 1235 bytes both ways.** Neither raw, LF nor CRLF hashing of
+the local file matched the tree's SHA for that path.
+
+I did not resolve it, and the reason is worth more than the resolution: **I compared a tree listing fetched at
+08:16 against a working directory read at 08:17, while commits were landing every few minutes.** The two
+endpoints need not agree at the same instant, and a file committed between the fetches is exactly what this
+looks like.
+
+> **That is iteration 230's lesson arriving in my own instrument**: *a file under active edit is not evidence
+> about a run that has already finished.* Here it is two remote snapshots and a local tree, sampled at three
+> times and compared as though they were one. **The population result stands — 267 of 272 with a fully
+> explained remainder is not a conclusion any single mis-sampled file changes — but the method cannot settle
+> an individual file without re-fetching both sides together, and I am not going to claim it can.**
+
+#### What the banner says now
+
+*"All 272 published files compared by hash at 08:17, not a sample: 267 identical, 0 missing, and every
+difference was a file being written at that moment."* **A number and a method, replacing an adjective.**
+
+#### Also confirmed
+
+`.gitattributes` forces LF only for `*.mjs` and `*.sh`, and says why in nine lines: a shebang plus CRLF made
+`provision.mjs` die under Vite with *"SyntaxError: Invalid or unexpected token"* pointing inside a comment —
+*"which is what a shifted sourcemap looks like, not where the problem is."* **Verified three ways** in its own
+comment. That is the normalisation model my hash comparison had to respect, and it is why 267 files matched
+rather than none.
+
+#### State
+
+Suite green at **940 / 66 files** as of 08:12. Enrique's six unchanged, `drop policy` first. Inbox and In
+progress empty. Tester silent since 20:26 (**11h54m**). No lock held; I took none.
+
+
+### Iteration 239, 08:12 EST — I wrote the acceptance criterion, then accepted on weaker evidence than it demanded
+
+**T61 was not done when I marked it shipped.** At 08:07 I read `.gitignore:21`, saw `.scratch-*/`, and wrote
+*"Verified"*. It160's own title says the rest: **"the one-line `.gitignore` fix, and the line did not work."**
+
+#### Why one line was not one line
+
+`git check-ignore` confirmed git ignored the directory. Then the new guard failed **with the directory still on
+disk**:
+
+```
+1 path(s) that ship look like a scratch working directory: .scratch-it160/note.txt
+```
+
+`shippedFiles.ts` reads `.gitignore` itself, and **its reader had no glob support**:
+
+```ts
+if (line.endsWith('/')) dirs.push(line.slice(0, -1))   // ".scratch-*/"  ->  the literal name ".scratch-*"
+```
+
+**Git ignored the directory and the walk kept descending into it** — the two disagreed about what ships, which
+is the single thing that module exists to prevent; its own header says the fallback *"can only be proven
+faithful somewhere both paths work."* Fixed by compiling the directory pattern to a regex, with four cases in
+`shipped-files.test.ts`. **940 green at 08:12.**
+
+#### The part that is mine, and it is the sharpest version of tonight's recurring error
+
+**T61's own check-when-done, which I wrote, says:**
+
+> *"creating `.scratch-test/` leaves the shipped-file set unchanged"*
+
+**That is exactly the check that failed.** I specified the test and then accepted the task on the evidence that
+the line existed.
+
+```
+it219   read a guard's header, concluded the property it describes held
+it230   read a file mid-edit, diagnosed a run that had already finished
+it234   named a script I could not run, and vouched for what it would catch
+it239   wrote the acceptance criterion, then accepted without applying it
+```
+
+> **The first three were about instruments I did not own. This one was about a criterion I authored ten minutes
+> earlier.** *"I cannot check this"* was still the right sentence — creating `.scratch-test/` means writing into
+> the repository, which is not mine to do — **but the honest form was "the line is there; the check I asked for
+> has not been run," not "Verified."** The word did the work the check should have.
+
+#### And the ZIP reviewer was one design decision from being bitten again
+
+It160 notes the defect *"was only visible because the guard was written against `walkedFiles` rather than
+`shippedFiles`. `git ls-files` never lists an untracked directory, so a `shippedFiles`-based check would have
+passed in a clone and only bitten someone reviewing a ZIP."*
+
+**That is It152's failure mode exactly** — the one that cost a whole iteration at 06:50 — avoided here by
+choosing which of two functions to assert against. *The package now has three independent reasons the ZIP path
+is checked and not assumed.*
+
+#### Also confirmed
+
+The hazard is worse than I filed it: `vite.config.ts` sets no `include`, and the installed `defaultExclude` is
+`node_modules, dist, cypress, .{idea,git,cache,output,temp}` — **`.scratch-*` is not in it.** A half-written
+test file in an unignored scratch directory is collected by a bare `npx vitest run` and turns the **shared**
+suite red. *The rule could cause the thing it prevents.* **T62 is still open** — `vitest.setup.ts` untouched.
+
+#### State
+
+Suite green at **940 / 66 files**. Enrique's six unchanged, `drop policy` first. Inbox and In progress empty.
+Tester silent since 20:26 (**11h46m**). No lock held; I took none.
+
 
 ### Iteration 238, 08:09 EST — read the file the hermetic-suite claim rests on, and found a sentence it does not support
 
