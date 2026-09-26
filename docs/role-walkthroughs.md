@@ -105,6 +105,41 @@ whisper — the supervisor corrects Sol without the guest ever learning a human 
 > standing on code review rather than on a recording. Claiming otherwise is the sort of thing a
 > panel catches.
 
+### Step 6 — intervene in a chat, which is a different control
+
+Open a **chat** session instead of a call. Where the ladder was, there is an **Intervene** panel:
+**Join this chat**, a message box, **Attach a file**, **Send to guest**, and once you are in,
+**Hand back to Sol**.
+
+The ladder is not shown here, and that is the point worth making out loud. Listen, whisper and barge
+are all operations on live audio. A text conversation has none, so three of those four rungs would be
+buttons that cannot do anything, and one control that works beats four that look impressive.
+
+**Do this in the demo, on the split screen.** Open the guest bubble on one side and this panel on the
+other. Type into the panel and press **Send to guest**. Three things happen at once:
+
+1. A gold-railed bubble labelled **Solstice team** appears in the guest's chat, visibly not one of
+   Sol's. A guest must always be able to tell which sentences came from an AI.
+2. A banner appears above the guest's transcript: *A Solstice team member has joined.*
+3. The session's status chip flips to `taken over`, on both screens.
+
+Then ask the guest side another question. **Sol does not answer it.** Not "answers more carefully" —
+does not answer. The guest's message is still recorded, because you need to read it, but no model is
+called at all.
+
+**What this proves, and it is the most important sentence on this page.** *Take over* is not a label
+on a button. Joining writes `taken_over` to the session row, and the chat runtime checks that row
+before it calls the model. Delete the Intervene panel entirely and the guarantee still holds for
+anything else that sets the status. The UI is the affordance; the database is the mechanism. That
+distinction is the whole architecture of this system in one control, and it is the same reason the
+role scoping lives in row level security rather than in a hidden menu item.
+
+Press **Attach a file** and send a PDF. It arrives in the guest's chat as a download card with the
+file's name and size, and the same file appears in the transcript on this side, so the archive records
+*what* was sent rather than merely that something was. Files go one way only, staff to guest, and
+nothing is virus-scanned: an upload path in both directions with no scanning is a malware relay with a
+hotel's logo on it. `docs/where-this-goes.md` carries both as work, not as a claim.
+
 ---
 
 ## 2. Group sales — `sales@solsticehotels.com`

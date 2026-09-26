@@ -104,7 +104,7 @@ rows where the raw-argument column does not exist at all, so masking is a proper
 rather than something applied on read.
 
 
-**The result:** over 250 files, more than 160 of them TypeScript, and over 700 tests across more than 50 test files. The line
+**The result:** over 250 files, more than 160 of them TypeScript, and over 1000 tests across more than 50 test files. The line
 count splits in a way worth showing rather than totalling: **over 38,000 lines of source**, over 4,500
 of deliverable documents, and **over 26,000 of the agents' own coordination record** — the plan, the
 three status files, and the two logs in which the loop argued with itself. A single "over 80,000
@@ -199,7 +199,7 @@ Worth being precise about, because a demo that overstates itself is worse than a
 **Real:** the deployed site and API; Postgres with row-level security enforcing role scoping;
 Sol answering on chat and on a real phone number; live transcripts streaming to the supervisor
 console; the rules engine and all ten inquiry verdicts; proposal generation with PDFs, and a proposal email that has actually been delivered; a test
-suite of over 700 tests (`npx vitest run` for the live number).
+suite of over 1000 tests (`npx vitest run` for the live number).
 
 **Partly working, and stated precisely because it matters:** the supervisor ladder. Verified on a
 live call, a supervisor can attach to an in-progress assistant call, hears the GUEST, and
@@ -274,7 +274,7 @@ against a bare checkout with no credentials of any kind:
 ```bash
 npm install
 npm run typecheck        # tsc -b
-npx vitest run           # over 700 tests; the command prints the live count
+npx vitest run           # over 1000 tests; the command prints the live count
 npm run data:check       # proves data/generated still matches the CSVs you sent
 ```
 
