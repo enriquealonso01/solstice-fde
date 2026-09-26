@@ -189,6 +189,17 @@ the checkout refuses — a status line you fixed after staging, say — stash th
 you are on `main`. Same three commands, one level down. Do not fold it into their stash: you will not be
 able to tell whose change is whose when you come back to it.
 
+**Untracking a file the agents still read: check it is on disk afterwards.** `git rm --cached` leaves the
+working copy, but the branch commits the deletion — so the `checkout main` at the end of the ship removes
+it, and the file the Planner reads as ground truth is gone. It happened at iteration 117 with
+`FDE_Project_Challenge.pdf`. Recovery is one command against the commit that still has it:
+
+```bash
+git show <commit-before-the-removal>:<path> > <path>
+```
+
+So the last step of untracking something is `test -f <path>`, not the merge.
+
 **Never resolve another agent's file by merging the two versions yourself.** You cannot tell an
 edit they abandoned from one they are mid-way through, and a plausible merge of a 9,000-line plan is
 the worst of the three outcomes: it looks finished.

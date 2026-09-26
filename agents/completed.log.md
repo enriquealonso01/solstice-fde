@@ -6620,3 +6620,29 @@ procedure for this since iteration 100, and it worked: their file backed up to t
 checked out, their stash left in place rather than dropped. My own uncommitted status fix needed the same
 treatment one level down, which the procedure did not mention and now does not need to — it is the same three
 commands.
+
+### It117, second postscript — untracking the brief deleted it from disk, and I caught it in the verification
+
+The deploy verification printed `still on disk:` with nothing after it. The file was gone.
+
+`git rm --cached` does leave the working copy — that part was right. But the branch then **committed the
+deletion**, and the `git checkout main` at the end of the ship applied that deletion to the working tree. So
+the document the Planner reads as ground truth had been removed from the machine, by me, while I was in the
+middle of writing that it must stay on disk.
+
+Restored from the commit that still has it:
+
+```bash
+git show b9145b7:FDE_Project_Challenge.pdf > FDE_Project_Challenge.pdf
+```
+
+94,544 bytes, `%PDF-1.4` header, byte count identical to what I measured at the start of the iteration.
+Untracked and ignored, and now actually present.
+
+**The check that caught it was the one I nearly skipped.** `test -f` in the deploy verification was there to
+prove the file survived, and its empty output was the only signal — the suite was green, the guard was green,
+and every guard I had just written asserts the file is *absent from git*, which it was. Nothing I had built
+could have noticed the working copy was gone.
+
+`agents/README.md` now says it: the last step of untracking something the agents still read is `test -f`, not
+the merge, with the one-line recovery.
