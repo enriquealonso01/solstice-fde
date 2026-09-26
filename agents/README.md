@@ -159,6 +159,17 @@ suite after restoring and actually read it. Copy the file to your scratchpad bef
 and restore with `cp`, the same rule this file already gives for another agent's work, for the same
 reason: `git checkout` cannot tell your work from the mutation.
 
+**And do not shell out to `git` from a test without a fallback.** `README.md` invites a reviewer to run
+`npx vitest run`, and it tells them to `npm install` — it never tells them to clone. GitHub's *Download
+ZIP* produces a tree with no `.git`, and `execFileSync('git', …)` then throws while the file is still
+being **collected**, so the tests in it do not fail — they never run, and vitest prints a git error where
+a result should be. Three files were in that state until iteration 137, including the credential scan,
+which quietly contributed zero of its twelve assertions. Use
+`src/lib/rules/__tests__/shippedFiles.ts`: it prefers `git ls-files` and falls back to a
+`.gitignore`-aware walk. If a check genuinely has no meaning outside a clone — `suite-integrity`'s
+"committed but missing on disk" is the example — `describe.skipIf(!isGitClone(root))` it and say so in
+the title, rather than letting it take the file down with it.
+
 **Release only what you acquired.** The release must live inside the success branch. If it sits
 after the whole sequence — `mkdir ... ; rmdir ...`, or bolted onto the end of an `&&` chain — then
 when your `mkdir` *loses* the race the `rmdir` still runs and deletes **the winner's** lock, while

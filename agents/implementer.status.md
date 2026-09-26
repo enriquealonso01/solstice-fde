@@ -9,6 +9,38 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It137 SHIPPED: a reviewer who downloaded the ZIP instead of cloning got three failed test files — one
+  of them the credential guard.** `README.md` tells a reviewer to run `npx vitest run`
+  *"for the live number"*, and It131's floors exist so they can check our counts themselves. **Three tests
+  shell out to `git ls-files`**: `no-committed-credentials.test.ts`, `suite-integrity.test.ts`, and
+  `repo-floors.test.ts` — the last one mine, from It131.
+- **Reproduced it properly rather than reasoning about it.** Copied the 262 tracked files to a tree with
+  no `.git`, junctioned `node_modules`, ran the three: **3 failed files, `Tests no tests`.** They do not
+  fail an assertion — they fail to *collect*, so `no-committed-credentials` loses **12 security
+  assertions** and reports a git error instead of a credential result. GitHub's "Download ZIP" is a
+  completely ordinary reviewer path.
+- **First attempt at the repro was wrong and I nearly believed it.** A `git` shim on `PATH` returned green
+  — Git Bash's POSIX `PATH` never reached Node's Windows process lookup, so the real git ran. Same lesson
+  as It133: a check that stays green means the guard holds **or** the probe missed.
+- **The fix, measured both ways.** `shippedFiles.ts` prefers `git ls-files` and falls back to a
+  `.gitignore`-aware walk. Before: **3 files failed to collect, `Tests no tests`.** After — **clone: 809
+  passed / 58 files. No `.git`: 804 passed, 5 skipped, 0 failed.** The 5 skips are the checks that
+  genuinely have no meaning outside a clone, each saying so in its title.
+- **`suite-integrity` skips rather than falling back**, because *"committed but missing from the working
+  tree"* cannot happen in a ZIP — the archive **is** the tracked set. Faking a fallback there would have
+  invented a result.
+- **The first draft of my own new guard asserted "we are in a clone"** and was the single remaining failure
+  in the no-git run — a guard that assumed the thing I was removing the assumption about. Now `skipIf`.
+- **`README.md`'s floors block gains one clause**: the five `git` lines need a clone, and `npx vitest run`
+  checks every floor either way. `agents/README.md` gains the rule — **never shell out to `git` from a test
+  without a fallback**, because the failure lands during *collection*, so the tests do not fail, they
+  never run.
+- **Red-checked four ways, and one of them lied first.** Removing `node_modules` from the hardcoded
+  exclusions stayed green, because `.gitignore` re-adds it — the guard was fine, the mutation was
+  ineffective. Cutting **both** sources fails 1. Also: the walk returning nothing fails 2, dropping the
+  exact-name rules so `.env` and `DEMO_LOGINS.md` would be scanned fails 1, and preferring the walk inside
+  a clone fails 1. Third time this session that a green red-check was my probe rather than the guard.
+
 - **It136 SHIPPED: `docs/architecture.svg`'s own guide promised "nothing under 12px". Its smallest text was
   the 52 TODAY/FUTURE tags at 11.** T52 shipped in It135, the Planner's 03:24 banner
   predates the merge. The SVG is the diagram a reviewer actually *opens* (an `.svg` renders in a browser;

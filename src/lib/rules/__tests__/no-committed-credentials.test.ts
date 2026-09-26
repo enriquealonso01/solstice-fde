@@ -12,13 +12,16 @@
 // secrets have, and exempts strings that announce themselves as fake.
 
 import { describe, expect, it } from 'vitest'
-import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
+import { shippedFiles } from './shippedFiles'
 
-/** Every file git tracks, which is exactly the set that ships. */
+/**
+ * Every file that ships. This used to be `git ls-files` alone, which threw during collection for anyone
+ * reviewing a ZIP download — and a credential guard that fails to collect is a credential guard that is
+ * not running. `shippedFiles` prefers git and falls back to a `.gitignore`-aware walk.
+ */
 function trackedFiles(): string[] {
-  const out = execFileSync('git', ['ls-files'], { cwd: process.cwd(), encoding: 'utf8' })
-  return out.split(String.fromCharCode(10)).filter(Boolean)
+  return shippedFiles(process.cwd()).files
 }
 
 /** A value that says "I am a placeholder" is allowed to look like anything. */

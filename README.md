@@ -124,7 +124,9 @@ cat plans/06-master-plan.md agents/*.status.md agents/*.log.md | wc -l  # coordi
 
 (`-z` and `xargs -0` are not decoration: one of the provided data files is
 `SOLSTICE HOTEL GROUP — FRONT DESK POLICY REFERENCE.md`, and a bare `xargs` drops it and silently
-undercounts.)
+undercounts. The five `git` lines need a clone; if you downloaded this as a ZIP, `npx vitest run` still
+checks every floor — the test falls back to walking the tree with `.gitignore` applied, and a case
+asserts the two agree wherever both are available.)
 
 Floors rather than measurements, deliberately, and the reason is on this page twice over. The day-two
 loop was still merging while the paragraph was written and three precise counts went stale inside an
