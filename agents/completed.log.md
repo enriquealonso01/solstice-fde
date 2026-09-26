@@ -6308,3 +6308,65 @@ in `manifest.json` by hand takes it straight back to STALE.
 **The lesson is about my own verification, not the code.** I proved the fix in the one checkout shape where
 the failure had appeared, and the other shape was one `git checkout` away. Two shapes exist, both are
 reviewers, and a claim about "either checkout" has to be tested in both.
+
+## It113 — `npm run dev` without a finished `.env` was a white screen, guest site included
+
+It112's best find came from testing an *environment shape* rather than a claim, so I kept going. The same
+throw that killed a test file in a fresh clone lives in the app's import graph.
+
+**The chain, each link verified on its own rather than reasoned about:**
+
+```
+createClient('')                     throws "supabaseUrl is required."   (run against the installed lib)
+src/lib/supabase.ts                  calls it at MODULE SCOPE
+vite.config.ts                       defines VITE_SUPABASE_URL as env.SUPABASE_URL ?? ''
+src/App.tsx                          imports all seven admin pages EAGERLY, no lazy()
+src/main.tsx                         mounts React after that graph has evaluated
+```
+
+So with an empty or unfinished `.env`, the module throws before anything renders and **the whole app is a
+blank page** — the landing page and the chat widget included, neither of which needs Supabase, because chat
+is a Netlify function.
+
+`README.md`'s "Running it locally" is six lines, and step 2 is *"cp .env.example .env # then fill it in"*
+with step 6 `npm run dev`. A reviewer who wants a quick look at the guest experience has no reason to own a
+Supabase project, and what they got was nothing at all with an error in a console they may not open.
+
+**Fails soft now.** Unconfigured yields a client pointed at a placeholder that cannot resolve, plus an
+exported `isSupabaseConfigured` and a single console warning aimed at an operator. This is not inventing a
+degraded mode: every admin read already goes through `readOrMock`, which catches failure and falls back to
+the sample rows, and the header's `SourceChip` already renders **Sample data** rather than Connected. The
+app was built to show that state honestly; it just never got the chance to render it.
+
+Verified at the bundle rather than by argument: a build with the variables empty now contains
+`supabase.invalid` and the warning string, where before it passed an empty string into a constructor that
+throws.
+
+**A production trade-off, stated rather than smuggled.** If the variables ever went missing in production,
+this turns a loud white screen into admin screens reading "Sample data". That is the better failure — the
+guest path keeps working and the screen says which state it is in — but it is quieter, which is why the
+console warning exists and why the chip's wording matters. Production has the variables; verified after the
+deploy below.
+
+### My own test asserted the wrong thing, and failed for the right reason
+
+The first version of the regression test said:
+
+```ts
+expect(isSupabaseConfigured).toBe(false)   // "with no env, this must be false"
+```
+
+It failed here: **true**. vitest loads vite's config, so `define` fills those values from *my* `.env`. The
+flag is true on this machine and false in a reviewer's clone — an environment-dependent assertion, in the
+test file written to catch environment-dependent behaviour. It would have passed here and failed for them,
+or the reverse, depending on which value I had guessed.
+
+It now asserts the fix from **source** — the module must fall back to a placeholder rather than pass the
+variable straight through — which holds in either checkout, plus that importing the module succeeds at all,
+which is the real regression. A fourth case pins that `App.tsx` still imports the admin pages eagerly: if
+that ever becomes lazy, the blast radius shrinks and the reasoning above deserves revisiting.
+
+Red-checked by removing the two fallbacks: the source case fails with the whole explanation in its message.
+
+`npx tsc -b` clean. `npx vitest run` **624 tests / 51 files** green (up 5). No prompt change, so no
+re-provision: compile === export === live still 29,655, margin 345.

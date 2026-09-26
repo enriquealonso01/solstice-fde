@@ -9,40 +9,24 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It112: a reviewer cloning the public repo and running the suite got RED. Two failures, both
-  invisible from this working tree.**
-- I cloned from GitHub with `core.autocrlf=false` — an LF tree, as a Linux or mac reviewer gets — ran
-  `npm ci`, `npm run typecheck`, `npx vitest run`: **2 failed files, 2 failed tests of 615.** The
-  package's headline claim is a green suite and the first command a reviewer runs did not deliver it.
-- **`doc-paths`: README and SUBMISSION name `DEMO_LOGINS.md`, which is gitignored by design.** It exists
-  here, so the guard passed; it is absent for everyone else. The guard was right all along and only ever
-  passed locally by accident. Fixed with an exemption that **earns itself twice**: `.gitignore` must name
-  the path **and** the document must say so nearby.
-- **`supervisor-archive` failed to collect at all: `Error: supabaseUrl is required`.** My own It95 test
-  imported `useAdminData`, which loads the Supabase browser client at module scope; `vite.config.ts`
-  fills the URL from `.env`, which a reviewer does not have. **My It95 importability probe passed for
-  exactly the reason it should have failed.** Constants moved to a leaf `fetchLimits.ts`, re-exported so
-  nothing else changes.
-- **Nearly repeated It106's mistake.** My first predicate accepted only the word *"gitignored"*, and
-  README says *"which is deliberately not committed"* — clearer, in fact. I was one edit from rewording a
-  good sentence to satisfy my regex. **Widen the predicate, not the document.**
-- **Ninth escape incident, inside the bullet describing the eighth.** A carriage-return-newline pattern
-  written through a heredoc became a real line break, first in a `doc-paths` regex (`tsc` caught it:
-  *Unterminated regular expression literal*) and then in this very file while I wrote the bullet about
-  it. Both replaced with forms that need no escape: a plain newline split, and prose.
-- **Then the clone found a third failure the suite cannot see: `npm run data:check` reported STALE.**
-  `manifest.json` records a **sha256 of the raw bytes** of each source, and the CSVs are CRLF here and
-  LF there — so the provenance proof that `IF THEY ASK` answer 1 and the README both send a reviewer to
-  **failed on their machine and passed on mine.** Same class as It96, one layer over.
-- Hash now folds carriage returns out before digesting. Three of the four hashes moved; only
-  `manifest.json` changed on rebuild. **Still a real fingerprint:** changing one rate digit in the CSV
-  takes both `properties.json` and `manifest.json` to STALE, checked.
-- **And that fix was only half of it.** After the merge, `data:check` went STALE **in my own tree** — the
-  checkout had rewritten `manifest.json` as CRLF, and `--check` compares byte-for-byte against a string
-  that is always LF. It had passed for weeks only because an earlier rebuild left all nine files LF and
-  git had not touched them since. **In a fresh Windows clone all nine would be STALE**, and I had tested
-  only a Linux-shaped clone. Both sides of the comparison now fold; verified in this CRLF tree, and it
-  still catches a hand-edited count.
+- **SHIPPED It113: `npm run dev` with an unfinished `.env` was a white screen — including the guest site,
+  which does not need Supabase at all.**
+- **The chain, each link verified separately:** `createClient('')` throws *"supabaseUrl is required"*
+  (run against the installed library) · `src/lib/supabase.ts` called it at **module scope** ·
+  `vite.config.ts` defines the URL as `env.SUPABASE_URL ?? ''` · **`App.tsx` imports all seven admin pages
+  eagerly**, so that module evaluates before React mounts · `main.tsx` mounts after the graph loads. So the
+  landing page and the chat widget died for a dependency neither uses — chat is a Netlify function.
+- **README step 6 is `npm run dev` right after *"cp .env.example .env # then fill it in"*.** A reviewer who
+  wants a quick look at the guest experience has no reason to own a Supabase project.
+- **Fails soft now:** a placeholder URL when unconfigured, plus `isSupabaseConfigured` and one console
+  warning. The degraded state is the one this app already designs for — `readOrMock` falls back to sample
+  rows and `SourceChip` already renders **Sample data** rather than Connected — so it says which state it
+  is in on screen. Verified at the bundle: an unconfigured build now contains `supabase.invalid` and the
+  warning instead of an empty string.
+- **My own first test asserted the wrong thing and failed for the right reason.** I wrote
+  `expect(isSupabaseConfigured).toBe(false)` — but vitest loads vite's config, so `.env` fills it here and
+  it is **true** on my machine and false in a clone. An environment-dependent assertion, which is the exact
+  class of bug this file exists for. Now it asserts the *fix* from source, which holds in either checkout.
 
 ## Demo rehearsal coverage — what is actually verified
 
