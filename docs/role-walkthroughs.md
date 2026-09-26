@@ -294,7 +294,7 @@ The nav filtering is cosmetic. Prove the real thing:
    ```
 
    ```
-   HTTP/2 403
+   403 Forbidden
    {"ok":false,"error":"This role cannot see group sales. Group sales inquiries are readable by
     group_sales and admin only, which is what row level security enforces in the database as well."}
    ```
