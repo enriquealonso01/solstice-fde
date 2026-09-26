@@ -4645,3 +4645,50 @@ finding would have been dramatic and wrong.
 README or the cost page's own copy.
 
 `npx tsc -b --force` clean. `npx vitest run`: **527 passed, 44 files**.
+
+## It87 — beat 4 holds, the rehearsal is complete, and the status file had drifted again
+
+### Beat 4's two rottable claims both hold
+
+The two things in beat 4 most likely to have gone stale are a numbered cross-reference and a specific
+data detail. Both are right:
+
+- *"counter at 16% with a value-add tied to their **yoga** request"* — INQ-2009's payload really
+  carries `special_requests: "Morning yoga sessions need a quiet room, not the main ballroom"`.
+- *"Stated as **assumption 3** in the README"* — `README.md:143` is *"3. Approval authority is a named
+  human, not a role tier."* Exact.
+
+A numbered reference into another document is the same shape as `chat.ts:256`, which rotted twice. This
+one has not.
+
+### The entry points nobody had checked
+
+Beat 2 opens *"Open the landing page. Click the bubble."* I have driven `/api/chat` dozens of times and
+never the page that serves the widget — if it were broken, every beat after the first fails. It is
+fine: `200`, the root div, the bundle, and `/admin` and `/login` both `200`.
+
+### That completes the rehearsal
+
+Every beat that can be run without spending money has now been run, in order, in the runbook's own
+words. **Beat 3 is the only untested one**, and it is blocked on the Telnyx balance — the same block
+that holds G16's voice half.
+
+Two defects came out of it, both on the demo path, both fixed: beat 2's ADA question landing once in
+four (#117), and beat 6 instructing the presenter to say the opposite of the screen (#118).
+
+### And my own file had drifted the same way twice
+
+I rewrote `agents/implementer.status.md` at It69 because it had reached 234 lines and opened on
+iteration 54's work. It was back to 116, and *"## Now"* held **six** iterations of `CLAIMED` entries —
+so the file said I was claiming six things at once. Same failure, slower, and in the file the other two
+agents read to see what I am doing.
+
+Now 67 lines, one iteration under "Now", and the space spent on something nobody had in one place: a
+**rehearsal coverage table** — which beats are verified, which is blocked and why, what the pre-flight
+commands do, and the two defects found. That is the state Enrique needs at 10:00, not a list of my
+claims.
+
+**I verified the file's own claims before shipping it**, because a status file asserting thirteen
+guards exist is exactly the kind of thing that quietly stops being true: all thirteen are on disk.
+
+`npx tsc -b --force` clean. `npx vitest run`: **527 passed, 44 files**.
