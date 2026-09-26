@@ -94,40 +94,40 @@ export default function ConversationThread({ inquiry }: { inquiry: InquiryRow })
           body="Proposals, follow-ups and inbound messages for this customer will appear here."
         />
       ) : (
-        <ol className="divide-y divide-solstice-sand/60">
+        <ol className="divide-y divide-line/60">
           {state.items.map((item) => (
             <li key={item.id} className="px-5 py-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span
                   className={`chip ${
                     item.direction === 'outbound'
-                      ? 'bg-solstice-ink text-white'
-                      : 'border border-solstice-sand bg-white text-solstice-slate'
+                      ? 'bg-hero text-on-accent'
+                      : 'border border-line bg-card text-muted'
                   }`}
                 >
                   {item.direction === 'outbound' ? 'We sent' : 'They sent'}
                 </span>
-                <span className="chip bg-solstice-sand/50 text-solstice-slate">{CHANNEL_LABEL[item.channel]}</span>
+                <span className="chip bg-line/50 text-muted">{CHANNEL_LABEL[item.channel]}</span>
                 {item.status ? (
-                  <span className="text-xs text-solstice-stone">{item.status}</span>
+                  <span className="text-xs text-muted">{item.status}</span>
                 ) : null}
-                <span className="ml-auto text-xs text-solstice-stone">{shortDate(item.occurred_at)}</span>
+                <span className="ml-auto text-xs text-muted">{shortDate(item.occurred_at)}</span>
               </div>
 
               {item.subject ? (
-                <p className="mt-2 font-medium text-solstice-ink">{item.subject}</p>
+                <p className="mt-2 font-medium text-ink">{item.subject}</p>
               ) : null}
               {item.preview || item.body ? (
-                <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-solstice-slate">
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-muted">
                   {item.body ?? item.preview}
                 </p>
               ) : null}
               {item.delivered_to ? (
-                <p className="mt-1.5 text-[11px] text-solstice-stone">
+                <p className="mt-1.5 text-[11px] text-muted">
                   Demo mode redirected delivery to {item.delivered_to}
                 </p>
               ) : null}
-              {item.actor ? <p className="mt-1 text-[11px] text-solstice-stone">by {item.actor}</p> : null}
+              {item.actor ? <p className="mt-1 text-[11px] text-muted">by {item.actor}</p> : null}
             </li>
           ))}
         </ol>

@@ -19,14 +19,14 @@ export function ToolChip({ tool }: { tool: ToolActivity }) {
       className={[
         'sol-rise flex items-center gap-2 rounded-full border py-1 pl-1.5 pr-3 text-[11px] leading-none transition-colors duration-300',
         running
-          ? 'border-solstice-gold/45 bg-solstice-gold/10 text-solstice-slate'
-          : 'border-solstice-sand bg-white text-solstice-stone',
+          ? 'border-accent/45 bg-accent/10 text-muted'
+          : 'border-line bg-card text-muted',
       ].join(' ')}
     >
       <span
         className={[
           'grid h-4 w-4 shrink-0 place-items-center rounded-full',
-          running ? 'bg-solstice-gold/25 text-solstice-ember' : 'bg-solstice-sand/70 text-solstice-stone',
+          running ? 'bg-accent/25 text-accent' : 'bg-line/70 text-muted',
         ].join(' ')}
       >
         {running ? <Spinner /> : <CheckIcon className="h-2.5 w-2.5" />}
@@ -35,7 +35,7 @@ export function ToolChip({ tool }: { tool: ToolActivity }) {
       <span className={running ? 'font-medium' : ''}>{label}</span>
 
       {elapsed !== undefined && elapsed > 0 ? (
-        <span className="tabular-nums text-[10px] text-solstice-stone/60">
+        <span className="tabular-nums text-[10px] text-muted/60">
           {formatElapsed(elapsed)}
         </span>
       ) : null}

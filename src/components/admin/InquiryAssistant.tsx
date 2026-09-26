@@ -97,7 +97,7 @@ export default function InquiryAssistant({
     <div className="panel sticky top-4 flex h-[calc(100vh-7rem)] max-h-[46rem] min-h-[26rem] flex-col">
       <header className="panel-header flex items-center justify-between gap-2">
         <span>Assistant · {inquiry.inquiry_code}</span>
-        <span className="chip bg-solstice-ember/10 text-solstice-ember">scoped to this inquiry</span>
+        <span className="chip bg-accent/10 text-accent">scoped to this inquiry</span>
       </header>
 
       {/* overscroll-contain stops the page behind from taking over the wheel once this list
@@ -108,10 +108,10 @@ export default function InquiryAssistant({
             <div
               className={`sol-rise max-w-[92%] rounded-lg px-3 py-2 text-sm leading-relaxed ${
                 t.role === 'rep'
-                  ? 'bg-solstice-ink text-white'
+                  ? 'bg-hero text-on-accent'
                   : t.refused
-                    ? 'border border-rose-200 bg-rose-50 text-rose-900'
-                    : 'border border-solstice-sand bg-solstice-cream text-solstice-ink'
+                    ? 'border border-bad-ring bg-bad-soft text-bad'
+                    : 'border border-line bg-canvas text-ink'
               }`}
             >
               {t.role === 'rep' ? (
@@ -120,7 +120,7 @@ export default function InquiryAssistant({
                 <Markdown text={t.text} />
               )}
               {t.simulated ? (
-                <p className="mt-1.5 text-[11px] text-solstice-stone">
+                <p className="mt-1.5 text-[11px] text-muted">
                   Simulated locally. <code>/api/group/assistant</code> is not deployed yet.
                 </p>
               ) : null}
@@ -128,15 +128,15 @@ export default function InquiryAssistant({
           </div>
         ))}
         {busy ? (
-          <div className="flex items-center gap-1 pl-1 text-solstice-stone">
-            <span className="sol-dot h-1.5 w-1.5 rounded-full bg-solstice-stone" />
-            <span className="sol-dot h-1.5 w-1.5 rounded-full bg-solstice-stone" style={{ animationDelay: '150ms' }} />
-            <span className="sol-dot h-1.5 w-1.5 rounded-full bg-solstice-stone" style={{ animationDelay: '300ms' }} />
+          <div className="flex items-center gap-1 pl-1 text-muted">
+            <span className="sol-dot h-1.5 w-1.5 rounded-full bg-faint" />
+            <span className="sol-dot h-1.5 w-1.5 rounded-full bg-faint" style={{ animationDelay: '150ms' }} />
+            <span className="sol-dot h-1.5 w-1.5 rounded-full bg-faint" style={{ animationDelay: '300ms' }} />
           </div>
         ) : null}
       </div>
 
-      <div className="border-t border-solstice-sand p-3">
+      <div className="border-t border-line p-3">
         <div className="mb-2 flex flex-wrap gap-1.5">
           {suggestions.slice(0, 4).map((s) => (
             <button
@@ -144,7 +144,7 @@ export default function InquiryAssistant({
               type="button"
               disabled={busy}
               onClick={() => void send(s)}
-              className="chip border border-solstice-sand bg-white text-solstice-slate transition hover:bg-solstice-sand/40 disabled:opacity-40"
+              className="chip border border-line bg-card text-muted transition hover:bg-line/40 disabled:opacity-40"
             >
               {s}
             </button>
@@ -155,7 +155,7 @@ export default function InquiryAssistant({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Modify, explain, resend or delete this inquiry…"
-            className="min-w-0 flex-1 rounded-md border border-solstice-sand bg-white px-3 py-2 text-sm outline-none transition focus:border-solstice-ember focus:ring-1 focus:ring-solstice-ember"
+            className="min-w-0 flex-1 rounded-md border border-line bg-card px-3 py-2 text-sm outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
           />
           <button type="submit" className="btn-primary" disabled={busy || !input.trim()}>
             Send

@@ -2,70 +2,281 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * The editorial-paper design system.
+ *
+ * Every color is a CSS variable with a light value on :root and a dark value on
+ * [data-theme='dark']. The Tailwind config exposes them as rgb(var(--x)) so the
+ * alpha utilities (/50, /10 …) keep working. No component hard-codes a color.
+ * The OS decides the default via the media query; an explicit choice from the
+ * header toggle is applied earlier by the inline script in index.html, which is
+ * why the media-query block sits before the data-theme blocks.
+ */
 @layer base {
   :root {
     color-scheme: light;
+    /* paper + ink */
+    --canvas: 244 241 234; /* #f4f1ea */
+    --card: 255 253 248; /* #fffdf8 */
+    --ink: 27 25 22; /* #1b1916 */
+    --muted: 87 82 74; /* #57524a */
+    --faint: 130 123 113; /* #827b71 */
+    --line: 228 221 208; /* #e4ddd0 */
+    --on-accent: 255 253 248;
+    /* the one ember accent */
+    --accent: 217 72 28; /* #d9481c */
+    /* hero quote card (dark in both themes) */
+    --hero: 27 25 22;
+    --hero-text: 242 238 230;
+    /* semantic tones: text, soft background, ring */
+    --good: 21 128 110; /* green */
+    --good-soft: 232 244 239;
+    --good-ring: 134 199 178;
+    --warn: 158 106 16; /* amber */
+    --warn-soft: 250 242 224;
+    --warn-ring: 226 189 117;
+    --bad: 186 51 40; /* red */
+    --bad-soft: 250 234 230;
+    --bad-ring: 227 145 132;
+    --info: 43 100 170; /* blue */
+    --info-soft: 233 240 249;
+    --info-ring: 139 175 216;
+    --agent: 107 63 196; /* the AI violet */
+    --agent-soft: 240 235 250;
+    --agent-ring: 172 148 220;
   }
+
+  [data-theme='dark'] {
+    color-scheme: dark;
+    --canvas: 18 17 15; /* #12110f */
+    --card: 27 26 23; /* #1b1a17 */
+    --ink: 242 238 230; /* #f2eee6 */
+    --muted: 176 168 156;
+    --faint: 134 127 117;
+    --line: 55 52 46;
+    --on-accent: 255 250 245;
+    --accent: 255 115 66; /* #ff7342 */
+    --hero: 27 26 23;
+    --hero-text: 242 238 230;
+    --good: 82 196 165;
+    --good-soft: 31 45 40;
+    --good-ring: 62 110 95;
+    --warn: 226 176 80;
+    --warn-soft: 51 44 30;
+    --warn-ring: 120 101 58;
+    --bad: 240 122 108;
+    --bad-soft: 55 33 30;
+    --bad-ring: 122 66 60;
+    --info: 122 171 227;
+    --info-soft: 29 39 52;
+    --info-ring: 63 90 122;
+    --agent: 168 133 235;
+    --agent-soft: 43 36 61;
+    --agent-ring: 90 74 126;
+  }
+
+  /* OS preference drives the default when no explicit choice has been made. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+      color-scheme: dark;
+      --canvas: 18 17 15;
+      --card: 27 26 23;
+      --ink: 242 238 230;
+      --muted: 176 168 156;
+      --faint: 134 127 117;
+      --line: 55 52 46;
+      --on-accent: 255 250 245;
+      --accent: 255 115 66;
+      --hero: 27 26 23;
+      --hero-text: 242 238 230;
+      --good: 82 196 165;
+      --good-soft: 31 45 40;
+      --good-ring: 62 110 95;
+      --warn: 226 176 80;
+      --warn-soft: 51 44 30;
+      --warn-ring: 120 101 58;
+      --bad: 240 122 108;
+      --bad-soft: 55 33 30;
+      --bad-ring: 122 66 60;
+      --info: 122 171 227;
+      --info-soft: 29 39 52;
+      --info-ring: 63 90 122;
+      --agent: 168 133 235;
+      --agent-soft: 43 36 61;
+      --agent-ring: 90 74 126;
+    }
+  }
+
+  html {
+    scrollbar-gutter: stable;
+  }
+
   body {
-    @apply bg-solstice-cream text-solstice-ink font-sans antialiased;
+    @apply bg-canvas font-sans text-ink antialiased;
   }
-  h1, h2, h3 {
+
+  h1,
+  h2,
+  h3 {
     @apply font-display tracking-tight;
+  }
+
+  ::selection {
+    background: rgb(var(--accent) / 0.18);
+  }
+
+  /* the page-level backdrop: faint accent/violet radial glows + noise grain */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      radial-gradient(52rem 30rem at 85% -8%, rgb(var(--accent) / 0.07), transparent 62%),
+      radial-gradient(44rem 26rem at -10% 42%, rgb(var(--agent) / 0.055), transparent 60%),
+      radial-gradient(40rem 24rem at 55% 112%, rgb(var(--accent) / 0.045), transparent 65%);
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.05'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer components {
-  /* Shared admin chrome so the three dashboards read as one product. */
+  /* Shared chrome so every page reads as one product. */
   .panel {
-    @apply rounded-lg border border-solstice-sand bg-white shadow-sm;
+    @apply rounded-2xl border border-line bg-card shadow-[0_1px_2px_rgb(28_20_10/0.04),0_8px_24px_-12px_rgb(28_20_10/0.08)];
+  }
+  .panel-hover {
+    @apply panel transition-shadow duration-200 hover:shadow-[0_1px_2px_rgb(28_20_10/0.04),0_16px_36px_-14px_rgb(28_20_10/0.16)];
   }
   .panel-header {
-    @apply border-b border-solstice-sand px-4 py-3 text-sm font-medium text-solstice-slate;
+    @apply border-b border-line px-4 py-3 text-sm font-medium text-muted;
   }
+
   .btn {
-    @apply inline-flex items-center justify-center rounded-md px-3.5 py-2 text-sm font-medium transition;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition;
   }
   .btn-primary {
-    @apply btn bg-solstice-ember text-white hover:bg-solstice-ember/90 disabled:opacity-40;
+    @apply btn bg-accent text-on-accent shadow-sm hover:brightness-110 active:brightness-95 disabled:opacity-40;
   }
   .btn-ghost {
-    @apply btn border border-solstice-sand text-solstice-slate hover:bg-solstice-sand/40;
+    @apply btn border border-line bg-card text-muted hover:border-faint/60 hover:text-ink;
   }
+  .btn-danger {
+    @apply btn bg-bad text-white hover:brightness-110 disabled:opacity-40;
+  }
+  .btn-dark {
+    @apply btn bg-hero text-hero-text hover:opacity-90;
+  }
+
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  /* small uppercase section label */
+  .eyebrow {
+    @apply text-[11px] font-medium uppercase tracking-[0.18em] text-faint;
+  }
+
+  /* timeline: a dot on a vertical line */
+  .timeline {
+    @apply relative space-y-4 pl-6;
+  }
+  .timeline::before {
+    content: '';
+    @apply absolute bottom-1 left-[5px] top-1 w-px bg-line;
+  }
+  .timeline-item {
+    @apply relative;
+  }
+  .timeline-item::before {
+    content: '';
+    @apply absolute -left-6 top-1.5 h-[11px] w-[11px] rounded-full border-2 border-accent bg-card;
+  }
+
+  /* native dialog theming */
+  dialog.sol-dialog {
+    @apply rounded-2xl border border-line bg-card p-6 text-ink shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm;
+  }
+  dialog.sol-dialog::backdrop {
+    background: rgb(0 0 0 / 0.4);
+    backdrop-filter: blur(2px);
   }
 }
 
 /* The chat bubble is the product. Motion here is deliberate, not decorative. */
 @keyframes sol-rise {
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.sol-rise { animation: sol-rise 220ms cubic-bezier(0.22, 1, 0.36, 1); }
+.sol-rise {
+  animation: sol-rise 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* staggered list entrances: delay comes from --stagger, set inline per row */
+.sol-stagger {
+  animation: sol-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(min(var(--stagger, 0), 12) * 45ms);
+}
 
 /*
  * The chat panel's height, which is a phone problem rather than a styling one.
- *
- * `vh` on a phone is the *large* viewport: it measures as though the browser's
- * collapsible toolbars were already hidden, and it does not shrink when the
- * keyboard opens. Sizing the panel with it puts the composer underneath
- * Safari's bottom bar on exactly the device a panelist is most likely to open
- * the landing page on. `dvh` tracks the viewport that is actually visible, so
- * the composer stays reachable. The `vh` rule is kept as the fallback for
- * browsers without `dvh` (Safari below 15.4), where the old behaviour is still
- * better than no height at all.
+ * `dvh` tracks the viewport that is actually visible so the composer stays
+ * reachable when the keyboard opens; `vh` is the fallback for older Safari.
  */
-.sol-panel-height { height: min(34rem, calc(100vh - 7.5rem)); }
+.sol-panel-height {
+  height: min(34rem, calc(100vh - 7.5rem));
+}
 @supports (height: 100dvh) {
-  .sol-panel-height { height: min(34rem, calc(100dvh - 7.5rem)); }
+  .sol-panel-height {
+    height: min(34rem, calc(100dvh - 7.5rem));
+  }
 }
 
 @keyframes sol-dot {
-  0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
-  30%           { opacity: 1;    transform: translateY(-3px); }
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
 }
-.sol-dot { animation: sol-dot 1.2s infinite; }
+.sol-dot {
+  animation: sol-dot 1.2s infinite;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .sol-rise, .sol-dot { animation: none; }
+  .sol-rise,
+  .sol-stagger,
+  .sol-dot {
+    animation: none;
+  }
 }

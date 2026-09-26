@@ -20,13 +20,13 @@ function inline(text: string, keyPrefix: string): ReactNode[] {
     const key = `${keyPrefix}-i${i++}`
     if (token.startsWith('**')) {
       out.push(
-        <strong key={key} className="font-semibold text-solstice-ink">
+        <strong key={key} className="font-semibold text-ink">
           {token.slice(2, -2)}
         </strong>,
       )
     } else if (token.startsWith('`')) {
       out.push(
-        <code key={key} className="rounded bg-solstice-sand/60 px-1 py-0.5 font-mono text-[0.85em]">
+        <code key={key} className="rounded bg-line/60 px-1 py-0.5 font-mono text-[0.85em]">
           {token.slice(1, -1)}
         </code>,
       )
@@ -76,7 +76,7 @@ export default function Markdown({ text }: { text: string }) {
           {items}
         </ol>
       ) : (
-        <ul key={`l${k++}`} className="list-disc space-y-1 pl-5 marker:text-solstice-stone">
+        <ul key={`l${k++}`} className="list-disc space-y-1 pl-5 marker:text-muted">
           {items}
         </ul>
       ),

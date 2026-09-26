@@ -252,11 +252,11 @@ export default function InquiryDetail() {
       title={p.company_name}
       subtitle={
         <span className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-xs text-solstice-stone">{inquiry.inquiry_code}</span>
+          <span className="font-mono text-xs text-muted">{inquiry.inquiry_code}</span>
           <SourceBadge source={inquiry.source} />
           {proposal ? <ProposalStatusChip status={proposal.status} /> : null}
           {proposal ? <SeverityChip severity={severity} /> : null}
-          <span className="text-solstice-stone">
+          <span className="text-muted">
             {p.contact_name}
             {p.contact_email ? ` · ${p.contact_email}` : p.contact_phone ? ` · ${p.contact_phone}` : ''}
           </span>
@@ -278,24 +278,24 @@ export default function InquiryDetail() {
             <PanelHeader
               title="Decision"
               right={
-                <span className="text-xs font-normal text-solstice-stone">
+                <span className="text-xs font-normal text-muted">
                   Delivery: {channel === 'email' ? 'branded email + PDF' : channel === 'sms' ? 'SMS with a link to the PDF' : 'no channel'}
                 </span>
               }
             />
             <div className="p-4">
               {lockReason ? (
-                <p className="mb-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                <p className="mb-3 flex items-start gap-2 rounded-md border border-warn-ring bg-warn-soft px-3 py-2 text-sm text-warn">
                   <span aria-hidden className="mt-0.5 font-semibold">Locked</span>
                   <span>{lockReason}</span>
                 </p>
               ) : alreadySent ? (
-                <p className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+                <p className="mb-3 rounded-md border border-good-ring bg-good-soft px-3 py-2 text-sm text-good">
                   Sent {proposal?.sent_via === 'sms' ? 'by SMS' : 'by email'} to {proposal?.sent_to} on{' '}
                   {shortDate(proposal?.sent_at ?? null)}.
                 </p>
               ) : (
-                <p className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+                <p className="mb-3 rounded-md border border-good-ring bg-good-soft px-3 py-2 text-sm text-good">
                   Inside every rule for this property. One click sends it.
                 </p>
               )}
@@ -325,7 +325,7 @@ export default function InquiryDetail() {
                   onClick={() => request('approve')}
                   title={approveLock ?? undefined}
                 >
-                  Approve
+                  {DECISION_LABEL.approve}
                 </button>
                 {proposal?.pricing.requested_discount_pct !== undefined ? (
                   <button
@@ -339,31 +339,31 @@ export default function InquiryDetail() {
                 ) : null}
                 <button
                   type="button"
-                  className="btn-ghost text-rose-700"
+                  className="btn-ghost text-bad"
                   disabled={!proposal || busy || alreadySent || rejected}
                   onClick={() => request('reject')}
                 >
-                  Reject
+                  {DECISION_LABEL.reject}
                 </button>
               </div>
 
               {notApprover && proposal && severity !== 'clear' && !approved && !alreadySent && !rejected ? (
-                <p className="mt-3 text-xs text-solstice-stone">{approveLock}</p>
+                <p className="mt-3 text-xs text-muted">{approveLock}</p>
               ) : null}
 
               {actionError ? (
-                <p role="alert" className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+                <p role="alert" className="mt-3 rounded-xl border border-bad-ring bg-bad-soft px-3 py-2 text-sm text-bad">
                   {actionError} Nothing was changed.
                 </p>
               ) : null}
 
               {log.length > 0 ? (
-                <ul className="mt-4 space-y-1.5 border-t border-solstice-sand pt-3 text-xs">
+                <ul className="mt-4 space-y-1.5 border-t border-line pt-3 text-xs">
                   {log.map((e) => (
-                    <li key={e.id} className="text-solstice-slate">
+                    <li key={e.id} className="text-muted">
                       <span className="font-medium">{DECISION_LABEL[e.action]}</span>
-                      {e.justification ? <span className="text-solstice-stone"> — “{e.justification}”</span> : null}
-                      <span className="text-solstice-stone">
+                      {e.justification ? <span className="text-muted"> — “{e.justification}”</span> : null}
+                      <span className="text-muted">
                         {' '}
                         · {new Date(e.at).toLocaleTimeString('en-US')}
                         {e.simulated ? ' · recorded on this device only, not sent' : ' · written to the audit trail'}
@@ -381,9 +381,9 @@ export default function InquiryDetail() {
               title="Parsed requirements"
               right={
                 inquiry.missing_fields.length > 0 ? (
-                  <span className="chip bg-sky-50 text-sky-800">{inquiry.missing_fields.length} missing</span>
+                  <span className="chip bg-info-soft text-info">{inquiry.missing_fields.length} missing</span>
                 ) : (
-                  <span className="chip bg-emerald-50 text-emerald-800">complete</span>
+                  <span className="chip bg-good-soft text-good">complete</span>
                 )
               }
             />
@@ -402,14 +402,14 @@ export default function InquiryDetail() {
               <Field label="Contact" value={p.contact_email ?? p.contact_phone ?? 'none captured'} />
             </dl>
             {p.special_requests ? (
-              <p className="border-t border-solstice-sand px-4 py-3 text-sm text-solstice-slate">
-                <span className="text-xs uppercase tracking-wide text-solstice-stone">Special requests</span>
+              <p className="border-t border-line px-4 py-3 text-sm text-muted">
+                <span className="eyebrow">Special requests</span>
                 <br />
                 {p.special_requests}
               </p>
             ) : null}
             {inquiry.missing_fields.length > 0 ? (
-              <p className="border-t border-solstice-sand bg-sky-50/50 px-4 py-3 text-sm text-sky-900">
+              <p className="border-t border-line bg-info-soft/50 px-4 py-3 text-sm text-info">
                 Still needed from {p.contact_name}: {inquiry.missing_fields.join(', ')}. Sol drafts the clarifying
                 questions rather than guessing a proposal from an incomplete request.
               </p>
@@ -426,7 +426,7 @@ export default function InquiryDetail() {
             }
             right={
               proposal ? (
-                <span className="text-xs font-normal text-solstice-stone">
+                <span className="text-xs font-normal text-muted">
                   {proposal.verdicts.filter((v) => v.status === 'pass').length} pass ·{' '}
                   {proposal.verdicts.filter((v) => v.status === 'flag').length} flag ·{' '}
                   {proposal.verdicts.filter((v) => v.status === 'fail').length} fail
@@ -437,7 +437,7 @@ export default function InquiryDetail() {
             {!proposal ? (
               <EmptyState title="No verdicts yet" body="The rules engine runs once the request is complete." />
             ) : (
-              <ul className="divide-y divide-solstice-sand">
+              <ul className="divide-y divide-line">
                 {proposal.verdicts.map((v) => (
                   <li key={v.rule_id} className="flex gap-3 px-4 py-3">
                     <span className="mt-0.5 shrink-0">
@@ -445,13 +445,13 @@ export default function InquiryDetail() {
                     </span>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                        <code className="text-xs text-solstice-stone">{v.rule_id}</code>
-                        <span className="text-xs tabular-nums text-solstice-slate">
+                        <code className="text-xs text-muted">{v.rule_id}</code>
+                        <span className="text-xs tabular-nums text-muted">
                           actual <strong className="font-medium">{v.actual}</strong> · threshold{' '}
                           <strong className="font-medium">{v.threshold}</strong>
                         </span>
                       </div>
-                      <p className="mt-1 text-sm leading-relaxed text-solstice-ink">{v.human_reason}</p>
+                      <p className="mt-1 text-sm leading-relaxed text-ink">{v.human_reason}</p>
                     </div>
                   </li>
                 ))}
@@ -464,11 +464,11 @@ export default function InquiryDetail() {
             <CollapsiblePanel
               title="Pricing"
               summary={`${money(proposal.pricing.total_cents)} · ${proposal.pricing.discount_pct}% off`}
-              right={<span className="text-xs font-normal text-solstice-stone">Integer cents, computed from property base rates</span>}
+              right={<span className="text-xs font-normal text-muted">Integer cents, computed from property base rates</span>}
             >
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-solstice-sand text-left text-xs uppercase tracking-wide text-solstice-stone">
+                  <tr className="border-b border-line text-left eyebrow">
                     <th className="px-4 py-2 font-medium">Room type</th>
                     <th className="px-4 py-2 font-medium">Rooms</th>
                     <th className="px-4 py-2 font-medium">Nights</th>
@@ -478,41 +478,41 @@ export default function InquiryDetail() {
                 </thead>
                 <tbody>
                   {proposal.pricing.line_items.map((l) => (
-                    <tr key={l.room_type} className="border-b border-solstice-sand/60">
-                      <td className="px-4 py-2.5 text-solstice-ink">{l.room_type}</td>
-                      <td className="px-4 py-2.5 tabular-nums text-solstice-slate">{l.rooms}</td>
-                      <td className="px-4 py-2.5 tabular-nums text-solstice-slate">{l.nights}</td>
-                      <td className="px-4 py-2.5 tabular-nums text-solstice-slate">{money(l.nightly_rate_cents)}</td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-solstice-slate">{money(l.line_total_cents)}</td>
+                    <tr key={l.room_type} className="border-b border-line/60">
+                      <td className="px-4 py-2.5 text-ink">{l.room_type}</td>
+                      <td className="px-4 py-2.5 tabular-nums text-muted">{l.rooms}</td>
+                      <td className="px-4 py-2.5 tabular-nums text-muted">{l.nights}</td>
+                      <td className="px-4 py-2.5 tabular-nums text-muted">{money(l.nightly_rate_cents)}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-muted">{money(l.line_total_cents)}</td>
                     </tr>
                   ))}
-                  <tr className="border-b border-solstice-sand/60">
-                    <td colSpan={4} className="px-4 py-2 text-solstice-stone">
+                  <tr className="border-b border-line/60">
+                    <td colSpan={4} className="px-4 py-2 text-muted">
                       Subtotal
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums text-solstice-slate">
+                    <td className="px-4 py-2 text-right tabular-nums text-muted">
                       {money(proposal.pricing.subtotal_cents)}
                     </td>
                   </tr>
-                  <tr className="border-b border-solstice-sand/60">
-                    <td colSpan={4} className="px-4 py-2 text-solstice-stone">
+                  <tr className="border-b border-line/60">
+                    <td colSpan={4} className="px-4 py-2 text-muted">
                       Group discount, {proposal.pricing.discount_pct}%
                       {proposal.pricing.requested_discount_pct !== undefined &&
                       proposal.pricing.requested_discount_pct !== proposal.pricing.discount_pct ? (
-                        <span className="ml-2 chip bg-amber-50 text-amber-900">
+                        <span className="ml-2 chip bg-warn-soft text-warn">
                           {proposal.pricing.requested_discount_pct}% requested
                         </span>
                       ) : null}
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums text-solstice-slate">
+                    <td className="px-4 py-2 text-right tabular-nums text-muted">
                       −{money(proposal.pricing.discount_cents)}
                     </td>
                   </tr>
                   <tr>
-                    <td colSpan={4} className="px-4 py-3 font-medium text-solstice-ink">
+                    <td colSpan={4} className="px-4 py-3 font-medium text-ink">
                       Total
                     </td>
-                    <td className="px-4 py-3 text-right font-display text-xl tabular-nums text-solstice-ink">
+                    <td className="px-4 py-3 text-right font-display text-xl tabular-nums text-ink">
                       {money(proposal.pricing.total_cents)}
                     </td>
                   </tr>
@@ -528,7 +528,7 @@ export default function InquiryDetail() {
               summary={`${proposal.status} · ${proposal.pdf_path ? 'PDF ready' : 'no PDF yet'}`}
               right={<ProposalPdfLink pdfPath={proposal.pdf_path} />}
             >
-              <pre className="whitespace-pre-wrap px-5 py-4 font-sans text-sm leading-relaxed text-solstice-ink">
+              <pre className="whitespace-pre-wrap px-5 py-4 font-sans text-sm leading-relaxed text-ink">
                 {proposal.body ?? renderProposalBody(inquiry, proposal)}
               </pre>
             </CollapsiblePanel>
@@ -538,7 +538,7 @@ export default function InquiryDetail() {
           <ConversationThread inquiry={inquiry} />
         </div>
 
-        <div className="xl:col-span-4">
+        <div className="xl:sticky xl:top-20 xl:self-start xl:col-span-4">
           <InquiryAssistant inquiry={inquiry} proposal={proposal} />
         </div>
       </div>
@@ -598,22 +598,22 @@ function JustificationDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-solstice-ink/40 px-4">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-hero/40 px-4">
       <form onSubmit={submit} className="panel sol-rise w-full max-w-lg p-5">
-        <h2 className="font-display text-2xl text-solstice-ink">{DECISION_LABEL[action]}</h2>
-        <p className="mt-1 text-sm leading-relaxed text-solstice-stone">{context}</p>
+        <h2 className="font-display text-2xl text-ink">{DECISION_LABEL[action]}</h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted">{context}</p>
         <label className="mt-4 block">
-          <span className="text-xs font-medium uppercase tracking-wide text-solstice-stone">Justification (required)</span>
+          <span className="eyebrow">Justification (required)</span>
           <textarea
             autoFocus
             rows={4}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="mt-1.5 w-full resize-none rounded-md border border-solstice-sand bg-white px-3 py-2 text-sm outline-none transition focus:border-solstice-ember focus:ring-1 focus:ring-solstice-ember"
+            className="mt-1.5 w-full resize-none rounded-md border border-line bg-card px-3 py-2 text-sm outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
             placeholder="e.g. Repeat client, third block this year, worth the extra two points."
           />
         </label>
-        <p className="mt-2 text-xs text-solstice-stone">
+        <p className="mt-2 text-xs text-muted">
           This is recorded in the audit trail with your user id. Overrides are readable forever.
         </p>
         <div className="mt-4 flex justify-end gap-2">

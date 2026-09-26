@@ -132,8 +132,8 @@ export default function ChatIntervention({ sessionId, status, live, onStatusChan
   if (!live) {
     return (
       <div className="panel p-4">
-        <h3 className="font-display text-lg text-solstice-ink">Intervene</h3>
-        <p className="mt-1 text-xs leading-relaxed text-solstice-stone">
+        <h3 className="font-display text-lg text-ink">Intervene</h3>
+        <p className="mt-1 text-xs leading-relaxed text-muted">
           This conversation has ended, so there is nobody on the other side to answer. The transcript
           beside it is the full record.
         </p>
@@ -145,13 +145,13 @@ export default function ChatIntervention({ sessionId, status, live, onStatusChan
     <div className="panel p-4">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h3 className="font-display text-lg text-solstice-ink">Intervene</h3>
-          <p className="mt-0.5 text-xs text-solstice-stone">
+          <h3 className="font-display text-lg text-ink">Intervene</h3>
+          <p className="mt-0.5 text-xs text-muted">
             {joined ? 'You are answering this guest. Sol has stood down.' : 'Sol is answering. Step in when you need to.'}
           </p>
         </div>
         {joined ? (
-          <span className="chip shrink-0 bg-solstice-gold/15 text-solstice-ink">you have it</span>
+          <span className="chip shrink-0 bg-accent/15 text-ink">you have it</span>
         ) : null}
       </div>
 
@@ -177,7 +177,7 @@ export default function ChatIntervention({ sessionId, status, live, onStatusChan
         )}
       </div>
 
-      <label htmlFor="supervisor-note" className="mt-4 block text-xs uppercase tracking-wide text-solstice-stone">
+      <label htmlFor="supervisor-note" className="mt-4 block eyebrow">
         Message to the guest
       </label>
       <textarea
@@ -195,7 +195,7 @@ export default function ChatIntervention({ sessionId, status, live, onStatusChan
         rows={4}
         maxLength={4000}
         placeholder="They can see this immediately, alongside everything Sol has said."
-        className="mt-1.5 w-full resize-y rounded-md border border-solstice-sand bg-white px-3 py-2 text-sm text-solstice-ink placeholder:text-solstice-stone/60 focus:border-solstice-stone/50 focus:outline-none focus:ring-2 focus:ring-solstice-ember/25"
+        className="mt-1.5 w-full resize-y rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink placeholder:text-muted/60 focus:border-faint/60 focus:outline-none focus:ring-2 focus:ring-accent/25"
       />
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -214,13 +214,13 @@ export default function ChatIntervention({ sessionId, status, live, onStatusChan
           Attach a file
         </label>
         {file ? (
-          <span className="chip max-w-[12rem] bg-solstice-sand/60 text-solstice-slate">
+          <span className="chip max-w-[12rem] bg-line/60 text-muted">
             <span className="truncate">{file.name}</span>
             <button
               type="button"
               onClick={clearFile}
               aria-label={`Remove ${file.name}`}
-              className="ml-1 text-solstice-stone hover:text-solstice-ink"
+              className="ml-1 text-muted hover:text-ink"
             >
               ×
             </button>
@@ -236,15 +236,15 @@ export default function ChatIntervention({ sessionId, status, live, onStatusChan
         </button>
       </div>
 
-      {error ? <p className="mt-2 text-xs leading-relaxed text-rose-700">{error}</p> : null}
+      {error ? <p className="mt-2 text-xs leading-relaxed text-bad">{error}</p> : null}
       {simulated ? (
-        <p className="mt-2 text-xs leading-relaxed text-amber-800">
+        <p className="mt-2 text-xs leading-relaxed text-warn">
           This environment has no supervisor service running, so the panel moved but the guest was
           not contacted and nothing was recorded.
         </p>
       ) : null}
 
-      <p className="mt-3 border-t border-solstice-sand pt-2 text-[11px] leading-relaxed text-solstice-stone">
+      <p className="mt-3 border-t border-line pt-2 text-[11px] leading-relaxed text-muted">
         Joining marks the conversation as yours, and Sol will not answer another word on it until you
         hand it back. The guest is told a person has joined. Every message and file you send is
         recorded against your account.

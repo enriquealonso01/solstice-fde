@@ -86,9 +86,9 @@ export default function FailureInjection() {
       defaultOpen={active.length > 0}
       right={
         active.length ? (
-          <span className="chip bg-rose-100 text-rose-900">live outage simulated</span>
+          <span className="chip bg-bad-soft text-bad">live outage simulated</span>
         ) : (
-          <span className="chip bg-emerald-50 text-emerald-800">healthy</span>
+          <span className="chip bg-good-soft text-good">healthy</span>
         )
       }
     >
@@ -98,26 +98,26 @@ export default function FailureInjection() {
         <EmptyState title="Loading…" />
       ) : (
         <>
-          <p className="px-5 pt-4 text-sm leading-relaxed text-solstice-slate">
+          <p className="px-5 pt-4 text-sm leading-relaxed text-muted">
             Switch a dependency off and the tools that need it start refusing, in exactly the shape a real
             outage produces: ungrounded, with a reason Sol says out loud. Nothing is faked downstream, which is
             the point. Tools that do not need the dependency keep working.
           </p>
-          <ul className="divide-y divide-solstice-sand/60 p-2">
+          <ul className="divide-y divide-line/60 p-2">
             {flags.map((f) => (
               <li key={f.key} className="flex items-start gap-4 px-3 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-solstice-ink">{LABEL[f.key] ?? f.key}</span>
+                    <span className="font-medium text-ink">{LABEL[f.key] ?? f.key}</span>
                     {f.enabled ? (
-                      <span className="chip bg-rose-100 text-rose-900">offline</span>
+                      <span className="chip bg-bad-soft text-bad">offline</span>
                     ) : (
-                      <span className="chip bg-emerald-50 text-emerald-800">healthy</span>
+                      <span className="chip bg-good-soft text-good">healthy</span>
                     )}
                   </div>
-                  <p className="mt-0.5 text-xs text-solstice-stone">Affects: {AFFECTS[f.key] ?? '—'}</p>
+                  <p className="mt-0.5 text-xs text-muted">Affects: {AFFECTS[f.key] ?? '—'}</p>
                   {f.enabled && f.spoken_reason ? (
-                    <p className="mt-1.5 text-xs italic leading-relaxed text-rose-900">"{f.spoken_reason}"</p>
+                    <p className="mt-1.5 text-xs italic leading-relaxed text-bad">"{f.spoken_reason}"</p>
                   ) : null}
                 </div>
                 <button
@@ -132,7 +132,7 @@ export default function FailureInjection() {
               </li>
             ))}
           </ul>
-          <p className="px-5 pb-4 text-xs leading-relaxed text-solstice-stone">
+          <p className="px-5 pb-4 text-xs leading-relaxed text-muted">
             Changes take effect within about three seconds, everywhere, without a redeploy. Switches read from
             the database rather than the environment for exactly that reason.
           </p>
