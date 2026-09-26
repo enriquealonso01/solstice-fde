@@ -74,3 +74,80 @@ describe('the compiled voice prompt', () => {
     expect(markdown.length).toBeGreaterThan(compiled.instructions.length)
   })
 })
+
+/**
+ * The compiled prompt must not depend on whose machine compiled it.
+ *
+ * `*.md` is not pinned in `.gitattributes`, so `agent/sol.md` is checked out CRLF on Windows and LF
+ * everywhere else. `compileInstructions` collapsed runs of blank lines with a bare-newline pattern,
+ * which matches nothing in CRLF text, and then measured the result against the 30,000 cap. The same
+ * commit therefore compiled to **29,411** characters on this machine and **29,006** on a Linux
+ * checkout: 400 carriage returns and 5 surviving blank lines.
+ *
+ * Two things followed. The margin everyone was reasoning about was 405 characters too small -- the
+ * real head-room is 994, and both this file's status notes and the plan's banner carried the wrong
+ * figure (589 and 681). And `exports/telnyx-assistant.json` is what the live assistant returned, so
+ * a reviewer compiling the source on their own machine would not reproduce it, which is exactly the
+ * parity the export exists to demonstrate.
+ *
+ * Found by accident: a Python edit rewrote the working file to LF and the compile dropped by 405
+ * characters with no content change. It is the fifth time this session that an unexplained number
+ * was the only signal something was wrong.
+ */
+describe('the compile is independent of line endings', () => {
+  const lf = markdown.replace(/\r\n?/g, '\n')
+  const crlf = lf.replace(/\n/g, '\r\n')
+
+  it('produces identical bytes from a CRLF and an LF checkout', () => {
+    expect(crlf).not.toBe(lf) // the fixture is doing something
+    expect(
+      compileInstructions(crlf).instructions,
+      'The same commit compiles differently depending on the checkout, so the live assistant and ' +
+        'the committed export cannot both be reproducible.',
+    ).toBe(compileInstructions(lf).instructions)
+  })
+
+  it('emits no carriage returns, which are what inflated the measured size', () => {
+    expect(compileInstructions(crlf).instructions).not.toMatch(/\r/)
+  })
+
+  it('actually collapses blank-line runs, whatever the input endings', () => {
+    for (const [label, input] of [
+      ['LF', lf],
+      ['CRLF', crlf],
+    ] as const) {
+      expect(compileInstructions(input).instructions, `${label} input left a blank-line run`).not.toMatch(
+        /\n{3,}/,
+      )
+    }
+  })
+})
+
+/**
+ * What the deliverable says the head-room is must be what the head-room is.
+ *
+ * `agent/sol.md` told a reader the voice compile 'is 1.4KB from a hard 30,000-char cap'. True when
+ * written; the real margin by iteration 96 was 994 characters, under 1KB. The number is load-bearing
+ * -- it is the figure anyone editing this file uses to decide whether an addition needs wrapping --
+ * and an exact count in a file edited every iteration is guaranteed to rot.
+ *
+ * So the file states a bucket instead, and the bucket is pinned here. A claim that cannot be checked
+ * is how the previous one survived being wrong.
+ */
+describe('the head-room the deliverable claims', () => {
+  const margin = MAX_INSTRUCTION_CHARS - compiled.instructions.length
+  const BUCKET = 'under a thousand characters of head-room'
+
+  it('is stated as a bucket, not as a figure that rots', () => {
+    expect(markdown, `agent/sol.md no longer says "${BUCKET}"; update this case with it`).toContain(BUCKET)
+  })
+
+  it('matches the measured margin', () => {
+    expect(margin, `agent/sol.md claims "${BUCKET}" and the margin is ${margin}`).toBeGreaterThan(0)
+    expect(margin, `agent/sol.md claims "${BUCKET}" and the margin is ${margin}`).toBeLessThan(1000)
+  })
+
+  it('states no head-room figure in KB, because that is the form that went stale', () => {
+    expect(markdown, 'agent/sol.md is back to claiming head-room in KB').not.toMatch(/[0-9.]+ ?KB from a hard/i)
+  })
+})

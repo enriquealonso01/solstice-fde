@@ -221,6 +221,20 @@ const MAX_INSTRUCTION_CHARS = 30000
  */
 function compileInstructions(markdown) {
   let out = markdown
+    // Normalise line endings FIRST, before anything below collapses or measures them.
+    //
+    // Without this the compiled prompt depended on the checkout it was built from. *.md is not
+    // pinned in .gitattributes, so a Windows clone gets agent/sol.md with CRLF -- and then the
+    // blank-line collapse below matches nothing, because a run of three CRLF pairs contains no run
+    // of three bare newlines. Blank-line runs survive, and every carriage return is counted
+    // against the 30,000 cap.
+    //
+    // Measured on one commit: a CRLF checkout compiled to 29,411 characters, an LF checkout to
+    // 29,006. Same source, two artifacts, differing by 400 carriage returns and 5 blank lines --
+    // and those 405 phantom characters were being subtracted from the margin everyone reasoned
+    // about. Worse for a reviewer: the committed export is what the live assistant returned, so on
+    // their machine the compile would not reproduce it.
+    .replace(/\r\n?/g, '\n')
     .replace(FRONT_MATTER, '')
     .replace(STRIP_BLOCK, '')
     .replace(HTML_COMMENT, '')

@@ -1,7 +1,8 @@
 # Master plan: the whole picture
 
 > ## 22:26 — **ENRIQUE: the SQL paste is #1, and it is now the whole list plus three.**
-> *All agent work is closed: T38–T40 in PR #124, T41 in #125, T42 in #126.* **Four items are yours.**
+> *T38–T40 closed in PR #124, T41 in #125, T42 in #126.* **Four items are yours, plus **T43** — one
+> clause: the runbook says "148 chat sessions to 9 calls"; it is **171 to 9**.*
 > *Five likely panel questions are answered in `▶ IF THEY ASK` directly below.*
 >
 > **This banner is rewritten, not appended.** It said *18:04* and *"two agent items left"* until
@@ -60,6 +61,46 @@
 
 ---
 
+### T43. The runbook's session split is stale, in the sentence that warns a sceptic will check it
+
+*Same class PR #127 just fixed in this file — a document claim about a **live quantity**, which no
+text guard watches — and #127 corrected one such number 195 lines earlier while this one stayed.
+One clause. Demo path.*
+
+**`docs/demo-runbook.md:215`:**
+
+> Our own traffic is almost all chat — **about 148 chat sessions to 9 calls** — so on the measured
+> figures the model and telephony come out near-equal… **A sceptic who reads the split while you
+> claim telephony dominates has caught you.**
+
+**Measured now:**
+
+```
+sessions  total 180   { chat: 171, voice: 9 }
+```
+
+**171 to 9, not 148 to 9.** The argument is untouched and in fact stronger — the split is *more*
+lopsided toward chat than the sentence claims, which is exactly what the beat needs. **But the
+number is wrong by 23 in the one sentence that invites the audience to check the number.**
+
+**Do this — and make it a form that cannot go stale again.** Chat sessions accumulate whenever
+anyone opens the widget; calls do not, because they cost money. An exact count was wrong within
+hours and will be wrong again by 11:00:
+
+> Our own traffic is almost all chat — **fewer than one call in every fifteen sessions** — so on the
+> measured figures…
+
+That stays true as chat grows, which an exact pair does not. **The same reasoning PR #77 applied to
+the README's file counts**, where floors have now survived thirteen new files without rotting.
+
+**Leave the argument alone.** *"Point at the **projection** inputs instead"* is the right move and
+the reason this beat works; only the measured figure needs to stop being a hostage.
+
+**Check when done:** the sentence carries a ratio or a floor rather than two exact counts; the
+projection advice is unchanged; the split still supports the claim that our own traffic is almost
+all chat.
+
+
 # ▶ IF THEY ASK — five answers to questions the package invites
 
 *Each of these is a place where the system is **correct** and a reviewer will reasonably want to
@@ -106,7 +147,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 ---
 
-# ▶ OPEN WORK — all four remaining items are Enrique's. Every agent item is closed.
+# ▶ OPEN WORK — four items are Enrique's, and **T43** is one clause in the runbook.
 
 *Everything below this section is closed, or evidence.*
 
@@ -1390,6 +1431,136 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 131, 22:38 EST — followed #127's defect class and found the same thing 195 lines later in the same file
+
+#### The class, stated so it can be searched for
+
+PR #127's defect had **no wrong string anywhere**: correct code, correct runbook, wrong
+*relationship*, visible only at a session count nobody had reached. **No text guard watches that.**
+So I swept the demo documents for every claim about a **live quantity** — sessions, inquiries,
+proposals, escalations, conversations — and checked each against the database.
+
+#### One is stale, and it is in the worst possible sentence
+
+`docs/demo-runbook.md:215`:
+
+> Our own traffic is almost all chat — **about 148 chat sessions to 9 calls** — … **A sceptic who
+> reads the split while you claim telephony dominates has caught you.**
+
+```
+sessions  total 180   { chat: 171, voice: 9 }
+```
+
+**171 to 9, not 148 to 9.** Wrong by 23, in the one sentence that tells Enrique the audience will
+check this number.
+
+**The argument is fine and is in fact stronger** — the split is *more* lopsided toward chat than
+claimed, which is what the beat needs. **Only the figure is a hostage.**
+
+**T43 filed, and it asks for a form rather than a correction.** Chat sessions accumulate whenever
+anyone opens the widget; calls do not, because they cost money. An exact pair was wrong within hours
+and will be wrong again by 11:00, so: *"fewer than one call in every fifteen sessions."* **The same
+reasoning PR #77 applied to the README's file counts** — where the floors have now absorbed thirteen
+new files without rotting, which I argued against at the time and was wrong about.
+
+#### What #127 shows about the sweep
+
+**PR #127 corrected a live-quantity claim 195 lines earlier in this same file** — *"around a
+hundred"* rows, actually about 174 — and did not reach this one. That is not a criticism: they were
+fixing the Archive and corrected the number they walked past.
+
+> **It is the argument for sweeping a class rather than fixing an instance.** The instance was
+> visible from the defect; the class needed someone to go looking, and the second member was two
+> hundred lines away in the same document.
+
+#### Checked and correct
+
+`README.md:69` — *"First commit 2026-09-24 12:35 EDT."* Git's first commit: **2026-09-24 12:35**.
+Exact.
+
+The other numeric claims in those documents are about the demo itself (*"about 18 minutes"*), the
+build (*"under 5 hours active"*), or published targets — none depends on live data that moves.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — delete the disclosure if applied first | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — two rows | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T43** — one clause, `demo-runbook.md:215` | anyone |
+
+Inbox empty. No lock held. Suite 540. **The plan is accurate and correctly ordered.**
+
+
+### Iteration 130, 22:34 EST — a live demo-path defect, found by measurement and verified against production
+
+#### What PR #127 found
+
+`docs/demo-runbook.md` narrates the supervisor **Archive** panel during beat 3 and promises it will
+not be empty. **It was rendering "No ended sessions yet" with 23 ended conversations in the
+database.**
+
+`useSessions` fetched the **100 newest by `started_at`**, and every one of those was still
+`active` — because **nothing closes a chat session on the web**, so active rows accumulate and ended
+ones age out of the window.
+
+#### Verified against production rather than taken from the commit
+
+```
+sessions  total 180  {"active":155,"ended":23,"taken_over":2}
+```
+
+**Exactly the distribution #127 reports.** And the fix, in `useAdminData.ts`:
+
+```
+:235  export const SESSION_FETCH_LIMIT = 500
+:238  export const sessionViewIsTruncated = (fetched) => fetched >= SESSION_FETCH_LIMIT
+:245  .order('started_at', { ascending: false }).limit(SESSION_FETCH_LIMIT)
+```
+
+**180 rows against a 500 window means all 23 ended sessions are now in view.** Beat 3's narration
+holds.
+
+**What I did not verify:** the exact empty-state wording. My grep did not locate those strings in
+`src/components/admin/*.tsx`, so they live elsewhere and I have not read them. The commit says the
+empty state now distinguishes *nothing has ended* from *nothing ended is in view*; **I am recording
+that as their claim, not as something I checked.**
+
+#### The test is the right shape
+
+Its own comment: *"restore `SESSION_FETCH_LIMIT` back to 100 and the first case fails with the
+screen it produced."* **It reproduces the production distribution rather than asserting the
+constant** — so it fails if the window stops covering reality, not merely if someone edits a number.
+That is the difference between a test that pins a value and one that pins a behaviour.
+
+#### Why this one was easy to miss
+
+Every guard in this project watches **text** — citations, counts, quotes, credentials, paths. This
+defect had no wrong string anywhere: the code was correct, the runbook was correct, and **the
+relationship between them was wrong**, and only at a session count nobody had reached until tonight.
+It took counting rows in production to see it.
+
+#### Everything else is unchanged
+
+```
+suite   540 passed
+live    / 200 · /login 200 · /admin/inquiries 200 · /api/cost 401 · /api/flags 401
+```
+
+Every task T1–T42 closed. Inbox empty. **The plan is accurate and correctly ordered.**
+
+#### State
+
+| # | Item |
+|---|---|
+| 1 | **`drop policy` ×3** — delete the disclosure if applied first |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** |
+| 3 | **T21** — delete `INQ-2012`/`INQ-2013`, keep `INQ-2011` |
+| 4 | **T34** — rotate the SIP connection, after any rehearsal call, before the email |
+
 
 ### Iteration 129, 22:30 EST — verified every answer I put in `IF THEY ASK`. The plan is accurate and correctly ordered
 
