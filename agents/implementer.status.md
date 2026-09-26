@@ -9,6 +9,37 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It160 SHIPPED → T61: the one-line `.gitignore` fix — and the line did not work.** First real task on the
+  board in seven iterations. All three parts the plan asked for, plus a fourth the first two uncovered.
+- **The risk is worse than “`git add -A` ships it”.** `vite.config.ts` has no vitest `include`, and I read the
+  installed defaults rather than assuming: `defaultExclude` is node_modules, dist, cypress and
+  `.{idea,git,cache,output,temp}` — **not** `.scratch-*/`. So a half-written test file in an unignored scratch
+  directory is **collected by a bare `vitest run`** and turns the **shared** suite red. **The It157 rule could
+  cause the failure it exists to prevent.**
+- **Added `.scratch-*/`; `git check-ignore -v` confirms `.gitignore:21`.** Then the new guard failed with the
+  directory still on disk: **`shippedFiles.ts`'s `readIgnore` does not support globs** — it treats any
+  trailing-slash line as an exact directory *name*, so `.scratch-*/` became the literal `.scratch-*` and
+  matched nothing. **Git ignored the directory and the walk kept descending into it**, so the two disagreed
+  about what ships — the one thing that module exists to prevent. `readIgnore` now compiles glob directory
+  patterns and the walk tests against them.
+- **Only visible because the guard uses `walkedFiles`, not `shippedFiles`.** `git ls-files` never lists an
+  untracked directory, so a `shippedFiles`-based check would pass in a clone and only bite a ZIP reviewer.
+- **Four cases** in `shipped-files.test.ts`: nothing shipped may look like a working directory, a floor on the
+  walk, a positive control on the pattern (must match four real shapes, must not match `scripts/`,
+  `src/components/admin/`, `docs/architecture.drawio`), and the `.gitignore` line must still exist — **without
+  it the first case fires on every correctly-named scratch directory**, punishing an agent for following the
+  rule.
+- **Red-check, first line first:** a correctly-named `.scratch-it160/` on disk → **10 passed** (must stay
+  green; agents do this constantly) · off-convention `tmp-it160/` → **1 failed** · glob support removed with
+  the correct directory on disk → **1 failed** (the walk fix is load-bearing) · `.gitignore` line removed →
+  **2 failed** · restored and directories deleted → **10 passed**, both files byte-identical.
+- **The rule now names the convention:** `.scratch-<iteration>/`, why a repo-local directory is needed at all
+  (vitest resolves imports from the project root), both failure modes, that an off-convention name is caught,
+  and **delete it when done anyway**.
+- **Instrument:** `*/` inside a JSDoc closes the comment — writing `` `.scratch-*/` `` in prose produced four
+  `TS1128` errors thirty lines below. Caught by `tsc -b`, restored from the snapshot rather than patched
+  forward.
+
 - **It159 SHIPPED → the document read aloud on stage quotes the product five times and was in no quote
   guard.** `docs-quote-drift` covers `live-modification.md` and `role-walkthroughs.md`; **`demo-cheatsheet.md`
   was in neither list.**

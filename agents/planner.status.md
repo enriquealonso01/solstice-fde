@@ -4,53 +4,57 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 235 — 2026-09-26 07:55 EST
+## Iteration 238 — 2026-09-26 08:10 EST
 
-**Nothing is open for an agent. No new tasks.** My prompt lists `agents/README.md` among the files to read each
-iteration. **I have been checking its mtime and calling that reading it.** So I read all 329 lines, and it sent
-me to a false claim in my own file.
+**One small agent task is open: T62.** T61 shipped at 08:06, one minute after I filed it.
 
-### What the working agreement says that I had not registered
+### T61, and a sharper hazard than the one I filed
 
-The writer table gives **`BACKLOG.md` two writers: Enrique (Inbox), Planner (triage)**. I have described myself
-all night as owning one file. Nothing turned on it — the Inbox has been empty since before this segment — but if
-Enrique drops a line in there at 09:00, **clearing it into the plan is mine to do**, and I would have hesitated
-over a permission I already hold.
+`.gitignore:21` now carries `.scratch-*/`, and its comment names the real risk: not *"`git add -A` ships it"*
+but *"**vitest has no include config**, so its default collects any `*.test.ts` under the project root and a
+half-written file inside one turns the SHARED suite red."* **An unignored scratch directory defeats the purpose
+of the rule that creates it.** I confirmed the first half — `vite.config.ts:19` is
+`test: { setupFiles: ['./vitest.setup.ts'] }`, no `include`, no `exclude`. *Whether the default glob descends
+into a dot-prefixed directory I did not test, because testing it means putting a `.test.ts` in the repository.*
 
-And the newest section exists because of me: *"**Get a new test file green before it lands in the shared tree.**
-It happened at iteration 156… the Planner found the suite red at 07:29… That is a whole iteration of theirs
-spent on a transient state of mine. Write the file in the scratchpad, run it there, and copy it in once it
-passes."* **A wasted iteration of mine became a written rule with a remedy, in a file the other agent owns** —
-a better answer to *"build with agents"* than any paragraph about agents.
+### Then I read `vitest.setup.ts`, which several claims rest on and I never had
 
-### Then it sent me to a pointer of mine that was wrong twice over
+34 lines, deleting **ten** environment keys in a `beforeAll`. **Hermeticity is intact** — Supabase, the Telnyx
+API, Anthropic, the tool webhook and the proposal link secret are all stripped, which is what the file was
+written for.
+
+### The claim built on top of it does not hold
+
+`no-committed-credentials.test.ts:106`: *"`vitest.setup.ts` strips credentials from the environment, **so no
+test here can know the password's value.**"*
 
 ```
-plan:326  "### All agent tasks are closed — T44, T46–T50 shipped; T38–T43, T45 closed in iteration 157"
-plan:330  "one thing only a Tester can do: re-verify the auto-triage agent … BACKLOG.md:50"
-BACKLOG.md:50   (blank)
-BACKLOG.md:54   "Caveat CLOSED at It129 (PR #166), and it had no test at all"
+credential-shaped in .env and NOT stripped:
+  DEMO_PASSWORD · NETLIFY_AUTH_TOKEN · TELNYX_SIP_PASSWORD · TELNYX_TELEPHONY_CREDENTIAL_ID
 ```
 
-**Three faults in five lines of my own file.** The heading named a task set from iteration 157 while T51–T60
-closed underneath it — the stale-heading failure I have cured twice this morning, recurring in the one place I
-had not looked. The pointer landed on a blank line. And the claim it supported was **the opposite of what the
-cited file says**: that caveat closed about eighty iterations ago.
+**`DEMO_PASSWORD` is the admin password in `DEMO_LOGINS.md`** — the exact value the sentence says no test can
+know. **T62 filed:** three list entries make it true, and none of the three is referenced by a non-comment line
+under `src/`, `netlify/` or `shared/`.
 
-**So "one thing only a Tester can do" was false**, in a section summarising what is left — and with the Tester
-silent eleven hours, it reads as an open dependency on an agent that is not coming back.
+> **The "assertion holding its own copy of the answer" family, one level up: a justification holding a copy of a
+> guarantee the code does not give.** Nothing leaks and nobody exploits it — what is wrong is that a reader
+> judging whether the credential guard is adequate is told a value comparison is impossible, in the file whose
+> whole job is to be trusted about credentials.
 
-**Corrected**: the heading carries no task numbers; the correction quotes `BACKLOG.md`'s own words instead of a
-line number; and I ran `triage.test.ts` — **15 green at 07:54** — before asserting it closes the caveat.
+### Two things I checked and did not file
 
-> **The lesson is about where I looked, not about care.** I cured this exact failure twice today, both times in
-> the region I was already editing. **A stale summary does not live where you are working; it lives where you
-> stopped going.** Reading a file because a checklist names it — not because I had a question — is what found it.
+- **The strip runs in `beforeAll`, not at module scope**, so an import-time read would see the real value.
+  **No instance exists** — the only module-scope `process.env` reads in the tree are `ANTHROPIC_MODEL` and
+  `SOL_NARRATION`. Theoretical, so not a task.
+- **`TELNYX_TELEPHONY_CREDENTIAL_ID` is referenced by two non-test files**, so T62 says read those first and
+  notes an id is not a secret the way a password is.
 
 ### Open
 
 | # | Item | Owner |
 |---|---|---|
+| **T62** | *"No test here can know the password's value"* — `DEMO_PASSWORD` is not stripped. Three list entries | any agent — small |
 | 1 | **`drop policy` ×3** — **only Enrique can.** SQL at **609**, ***"### What to run"***. **Breaks nothing; verified three ways** | Enrique — **do** |
 | 2 | **Top up Telnyx** — under **$3.01** at 06:45, no credit line, fewer than six calls, hard stop at zero | Enrique — **do** |
 | 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
@@ -58,11 +62,10 @@ line number; and I ran `triage.test.ts` — **15 green at 07:54** — before ass
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
 
-Nothing for an agent, and **nothing waiting on the Tester** — that was the false claim. Suite green at
-**923 / 65 files**. Tester silent since 20:26 (**11h29m**); no open findings. Inbox and In progress empty. No
-lock held; I took none. Plan guards re-run: **104 green**.
+Suite green at **923 / 65 files**. Tester silent since 20:26 (**11h44m**); no open findings. Inbox and In
+progress empty. No lock held; I took none. Plan guards re-run: **104 green**.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** With that block corrected, nothing in the plan claims an open dependency on anyone
-but Enrique. **The SQL is the one action left that nobody else can take.**
+**The `drop policy` paste.** T62 is three list entries in a test-setup file. **The SQL is still the one action
+nobody else can take.**

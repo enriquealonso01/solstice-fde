@@ -10453,3 +10453,97 @@ out of the files — 1 failed and 2 failed respectively. *Third iteration in fou
 every time the cause was typing an anchor instead of reading one.*
 
 `npx tsc -b` clean. `npx vitest run` **936 tests / 66 files** green (up 6).
+
+---
+
+## It160 — T61: the one-line `.gitignore` fix, and the line did not work
+
+An actual task on the board for the first time in seven iterations. T61: `.gitignore` has `*.scratch.json`
+but no rule for the `.scratch-*/` directories **my own It157 rule** now tells every agent to create.
+Protective rather than corrective — nothing was on disk at 08:03, and the plan says so.
+
+The plan asked for one line, a sentence in the rule, and an optional guard. All three, plus a fourth thing
+the first two uncovered.
+
+### The risk is worse than "git add -A ships it"
+
+`vite.config.ts` has no `include` for vitest, so the **default** applies, and I read the installed defaults
+rather than assuming them:
+
+```
+defaultInclude  **/*.{test,spec}.?(c|m)[jt]s?(x)
+defaultExclude  node_modules, dist, cypress, .{idea,git,cache,output,temp}
+```
+
+`.scratch-*/` is not in that exclude list. So a half-written test file left in an unignored scratch
+directory is **collected by a bare `npx vitest run`** — it turns the **shared** suite red for the other two
+agents, which is the exact failure the It157 rule exists to prevent. The rule could cause the thing it
+prevents.
+
+### The one line, and then it did not take effect
+
+Added `.scratch-*/` with the reasoning above. `git check-ignore -v` confirms it: `.gitignore:21:.scratch-*/`
+matches `.scratch-it160/note.txt`, and `git status` stops showing it.
+
+Then the new guard failed with the directory still on disk:
+
+```
+1 path(s) that ship look like a scratch working directory: .scratch-it160/note.txt
+```
+
+**`shippedFiles.ts`'s `.gitignore` reader does not support globs.** Its `readIgnore` treats any
+trailing-slash line as an exact directory *name*:
+
+```ts
+if (line.endsWith('/')) dirs.push(line.slice(0, -1))   // ".scratch-*/" -> the literal name ".scratch-*"
+```
+
+So git ignored the directory and the walk kept descending into it. **The two disagreed about what ships,
+which is the single thing that module exists to prevent** — its own header says the fallback "can only be
+proven faithful somewhere both paths work". `readIgnore` now compiles a glob directory pattern to a regex
+and the walk tests directory names against it.
+
+That is the fourth item, and it was only visible because the guard was written against `walkedFiles` rather
+than `shippedFiles`. `git ls-files` never lists an untracked directory, so a `shippedFiles`-based check
+would have passed in a clone and only bitten someone reviewing a ZIP.
+
+### Guarded, four cases
+
+In `shipped-files.test.ts`, which already owns `walkedFiles`: nothing that ships may look like a working
+directory (`/(^|\/)(\.?scratch[\w.-]*|tmp[-_]?it\d*|temp[-_]?it\d*|it\d+[-_]?scratch)(\/|$)/i`), a floor on
+the walk so the question is not asked of an empty list, a positive control on the pattern (it must match
+four real shapes and must not match `scripts/`, `src/components/admin/`, `docs/architecture.drawio`), and
+the `.gitignore` line itself must still be there.
+
+That last one matters more than it looks: **without the ignore line, the first case fires on every
+correctly-named scratch directory**, and an agent following the rule would be met by a red suite for
+following it.
+
+### Red-check, and the first line is the important one
+
+```
+a correctly-named .scratch-it160/ on disk        10 passed   <- must stay green, agents do this constantly
+an off-convention tmp-it160/ on disk             1 failed
+glob support removed, correct directory on disk  1 failed    <- proves the walk fix is load-bearing
+the .gitignore line removed                      2 failed
+restored, directories deleted                   10 passed    both files byte-identical
+```
+
+A guard that punished correct use of the rule would be worse than no guard, so that first line was checked
+before any of the others.
+
+### The rule now names the convention
+
+`agents/README.md` says `.scratch-<iteration>/`, not `tmp-it160/`; says why a repository-local directory is
+needed at all (vitest resolves imports from the project root); gives both failure modes; says
+`shipped-files.test.ts` catches an off-convention name; and says **delete it when done anyway** — ignored is
+not absent, and the next agent should not be collecting someone else's drafts.
+
+### One instrument note
+
+`*/` inside a JSDoc comment closes the comment. My block wrote `` `.scratch-*/` `` in prose and produced
+four `TS1128` errors thirty lines later; the fix was to write the pattern without the slash in comments and
+keep the exact string in code. Caught by `tsc -b` immediately, which is the right place for it, and the file
+was restored from the snapshot rather than patched forward.
+
+`npx tsc -b` clean. `npx vitest run` **940 tests / 66 files** green (up 4). No scratch directory on disk.

@@ -22,7 +22,7 @@
  * The fallback can only be proven faithful somewhere both paths work, which is here. That is what the
  * subset case below is for.
  */
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
@@ -103,5 +103,70 @@ describe('the file set three guards depend on', () => {
       tests(walked),
       'the walk and git disagree on the test file count, which README.md states as a floor',
     ).toBeGreaterThanOrEqual(tests(resolved.files))
+  })
+})
+
+/**
+ * No scratch working directory is shipping, whatever it was called.
+ *
+ * `agents/README.md` tells every agent to get a new test file green in a scratch directory before it
+ * lands in the shared tree -- a rule that has already paid for itself twice -- and `.gitignore` now
+ * carries `.scratch-` directories so the ones following the convention never reach a count or a commit.
+ *
+ * **The `.gitignore` line cannot cover the failure that matters.** It matches a name. An agent who calls
+ * theirs `tmp-it170/` or `scratch/` lands outside the pattern, and then nothing notices: it holds no
+ * credential, so the credential scan passes it; it is not a document, so no doc guard reads it; and
+ * `git add -A` commits it. Worse, vitest has no `include` config, so its default collects any
+ * `*.test.ts` under the project root -- a half-written file in an unignored directory turns the shared
+ * suite red, which is the exact failure the rule exists to prevent.
+ *
+ * So this asks the question the pattern cannot: does anything that ships look like a working directory?
+ * Deliberately checked against `walkedFiles`, not `shippedFiles`. The walk sees what is on disk with
+ * `.gitignore` applied, so it catches an off-convention directory that git has not been told about;
+ * `git ls-files` would not list it at all, and the check would pass in a clone and only bite in a ZIP.
+ */
+describe('nothing that ships looks like a scratch directory', () => {
+  /** Names agents have used or would plausibly reach for, as a path segment. */
+  const SCRATCH_SEGMENT = /(^|\/)(\.?scratch[\w.-]*|tmp[-_]?it\d*|temp[-_]?it\d*|it\d+[-_]?scratch)(\/|$)/i
+
+  it('sees enough of the tree for the question to mean anything', () => {
+    expect(
+      walkedFiles(repoRoot).length,
+      'the walk returned almost nothing, so the check below would pass over an empty list',
+    ).toBeGreaterThan(250)
+  })
+
+  it('finds no scratch-looking path among the files that ship', () => {
+    const offenders = walkedFiles(repoRoot).filter((f) => SCRATCH_SEGMENT.test(f))
+    expect(
+      offenders.slice(0, 10),
+      `${offenders.length} path(s) that ship look like a scratch working directory: ` +
+        `${offenders.slice(0, 10).join(', ')}.\n\n` +
+        `If this is an agent's scratch directory, rename it to a .scratch- prefixed directory so .gitignore covers ` +
+        `it, or delete it -- vitest collects any *.test.ts under the root, so leaving it there can turn ` +
+        `the shared suite red for the other two agents.`,
+    ).toEqual([])
+  })
+
+  it('would recognise one if it were there', () => {
+    // A positive control: the pattern is the whole check, and a pattern that matches nothing looks
+    // exactly like a clean tree.
+    for (const path of ['.scratch-it159/x.test.ts', 'tmp-it170/note.txt', 'scratch/thing.ts', 'temp_it9/a.ts']) {
+      expect(SCRATCH_SEGMENT.test(path), `the pattern does not match ${path}`).toBe(true)
+    }
+    // ...and it must not fire on real paths that merely contain the letters.
+    for (const path of ['scripts/data/lib/env.mjs', 'src/components/admin/ui.tsx', 'docs/architecture.drawio']) {
+      expect(SCRATCH_SEGMENT.test(path), `the pattern wrongly matches ${path}`).toBe(false)
+    }
+  })
+
+  it('has the .gitignore rule that keeps the convention out of the walk', () => {
+    // Without this line the case above fires on every correctly-named scratch directory too, and an
+    // agent following the rule would be met by a red suite for doing so.
+    expect(
+      readFileSync(join(repoRoot, '.gitignore'), 'utf8'),
+      '.gitignore no longer ignores .scratch-*/, so a scratch directory created by the rule in ' +
+        'agents/README.md is untracked, unignored, shipped by git add -A, and collected by vitest.',
+    ).toMatch(/^\.scratch-\*\/$/m)
   })
 })

@@ -24,8 +24,16 @@ import { join, relative, resolve } from 'node:path'
 /** Patterns from `.gitignore`, reduced to the three shapes this repo actually uses. */
 interface Ignore {
   dirs: string[]
+  /** Directory patterns containing a `*`, compiled. `.gitignore` may glob; git honours it, so must we. */
+  dirPatterns: RegExp[]
   names: string[]
   suffixes: string[]
+}
+
+/** `.scratch-*` -> /^\.scratch-[^/]*$/ . Only `*` is supported, which is all this .gitignore uses. */
+function dirPattern(glob: string): RegExp {
+  const escaped = glob.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*')
+  return new RegExp(`^${escaped}$`)
 }
 
 function readIgnore(repoRoot: string): Ignore {
@@ -40,15 +48,23 @@ function readIgnore(repoRoot: string): Ignore {
   }
 
   const dirs = ['.git', 'node_modules', 'dist', '.netlify']
+  const dirPatterns: RegExp[] = []
   const names: string[] = []
   const suffixes: string[] = []
 
   for (const line of lines) {
-    if (line.endsWith('/')) dirs.push(line.slice(0, -1))
-    else if (line.startsWith('*.')) suffixes.push(line.slice(1))
+    if (line.endsWith('/')) {
+      const name = line.slice(0, -1)
+      // A trailing-slash line may be a glob. Reading it as a literal name was silently wrong: the
+      // walk kept descending into `.scratch-it160/` while git ignored it, so the two disagreed about
+      // what ships -- the one thing this module exists to prevent. Found at iteration 160, by the
+      // .gitignore line added that iteration failing to take effect in the walk.
+      if (name.includes('*')) dirPatterns.push(dirPattern(name))
+      else dirs.push(name)
+    } else if (line.startsWith('*.')) suffixes.push(line.slice(1))
     else names.push(line)
   }
-  return { dirs: [...new Set(dirs)], names, suffixes }
+  return { dirs: [...new Set(dirs)], dirPatterns, names, suffixes }
 }
 
 function walk(repoRoot: string, ignore: Ignore): string[] {
@@ -59,6 +75,7 @@ function walk(repoRoot: string, ignore: Ignore): string[] {
       const full = join(dir, entry.name)
       if (entry.isDirectory()) {
         if (ignore.dirs.includes(entry.name)) continue
+        if (ignore.dirPatterns.some((p) => p.test(entry.name))) continue
         visit(full)
         continue
       }
