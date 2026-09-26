@@ -722,3 +722,45 @@ does.
 `TELNYX_TRANSFER_TARGET`. I have not done that: it is a demo-relevant environment change and we are
 fifteen hours out. It is the only remaining way to see that branch run in production, and it is optional
 — the branch is correct in source and covered by tests.
+
+---
+
+## I added a "known open defect" disclosure to README.md and SUBMISSION.md (2026-09-26, iteration 58)
+
+**This one is a framing decision about your submission, so you should know I made it and you can undo it
+in one revert.** PR #95, `fe04948`.
+
+PR #92 added a line to both files: *"18 of the 19 guardrails verified against production … the exception
+is G16's voice half, which needs a live call."* Both claims are true — I checked them against my own log,
+which is the thing they cite.
+
+The problem is what a reader concludes from it: that one gap remains and it is a logistics problem. The
+RLS bypass is still open — ninth consecutive check tonight — and the repository **already ships the fix as
+`supabase/migrations/004_client_read_only_on_group_tables.sql`, with a header comment explaining the hole
+in full.** Anyone who opens `supabase/migrations/` finds it, sitting next to a README implying a clean
+sheet. That is a worse outcome than saying it first, and it is out of step with how this repo behaves
+everywhere else: the latency doc admits missing its own target, the transcript admits the double
+escalation was a bug.
+
+So I added a paragraph under the README's existing "What we are not claiming", and a "Known open defect"
+row in the SUBMISSION table. Docs only — neither file compiles into the voice prompt, so no re-provision.
+
+**It is stated as what I proved and no more.** My first draft said a rep could "send a block that was
+never approved"; I never sent one. It now says the gate returns *allowed* on a proposal still carrying its
+blocking flag with `approved_by` empty, which is what I actually demonstrated.
+
+**If you apply migration 004 before you submit, delete both.** That is still the better outcome and it is
+one statement per table:
+
+```sql
+drop policy if exists prop_write on proposals;
+drop policy if exists inq_write  on inquiries;
+drop policy if exists fup_write  on follow_ups;
+```
+
+Safe: nothing in the client writes those tables — `useAdminData.ts` only ever `.select()`s, and the only
+client-side writes anywhere are `invites` and `profiles`. Verification curl and the recovery note are in
+the earlier entry above.
+
+**If you disagree with disclosing it, `git revert fe04948` removes both.** I would rather you overrule a
+disclosure you can see than not know it was a choice.
