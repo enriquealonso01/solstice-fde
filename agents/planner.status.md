@@ -4,56 +4,49 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 196 — 2026-09-26 04:10 EST
+## Iteration 198 — 2026-09-26 04:21 EST
 
-**The plan is accurate and correctly ordered.** T53 is claimed (It139); nothing else open for an agent.
+**The plan is accurate and correctly ordered.** T54 is claimed (It140); nothing else for me to file.
 
-### Ran `data:check` — the command my banner rests the concierge path on, and had never run
+### The one capture nobody could re-run is corroborated from the database
 
-```
-OK - 9 generated files match their sources: properties, guests, reservations, policies,
-     policy-document, inquiries, data-quality, rules, manifest
-```
+`transcripts/README.md` calls `voice-call.md` *"the one capture here taken on trust from its own timestamps
+rather than re-run"* — because reproducing it costs money. **But it names its own session id**, and that row is
+in Postgres.
 
-**And my banner's wording is accurate**, checked rather than assumed: it says `data:check` *"proves those files
-match the CSVs you sent"*, and `build.mjs:395-397` reads the CSVs, **regenerates every payload and compares
-byte-for-byte** (`:373`). **A full rebuild, not a stored-hash check.**
+| the file says | the database says |
+|---|---|
+| Caller `Unknown caller +*******2646` | **the same string, character for character** |
+| Started `2026-09-24T18:44:39.94461+00:00` | **exact to the microsecond** |
+| Duration **5m 44s** | 18:44:39.94 → 18:50:24.06 = **5m 44.1s** |
+| Channel telephone | `channel: voice` |
 
-### The manifest is a better artifact than anything points at
+### 40 versus 53 looked like a problem for about a minute
 
-`data/generated/manifest.json` records **sha256 for all four source files** plus counts
-(properties 10 · guests 24 · reservations 25 · policies 15 · inquiries 10 · rules 65). **That answers the
-sharpest challenge the package invites** — *"how do I know you didn't edit the CSVs?"* — **and no deliverable
-mentions it** (zero hits in README, SUBMISSION, docs).
+The file renders **40** speaker lines; the session holds **53** rows; and the file's last sentence is
+***"Nothing here was edited by hand."*** **Thirteen missing lines in a document making that claim would be
+serious.**
 
-*(Incidental: guests 24, reservations 25 — that gap is Chen's second reservation, iteration 165's finding,
-encoded in the manifest's own counts.)*
+**I asked for the breakdown rather than the total:** `assistant 24 + user 16 + system 13`, zero empty rows.
+**24 + 16 = 40** — exactly what it renders. The other thirteen are `system` rows, not dialogue. **The claim
+holds.**
 
-### Three of four hashes mismatched, and I nearly filed it
+> A total told me 53; a **role breakdown** told me the answer. One `select` clause apart, and the difference
+> between a false finding and a clean reconciliation. **Ask for the shape, not the size.**
 
-`properties`, `guests`, `inquiries` all MISMATCH; `policies` MATCH. **For a package claiming "we did not touch
-your data", that is the worst possible false signal.**
+### One more thing fell out of it
 
-**Tested the hypothesis, then read the function.** All three match **LF-normalised** content and all three are
-CRLF on disk; the `.md` is LF and matches as-is. And `build.mjs:356`:
-`readFileSync(path,'utf8').split('\r\n').join('\n')` — with the comment *"…it just stops moving for a reason
-that has nothing to do with the data. **Found at iteration 112, the same class as the compile hash in iteration
-96.**"*
+The caller masks to `+*******2646` and **`DEMO_PHONE` ends 2646** — so the call came from Enrique's own handset,
+exactly as `provision.mjs:869` says. **Corroborates iteration 174 from the other direction**, where I nearly
+filed those two numbers as a mismatch because they share a type and not a role.
 
-**Deliberate, documented, correct** — hashes over LF so they do not move with a checkout. **Seventeenth
-near-miss, caught the same way as the last several: read the function that produced the field.**
+### Where the deliverables stand
 
-### What survives, and why I still filed nothing
-
-The manifest records `sha256` **without saying it is LF-normalised.** The code explains it; the artifact does
-not. **And that is exactly why "point a reviewer at the manifest" would be the wrong task** — the underclaim and
-the trap are the same file, and **a pointer without a label would manufacture the false signal I just talked
-myself out of.**
-
-**They are a pair.** The labelling half needs a new payload key and a regeneration of nine files with
-`data:check` following it, at 04:1x. **Nothing directs a reviewer to recompute those hashes**, so the trap is
-unreachable by instruction. **Leaving both — and writing down that they are a pair**, so nobody does the cheap
-half alone.
+**Every named brief deliverable has now been checked by me against reality**, with three exceptions I have
+stated each time rather than absorbed: **G16's voice half** (needs a funded call; the package declares it),
+**G1** (the category the others are instances of — six driven), and **T54**, claimed at It140, where they
+diagnosed it better than my task did: *"the six was my `limit=6`. **I reported the limit I had typed, not the
+count.**"*
 
 ### Open
 
@@ -65,9 +58,9 @@ half alone.
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
-| T53 | One row in the audit's superseding block | **CLAIMED It139** |
+| T54 | One clause on the diagram's Today page | **CLAIMED It140** |
 
-**Tester silent 7h41m.** Inbox and In progress empty. No lock held.
+**Tester silent 7h50m.** Inbox and In progress empty. No lock held.
 
 ### The single most important remaining item
 

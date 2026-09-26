@@ -8520,3 +8520,107 @@ because the interesting part is not the row, it is that a correction list can be
 as authoritative.
 
 `npx tsc -b` clean. `npx vitest run` **825 tests / 58 files** green (up 3).
+
+---
+
+## It140 — T54: the six in "Six calls transcribed" was the `limit=6` I typed
+
+T54 was open and unclaimed, and like T53 it is a correction of my own work — a worse one.
+
+At It133 I promoted the `/api/telnyx/events` node on the diagram's Today page from PENDING to LIVE and
+wrote its evidence into the detail line: ***"Six calls transcribed."*** The query I measured it with was:
+
+```
+sessions?select=id,channel,status,started_at&channel=eq.voice&order=started_at.desc&limit=6
+```
+
+**I reported the `limit` I had typed, not the count.** Re-run without it:
+
+```
+Content-Range: 0-8/9      ->  nine voice sessions
+  09-24 17:32  ended        6 turns      09-25 14:58  taken_over   3 turns
+  09-24 18:44  ended       53 turns      09-25 14:59  ended        9 turns
+  09-24 18:57  taken_over   6 turns      09-25 15:27  ended        8 turns
+  09-24 18:59  ended        9 turns      09-25 15:28  ended        7 turns
+  09-24 19:14  ended        3 turns
+```
+
+Nine sessions, and **all nine carry turns.** So the node was claiming a third less transcription work
+than the webhook had actually done, in the same direction as everything else this page has been wrong in.
+
+A number that came out of a query feels measured, which is what makes this the hardest kind of error to
+notice. It is the sixth instrument error in this project and the first where the instrument reported my
+own input back to me.
+
+### The shape is the fix, not the number
+
+It131 converted every count in `README.md` into a floor, a command and a test. **The diagram was never
+part of that pass**, and this was the one figure on it that moves the same way — it changes every time
+anyone dials the number.
+
+The argument is on the same page. There are exactly two raw counts on it:
+
+| count | moves when | pinned |
+|---|---|---|
+| `25 tools` | only on a re-provision | yes — the export-parity test |
+| `Six calls transcribed` | every time anyone phones in | no |
+
+And *"calls"* is not even well defined here. Two of the nine sessions are `taken_over` followed a minute
+or two later by an `ended` one — a supervisor takeover plausibly produces a second session for the same
+call, and so does a redial. Nine sessions are seven, eight or nine calls depending on how you count,
+which settles it: the node should not assert a number it cannot defend.
+
+It now reads:
+
+> **LIVE /api/telnyx/events** — Verifies the signature, diffs the cumulative history, inserts only new
+> turns. **Every voice session to date has a transcript: nine of nine as of 2026-09-26, two of them handed
+> to a supervisor mid-call.**
+
+The invariant is the claim worth making about a transcript webhook, it says more than the tally did, and
+*"as of 2026-09-26"* dates itself rather than pretending not to. **`25 tools` is untouched** — it is
+correct, it is held still, and removing a number that is doing useful work would be the wrong lesson.
+
+### The same six had spread to a second file
+
+T54 named one occurrence. Scanning for the pattern found another it did not: `docs/README-diagram.md:43`,
+inside the paragraph I wrote at It133 explaining the status corrections — *"six phone calls are in Postgres
+with their transcripts."* Same sentence, same wrong number, two files, because I wrote the guide's summary
+from the same query result. Fixed, and the guide now says why the clause is an invariant rather than a
+count, next to the contrast with `25 tools`.
+
+### Guarded by shape
+
+Three cases in `diagram-guide.test.ts`. The Today page may not state a bare count of calls, sessions,
+conversations, transcripts, messages or turns unless the surrounding sentence dates itself (`as of`, `at
+the time of writing`) or states an invariant (`every`, `nine of nine`). **So even *"Nine calls
+transcribed"* — the correct number — fails**, which is the point: the ban is on the shape, because the
+right number today is the wrong number tomorrow.
+
+A positive case requires the invariant sentence to still be there, so the node cannot quietly revert. And
+a third ties `25 tools` to `exports/telnyx-assistant.json`, because *"it is allowed to be a number because
+it is pinned"* is only an argument if something here checks it.
+
+Reading the page needed a `decode` helper: the `.drawio` stores labels as **doubly**-escaped HTML inside an
+XML attribute, so a plain-text read has to unescape twice and then strip tags. Without it the scan would
+have matched nothing and passed.
+
+Red-checked three ways: the original bare count fails 2, a correct bare count fails 2, and drifting the
+tool count to 24 fails 1.
+
+### I lost the fix in the middle of the red-check
+
+It135's lesson is: do not use `git checkout --` to undo a mutation, copy the file to the scratchpad and
+restore with `cp`. I followed it. The snapshot still put back the wrong thing, because **I took the copy at
+the top of the iteration, before making the edit** — so every `cp` in the red-check restored the *unfixed*
+file, and the last one left it that way. MUT 1's mutation and the restore were the same content, which is
+why nothing looked odd until the end.
+
+The tell was identical to last time: the **restored** line came back `2 failed | 21 passed` where it should
+have read 23 passed. That line exists for exactly this, and it is worth restating that a red-check has four
+parts, not three — mutate, observe, restore, **re-run and read it.** Re-applied the fix, snapshotted the
+*fixed* state as `DW140-FIXED.bak`, and ran all three mutations again.
+
+`agents/README.md` now carries the refinement under It135's rule: take the snapshot **after** the fix is
+green, and name the copy for the state it holds.
+
+`npx tsc -b` clean. `npx vitest run` **828 tests / 58 files** green (up 3).

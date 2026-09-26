@@ -23,6 +23,19 @@ const repoRoot = resolve(__dirname, '../../../..')
 const guide = readFileSync(join(repoRoot, 'docs/README-diagram.md'), 'utf8')
 const drawio = readFileSync(join(repoRoot, 'docs/architecture.drawio'), 'utf8')
 
+/** The .drawio stores node labels as doubly-escaped HTML inside an XML attribute, and the tags carry
+ *  no text, so a plain-text read has to unescape twice and then strip the markup. */
+const decode = (xml: string): string =>
+  xml
+    .replace(/&amp;lt;/g, '<')
+    .replace(/&amp;gt;/g, '>')
+    .replace(/&amp;quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/<[^>]+>/g, ' ')
+
 const pageNames = [...drawio.matchAll(/<diagram[^>]*name="([^"]+)"/g)].map((m) => m[1])
 
 describe('the diagram guide against the diagram', () => {
@@ -338,5 +351,74 @@ describe('the Today page says what actually runs', () => {
       'the future-state Object storage node no longer offers signed URLs. It is the recommendation and ' +
         'the thing the Today page must not pretend to be.',
     ).toContain('Amazon S3 with time-limited signed URLs for proposal PDFs. Today: Supabase Storage.')
+  })
+
+  /**
+   * T54. The `/api/telnyx/events` node said *"Six calls transcribed."* There were nine, and all nine had
+   * transcripts — and the six was the `limit=6` on the query I measured it with at iteration 133. The
+   * figure reported was the one typed into the request, which is the most embarrassing way to be wrong
+   * and the hardest to notice, because a number that came out of a query feels measured.
+   *
+   * The shape is the fix rather than the number. Iteration 131 converted every count in `README.md` into
+   * a floor, a command and a test; **the diagram was not part of that pass**, and this was the one figure
+   * on the page that moves the same way — every time anyone dials the number. Worse, *"calls"* is not even
+   * well defined here: two of the nine sessions are `taken_over` followed a minute later by an `ended`
+   * one, so nine sessions are seven, eight or nine calls depending on how a takeover is counted. The node
+   * states the invariant now — every voice session has a transcript — with a dated snapshot beside it.
+   *
+   * `25 tools` stays a bare number, and the contrast is the argument: it changes only on a re-provision,
+   * and the export-parity test holds it still. The case below ties it to the export so that claim is
+   * checked here too rather than asserted.
+   */
+  const QUANTITY = String.raw`(?:calls?|sessions?|conversations?|transcripts?|messages?|turns?)`
+  const NUMBER = String.raw`(?:[0-9][0-9,]*|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)`
+
+  it('states no bare count of anything that moves when someone dials', () => {
+    const flat = decode(todayPage).replace(/\s+/g, ' ')
+    const hits = [...flat.matchAll(new RegExp(String.raw`\b${NUMBER}\s+${QUANTITY}\b`, 'gi'))]
+      .map((m) => m[0])
+      // A figure that dates itself, or one attached to an invariant, is not the failure mode.
+      .filter((phrase) => {
+        const at = flat.indexOf(phrase)
+        const sentence = flat.slice(Math.max(0, at - 160), at + 160)
+        return !/as of|at the time of writing|every |all nine|nine of nine/i.test(sentence)
+      })
+
+    expect(
+      hits,
+      `the Today page states ${hits.join(', ')} as a bare count. Calls, sessions and transcripts change ` +
+        `every time anyone uses the system, so a number is wrong by the time it is read — and the last ` +
+        `one was wrong on the day it was written, because it was the query's limit rather than its result. ` +
+        `State the invariant and date the snapshot.`,
+    ).toEqual([])
+  })
+
+  it('still states the transcription invariant, so it cannot revert to a count', () => {
+    const flat = decode(todayPage).replace(/\s+/g, ' ')
+    expect(
+      flat,
+      'the /api/telnyx/events node no longer claims that every voice session has a transcript. That is ' +
+        'the claim worth making about a transcript webhook; a tally of calls is not.',
+    ).toContain('Every voice session to date has a transcript')
+  })
+
+  it('keeps the one bare count on the page tied to the export that fixes it', () => {
+    // "25 tools" is allowed to be a number because it only moves on a re-provision. That is only an
+    // argument if it is true, so it is checked against the committed export rather than trusted.
+    const flat = decode(drawio).replace(/\s+/g, ' ')
+    const stated = flat.match(/\b(\d+) tools\b/)
+    expect(stated, 'the diagram no longer states a tool count; drop this case or re-point it').toBeTruthy()
+
+    const parsed = JSON.parse(readFileSync(join(repoRoot, 'exports/telnyx-assistant.json'), 'utf8')) as {
+      tools?: unknown[]
+      data?: { tools?: unknown[] }
+    }
+    const actual = (parsed.tools ?? parsed.data?.tools ?? []).length
+    expect(
+      Number((stated as RegExpMatchArray)[1]),
+      `the diagram says ${(stated as RegExpMatchArray)[1]} tools and exports/telnyx-assistant.json has ` +
+        `${actual}. This number is allowed to be a number only because it is pinned; if the two disagree ` +
+        `it is just another stale figure.`,
+    ).toBe(actual)
   })
 })

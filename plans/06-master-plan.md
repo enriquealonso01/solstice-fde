@@ -1,9 +1,8 @@
 # Master plan: the whole picture
 
-> ## 04:09 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> **One agent task is open: T53** — the requirements audit marks **D1**, one of Katie's six asks, PARTIAL
-> for a gap that is filled: `docs/demo-runbook.md` opens by naming *"two audiences in one room."*
-> *T38–T52 are closed.* `sol.md`, the committed export and the live phone agent
+> ## 04:20 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **One agent task is open: T54** — the architecture diagram's Today page says *"Six calls transcribed"*;
+> there are **nine**, all transcribed. *T38–T53 are closed.* `sol.md`, the committed export and the live phone agent
 > all sit at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **809 tests / 58 files at
 > 03:48**. It grows every hour, so read that as a vintage rather than a target.*
 >
@@ -465,6 +464,85 @@ missing, or mark it DONE.**
 
 **Check when done:** the block names D1; the original row at :73 is untouched; the reason given for any
 surviving PARTIAL is not *"no rehearsed narrative"*.
+
+### T54. The diagram's Today page says "Six calls transcribed". There are nine, and this is the count It131 did not convert.
+
+*One clause, on the page It133 already swept for statuses and It135 for the storage overclaim. **Third wrong
+figure on the same page, and the third understating one.** The argument for the fix is the other count on that
+page, which is right.*
+
+#### Measured
+
+**`docs/architecture.drawio`, Today (MVP), the `/api/telnyx/events` node:**
+
+> **LIVE /api/telnyx/events** — Verifies the signature, diffs the cumulative history, inserts only new turns.
+> ***Six calls transcribed.***
+
+With the service-role key, `sessions` where `channel = 'voice'`, joined to their `messages`:
+
+```
+voice sessions: 9   |   with at least one message: 9
+  09-24 17:32:40  ended       6 turns
+  09-24 18:44:39  ended      53 turns
+  09-24 18:57:56  taken_over  6 turns
+  09-24 18:59:41  ended       9 turns
+  09-24 19:14:06  ended       3 turns
+  09-25 14:58:15  taken_over  3 turns
+  09-25 14:59:27  ended       9 turns
+  09-25 15:27:55  ended       8 turns
+  09-25 15:28:56  ended       7 turns
+```
+
+**Nine voice sessions and all nine carry transcribed turns.** The `/api/telnyx/events` node is claiming less
+transcription work than it did.
+
+#### Why a number is the wrong shape here, and the proof is on the same page
+
+There are exactly **two** raw counts on the Today page, and they are different in kind:
+
+| count | changes when | guarded |
+|---|---|---|
+| *"25 tools"* | **only on a re-provision** | **yes** — T49's export-parity test would go red. Verified correct at iterations 158 and 170 |
+| *"Six calls transcribed"* | **every time anyone dials the number** | **no** |
+
+**It131 converted every count in `README.md` to a floor, a command and a test.** *"About 35,100 lines"* became a
+floor because it moves. **The diagram was not part of that pass**, and this is the one figure on it that moves
+the same way. **"25 tools" can stay a number precisely because a guard holds it still.**
+
+#### And "calls" is genuinely ambiguous, which settles the shape
+
+Three pairs are one to two minutes apart, two of them across a `taken_over` → `ended` boundary:
+
+```
+18:57:56 taken_over → 18:59:41 ended
+14:58:15 taken_over → 14:59:27 ended
+15:27:55 ended      → 15:28:56 ended
+```
+
+**A supervisor takeover plausibly produces a second session for the same call**, and a redial does too. So the
+number of *calls* behind nine sessions could be seven, eight or nine depending on how you count — **which is
+exactly why the node should not assert a number it cannot defend.**
+
+#### Do this — one clause
+
+Replace *"Six calls transcribed."* with a form that is true at any reading:
+
+> **LIVE /api/telnyx/events** — Verifies the signature, diffs the cumulative history, inserts only new turns.
+> **Every voice session to date has a transcript** — nine of nine at the time of writing, two of them handed to
+> a supervisor mid-call.
+
+**That says more than the old figure and cannot rot:** the invariant (*every* voice session is transcribed) is
+the claim worth making, and *"nine of nine at the time of writing"* dates itself instead of pretending not to.
+
+**Leave *"25 tools"* alone.** It is correct, it is pinned, and changing it would remove a number that is doing
+useful work.
+
+**Check when done:** the node states an invariant rather than a bare count; `diagram-guide.test.ts` still reads
+the `.drawio` as plain XML and is green; `docs/README-diagram.md` still describes the pages accurately;
+*"25 tools"* is unchanged.
+
+*(Incidental, worth knowing: the two `taken_over` rows are the **supervisor ladder having been exercised**, which
+is what It125's D5 correction asserted. This is the data behind that claim.)*
 
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
@@ -1790,6 +1868,155 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 198, 04:20 EST — the one capture nobody could re-run is corroborated to the microsecond and the exact turn
+
+#### Why this was the last thing left
+
+`transcripts/voice-call.md` is the only deliverable the package admits it cannot re-verify:
+`transcripts/README.md` says *"reproducing it means placing a real call, which costs money on a balance held
+for the demo. **It is the one capture here taken on trust from its own timestamps rather than re-run.**"*
+
+**But it does not have to be taken on trust, because it names its own session id.** It prints
+`Session: 701de11f-6e7e-4c5c-97b4-f972fb0a9c97`, and that row is in Postgres.
+
+```
+id          701de11f-6e7e-4c5c-97b4-f972fb0a9c97
+channel     voice
+guest_label "Unknown caller +*******2646"
+started_at  2026-09-24T18:44:39.94461+00:00
+ended_at    2026-09-24T18:50:24.06+00:00
+```
+
+| the file says | the database says |
+|---|---|
+| Channel: telephone | `channel: voice` |
+| Caller: `Unknown caller +*******2646` | **the same string, character for character** |
+| Started: `2026-09-24T18:44:39.94461+00:00` | **exact to the microsecond** |
+| Duration: **5m 44s** | 18:44:39.94 → 18:50:24.06 = **5m 44.1s** |
+
+#### And 40 versus 53 looked like a problem for about a minute
+
+The file renders **40** speaker lines. The session holds **53** message rows. And the file's last sentence is
+***"Nothing here was edited by hand."*** **Thirteen missing lines in a document making that claim would be a
+serious finding.**
+
+**I asked for the breakdown rather than the total:**
+
+```
+53 rows = assistant 24 + user 16 + system 13      empty-content rows: 0
+24 + 16 = 40
+```
+
+**Exactly the forty lines the file renders.** The other thirteen are `system` rows — not dialogue, so correctly
+absent from a transcript of a conversation. ***"Nothing here was edited by hand"* holds:** every speech row
+appears and nothing that appears was invented.
+
+> **The same lesson in a new dress.** A total told me 53; a **role breakdown** told me 24 + 16 + 13. The
+> difference between those two queries is one `select` clause, and it is the difference between a false finding
+> and a clean reconciliation. **Ask for the shape, not the size.**
+
+#### One more thing fell out of it
+
+The caller is masked to `+*******2646`, and **`DEMO_PHONE` ends 2646.** So the call came from Enrique's own
+handset — exactly what `scripts/telnyx/provision.mjs:869` says it should: *"**Enrique demos by calling from
+`DEMO_PHONE`**."* **That corroborates iteration 174's finding from the other direction**, where I nearly filed
+the two phone numbers as a mismatch because they share a type and not a role.
+
+#### Where that leaves the deliverables
+
+**Every named brief deliverable has now been checked by me against reality**, with three exceptions I have
+stated each time rather than absorbed:
+
+- **G16's voice half** — needs a funded call, and the package declares the exception itself.
+- **G1** — *"no hotel fact is ever invented"* is the category the others are instances of; I have driven six of
+  those instances.
+- **T54** — the diagram's *"Six calls transcribed"*, **claimed at It140**, where they diagnosed it better than
+  my task did: *"the six was my `limit=6`. **I reported the limit I had typed, not the count.**"* That belongs
+  in the taxonomy next to my own — reporting a query parameter as a measurement.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — $3.03, no credit line, ~6 calls, hard stop at zero. **Buys beat 3 and G16's voice half** | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T54 | One clause on the diagram's Today page | **CLAIMED It140** |
+
+**No agent task is open for me to file.** Inbox and In progress empty. No lock held. Tester silent **7h50m**.
+**The plan is accurate and correctly ordered.**
+
+### Iteration 197, 04:14 EST — T53 shipped, and the same diagram page carries a third understating figure
+
+#### T53 closed (It139), and they added the sentence I should have written
+
+The audit's superseding block now carries **D1**, and above the table:
+
+> *"This table said **eight** until iteration 139. D1 was missed by the pass that wrote it, and D1 covers one of
+> the brief's six evaluation criteria — so **the sweep that corrected understatements understated its own
+> coverage.** Worth leaving visible: **a list of corrections is exactly the kind of list that gets read as
+> complete.**"*
+
+**That last clause is the general form of the whole night** — the 15:30 short list, the guard with five hardcoded
+needles, the banner that kept advertising shipped fixes. **A list that exists to fix omissions is read as
+exhaustive, and nothing about being a correction makes it one.**
+
+#### T54: "Six calls transcribed" — there are nine
+
+`docs/architecture.drawio`, Today (MVP), the `/api/telnyx/events` node. Measured with the service-role key,
+`sessions` where `channel='voice'` joined to `messages`:
+
+```
+voice sessions: 9   |   with at least one message: 9
+  6 · 53 · 6 · 9 · 3 · 3 · 9 · 8 · 7 turns
+  two of them status taken_over
+```
+
+**Nine, all transcribed.** Third wrong figure on that page — after It133's six statuses and It135's storage
+overclaim — **and the third in the understating direction.**
+
+#### The argument for the fix is the other count on the same page
+
+There are exactly two raw counts on the Today page, and they differ in kind:
+
+| count | moves when | guarded |
+|---|---|---|
+| *"25 tools"* | only on a re-provision | **yes** — T49's export-parity test. Verified correct at iterations 158 and 170 |
+| *"Six calls transcribed"* | **every time anyone dials the number** | **no** |
+
+**It131 converted every count in `README.md` to a floor, a command and a test. The diagram was not in that
+pass**, and this is the one figure on it that moves the same way. **"25 tools" earns its number because a guard
+holds it still** — so T54 says to fix one and explicitly leave the other alone.
+
+#### And "calls" is genuinely ambiguous, which settles the shape rather than the number
+
+Three session pairs sit one to two minutes apart, two across a `taken_over → ended` boundary. **A supervisor
+takeover plausibly makes a second session for the same call; so does a redial.** So the call count behind nine
+sessions is seven, eight or nine depending on how you count — **which is the reason the node should assert an
+invariant instead of a figure:** *"every voice session to date has a transcript — nine of nine at the time of
+writing."* **That says more than the old number and cannot rot.**
+
+*(Incidental: those two `taken_over` rows are the **supervisor ladder having been exercised**, which is what
+It125's D5 correction asserted. This is the data behind that claim.)*
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — $3.03, no credit line, ~6 calls, hard stop at zero. **Buys beat 3 and G16's voice half** | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T54 | One clause on the diagram's Today page — an invariant, not a count | any agent |
+
+Inbox and In progress empty. No lock held. Tester silent **7h46m**.
+**The plan is accurate and correctly ordered.**
 
 ### Iteration 196, 04:09 EST — ran the command my own banner rests the concierge path on, and chased its manifest to a near-miss
 
