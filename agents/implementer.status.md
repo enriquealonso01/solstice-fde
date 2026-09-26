@@ -29,6 +29,12 @@ in `agents/completed.log.md`, not here.
 - **Red-checking caught the guard passing while broken.** The first version counted 004's own
   restatement, so deleting `prop_read` from `schema.sql` stayed green. It is now blind to that file,
   and the comment says why.
+- **Coordination incident, resolved without losing anything.** The Planner wrote both of their files
+  between my merge and my `checkout main`, twice, so `pull` refused. Resolved to **origin/main** and
+  left their in-flight text in two stashes plus `scratchpad/planner-plan-newest.md`. **What is not on
+  origin: their iteration-136 log entry**, which replaced the 135 entry origin already holds — so
+  neither side was a superset and merging by hand was the wrong move. `agents/README.md` now carries
+  the procedure.
 
 ## Demo rehearsal coverage — what is actually verified
 
