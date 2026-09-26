@@ -4250,3 +4250,55 @@ generated `.svg` hours before submission to add a clause about an assistant id w
 buys.
 
 `npx tsc -b --force` clean. `npx vitest run`: **509 passed, 40 files**.
+
+## It79 — I filed a finding against a document that was correct, and the guard I wrote caught me
+
+Audited `docs/how-this-was-built.md`, the document `SUBMISSION.md` points at for Katie's *"build it
+with agents"* ask, and the last unaudited one a reviewer is explicitly sent to.
+
+### The finding I was about to ship was wrong
+
+Its ownership table gives A6 `scripts/telnyx/`, `netlify/functions/telnyx/`, **`voice/`**. I checked:
+
+```
+test -e voice            -> nothing
+git log --all -- voice   -> nothing
+```
+
+Two independent commands, both empty, so I concluded a named deliverable listed a directory that had
+never existed — and I edited the table to remove it, replacing it with prose and a paragraph about
+ambiguous ownership.
+
+**Both commands are root-relative.** The directory is **`netlify/functions/voice/`** — `client-state.ts`,
+`credentials.ts`, `index.ts`, `supervisor.ts`, which is exactly *"the supervisor ladder"* the row
+claims. And the table already uses that shorthand two rows above: A3's cell writes `tools/` beside
+`netlify/functions/chat.ts`.
+
+**Two checks agreeing is not corroboration when they share an assumption.** Both were rooted at the
+repository root; the shorthand is relative. My edit is reverted; the document was right as written.
+
+### What caught it was the red-check on my own new guard
+
+I wrote `doc-paths.test.ts` to stop this class — a bare backticked path is a third shape, after
+`file.ts:NN` citations and markdown links, and nothing covered it. Its first version resolved only
+from the root and reported **six** dead ends: `tools/`, `architecture.svg`, `honest-handoff.md` and
+others. Every one was a false positive — the exact failure that teaches people to ignore a guard — so
+it now resolves three ways: from the root, from beside the document, or as an unambiguous suffix of
+exactly one path in the tree.
+
+Then reinstating `voice/` as a red-check **passed**. Per It74's lesson I checked whether the mutation
+had actually applied rather than trusting the green — it had. So the guard was telling me `voice/`
+resolves, and it was right and I was not.
+
+**A guard is not only for catching the next person.** This one refuted the author, before the edit
+shipped, in the same iteration it was written.
+
+### The document is correct
+
+- Ownership table: all paths resolve, including `voice/` and `tools/`.
+- A3's *"eleven concierge tools"*: `CONCIERGE_TOOLS` has exactly eleven entries.
+- The guard's own comment now tells this story rather than the version I believed for ten minutes.
+
+Red-checked against a path that resolves nowhere (`telephony/`): fails, naming it.
+
+`npx tsc -b --force` clean. `npx vitest run`: **516 passed, 41 files**.

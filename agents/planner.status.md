@@ -4,37 +4,40 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 108 — 2026-09-25 ~20:46 EST
+## Iteration 110 — 2026-09-25 ~20:56 EST
 
-### I audited my own file's headings. Two more contradicted their own contents
+### Drove the pre-demo checklist. It holds, with one gap folded into T39
 
-**The OPEN WORK heading said there was nothing to do, directly above two things to do.** Line 73
-read *"nothing is left for an agent; all four items are Enrique's"* while **T39 sits at line 109 and
-T38 at line 160**, both open, both agent work. I wrote that heading in iteration 95 when it was
-true, filed both tasks under it in 104 and 105, and never looked back up.
+`docs/demo-runbook.md`'s **"Before they join"** was the last instruction block I had not executed.
 
-**T17's heading has been wrong since PR #56.** It reads *"WRITTEN, uncommitted"*; the telephony-only
-note is live at `agent/sol.md:77-80` and present at HEAD. Iteration 75 recorded that it needed no
-work and I never returned to the heading. Marked CLOSED with the correction inline; the body is left
-as written with its stale present tense flagged.
+**What holds, checked not admired:**
 
-### What this says about the file
+- **`Telnyx balance above $20`** matches `SUBMISSION.md`'s gate and my corrected item 2 — two
+  documents, one number, no drift.
+- **Warm-up figures** are the ones I measured in iteration 74: **1.202s** and **0.978s** cold,
+  session count unmoved at 121.
+- **The ordering argument is the best thing in the file** and it is reasoned: stop the loop before
+  tidying, because tidy only closes sessions idle over **30 minutes** while the loop was adding
+  **~25 an hour**, so *"a tidy at 10:55 is undone by agent traffic at 10:56."*
 
-**Each of the last three stale facts was in the part of the plan that claims to be current, and each
-was written by me and then outlived by events I recorded myself.** The verification log stays
-accurate because every entry is dated and never touched again. **The current-state sections rot
-precisely because they are the ones meant to change.**
+**The gap:** *"Run it with no flag first to see the count, then `npm run demo:tidy`"* — **there is
+no npm alias for the dry run.** `package.json:18` is `…--delete`; the dry run is the bare
+`node scripts/cleanup-phantom-sessions.mjs`. A presenter minutes from the panel is told to run
+*"it"* with no flag, without being told what **it** is. Every other item in that checklist ships its
+exact command.
 
-`doc-citations.test.ts` and `list-counts.test.ts` guard the eleven deliverable documents. **Nothing
-guards this file** — and it is the one three agents read first. Not proposing a guard at 20:46 with
-four items outstanding, but the next person keeping a long-lived planning document should know that
-its dated log will stay true and its summary will not.
+### Folded into T39 rather than filed as T41
 
-### Everything else above the log checks out
+Both edits are in the same file, so they should be **one lock, one PR** — the reasoning PR #79 used
+when it folded T32 into the re-export. **A fourth task for a second edit to a file already under a
+task would have been bookkeeping, not planning.** Three agent items, not four.
 
-T19–T37 headings carry accurate CLOSED markers with PR numbers; guardrail coverage reads **18 of
-19**; T21's heading correctly frames it as Enrique's database call.
+### Also landed
+
+**PR #110** made *"service-role keys must never appear here"* a test rather than a comment. That is
+the seventh guard — citations, list counts, README counts, walkthrough quotes, export redaction,
+committed credentials, and now this — **every one written after something rotted.**
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** Agent work is **T38 and T39**, one sentence each.
+**The `drop policy` paste.** Agent work is **T38, T39** (two edits, one pass) and **T40**.

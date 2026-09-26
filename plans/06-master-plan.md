@@ -70,7 +70,7 @@
 
 ---
 
-# ▶ OPEN WORK — four items are Enrique's, and two one-sentence fixes are the agents'
+# ▶ OPEN WORK — four items are Enrique's, and three one-sentence fixes are the agents'
 
 *Everything below this section is closed, or evidence.*
 
@@ -199,9 +199,25 @@ someone has driven it.
 network and runs in under a second, and `docs/live-modification.md` reproduces both its Before and
 After blocks verbatim (Tester iteration 61).
 
+**While you are in this file — a second, smaller fix in the same pass.** The *"Before they join"*
+checklist says of the tidy: *"Run it with no flag first to see the count, then `npm run demo:tidy` to
+close them."* **It never gives the no-flag command**, and there is no npm alias for it:
+`package.json:18` defines `demo:tidy` as `node scripts/cleanup-phantom-sessions.mjs --delete`, and
+the dry run is the bare `node scripts/cleanup-phantom-sessions.mjs` (the script's own header
+documents both). Every other item in that checklist ships its exact command — the warm-up gives two
+full `curl`s. Give this one too:
+
+> ```bash
+> node scripts/cleanup-phantom-sessions.mjs      # dry run, prints what it would close
+> npm run demo:tidy                              # actually closes them
+> ```
+
+**Both edits are in `docs/demo-runbook.md`, so take them in one pass** — one lock, one PR, the same
+reasoning PR #79 used when it folded T32 into the re-export rather than shipping twice.
+
 **Check when done:** step 3 names only what `npx vite-node scripts/show-verdict.ts -- INQ-2009`
 prints; `grep -c "console.log" scripts/show-verdict.ts` still shows a single price statement, so the
-claim and the script agree.
+claim and the script agree; and the tidy item carries both commands.
 
 
 ### T38. "Search for the second occurrence" points at the wrong hotel — one phrase, on the beat the panel watches
@@ -1173,6 +1189,138 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 110, 20:56 EST — drove the pre-demo checklist; it holds, with one command it names but never gives
+
+`docs/demo-runbook.md`'s **"Before they join"** is the last instruction block I had not executed. It
+is the strongest document in the package and it survives being driven.
+
+#### What holds, checked rather than admired
+
+- **`Telnyx balance above $20`** — matches `SUBMISSION.md`'s pre-send gate exactly, and matches the
+  correction I made to my own item 2 three iterations ago. Two documents, one number, no drift.
+- **The warm-up figures** — *"Cold reads ~1.3s and ~1.0s; warm ~0.21s and ~0.26s"* — are the ones I
+  measured in iteration 74 (**1.202s** and **0.978s** cold, with the session count unmoved at 121).
+- **The ordering argument is the best thing in the file**, and it is reasoned rather than asserted:
+  stop the loop *before* tidying, because `demo:tidy` only closes sessions idle over **30 minutes**
+  (`cleanup-phantom-sessions.mjs:84`), the Tester was adding **~25 sessions an hour**, so *"a tidy at
+  10:55 is undone by agent traffic at 10:56."*
+
+#### The one gap: an instruction that names a command it never gives
+
+> *"Run it with no flag first to see the count, then `npm run demo:tidy` to close them."*
+
+**There is no npm alias for the dry run.** `package.json:18` defines `demo:tidy` as
+`node scripts/cleanup-phantom-sessions.mjs --delete`; the dry run is the bare
+`node scripts/cleanup-phantom-sessions.mjs`, which the script's own header documents but the
+checklist does not. A presenter minutes from the panel joining is told to *"run it with no flag"*
+without being told what **it** is.
+
+Small — and the reason it matters is consistency of form rather than the size of the gap. **Every
+other item in that checklist ships its exact command**: the warm-up gives two complete `curl`s, and
+`SUBMISSION.md`'s deploy check ships an entire script rather than describing one. This item breaks
+the pattern in the place where the reader has least time to reconstruct it.
+
+#### Folded into T39 instead of filed as T41
+
+Both edits are in `docs/demo-runbook.md`, so they should be one pass — **one lock, one PR**, which is
+the reasoning PR #79 used when it folded T32 into the re-export rather than shipping twice and
+re-staling its own work. **Filing a fourth task for a second edit to a file already under a task
+would have been bookkeeping, not planning.**
+
+That leaves three agent items, not four, and each is still one sentence.
+
+#### Also landed this iteration
+
+**PR #110** turned *"service-role keys must never appear here"* from a comment into a test —
+continuing the run of guards that started with `doc-citations.test.ts` and now covers citations,
+list counts, README counts, walkthrough quotes, the export redaction, committed credentials, and
+this. **Seven guards, every one of them written after something rotted.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T38**, **T39** (two edits, one pass), **T40** | Agents |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
+### Iteration 109, 20:52 EST — the phone-failure fallback fails for the same reason the phone does
+
+I drove `docs/demo-runbook.md`'s **"If something breaks"** table, which is the only document in the
+package written to be read while something is going wrong.
+
+#### T40: the recovery shares a failure mode with the failure
+
+> | The phone call fails | **Use the mic in the chat bubble.** Same agent, same tools. |
+
+**"Same agent, same tools" is exactly right, and that is the problem.** `useTelnyxVoice.ts`
+connects with `VITE_TELNYX_ASSISTANT_ID` through `@telnyx/webrtc` to **the same assistant the phone
+number reaches**, on credentials minted by `netlify/functions/voice/credentials.ts` from the same
+account. Same assistant, same account, **same balance.**
+
+The numbers make it concrete rather than theoretical:
+
+```
+balance                      $3.03
+project's own pre-send gate  "above $20, or do not invite them to call the number"
+measured cost, 3-second call ~$0.48
+```
+
+**If the phone fails because the account is out of credit, the mic fails identically** — in front of
+the panel, immediately after Enrique has said *"same agent, same tools."*
+
+**The balance-independent fallback is the text chat bubble.** `/api/chat` runs on
+`ANTHROPIC_API_KEY` against `claude-sonnet-5` and does not touch Telnyx: different vendor, different
+credentials, different failure mode. T40 amends the one row to split the two causes and leaves the
+rest of the table alone — its best lines, *"Do not apologise twice"* and *"Handling it calmly is
+worth more than not hitting it"*, are why a presenter will actually read it under pressure.
+
+#### Why this is worth a task rather than a note
+
+Every other document I have driven this evening was wrong about **what a command prints** or **which
+line to edit**. This one is *correct* — the mic really is the same agent with the same tools — and
+still leads somewhere bad, because the sentence describes the fallback's **similarity** to the
+failed path when what matters is its **independence** from it.
+
+> A fallback is only a fallback if it can fail separately. **"Same agent, same tools" is a statement
+> about equivalence, and equivalence is the opposite of what you want from a backup.**
+
+#### It strengthens item 2 rather than replacing it
+
+Topping up to $20 **removes** this failure mode; T40 only stops it being walked into. If the top-up
+happens, the mic is a perfectly good fallback for the failures that remain — carrier, signal, DID —
+and those are the ones the row was written for.
+
+#### The rest of the table holds
+
+The supervisor-audio row is the model for how to handle a known limitation live: *"Expected, and say
+so before they notice… point at the live transcript, which has both sides, and explain the
+conference-based fix you chose not to build days before submission."* It names the gap, gives the
+evidence, and states the decision — before the audience finds it.
+
+#### T38 and T39 remain open
+
+Unchanged: `live-modification.md:22` still says *"second occurrence"*, `demo-runbook.md:217` still
+says *"all three costed options"*.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | **Top up Telnyx to $20+** (balance $3.03) — **now also removes T40's failure mode** | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T38**, **T39**, **T40** — one sentence each | Agents |
+
+Inbox empty. No lock held.
+
 
 ### Iteration 108, 20:46 EST — audited my own file's headings and found two more that contradict their own contents
 

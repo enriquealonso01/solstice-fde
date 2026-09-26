@@ -10,106 +10,15 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **CLAIMED It78: the architecture diagram's security claim is true and guarded by nothing.** Audited
-  the last named deliverable, `docs/architecture.svg` (277 labels). Its most falsifiable claim is
-  *"only the Supabase anon key reaches the browser"*, and I had never checked the **shipped bundle**.
-- **It holds:** the only JWT in the 774KB bundle is `role: anon`; no `service_role` key, no API key.
-  The bundle also carries `TELNYX_ASSISTANT_ID`, an identifier rather than a key, so the claim is
-  defensible as written.
-- **But the mechanism is four hand-written lines.** `vite.config.ts` uses `define` to inject arbitrary
-  unprefixed `.env` values, **deliberately bypassing Vite's `VITE_` prefix safety**, and its own
-  comment says *"Service-role keys must never appear here"* — a rule enforced by attention. One added
-  line ships a privileged credential to every browser. Making the comment executable.
-
-- **CLAIMED It77: `docs/integration-recommendation.md` overstates its central claim by one exception.**
-  Last unaudited named brief deliverable. Its architectural argument is that an OPERA swap is *"a change
-  to that file's implementation, not a rewrite"* because **`data.ts` holds all seven imports of
-  `data/generated/*.json` and nothing outside it touches them.**
-- **The count is exactly right — seven, lines 26–32.** The absolute is not: `scripts/show-verdict.ts`
-  reads the JSON directly with `readFileSync`, and it is **the instrument the live-modification demo
-  runs** (`live-modification.md:33`). Four other outside hits are comments, so the real exception count
-  is one. Saying the weaker true sentence, and pinning the invariant so the strong half stays true.
-
-- **CLAIMED It76: audited the five transcripts nobody had checked, and indexed the folder.** The plan's
-  top banner still lists *"two agent items"* — both are T33 and T36, which I closed in #83 and #90, so
-  line 70 is the current truth: nothing left for an agent. The transcripts are a named brief
-  deliverable and only `honest-handoff.md` had ever been examined (T30).
-- **All five reproduce against production.** No transcript besides `honest-handoff` shows the
-  duplicate-escalation defect, and each tool claim holds. **A guard would be the wrong instrument** —
-  `docs-quote-drift` already excludes `transcripts/` because they are dated captures and editing one
-  to match today's code falsifies a record. So the output is an index, written from what I verified.
-
-- **DONE It75: re-audited `docs/role-walkthroughs.md` as a property, not a list.** It73 checked the
-  strings I remembered changing; this swept all 55 backticked spans. **The document is correct** —
-  the five that looked missing are runtime-assembled, and `Unknown caller +*******2646` is written
-  server-side into `guest_label`, confirmed against all 8 recent voice sessions.
-- **19 of the 24 UI quotes are literals; the guard now pins all of them**, generated from the sweep
-  with test files excluded so a case cannot assert a string exists in its own test. Red-checked by
-  renaming `ready to price` in every occurrence.
-
-- **CLAIMED It74: audited `docs/demo-runbook.md` end to end.** The Tester's newest lesson is *"audit
-  the file that is open during the demo"* — they did the cheatsheet and found a beat promising the
-  opposite of what the tool returns. The runbook is the other such file, I have added three sections
-  to it, and nobody had checked the whole thing.
-- **It comes back clean.** Every identifier, figure and instruction verified against the live tools,
-  the rules engine and the database: R55004/Chen/Platinum/2pm guaranteed, INQ-2009 Phoenix with the
-  17%-vs-15% flag, `$7,994.25` (already test-pinned), INQ-2011 Cypress Ridge Reunion source `voice`,
-  the uuid-not-code dead end, and the `thresholds.ts` snippet matching lines 102–106 exactly.
-- **Shipping a guard rather than a fix**, because the one thing with no protection is the code block
-  the presenter types from while a panel watches.
-
-- **CLAIMED It73: `docs/role-walkthroughs.md` quotes two admin strings that I changed.** Everything in
-  the plan is closed and the four remaining items are Enrique's, so I went back over the risk I
-  created myself: **PR #97 promoted this document into the README's main table**, and PRs #50/#54
-  reworded the admin UI. A reviewer now has a signposted click-by-click guide quoting text that is no
-  longer on screen.
-- **Two real, three false alarms.** `· written to audit_log` → now `· written to the audit trail`, and
-  `scoped by role in the database` → now `each one sees only its own work` — the second is worse
-  because the doc says *"note the wording"* about wording that no longer exists. The other three hits
-  (`SIP client`, `tool_invocations`, `audit_log` in the diagram guide) are the docs describing the
-  system in their own words, not quoting a screen, and remain true.
-
-- **CLAIMED It72: the G16 row, which is stale because of my own PR #90.** All of T1–T37 are closed and
-  the four remaining items are Enrique's, so the one thing left for an agent is the row the Tester
-  parked as *"staged, not a task"*: `agent/sol.md:318` names `transferToHuman` as where G16 lives and
-  *"unset `TELNYX_TRANSFER_TARGET`"* as how to test it. **Neither exercises the voice path** — since
-  #90 the voice rule lives in the native transfer's `warm_transfer_instructions`.
-- **They wrote and measured the fix, then reverted it** rather than desync the live prompt from the
-  compile for a documentation cell. That was right for them; it is not a reason to ship a guardrail
-  table that misdescribes its own test, because I can resolve the desync by re-provisioning — a cycle
-  I have now run five times and which costs nothing.
-
-- **CLAIMED It71: T37 — two documents are unreachable from the README.** Verified by grepping every
-  deliverable: `docs/live-modification.md` is referenced from **nowhere at all**, and it is the
-  rehearsed script for the "modify it live" moment Katie asks about by name.
-  `docs/role-walkthroughs.md` — the longest document after the plan — is reachable only from a
-  secondary list in `SUBMISSION.md`. Two README rows and one bullet, no code.
-- **T37 warns that adding the bullet means updating "Three things" to "Four", and that my own
-  `list-counts.test.ts` will catch it if I forget.** I am going to add the bullet *first* and watch
-  the guard fail, because a guard I have only ever seen pass on synthetic input is not yet evidence.
-
-- **CLAIMED It70: T35 — the package underclaims its own guardrail evidence.** `agents/tested.log.md`
-  holds evidence for **18 of 19** guardrails driven against production and **no deliverable mentions
-  it**; `README.md` says "a tester" in one table cell. Two lines, in `README.md` and `SUBMISSION.md`
-  only — the `sol.md` guardrail section sits outside every `voice:exclude` block, so adding there
-  would spend the margin and force a re-provision.
-- **Not repeating T35's numbers as given.** It says the log is 4,783 lines; it is **4,963** — stale
-  already, as every exact count in this repo has been. Using a floor, and quoting the log's own
-  wording rather than the plan's paraphrase of it.
-
-- **CLAIMED It69: T36 — the voice handoff had no escalation requirement.** Verified all three of
-  T36's claims before acting: `provision.mjs:588` replaces `transfer_to_human` with a native Telnyx
-  `transfer` and `continue`s, so **no webhook is registered for that name on voice**;
-  `registry.ts:42` keeps it for chat; and `warm_transfer_instructions` was one sentence with nothing
-  about an escalation. Confirmed live rather than theoretical — the export carries 23 webhook + 1
-  transfer + 1 hangup, target resolved from `TELNYX_SIP_URI`.
-- **The fix puts G16 where it was missing.** The webhook path has the rule in code; the native
-  transfer had only that string. It now requires the escalation **before** the hand over, so the
-  record exists whether or not anyone answers, and forbids describing a handoff that did not happen.
-  Prompt text on a native tool: no `agent/sol.md`, no margin spent, but it needs `--refresh` **and** a
-  re-export, because tools live in the export too.
-- **Still unobserved, and not something I can fix:** whether a real call reaches the native transfer
-  at all. That is the live call, gated on the Telnyx balance.
+- **DONE It79: audited `docs/how-this-was-built.md`. It is correct — my finding was not.** I read its
+  ownership table's `voice/` as a phantom directory after `test -e voice` and `git log --all -- voice`
+  both came back empty. **Both are root-relative**; the directory is `netlify/functions/voice/`, and
+  the table uses the same shorthand two rows up (`tools/`). Two checks agreeing is not corroboration
+  when they share an assumption. Edit reverted.
+- **The new `doc-paths.test.ts` is what refuted me**, in the iteration it was written: its red-check
+  passed, the mutation had genuinely applied, so the guard was right and I was wrong. It resolves a
+  path from the root, from beside the document, or as a unique suffix — a root-only first version
+  called six legitimate shorthands dead ends.
 
 ## Standing state
 
