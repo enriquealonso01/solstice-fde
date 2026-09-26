@@ -4,40 +4,45 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 110 — 2026-09-25 ~20:56 EST
+## Iteration 111 — 2026-09-25 ~21:04 EST
 
-### Drove the pre-demo checklist. It holds, with one gap folded into T39
+### Everything the plan asserts is true. Verified in one pass
 
-`docs/demo-runbook.md`'s **"Before they join"** was the last instruction block I had not executed.
+```
+suite            516 passed       (476 an hour ago; the guards added ~40)
+deploy           current with HEAD
+live refusals    /api/cost 401 · /api/group/inquiries 401 · /api/flags 401
+Telnyx balance   $3.03            unchanged
+INQ-2012/2013    2 rows           still present, T21 not yet run
+```
 
-**What holds, checked not admired:**
+**Nothing needed correcting.**
 
-- **`Telnyx balance above $20`** matches `SUBMISSION.md`'s gate and my corrected item 2 — two
-  documents, one number, no drift.
-- **Warm-up figures** are the ones I measured in iteration 74: **1.202s** and **0.978s** cold,
-  session count unmoved at 121.
-- **The ordering argument is the best thing in the file** and it is reasoned: stop the loop before
-  tidying, because tidy only closes sessions idle over **30 minutes** while the loop was adding
-  **~25 an hour**, so *"a tidy at 10:55 is undone by agent traffic at 10:56."*
+### What I changed: I stated the ordering instead of assuming it was read
 
-**The gap:** *"Run it with no flag first to see the count, then `npm run demo:tidy`"* — **there is
-no npm alias for the dry run.** `package.json:18` is `…--delete`; the dry run is the bare
-`node scripts/cleanup-phantom-sessions.mjs`. A presenter minutes from the panel is told to run
-*"it"* with no flag, without being told what **it** is. Every other item in that checklist ships its
-exact command.
+**T38, T39 and T40 have been open across several iterations** while three guards shipped (#107,
+#110, #111). I have put the priority in the plan explicitly: **those three come before any further
+guard work.**
 
-### Folded into T39 rather than filed as T41
+Stating it is the part of my job I had been skipping — *"keep the plan ordered, best-for-the-
+submission first"* is the instruction, and I had been filing tasks in order without ever saying the
+order was a **claim** rather than a convenience.
 
-Both edits are in the same file, so they should be **one lock, one PR** — the reasoning PR #79 used
-when it folded T32 into the re-export. **A fourth task for a second edit to a file already under a
-task would have been bookkeeping, not planning.** Three agent items, not four.
+Reasoning, written into the plan so it can be argued with: all three are **single sentences in
+documents Enrique reads while presenting**; **T38 costs thirty seconds of visible confusion** if
+followed as written, sending him to edit Austin's threshold while the verdict does not move; and a
+guard protects against **the next** regression while these are **current defects on the demo path**.
 
-### Also landed
+**Not a complaint about the guards.** 476 → 516 tests in an hour, every guard written after
+something actually rotted. **The sequencing is what I am asserting, not the value.**
 
-**PR #110** made *"service-role keys must never appear here"* a test rather than a comment. That is
-the seventh guard — citations, list counts, README counts, walkthrough quotes, export redaction,
-committed credentials, and now this — **every one written after something rotted.**
+### Eight guards, and what they say
+
+Citations · list counts · README counts · walkthrough quotes · export redaction · committed
+credentials · service-role keys · bare paths. **Every one retrofitted after a real failure.** A
+reviewer reading `src/lib/rules/__tests__/` in order is reading this project's mistakes with a test
+standing over each — a better artefact than a clean suite, and worth saying in the room.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** Agent work is **T38, T39** (two edits, one pass) and **T40**.
+**The `drop policy` paste.** Agent work: **T38, T39, T40, before further guards.**

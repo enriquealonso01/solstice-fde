@@ -4302,3 +4302,45 @@ shipped, in the same iteration it was written.
 Red-checked against a path that resolves nowhere (`telephony/`): fails, naming it.
 
 `npx tsc -b --force` clean. `npx vitest run`: **516 passed, 41 files**.
+
+## It80 — the vision document asserted exactly what the README discloses as broken
+
+Audited `docs/where-this-goes.md`, the answer to Katie's second ask and the last document a reviewer
+is pointed at. It carries **no numeric claims at all**, so the risk class is different from every
+audit before it: a vision document fails by using the present tense about something that is not true.
+
+One does.
+
+> **"The agent learns the estate's own exceptions."** Every override is already written to the audit
+> log with the rules it overrode and the person who approved it — `overrode_rules:
+> ["GRP-DISCOUNT-CEILING"]` and an actor, **today, on every one.**
+
+And `README.md:117`, two documents away:
+
+> a signed-in sales rep … can set `status` to `approved` from the browser with the public anon key,
+> and the gate then returns *allowed* on a proposal that still carries its blocking flag and **an
+> empty `approved_by`**.
+
+The disclosed defect is precisely that an approval can happen without `approveProposal` running — no
+audit row, no actor. So the **strongest phrasing in the package** sat two files from the package's own
+admission of the opposite, and it is the sentence a whole product idea is built on: *here are the
+eleven rules your managers override most often.*
+
+That idea survives; it just needs the true version. Overrides **taken through the product** carry the
+rules and the actor, and the one path underneath is named, with its one-statement fix.
+
+### The part that would have been missed
+
+`HUMAN_INTERVENTION.md` tells Enrique that if he applies migration 004 he should **"delete both"** —
+the README paragraph and the SUBMISSION row. Adding a third mention silently makes that instruction
+wrong, and he would apply the SQL, delete two, and leave a stale caveat describing a defect he had
+just closed.
+
+So the instruction now reads **"delete all three"** and lists them by name and location, with a note
+on why the third was added later. **Fixing a document is not finished until the instructions about
+that document are fixed too** — and here the instruction was one I had just falsified myself.
+
+Verified all three disclosures now agree: the README names the empty `approved_by`, SUBMISSION names
+the unapplied migration, and the vision document points at both rather than contradicting them.
+
+`npx tsc -b --force` clean. `npx vitest run`: **516 passed, 41 files**.
