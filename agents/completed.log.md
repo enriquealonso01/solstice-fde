@@ -4145,3 +4145,55 @@ line that does not import `relative` — caught by `dirname is not defined` rath
 edit landed.
 
 `npx tsc -b --force` clean. `npx vitest run`: **502 passed, 38 files**.
+
+## It77 — the integration recommendation's central claim was true, and overstated by exactly one file
+
+`docs/integration-recommendation.md` was the last unaudited **named brief deliverable**. Its whole
+argument is one architectural claim:
+
+> *"every read of the provided data goes through one file — `netlify/functions/_lib/data.ts` holds all
+> seven imports of `data/generated/*.json` and **nothing outside it touches them**. Swapping the CSVs
+> for OPERA's Hospitality Integration Platform is a change to that file's implementation, not a
+> rewrite."*
+
+**The count is exactly right.** Seven imports, lines 26–32. **The absolute is not.** Five files
+outside the seam mention `data/generated`; four are comments, and one is real:
+`scripts/show-verdict.ts` reads the JSON with `readFileSync`.
+
+**And it is not an obscure script.** It is the instrument the live-modification demo runs —
+`docs/live-modification.md:33` invokes it by name, and the panel watches its output change when the
+threshold is edited. The one exception to the seam is the file that will be on screen.
+
+### Said the weaker true sentence, and named the consequence
+
+The claim is now *"every read of the provided data **on the request path**"*, with the exception given
+its own paragraph rather than buried: `show-verdict.ts` loads the snapshot itself **because its whole
+purpose is to run with no network and no model in front of an audience**, and — worth naming rather
+than hiding — after a PMS integration it would still read the exported snapshot rather than live
+inventory. Pointing it at the adapter is a small follow-on, not part of the swap.
+
+That is the pattern the Tester wrote down two iterations ago after nearly overclaiming their own
+finding: **write the weaker true sentence.** Here the weaker sentence is also the more interesting
+one, because the exception explains itself.
+
+### The invariant is now pinned, because it is a property of the code
+
+This is the one audit finding that deserved a test rather than a note. The claim is not a description
+of the code, it is an **invariant about** it: the day a second file imports one of those JSON files,
+the recommendation becomes a paragraph about a seam that no longer exists, and nothing would say so.
+
+`data-seam.test.ts` walks `netlify/`, `src/` and `scripts/`, allows the seam and the one named
+exception, and matches imports and `readFileSync` rather than mentions — so a comment about
+`data/generated` does not trip it, which is what four of the five hits were.
+
+Red-checked both halves:
+
+1. Added a second importer under `netlify/functions/_lib/` → fails, naming the file and pointing at
+   the document.
+2. Removed one import from the seam → *"imports 6 generated files; the document says seven"*, so the
+   document's number cannot silently drift either.
+
+Scope stated in the file so nobody reads it as more: it proves the request path has one door. It does
+not prove the adapter behind the door is any good.
+
+`npx tsc -b --force` clean. `npx vitest run`: **505 passed, 39 files**.

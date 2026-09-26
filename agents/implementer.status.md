@@ -10,6 +10,15 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It77: `docs/integration-recommendation.md` overstates its central claim by one exception.**
+  Last unaudited named brief deliverable. Its architectural argument is that an OPERA swap is *"a change
+  to that file's implementation, not a rewrite"* because **`data.ts` holds all seven imports of
+  `data/generated/*.json` and nothing outside it touches them.**
+- **The count is exactly right — seven, lines 26–32.** The absolute is not: `scripts/show-verdict.ts`
+  reads the JSON directly with `readFileSync`, and it is **the instrument the live-modification demo
+  runs** (`live-modification.md:33`). Four other outside hits are comments, so the real exception count
+  is one. Saying the weaker true sentence, and pinning the invariant so the strong half stays true.
+
 - **CLAIMED It76: audited the five transcripts nobody had checked, and indexed the folder.** The plan's
   top banner still lists *"two agent items"* — both are T33 and T36, which I closed in #83 and #90, so
   line 70 is the current truth: nothing left for an agent. The transcripts are a named brief

@@ -21,8 +21,11 @@
 > Safe — nothing in the client writes these tables. **Apply it and change nothing, or apply nothing
 > and weaken §13**, which is the package's best answer on authority.
 >
-> **Then:** **Telnyx** $3.09 — one call now settles **four** things: **beat 3**, the live intent
-> check, **G16 on voice**, and **T36** (whether PR #85's transfer guarantee reaches the voice leg) · **T21** delete
+> **Then:** **Telnyx — top up to at least $20** (the balance is **$3.03**, and `SUBMISSION.md`'s
+> pre-send checklist says *"above $20, or do not invite them to call the number"*). One call then
+> settles **three** things: **beat 3**, the live intent check, and **G16 on voice** — the last
+> unverified guardrail. *(T36 closed in PR #90: the voice handoff now requires an escalation before
+> it announces, verified live.)* · **T21** delete
 > `INQ-2012`/`INQ-2013`, keep `INQ-2011` — *"DELETE-ME"* is **row one** of the sales inbox.
 >
 > **T33 — disclosure only, no code change.** Sol tells the guest a manager has it **today**, in
@@ -67,7 +70,7 @@
 
 ---
 
-# ▶ OPEN WORK — nothing is left for an agent; all four items are Enrique's
+# ▶ OPEN WORK — four items are Enrique's, and two one-sentence fixes are the agents'
 
 *Everything below this section is closed, or evidence.*
 
@@ -83,7 +86,7 @@
 | # | Enrique's item | Why it is first / what it costs |
 |---|---|---|
 | 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr` | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at `HUMAN_INTERVENTION.md:753`. **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md` §13 with **no deliverable edit**. Three lines, in the SQL editor. |
-| 2 | **Telnyx top-up, $3.09** | One call settles **beat 3**, the live intent check, and **G16's voice half** — the last unverified guardrail. Nobody has made a voice call all day. |
+| 2 | **Top up Telnyx to at least $20** | **Not "add $3.09" — the balance IS $3.03**, measured this iteration and drifting down from $3.09. **$20 is the project's own gate**, in `SUBMISSION.md`'s pre-send checklist: *"Telnyx balance above $20, or do not invite them to call the number."* One call then settles **beat 3**, the live intent check, and **G16's voice half** — the last unverified guardrail. Nobody has made a voice call all day. |
 | 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. **Verified safe three ways:** two deliverables cite `INQ-2011`/`INQ-2010`, the demo runbook names `INQ-2007`/`2009`/`2011`, and **neither row T21 deletes appears in either**. Both confirmed live: `INQ-2012` Vantage Labs `needs_review`, `INQ-2013` Vantage Labs DELETE-ME `auto_approvable`. Exact SQL in `HUMAN_INTERVENTION.md`. |
 | 4 | **T34 — rotate the Telnyx SIP connection** | A credential *username* is in git history at `10b63e8` and `c09f04d`. **Rotate rather than rewrite history** — rewriting invalidates commit ids the deliverables cite, to remove something that authenticates nothing on its own. **Timing: after any rehearsal call, before the email.** |
 
@@ -1002,7 +1005,13 @@ Sol currently tells guests "Sales will follow up". That is a prompt change to a 
 and the trade we have declined twice tonight. Record it in the honest-limits register unless the
 Tester's runbook walk turns up a reason to touch it.
 
-### T17. `agent/sol.md` contradicts the shipped chat runtime — WRITTEN, uncommitted, fix T19 into it
+### T17. `agent/sol.md` contradicts the shipped chat runtime — CLOSED, committed by PR #56
+
+> **Corrected in iteration 108.** This heading read *"WRITTEN, uncommitted"*, and the body below
+> still says *"right now it tells them the opposite of what chat does"* — **both false since PR
+> #56.** The telephony-only note is live at `agent/sol.md:77-80` and present at HEAD. Iteration 75
+> recorded the resolution and I never came back to the heading. **The body below is kept as written;
+> its present tense is stale.**
 
 *Earns the top slot because `agent/sol.md` is a named brief deliverable and it is the first thing a
 technical reviewer reads before testing chat; right now it tells them the opposite of what chat does.*
@@ -1118,6 +1127,78 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 107, 20:42 EST — I drove the pre-send checklist and found two stale numbers in my own file
+
+#### The Telnyx item did not say what it actually requires
+
+`SUBMISSION.md`'s *"Before sending, check"* contains:
+
+> *"Telnyx balance above **$20**, or do not invite them to call the number."*
+
+**My open-work table said only *"Telnyx top-up, $3.09."*** That is ambiguous in the worst direction:
+it reads as *the amount to add*. Someone acting on my table could put in $5, mark item 2 done, and
+then be told at the final checklist not to invite the panel to call — after the invitation had
+already gone out in the email.
+
+**Corrected to "top up to at least $20", with the gate quoted and attributed.**
+
+#### And the balance is $3.03, not $3.09
+
+Measured against the Telnyx API this iteration:
+
+```
+balance 3.03 USD    credit_limit 0.00    available 3.03
+```
+
+**It has drifted down by six cents** while I quoted a figure from hours ago in the one file that is
+supposed to be current. Small, and exactly the class of thing this project has corrected in the
+README twice — *"figures are given as floors or rounded, deliberately"* — while my own table carried
+a stale precise number.
+
+Both fixed in the banner and the open-work table. **Historical log entries below keep `$3.09`,
+because they were true when written.**
+
+#### A third staleness in the same two lines
+
+The banner still described one live call as settling **four** things, including **T36** — which
+**closed in PR #90** several iterations ago, verified live. Now three: beat 3, the live intent
+check, and **G16 on voice**, the last unverified guardrail.
+
+**Three stale facts in two adjacent lines of the file I own**, found only because I drove a
+checklist that pointed at them. I have spent five iterations checking other people's documents by
+executing them, and had not once executed my own.
+
+#### The rest of the pre-send checklist is sound, and one item is unusually good
+
+It gates on repository visibility, `demo:tidy` **last** (with the reason: testing after it undoes
+it), failure switches healthy, the site loading, `npx vitest run` green — and then this, which
+earns its place from a real incident:
+
+> *"**Production is actually serving your latest commit.** Merging is not deploying, and a deploy
+> can fail silently: one errored at 18:45 on 2026-09-25 and left `main` ahead of production until a
+> retry two minutes later. **Nobody was notified.**"*
+
+It ships the exact command, not a description of it. That is the difference between a checklist item
+someone completes and one someone skips.
+
+#### T38 and T39 remain open
+
+One phrase each. `live-modification.md:22` still says *"second occurrence"*; `demo-runbook.md:217`
+still says *"all three costed options"*.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | **Top up Telnyx to $20+** (balance **$3.03**) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T38**, **T39** | Agents |
+
+Inbox empty. No lock held.
+
+
 ### Iteration 106, 20:38 EST — drove the README's "Try it", and watched a third agent reach the same lesson about predicted enumerations
 
 #### The first thing a reviewer executes, verified
@@ -1177,7 +1258,7 @@ occurrence"*; `demo-runbook.md:217` still says *"all three costed options"*.
 | # | Item | Owner |
 |---|---|---|
 | 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
-| 2 | Telnyx top-up, $3.09 | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
 | 3 | T21, two rows | Enrique |
 | 4 | T34 SIP rotation | Enrique |
 | — | **T38**, **T39** | Agents — one sentence each |
@@ -1243,7 +1324,7 @@ been read many times, including by me.
 | # | Item | Owner |
 |---|---|---|
 | 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
-| 2 | Telnyx top-up, $3.09 | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
 | 3 | T21, two rows | Enrique |
 | 4 | T34 SIP rotation | Enrique |
 | — | **T39** runbook step 3 · **T38** the `SOL-PHX` phrase | **Agents — both open, both one sentence** |
@@ -1307,7 +1388,7 @@ block so it cannot drift from the file it tells you to type into.
 | # | Item | Owner |
 |---|---|---|
 | 1 | `drop policy` ×3 — and delete the disclosure if applied | Enrique |
-| 2 | Telnyx top-up, $3.09 | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
 | 3 | T21, two rows | Enrique |
 | 4 | T34 SIP rotation | Enrique |
 | — | **T38** one phrase in `live-modification.md` | **Agents — open** |
@@ -1667,7 +1748,7 @@ applying it and not disclosing it was the only bad option, and that option is no
 | # | Item | Owner | State |
 |---|---|---|---|
 | 1 | `drop policy` ×3 | Enrique | **open — now publicly disclosed, which makes applying it cheaper, not dearer** |
-| 2 | Telnyx top-up, $3.09 | Enrique | open |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique | open |
 | 3 | T21, two rows | Enrique | open — verified safe three ways |
 | 4 | T34 SIP rotation | Enrique | open |
 | — | G16 row | staged | bundle with the next `--refresh` |
@@ -1739,7 +1820,7 @@ the guardrail itself is verified and the behaviour is right.
 | # | Item | Owner | State |
 |---|---|---|---|
 | 1 | `drop policy` ×3 | Enrique | **open — the one that matters** |
-| 2 | Telnyx top-up, $3.09 | Enrique | open |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique | open |
 | 3 | T21, two rows | Enrique | open — verified safe three ways |
 | 4 | T34 SIP rotation | Enrique | open |
 | — | **G16 row** | staged | **bundle with the next `--refresh`; ship as is if none happens** |
