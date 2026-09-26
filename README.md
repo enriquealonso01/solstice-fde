@@ -95,7 +95,7 @@ fixed. None of them would have been caught by the tests that were already passin
 `docs/how-this-was-built.md` has the detail, including what the agents got wrong.
 **The guardrail table in `agent/sol.md` is not asserted either.** Eighteen of its nineteen rules were
 driven against the deployed system rather than against fixtures, and the evidence is in
-[`agents/tested.log.md`](agents/tested.log.md) — over 4,900 lines of it, including the refusals that
+[`agents/tested.log.md`](agents/tested.log.md) — over 5,400 lines of it, including the refusals that
 failed the first time. The exception is **G16's voice half**, which needs a live phone call and is
 named here rather than rounded up. Two worth opening the file for: **G13** would not read a card's
 last four digits to a *correctly identified* cardholder who explicitly told it to ignore its system
@@ -104,16 +104,33 @@ rows where the raw-argument column does not exist at all, so masking is a proper
 rather than something applied on read.
 
 
-**The result:** over 230 files, more than 140 of them TypeScript, and over 400 tests across more than 30 test files. The line
-count splits in a way worth showing rather than totalling: **about 35,100 lines of source**, 3,500
-of deliverable documents, and **13,800 of the agents' own coordination record** — the plan, the
-three status files, and the two logs in which the loop argued with itself. A single "over 60,000
+**The result:** over 250 files, more than 160 of them TypeScript, and over 700 tests across more than 50 test files. The line
+count splits in a way worth showing rather than totalling: **over 38,000 lines of source**, over 4,500
+of deliverable documents, and **over 26,000 of the agents' own coordination record** — the plan, the
+three status files, and the two logs in which the loop argued with itself. A single "over 80,000
 lines" would flatter the first number by hiding the third, and the third is arguably the more
 interesting one.
 
-Figures are given as floors or rounded, deliberately: the day-two loop was still merging while this
-paragraph was written, and three precise counts went stale inside an hour. `git rev-list --count
-HEAD`, `git ls-files | wc -l` and `npx vitest run` are the live answers and they do not rot.
+Every figure above is a floor, and each one is a command:
+
+```bash
+git ls-files | wc -l                                                    # files
+git ls-files | grep -cE '\.tsx?$'                                       # TypeScript
+npx vitest run                                                          # tests, and test files
+git ls-files -z '*.ts' '*.tsx' '*.mjs' '*.sql' '*.css' | xargs -0 wc -l # source
+git ls-files -z '*.md' ':!agents/' ':!plans/'          | xargs -0 wc -l # deliverable documents
+cat plans/06-master-plan.md agents/*.status.md agents/*.log.md | wc -l  # coordination record
+```
+
+(`-z` and `xargs -0` are not decoration: one of the provided data files is
+`SOLSTICE HOTEL GROUP — FRONT DESK POLICY REFERENCE.md`, and a bare `xargs` drops it and silently
+undercounts.)
+
+Floors rather than measurements, deliberately, and the reason is on this page twice over. The day-two
+loop was still merging while the paragraph was written and three precise counts went stale inside an
+hour — then the replacements went stale too, and the coordination record was being reported at half
+its size by the time anyone re-ran the command. `src/lib/rules/__tests__/repo-floors.test.ts` now runs
+every line above and fails if any floor has stopped being one.
 
 **What we are not claiming.** Build-time model spend is not instrumented, so there is no figure
 here for it, and inventing one would undercut everything else on this page that *is* measured.
@@ -180,7 +197,7 @@ Worth being precise about, because a demo that overstates itself is worse than a
 **Real:** the deployed site and API; Postgres with row-level security enforcing role scoping;
 Sol answering on chat and on a real phone number; live transcripts streaming to the supervisor
 console; the rules engine and all ten inquiry verdicts; proposal generation with PDFs, and a proposal email that has actually been delivered; a test
-suite of over 400 tests (`npx vitest run` for the live number).
+suite of over 700 tests (`npx vitest run` for the live number).
 
 **Partly working, and stated precisely because it matters:** the supervisor ladder. Verified on a
 live call, a supervisor can attach to an in-progress assistant call, hears the GUEST, and
@@ -250,6 +267,6 @@ npm run seed:users
 npm run dev
 ```
 
-`npm run typecheck` · `npx vitest run` (over 400 tests; the command prints the live count) ·
+`npm run typecheck` · `npx vitest run` (over 700 tests; the command prints the live count) ·
 `npm run data:check` verifies the generated
 data still matches its sources.

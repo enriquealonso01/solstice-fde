@@ -303,13 +303,34 @@ describe('the four build-phase plans', () => {
     ).toMatch(/> ## Correction, \d{4}-\d{2}-\d{2} --/)
   })
 
-  // What the corrections point at, and the text that has to be on that line. `HUMAN_INTERVENTION.md`
-  // and `README.md` are both appended to during a session, so a citation into them is a live wire.
+  // What the corrections point at, and the text that has to be on that line.
+  //
+  // `README.md` was in this table and is not any more. It was cited as `:179` at iteration 127 and
+  // `:185` at 130, and both times the mover was an edit higher up the README rather than any change
+  // to the claim -- so the guard fired twice, correctly, about nothing that mattered. A line number
+  // into a file that is edited every iteration is the wrong anchor, however well guarded. That
+  // citation is a quotation now, checked below, and these three are line-cited because each is a
+  // stable region: an append-only file's early lines, and a comment block at the top of a module.
   const CITED: Array<[string, number, string]> = [
     ['HUMAN_INTERVENTION.md', 122, '10DLC registration not started on the funded account'],
-    ['README.md', 185, 'Partly working, and stated precisely because it matters'],
     ['netlify/functions/voice/supervisor.ts', 13, 'supervise_call_control_id'],
   ]
+
+  it('finds the README sentence a plan correction quotes, wherever it has moved to', () => {
+    const SENTENCE = 'Partly working, and stated precisely because it matters'
+    expect(
+      readFileSync(join(repoRoot, 'README.md'), 'utf8'),
+      `README.md no longer contains "${SENTENCE}". plans/02-voice-realtime.md's correction sends a ` +
+        `reader to it for the one real limit of the supervisor ladder -- that a monitor hears the ` +
+        `guest and not Sol. If the README stopped saying it, the limit is being glossed.`,
+    ).toContain(SENTENCE)
+
+    expect(
+      readFileSync(join(repoRoot, 'plans/02-voice-realtime.md'), 'utf8'),
+      'plans/02-voice-realtime.md cites README.md by line number again. It moved twice in four ' +
+        'iterations; quote the sentence instead.',
+    ).not.toMatch(/README\.md:\d+/)
+  })
 
   it.each(CITED)('%s:%d still says what a plan correction cites it for', (file, line, needle) => {
     const lines = readFileSync(join(repoRoot, file), 'utf8').split('\n')

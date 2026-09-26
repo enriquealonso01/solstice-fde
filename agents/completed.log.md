@@ -7594,3 +7594,113 @@ step. First time one of my own guards has fired on my own edit rather than on so
 the better direction for it to work in.
 
 `npx tsc -b` clean. `npx vitest run` **748 tests / 54 files** green (up 23).
+
+---
+
+## It131 — the paragraph below T51's was worse, and it was underselling the project's own best number
+
+Nothing was open: T51 shipped in It130 and the Planner's 02:32 banner still lists it because it
+predates the merge. So I stayed in the section I had just been editing, on the theory that a paragraph
+which rotted once is the best place to look for a paragraph that rotted twice. It was.
+
+`README.md`, four lines below the sentence T51 fixed:
+
+> **The result:** over 230 files, more than 140 of them TypeScript, and over 400 tests across more
+> than 30 test files. The line count splits in a way worth showing rather than totalling: **about
+> 35,100 lines of source**, 3,500 of deliverable documents, and **13,800 of the agents' own
+> coordination record** … A single "over 60,000 lines" would flatter the first number by hiding the
+> third, and the third is arguably the more interesting one.
+>
+> Figures are given as floors or rounded, **deliberately**: the day-two loop was still merging while
+> this paragraph was written, and three precise counts went stale inside an hour.
+
+Measured:
+
+```
+stated                                     measured          form
+over 230 files                             259               floor, holds
+more than 140 TypeScript                   169               floor, holds
+over 400 tests / more than 30 test files   766 / 55          floor, holds but reads as half the truth
+about 35,100 lines of source               38,850            not a floor
+3,500 of deliverable documents              4,682            not a floor
+13,800 of the agents' coordination record  26,706            not a floor, and wrong by 93%
+a single "over 60,000"                     82,455            not a floor
+```
+
+Two things make this worth more than an arithmetic fix.
+
+**The worst number is the one the paragraph is proudest of.** Its closing argument is that a single
+total *"would flatter the first number by hiding the third, and the third is arguably the more
+interesting one"* — and then it reports the third at roughly half its size. The page makes a case for
+looking at the coordination record and then undersells it. Every other error I have found in this
+repository flattered us; this one did the opposite, in service of an argument that only works if the
+number is big.
+
+**And the sentence below it claims the problem is already solved.** *"Figures are given as floors or
+rounded, deliberately … three precise counts went stale inside an hour."* Two of the three splits were
+neither floors nor rounded, and they went stale exactly as described, in the same paragraph that
+describes it. A document asserting that it has solved rot is not evidence that it has — which is
+worth writing down, because it is the fourth time here that a stated principle and its implementation
+have disagreed, after T47, T51's guard and my own It120 row.
+
+### The fix: floors, the command behind each one, and a test that runs them
+
+Every figure is now a floor, and the README prints the six commands that produce them, which is not a
+new idea on that page — the paragraph already ended with *"`git rev-list --count HEAD`, `git ls-files
+| wc -l` and `npx vitest run` are the live answers and they do not rot."* It had the right instinct
+and applied it to three of seven numbers.
+
+`src/lib/rules/__tests__/repo-floors.test.ts`, 18 cases. For each of the eight floors: the README must
+still contain the exact phrase, so a reworded claim cannot leave the guard checking a ghost; and the
+measured value must be at or above the claim. `git ls-files -z` is the source, so the counts are what
+someone cloning the repository would see rather than what is lying around in the working tree. Plus a
+case that bans *"about N"* / *"roughly N"* from that paragraph, since both figures that rotted arrived
+in that form, and a case that reports any floor sitting below its measurement.
+
+Red-checked twice. Restoring the old precise figures fails 4. And the careless-editor move — raising a
+floor in the README *and* in the table together, the way someone would if they mistyped it — fails 2,
+which is the one that proves the arithmetic bites rather than just the string matching.
+
+### A command I was one commit from publishing did not work
+
+The README now tells a reviewer to run these, so they had to actually run. One did not:
+
+```
+git ls-files '*.md' | grep -vE '^(agents|plans)/' | xargs wc -l
+wc: 'data/SOLSTICE HOTEL GROUP \342\200\224 FRONT DESK POLICY REFERENCE.md': No such file or directory
+```
+
+One of the four files the challenge provided has spaces and an em-dash in its name, so a bare `xargs`
+splits it into three non-existent paths, prints an error, and undercounts by 48 lines. I only caught
+it because I ran every command before quoting it, and the tell was not the wrong total — it was one
+line of stderr in the middle of otherwise clean output. Now `-z` with `xargs -0`, with a parenthetical
+in the README saying why, because a reviewer who runs a documented command and gets an error reads it
+as the page being careless, and they would be right.
+
+### The It127 citation guard fired on me twice running, so I fixed the anchor
+
+Same failure as It130, one iteration later:
+
+```
+FAIL  doc-paths.test.ts > README.md:185 still says what a plan correction cites it for
+```
+
+`plans/02-voice-realtime.md`'s correction cites the README for the supervisor's audio limit. That
+citation was `:179` when I wrote it at It127, `:185` after It130, and would be `:202` after this
+iteration. **All three moves were edits higher up the README. None was a change to the claim.** A
+guard that fires correctly about nothing that matters is a guard people learn to renumber without
+reading, which is how a real move eventually gets renumbered too.
+
+So the citation is a quotation now — the plan points at *"Partly working, and stated precisely because
+it matters"* and says, in the correction itself, why it stopped using a line number. `README.md` comes
+out of the `CITED` table, replaced by a case that finds the sentence wherever it has moved to, plus a
+second assertion that **bans a `README.md:<line>` citation from returning to that file**. The two
+entries left in `CITED` are line-cited on purpose and the comment now says why: an append-only file's
+early lines and a comment block at the top of a module are both stable regions in a way the middle of
+the README is not.
+
+Checked that this did not quietly rewrite the plan: the diff on `plans/02-voice-realtime.md` is 5
+insertions and 2 deletions, **all of them inside my own correction block**, and everything from
+`# Voice: live transcripts…` down is byte-identical to its first commit.
+
+`npx tsc -b` clean. `npx vitest run` **766 tests / 55 files** green (up 18).

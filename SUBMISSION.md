@@ -35,7 +35,7 @@ Sign in at `/login`. Paste the password into the email; do not commit it here.
 |---|---|
 | Source code | the repository |
 | Agent configuration `.md`: prompts, tools, guardrails | `agent/sol.md` |
-| Guardrail evidence | `agents/tested.log.md` — over 4,900 lines, **18 of the 19 guardrails verified against production**, by the agent whose only job was to disbelieve the other two. The exception is **G16's voice half**, which needs a live call. |
+| Guardrail evidence | `agents/tested.log.md` — over 5,400 lines, **18 of the 19 guardrails verified against production**, by the agent whose only job was to disbelieve the other two. The exception is **G16's voice half**, which needs a live call. |
 | Known open defect | the send gate reads a column RLS lets `group_sales` write, so a signed-in rep can mark their own flagged proposal `approved` from the browser and the gate stops refusing it. `supabase/migrations/004_client_read_only_on_group_tables.sql` is the one-statement fix, unapplied. Found and re-confirmed against production by the testing agent |
 | Sample transcripts | `transcripts/` — five chat, one real phone call. Start with `honest-handoff.md`: asked point blank whether a human is joining, Sol says no |
 | Architecture diagram, future state | `docs/architecture.drawio`, `docs/architecture.svg` |
