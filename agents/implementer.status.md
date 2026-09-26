@@ -3,100 +3,52 @@
 What I am doing right now, and what I did last. **Overwritten each iteration** — the reasoning lives
 in `agents/completed.log.md`, not here.
 
-> Rewritten at iteration 69 because it had stopped being this. It had grown to 234 lines carrying
-> every claim since It1, and its **first entry was iteration 54's** — so anyone opening it to see what
-> the Implementer was doing read a task finished fifteen iterations earlier. That is worse than a long
-> file: it is a coordination file that misinforms the two agents who read it.
+> Rewritten at It69 when it had grown to 234 lines and opened on iteration 54's work. Trimmed again at
+> It87: "Now" had quietly accumulated six iterations of CLAIMED entries, so the file said I was
+> claiming six things at once. Same drift, slower. One iteration belongs here.
 
 ## Now
 
-- **CLAIMED It86: beat 6 tells the presenter to say something the Cost screen contradicts.** Continued
-  the rehearsal into the two beats nobody had exercised. **Beat 7 is correct** — the backend map has
-  exactly seven tabs. **Beat 6 is not.**
-- It says *"telephony is the majority of the bill, not the AI"*. Computed from the same rows the page
-  reads: **model $1.34, telephony $1.30 — telephony is 49.1%**, so the model is marginally the larger
-  share and the screen shows the opposite of the line.
-- **The insight is right and the sentence is wrong**, which is the useful distinction: our traffic is
-  **148 chat sessions to 9 calls**. At production voice volumes telephony dominates by construction
-  ($0.1085/min against a fraction of a cent per chat turn). The claim belongs to the projection, not
-  to the measured row.
+- **It87: the demo is rehearsed end to end against the final build.** Every beat that can be run
+  without spending money has been run, in order, as the runbook words it. Nothing left open for an
+  agent: T1–T37 are closed and the four remaining plan items are Enrique's.
 
-- **CLAIMED It85: rehearsed the demo against the final build, and beat 2's second question lands
-  about one time in four.** Ran the runbook's verbatim prompts. Checkout time, the parking refusal and
-  beat 5's healthy late checkout are all correct. **"Can I bring my dog?" is not.**
-- **Four observed runs: one gave the full Policy 8 answer; two deflected with "which hotel?"; one
-  said "Pet policy can vary by property"** — which is false (Policy 8 is chain-wide, no exceptions)
-  and is the invented-plausible statement G1 exists to forbid.
-- **Fixing the runbook, not the prompt.** Two alternative phrasings are 3/3 reliable, and one of them
-  is what `transcripts/service-animal.md` already uses, so the demo and the transcript show the same
-  exchange. A prompt change to a verified runtime this close is the trade this loop has declined
-  twice, and it would need a re-provision and re-verification.
+## Demo rehearsal coverage — what is actually verified
 
-- **CLAIMED It84: a guard that is not running is worse than no guard, and one of mine already was.**
-  Nothing is reopened for me — the Tester's 403 finding against `role-walkthroughs.md` is already
-  fixed in the file. So I took the failure that has actually happened here: at their iteration 55 they
-  found `list-counts.test.ts` **in `HEAD` and not on disk**, so `vitest` silently skipped it and the
-  suite read 36 files / 471 tests instead of 37 / 473.
-- **Clean right now** — 43 tracked, 43 on disk, none missing — but that is a snapshot of something that
-  drifted an hour ago and would drift silently again. Making it loud, in both directions: a tracked
-  test absent from disk runs for nobody, and an untracked test on disk runs only for me.
+| Beat | State |
+|---|---|
+| 1. The problem, no screen | nothing to verify |
+| 2. Guest chat | **rehearsed.** Checkout cites Policy 1; parking refuses a number. The ADA question was **fixed** — see below |
+| 3. The phone | **BLOCKED on the Telnyx balance.** The only untested beat, and it also gates G16's voice half |
+| 4. Group booking | **rehearsed.** INQ-2009 is Phoenix, flags the ceiling at 17% vs 15%, `$7,994.25` is test-pinned, the yoga value-add is really in the payload, and "assumption 3" is really assumption 3 |
+| 5. Failure injection | **healthy half rehearsed** — R55004 returns the guaranteed 2pm. The injected half needs the switch, which I will not flip on a shared system |
+| 6. Cost | **rehearsed, and corrected** — see below |
+| 7. Architecture | **rehearsed.** Exactly seven tabs, as the beat says |
+| Entry points | landing page, `/admin` and `/login` all 200; the bundle and widget mount are served |
+| Pre-flight commands | all seven documented `npm run` scripts exist; `typecheck` and `data:check` pass; `demo:preview` added because the checklist named a command that did not exist |
 
-- **CLAIMED It83: the runbook's most time-critical instruction cannot be followed as written.** Beat
-  zero says *"Run it with no flag first to see the count, then `npm run demo:tidy` to close them"* —
-  but `demo:tidy` **is** `--delete`. There is no flagless script, so at 10:55 with a panel waiting
-  Enrique either runs the destructive one blind or works out the raw `node` invocation himself.
-- **The preview itself is good and worth reaching:** it reports 143 sessions examined, 0 phantoms and
-  **118 active idle over 30 minutes** — the number the checklist asks him to look at.
-- Adding `demo:preview`, naming it in the runbook, and pinning that every documented `npm run` exists.
+**Two defects the rehearsal found, both on the demo path, both fixed:**
 
-- **CLAIMED It82: the commands the deliverables tell a reviewer to run.** Doc sweep is finished, so I
-  took the surface a reviewer touches first. All **seven** documented `npm run` scripts exist in
-  `package.json`, and the two that are read-only (`typecheck`, `data:check`) both exit 0.
-- **`data:check` is real — I corrupted a generated file and it caught it**, exiting 1 with the remedy
-  (`STALE: properties.json differs from the source data`). Not a check that cannot fail.
-- **But on success it prints a header and nothing else.** A reviewer running the command the README
-  recommends sees `Checking data/generated ...` and no verdict — identical to a no-op. That is the
-  *"exit 0 and no output is not success"* rule, in our own instrument, in a documented command.
-
-- **CLAIMED It81: audited `docs/README-diagram.md`, the last unaudited deliverable.** It is accurate:
-  its three page names match `architecture.drawio` exactly, *"Six rows"* on the failover page is
-  exactly six, the SVG really is a render of the *Future state* page as it says, and
-  `SOL-PVD.base_rate_suite = -395` is in the source CSV.
-- **That completes the sweep — every deliverable has now been audited.** Shipping the last unguarded
-  doc-to-artifact pair: the guide describes a diagram nothing checks it against.
-- **Two of my own probes were wrong before they were right**, both caught by the shape of the answer:
-  I checked the guide's page names against the **SVG** when they describe the **drawio**, and my
-  first row count returned zero against a file that plainly contains those labels.
-
-- **CLAIMED It80: `docs/where-this-goes.md` contradicts the open defect the README discloses.** Audited
-  the vision document — the answer to Katie's second ask. It has no numeric claims, so the risk class
-  is present tense about things that are not true, and one is: *"Every override is already written to
-  the audit log … and an actor, **today, on every one**."*
-- **That is precisely what the disclosed defect falsifies.** `README.md:117` says a signed-in rep can
-  set `status` to `approved` from the browser, leaving *"an empty `approved_by`"* — no audit row, no
-  actor. The strongest phrasing in the package sits two documents from its own disclosure of the
-  opposite.
-- **And the cleanup instructions list two places to delete, not three.** Adding a caveat means adding
-  it to `HUMAN_INTERVENTION.md` too, or Enrique applies the SQL and leaves a stale caveat behind.
-
-- **DONE It79: audited `docs/how-this-was-built.md`. It is correct — my finding was not.** I read its
-  ownership table's `voice/` as a phantom directory after `test -e voice` and `git log --all -- voice`
-  both came back empty. **Both are root-relative**; the directory is `netlify/functions/voice/`, and
-  the table uses the same shorthand two rows up (`tools/`). Two checks agreeing is not corroboration
-  when they share an assumption. Edit reverted.
-- **The new `doc-paths.test.ts` is what refuted me**, in the iteration it was written: its red-check
-  passed, the mutation had genuinely applied, so the guard was right and I was wrong. It resolves a
-  path from the root, from beside the document, or as a unique suffix — a root-only first version
-  called six legitimate shorthands dead ends.
+1. **Beat 2's ADA question landed once in four** (PR #117). A bare *"Can I bring my dog?"* usually
+   asked "which hotel?" first, and once claimed *"pet policy can vary by property"* — false, and an
+   invented fact produced without a tool call. Reworded to the phrasing that reaches `get_policy`
+   3 of 3, matching the transcript.
+2. **Beat 6 told the presenter to say the opposite of the screen** (PR #118). *"Telephony is the
+   majority of the bill"* — measured, it is 49.1%, because our traffic is 148 chats to 9 calls. Moved
+   to the projection, where it is true by construction, with a warning not to claim it about the
+   measured row.
 
 ## Standing state
 
-- `compile === live === export`, checked byte-for-byte each time `agent/sol.md` changes.
-- Guards I own, each red-checked by reintroducing the defect: `admin-prose`, `voice-prompt-size`,
-  `doc-citations`, `list-counts`, `export-redaction`, `escalation-dedupe`.
-- **Open for Enrique** (in `HUMAN_INTERVENTION.md`): Telnyx top-up — gates beat 3, G16 on voice and
-  T36's remaining unknown · `INQ-2012`/`INQ-2013` · `demo:tidy` timing · the SIP credential in git
-  history and the `SUBMISSION.md` sentence about it.
+- `compile === live === export`, **29,363**, margin **637**. Re-checked whenever `agent/sol.md` moves.
+- Guards I own, each red-checked by reintroducing the defect it catches: `admin-prose`,
+  `voice-prompt-size`, `doc-citations` (counts, links), `list-counts`, `export-redaction`,
+  `escalation-dedupe`, `walkthrough-quotes`, `data-seam`, `browser-env`, `doc-paths`,
+  `diagram-guide`, `documented-commands`, `suite-integrity`.
+- **Open for Enrique** (`HUMAN_INTERVENTION.md`): the `drop policy` SQL — the only item with a live
+  security consequence, and disclosed in three places that must be deleted together if he applies it ·
+  the Telnyx top-up, which unblocks beat 3 and G16 · `INQ-2012`/`INQ-2013` · rotating the SIP
+  credential.
 
 ## What I shipped, one line each
 

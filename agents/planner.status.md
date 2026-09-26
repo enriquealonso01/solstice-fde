@@ -4,49 +4,44 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 117 — 2026-09-25 ~21:30 EST
+## Iteration 118 — 2026-09-25 ~21:34 EST
 
-### T41: the README quotes a phrase that is in neither source
+### Checked every policy citation as a property. All 34 hold
 
-Having read the brief last iteration, I checked the one deliverable whose **justification** nobody
-had verified — the net-new tool.
+T41 was one bad quotation found by reading one sentence. **PR #107's lesson is that finding one by
+inspection tells you nothing about how many there are**, so I did the whole set.
 
-**The near-miss first.** My first assumption was that `README:133` attributed *"subject to same-day
-availability"* to the **brief**, which does not contain it. **It does not** — it attributes it to
-**Policies 1 and 6**. I was wrong, and found out by reading the sentence properly rather than acting
-on its shape.
-
-**But that attribution is checkable too:**
+The policy document defines **15 sections**. Every `Policy N` reference in every deliverable:
 
 ```
-README:133   Policies 1 and 6 both hinge on "subject to same-day availability"
-Policy 1     "...based on same-day room availability."
-Policy 6     "...based on same-day inventory."
+12 files · 34 distinct citations · out of range: 0
 ```
 
-**Neither contains the quoted string.** Policy 6 uses *"subject to availability"* about the **Gold**
-1 PM checkout — a conditional benefit, while the quote argues about a guaranteed one.
+And the topics match where it matters: **1** checkout · **6** Platinum benefits and the
+two-Platinum judgment call · **7** per-stay comp authority · **8** pets and service animals ·
+**12** parking · **15** escalation matrix.
 
-**Substance entirely right**, and the service is genuinely net-new by the brief's own test. **Only
-the quotation marks are wrong.**
+### The one that looked wrong is a design decision
 
-### The fix argues the point better than the paraphrase
+`transcripts/service-animal.md:14` shows `get_policy` returning **Policies 8, 4 and 5** for a
+service-animal question. `policy.ts:52-57` takes **either** a `section_id`, returning exactly that
+section, **or** a `query`, which **searches**. The transcript is a topic search: it returned what it
+matched, and **the transcript lists all of them with correct titles** rather than only the one used.
 
-Policy 1 says *"same-day room availability"*; Policy 6 says *"same-day inventory"*. **Two policies
-reaching for the same missing data in different vocabularies** is the clearest evidence it belongs
-behind **one service** — which is the claim the assumption is making. The invented phrase flattens
-both and loses it.
+Ready answer if asked:
 
-Second time today a correction improved on what it corrected; the first was the Implementer's *"what
-was and was not re-measured"* paragraph in T30.
+> *"`get_policy` is a search when given a topic rather than a section number. Policy 8 grounded the
+> answer; 4 and 5 are what the search also surfaced. The transcript shows the whole retrieval rather
+> than a tidied list, because a citation list filtered after the fact is a claim you cannot check."*
 
-### Why it matters more than its size
+**In-range is not on-topic, and on-topic is not necessary.** The property check proves the first,
+reading proves the second, and the third was a design decision. **I nearly filed it as a defect.**
 
-**This project pins quoted strings to source with `walkthrough-quotes.test.ts`**, written four hours
-ago after UI rewording left a document quoting text that was gone. **T41 is the same defect class in
-the file a reviewer opens first**, and it predates the guard. The standard is the project's own.
+### Also landed
+
+**PR #117** — beat 2's ADA question rephrased so it lands every time. The Implementer driving their
+own document, the same method that found T38's trap.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** **T38, T39, T40 and T41** are all paste-ready at the top of `▶ OPEN
-WORK` — four documents, four replacements, no task or lock required.
+**The `drop policy` paste.** **T38, T39, T40, T41** remain paste-ready at the top of `▶ OPEN WORK`.

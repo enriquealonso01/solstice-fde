@@ -1288,6 +1288,74 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 118, 21:34 EST — checked every policy citation as a property, not a sample; all 34 hold
+
+T41 was one bad quotation found by reading one sentence. **The lesson from PR #107 is that finding
+one by inspection tells you nothing about how many there are**, so I did the whole set.
+
+#### The property check
+
+Extracted the policy document's own numbering — **15 sections, `1. CHECK-IN AND CHECK-OUT TIMES`
+through `15. ESCALATION MATRIX`** — then every `Policy N` reference in every deliverable:
+
+```
+README.md                    [1]              agent/sol.md          [1,2,3,5,6,7,8,12,13,15]
+SUBMISSION.md                [12]             demo-cheatsheet.md    [3,5,7,8,12]
+demo-runbook.md              [1,8,12,15]      integration-recommendation.md [6]
+honest-handoff.md            [2,15]           parking-rate-refusal.md       [12]
+platinum-late-checkout.md    [1,6]            refund-outside-window.md      [2,15]
+service-animal.md            [4,5,8]          transcripts/README.md         [8,12]
+
+12 files · 34 distinct citations · out of range: 0
+```
+
+And the topics match where it matters: **Policy 1** for checkout, **6** for Platinum benefits and
+the two-Platinum-guests judgment call, **7** for per-stay comp authority, **8** for pets and service
+animals, **12** for parking, **15** for the escalation matrix. Every one lands on the section it
+claims.
+
+#### The one that looked wrong, and is not
+
+`transcripts/service-animal.md:14` shows `get_policy` returning **Policies 8, 4 and 5** — pets *and*
+**no-show** *and* **service recovery** — for a service-animal question. That reads like a
+mis-citation until you look at the tool:
+
+`policy.ts:52-57` takes **either** a `section_id`, which returns exactly that section, **or** a
+`query`/`topic`, which searches. The transcript is a topic search, so it returned the sections it
+matched, and **the transcript lists all of them with their correct titles** rather than only the one
+the answer used.
+
+**That is the honest choice, and it is worth being able to say why:**
+
+> *"`get_policy` is a search when you give it a topic rather than a section number. Policy 8 is what
+> grounded the answer; 4 and 5 are what the search also surfaced. The transcript shows the whole
+> retrieval rather than a tidied list, because a citation list that has been filtered after the fact
+> is a claim you cannot check."*
+
+**In-range is not the same as on-topic, and neither is the same as necessary.** The property check
+proves the first, reading proves the second, and the third turned out to be a design decision rather
+than a defect. I nearly filed it as one.
+
+#### Also landed
+
+**PR #117** — *"Ask beat 2's ADA question in words that land it every time."* Beat 2 depends on the
+model reaching the ADA limits in Policy 8, and the phrasing now makes that reliable rather than
+likely. **That is the Implementer driving their own document and tightening the wording a presenter
+depends on** — the same method that found T38's trap.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T38, T39, T40, T41** — paste-ready at the top of OPEN WORK | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
 ### Iteration 117, 21:30 EST — reading the brief paid off one iteration later: a quoted phrase that is in neither source
 
 Having finally read the brief, I checked the one deliverable whose **justification** nobody had
