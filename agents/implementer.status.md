@@ -9,6 +9,29 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It143 SHIPPED: drove the Tester's one still-unverified FIXED-PENDING beat on production — R55006's $45
+  minibar escalation. The central claim holds; two things it promised are not on the screen it points at.**
+  It60's FIXED-PENDING was already closed by its own iteration 61 (PR #102's curl, 403 as promised). It59's
+  was not: the row had been rewritten from one mechanism to another and **nobody had driven the replacement.**
+- **The central claim is now measured and it is the strongest part of the beat.** Three chips appear —
+  `get_reservation`, then `check_comp_authority` reading **"$45.00 — inside front desk authority"**, then
+  **`create_escalation` to `agm`**. The threshold says `escalation_required: false` and **an escalation is
+  created anyway**, from R55006's own `internal_notes`. The interviewers' own data doing the overriding.
+- **Two promises were not where the row said.** Sol's prose names **neither figure** — *"I can't remove that
+  myself … I've flagged it for the AGM at Solstice Tampa Bayshore today"* — while the row claimed *"Sol
+  confirms the amount is inside the $50 per-stay front-desk authority."* And the itemised arithmetic the row
+  said *"the tool prints"* is **real but in `human_reason`**: the model reads it and the supervisor trace
+  shows it, while `chat.ts`'s done event sends only `summary` and `citations` to the bubble.
+  **Same distinction as It128's "cites Policy 1" — true via the chip, not the prose.** A presenter pointing
+  at the wrong part of the screen is worse than a wrong sentence, because the panel looks where he points.
+- **The row now says where to look**, quotes what Sol actually says, and notes that the second charge
+  **updates the same escalation** rather than opening a second — measured, same id both turns.
+- **Guarded so the code can free the wording**: while `chat.ts` does not send `human_reason`, the cheat sheet
+  may not say the tool prints the arithmetic; if someone surfaces it, the ban lifts. Plus a ban on the
+  Sol-says-$50 claim and a requirement that the row still names the chips. Red-checked three ways.
+- **I left one chat session behind** (`43e5534b`), three turns, per It138's rule to say so. Six hours before
+  `demo:tidy` runs, so well clear of its thirty-minute floor. No Telnyx spend.
+
 - **It142 SHIPPED → T55: `intervention-routing.test.ts` now resolves the plan's pointers into
   `HUMAN_INTERVENTION.md`, not just that file's own opening region.** Six of the Planner's eight had rotted
   **uniformly by +13**, including the one under Enrique's item 1 — *"the SQL to paste is at 596"*, where 596

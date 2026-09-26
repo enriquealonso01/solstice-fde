@@ -385,6 +385,70 @@ describe('the disputed-charge row against the reservation it names', () => {
     const sheet = flat(readFileSync(join(repoRoot, 'docs/demo-cheatsheet.md'), 'utf8'))
     expect(sheet.toLowerCase()).toContain('escalate to property agm')
   })
+
+  /**
+   * Rehearsed end to end on production at iteration 143 — the Tester's iteration 59 left this row
+   * FIXED-PENDING and nobody had driven the replacement wording. Three chips appear: `get_reservation`,
+   * `check_comp_authority` reading *"$45.00 — inside front desk authority"*, and **`create_escalation` to
+   * `agm`**. So the row's central claim is true and now measured: the threshold returns
+   * `escalation_required: false` and an escalation is created anyway, from R55006's own directive.
+   *
+   * Two things it promised were not on screen. Sol's prose named **neither** figure — *"I can't remove
+   * that myself … I've flagged it for the AGM at Solstice Tampa Bayshore today"* — while the row said
+   * *"Sol confirms the amount is inside the $50 per-stay front-desk authority."* And the itemised
+   * arithmetic the row said *"the tool prints"* is real but lives in `human_reason`: the model reads it and
+   * the supervisor trace shows it, while `chat.ts` sends only `summary` and `citations` to the bubble.
+   *
+   * Same distinction as iteration 128's *"cites Policy 1"* — true via the chip, not the prose. A presenter
+   * pointing at the wrong part of the screen is worse than a wrong sentence, because the panel is looking
+   * where he points.
+   */
+  const chatFn = () => readFileSync(join(repoRoot, 'netlify/functions/chat.ts'), 'utf8')
+
+  /** Does the chat stream actually hand the browser the tool's reasoning field? */
+  const bubbleShowsReasoning = () => {
+    const src = chatFn()
+    const at = src.indexOf("status: 'done'")
+    if (at === -1) return false
+    return /human_reason/.test(src.slice(at, at + 400))
+  }
+
+  it('finds the chat tool event, so the cases below are not vacuous', () => {
+    expect(chatFn(), 'chat.ts no longer emits a done tool event; re-point these cases').toContain("status: 'done'")
+  })
+
+  it('does not promise the bubble shows what only the trace shows', () => {
+    if (bubbleShowsReasoning()) return // Implemented for real: the row is then free to say so.
+    const sheet = flat(readFileSync(join(repoRoot, 'docs/demo-cheatsheet.md'), 'utf8'))
+    for (const claim of ['the tool prints the arithmetic', 'tool prints the sum']) {
+      expect(
+        sheet,
+        `docs/demo-cheatsheet.md says "${claim}", and chat.ts's done event carries only summary and ` +
+          `citations — the arithmetic is in human_reason, which the model reads and the supervisor trace ` +
+          `shows. Told this, Enrique points at the bubble for a sentence that is not in it, with the panel ` +
+          `following his hand.`,
+      ).not.toContain(claim)
+    }
+  })
+
+  it('does not claim Sol says a figure it does not say', () => {
+    const sheet = flat(readFileSync(join(repoRoot, 'docs/demo-cheatsheet.md'), 'utf8'))
+    expect(
+      sheet,
+      'docs/demo-cheatsheet.md again claims Sol confirms the amount is inside the $50 authority. Measured ' +
+        'on production, Sol names neither $45 nor $50 — the check_comp_authority chip carries both. Say ' +
+        'which part of the screen holds the number.',
+    ).not.toContain('Sol confirms the amount is inside the $50')
+  })
+
+  it('points the presenter at the chips, which is where the numbers are', () => {
+    const sheet = flat(readFileSync(join(repoRoot, 'docs/demo-cheatsheet.md'), 'utf8'))
+    expect(
+      sheet,
+      'the row no longer tells the presenter where to look. The beat only lands if the panel sees the ' +
+        'authority finding and the escalation next to each other, and both are chips.',
+    ).toMatch(/chip/i)
+  })
 })
 
 /**
