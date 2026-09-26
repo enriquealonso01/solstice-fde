@@ -31,3 +31,7 @@ FDE_Project_Challenge.pdf
 /HUMAN_INTERVENTION.md
 /agents/
 /plans/
+
+# UI screenshots are working evidence, not shipped docs; kept local on request.
+/screenshots/
+/supabase/.temp/
