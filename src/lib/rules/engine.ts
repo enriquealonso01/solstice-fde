@@ -168,8 +168,8 @@ export function evaluateGroupRules(options: EvaluateOptions): EvaluationResult {
         rooms,
         cap,
         over
-          ? `The customer is asking for ${rooms} rooms. ${rules.property_name} lets us sign off up to ${cap} rooms on our own, so this one is ${rooms - cap} rooms past the line and needs the general manager, ${describeApprover(rules)}, to approve it.`
-          : `${rooms} rooms is within the ${cap} rooms ${rules.property_name} lets us approve without going to the general manager.`,
+          ? `The customer is asking for ${rooms} rooms. ${rules.property_name} lets us sign off up to ${cap} rooms on our own, so this one is ${rooms - cap} rooms past the line and needs ${describeApprover()} to sign it off before it goes out.`
+          : `${rooms} rooms is within the ${cap} rooms ${rules.property_name} lets us sign off on our own.`,
       ),
     )
   }
@@ -193,7 +193,7 @@ export function evaluateGroupRules(options: EvaluateOptions): EvaluationResult {
         requestedDiscount,
         applied.pct,
         over
-          ? `The customer asked for ${requestedDiscount}% off.${seasonalClause} We can approve up to ${applied.pct}% on our own, so this is ${round1(requestedDiscount - applied.pct)} points over what we can authorise ourselves, and it needs a named approver to sign it off before it goes out.`
+          ? `The customer asked for ${requestedDiscount}% off.${seasonalClause} We can approve up to ${applied.pct}% on our own, so this is ${round1(requestedDiscount - applied.pct)} points over what we can authorise ourselves, and it needs ${describeApprover()} to sign it off before it goes out.`
           : `${requestedDiscount}% off is within the ${applied.pct}% we can approve ourselves.${seasonalClause}`,
       ),
     )
@@ -249,7 +249,7 @@ export function evaluateGroupRules(options: EvaluateOptions): EvaluationResult {
           `${daysOut} days before arrival`,
           `${rules.lead_time.min_days} days for blocks over ${rules.lead_time.over_rooms} rooms`,
           short
-            ? `A block this size at ${rules.property_name} normally needs at least ${rules.lead_time.min_days} days' notice, and we are only ${daysOut} days out. It is our busiest hotel, so squeezing ${rooms} rooms in at short notice takes the general manager's agreement.`
+            ? `A block this size at ${rules.property_name} normally needs at least ${rules.lead_time.min_days} days' notice, and we are only ${daysOut} days out. It is our busiest hotel, so squeezing ${rooms} rooms in at short notice is past what we can sign off ourselves, and it takes ${describeApprover()}'s decision.`
             : `At ${daysOut} days out we are comfortably inside the ${rules.lead_time.min_days} days' notice ${rules.property_name} wants for a block of this size.`,
         ),
       )
@@ -328,8 +328,21 @@ function decide(verdicts: RuleVerdict[]): Decision {
   return 'auto_approve'
 }
 
-function describeApprover(rules: PropertyRuleSet): string {
-  return `the general manager at ${rules.property_name}`
+/**
+ * Who a flagged verdict says has to sign it off.
+ *
+ * This used to return `the general manager at ${property_name}`. There is no general manager:
+ * `staff_role` is ('concierge', 'group_sales', 'admin') and `approveProposal` applies no test
+ * beyond group_sales|admin, so the sentence promised a tier nothing enforces. Policy 13 does put
+ * group block authority with "Sales and the General Manager", so the phrase was policy-grounded --
+ * the objection is about ENFORCEMENT, and that objection stands.
+ *
+ * Every rule that names an approver now calls this, so the vocabulary cannot drift between two
+ * verdicts of the same inquiry again. That is how it drifted the first time: the ceiling rule was
+ * corrected and the rooms-cap rule, ten lines above it, was not.
+ */
+function describeApprover(): string {
+  return 'a named approver'
 }
 
 function round1(value: number): number {

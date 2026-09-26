@@ -1050,3 +1050,33 @@ seven of them and a guard resolves those citations.
    A test now fails if a fourth disclosure appears without being added to that list.
 
 **So the order is: paste the SQL, then delete the three passages. Nothing else, and nothing will break.**
+
+---
+
+## Decided for you, 2026-09-26 06:25 — the "general manager" judgment call above needs no decision
+
+The open item **"Judgment call: 'the general manager' is not a role"** offered you three options: (a) leave
+it, (b) soften the wording, (c) add a GM role. **(b) is now done everywhere, so there is nothing to choose.**
+
+What changed, and why it was bigger than that item said:
+
+1. **That item quotes the discount-ceiling refusal, which had already been fixed** (T1c, PR #5) — it says
+   "a named approver" and has since. The sentence quoted above no longer exists.
+2. **The rooms-cap verdict still carried the phrase, and said it twice**: *"needs the general manager, the
+   general manager at Solstice Tampa Bayshore, to approve it."* Rendered on INQ-2002, the 40-rooms-in-Tampa
+   beat on the cheat sheet.
+3. **It was on nine of the ten inquiries**, not one — four flagged verdicts with the stutter, five passing
+   ones reading *"without going to the general manager"*. Measured by evaluating all ten, not by grep.
+4. **Every group verdict now says "a named approver"**, from one function in `engine.ts`, and the suite
+   fails if any verdict, mock or fixture reintroduces the phrase.
+
+**What did NOT change, deliberately.** The concierge escalation matrix still says *"goes straight to the
+General Manager and Regional Security"* — that is **quoting Policy 15**, which really says it, and
+`property.general_manager` is a real named person in the data that every proposal PDF signs on behalf of.
+Policy 13 does put group authority with "Sales and the General Manager". The objection was only ever about
+**enforcement**: there is no `gm` value in `staff_role`, so the app cannot prove that person approved. It can
+prove *someone named* approved, and that is now what it says.
+
+**If the panel asks who can approve:** group_sales or admin, recorded against their user with the rule they
+overrode. The GM is in the policy and on the paperwork; the app does not claim to enforce a tier it has no
+seat for.

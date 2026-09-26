@@ -1,14 +1,22 @@
 # Master plan: the whole picture
 
-> ## 05:58 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 06:23 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **Three agent tasks are open: T60, then two one-line items inside T58, then T59.**
 > **T58's instruction is FIXED** (It148, 05:56): the paragraph now names the field instead of a distance,
 > and a guard fails on any *“N lines below”* that is not describing the old mistake. **64 green**, and I
 > red-checked that guard in memory rather than trusting it — it fires. **Two one-line items remain in it**:
 > a message naming the wrong neighbour, and an `indexOf` that judges every match by the first occurrence.
-> **T60** — `show-verdict.ts INQ-2002`, the *40 rooms in Tampa* beat, still prints *“needs **the general
-> manager, the general manager at Solstice Tampa Bayshore**, to approve it.”* `engine.ts` is untouched since
-> yesterday. **T59** — the brief's *net-new tool* still has **no behavioural test**.
+> **T60 is CLOSED** (It149) and the suite is **green again — 872 tests, 61 files**. The guard that went red was
+> narrowed to the group-approval path rather than scrubbing three sentences that quote **Policy 7 and Policy
+> 15**; `rules.ts` is untouched. **Two agent tasks remain: T58's two one-line items, and T59** — the brief's
+> *net-new tool* still has no behavioural test.
+> **Measured at 06:09: the Chen suite refusal — your opening beat — is that function's output.**
+> Driven end to end on production: 2PM guarantee confirmed outright, suite refused, escalated to the AGM.
+> **Better stage line than the card's:** the tool's decision is literally `policy_gap_manager_decision`, and
+> its reason cites Policy 6 admitting that the last-suite case *“is a judgment call for the manager on duty.”*
+> **The brief itself is now re-readable by any agent**: `fitz` (PyMuPDF) is installed and extracts all four
+> pages; the naive stream-scrape that failed at It117 returns font tables. Two quotes re-verified verbatim —
+> *“5 business days from receipt to submit”* and *“a request that should take twenty minutes takes two days.”*
 > **T56 shipped at It144 — and it corrected me.** I handed the Implementer a
 > census p90 of **1488ms** and called the 1.5s first-signal target met. **That figure was one index low.**
 > Nearest-rank is **1502ms**, linear interpolation **1492ms**, and **10.1% of turns exceed 1500ms**, so the p90
@@ -39,7 +47,8 @@
 > **Six items are yours — three to do, and three decisions where the recommendation is to do nothing**
 > (T34 the SIP credential; the brief PDF in history, `HUMAN_INTERVENTION.md:975`, heading ***"Your call: the interviewers' own brief"***; and your own email
 > address in this file, which removing breaks nothing and on which I have no recommendation).
-> *Seven likely panel questions are answered in `▶ IF THEY ASK` below.*
+> *Likely panel questions are answered in `▶ IF THEY ASK` below — including, as of 06:15, **“how do I
+> know the approval gate actually holds?”**, answered from 265 live audit rows.*
 >
 > **This banner is rewritten, not appended.** It said *18:04* and *"two agent items left"* until
 > iteration 123; there were five. Everything it used to carry about **closed** work is in the
@@ -898,6 +907,14 @@ Five reader-facing places name it: `README.md` (twice, rows 27 and 162), `SUBMIS
 
 #### Why it earns a slot anyway
 
+> **Measured on production at 06:09, so this is no longer hypothetical.** I drove the cheat sheet's row-one
+> Chen beat end to end. Turn three, the suite refusal — *“the better moment of the two”* — is produced by
+> this function: `check_upgrade_eligibility` calls it, gets **no Suite inventory** for the stay date, and
+> returns `decision: policy_gap_manager_decision`. **The best refusal in the demo is the output of the one
+> capability with no behavioural test.** It also passes the snapshot through to the model with
+> `rooms_available`, `total_rooms`, `provenance` and `assumption` attached, which is why Sol can say *“suites
+> are showing sold out”* without inventing it.
+
 `AVAILABILITY_MODE=sold_out` is **the stage control for the Platinum-upgrade refusal** — the cheat sheet calls
 that refusal *"the better moment of the two"*. If that branch regressed, the beat does not fail loudly; **it
 inverts**, and Sol confirms a suite in front of the panel. A one-line change in the occupancy formula also moves
@@ -928,7 +945,58 @@ every late-checkout and upgrade answer at once, silently, because nothing reads 
 red; `npx vitest run` green. **Do not change `availability.ts` — it is correct.** If a case disagrees with the
 code, re-read the code before editing either.
 
-### T60. A verdict on the group-sales screen says "the general manager, the general manager at Solstice Tampa Bayshore"
+### T60 — SHIPPED (It149). All four items, and the guard kept its scope instead of scrubbing the policy text.
+
+> ## ✅ RESOLVED at 06:22 — the suite is green **and** `rules.ts` is untouched (still 13:11 yesterday)
+>
+> The guard was narrowed to `REASON_ROOTS = ['src/lib/rules', 'src/components/admin',
+> 'netlify/functions/group']` — the group-approval path — and its own comment now carries the distinction:
+> *"The defect is not the words ‘general manager’ appearing anywhere; it is a GROUP APPROVAL verdict naming a
+> tier the app will not enforce. A guard that could not tell those apart would have pushed me to break a
+> working tool to keep itself green."* **872 tests, 61 files, green.**
+>
+> *The note below is kept as written. The Implementer's file changed at **06:19** and mine at **06:20**, so
+> it reached this itself; I am not claiming the call.*
+>
+> ### The note, as written at iteration 215
+>
+> **The duplication is fixed and the vocabulary is unified** — `show-verdict.ts INQ-2002` now says *"needs **a
+> named approver** to sign it off before it goes out"* on **both** verdicts, and `general manager` survives in
+> `engine.ts` only inside a comment at `:334`. That is better than this task asked for.
+>
+> **But `npx vitest run` is RED right now: 1 failed of 871.** The new `approver-vocabulary.test.ts` sweeps every
+> `human_reason` literal in `src`, `netlify`, `shared` and `scripts` against `/general manager|GM/i` and
+> reports **three offenders, all in `netlify/functions/tools/rules.ts`**:
+>
+> ```
+> :229  "Policy 15: anything involving guest safety, a threat, or law enforcement goes straight to the
+>        General Manager and Regional Security..."
+> :247  "Policy 15 does not name legal threats. We route them above front-desk authority to the GM..."
+> :274  "Policy 7 and Policy 15: comps over $50, or a full comped night, need AGM or GM sign-off the same day."
+> ```
+>
+> **Do not scrub those three.** They are near-verbatim reports of the interviewers' own document, which I read
+> at 06:19:
+>
+> - **Policy 7:** *"Anything above $50, or a full comped night, **needs AGM or GM sign-off**."*
+> - **Policy 15 (titled ESCALATION MATRIX):** *"Anything involving guest safety, a threat, or law enforcement
+>   goes **straight to the General Manager** and Regional Security, any hour, no exceptions."*
+>
+> **The original objection does not apply to them.** It was that a sentence promised *an approver role the
+> product cannot enforce* — `staff_role` is `(concierge, group_sales, admin)` and `approveProposal` tests
+> nothing beyond `group_sales|admin`. These three are not about who clicks approve here; they report **where
+> the hotel routes a case**, and the system really does model that: `route.notify` carries
+> `['General Manager','Regional Security']` and `['Manager on duty','AGM']`, the Chen beat I drove at 06:09
+> escalated **to agm**, and the Webb beat measures `$55 -> agm`.
+>
+> **Scrubbing them would make the agent misreport Policy 7 — which is inventing a policy, the one thing the
+> brief forbids.** `:247` is the best of the three: it says *"Policy 15 does not name legal threats"* and then
+> states our assumption, which is exactly the behaviour the brief rewards.
+>
+> **The fix is the guard, not the sentences.** Scope it to the sentences it was born from — the proposal and
+> approval path (`src/lib/rules/engine.ts`, `options.ts`, the proposal modules) — or exempt a reason that cites
+> a policy number, since a sentence quoting Policy 7 is reporting an authority rather than promising one.
+> **A guard that forces the product to misquote the source data is worse than the defect it was written for.**
 
 *Rendered, not inferred — `show-verdict.ts INQ-2002`, the cheat sheet's own **40 rooms in Tampa** beat. The
 sibling verdict directly beneath it is the one the project deliberately scrubbed of that phrase, and the guard
@@ -995,7 +1063,11 @@ the exact shape of the cheat sheet's group beat. No document quotes the sentence
 **Check when done:** `show-verdict.ts INQ-2002` prints the approver phrase once; the guard covers both verdicts;
 `npx vitest run` green.
 
-# ▶ IF THEY ASK — seven answers to questions the package invites
+# ▶ IF THEY ASK — prepared answers to questions the package invites
+
+*The heading deliberately carries no count. It said **seven** while an eighth was being added, which is
+the same failure the `▶ OPEN WORK` block was cured of at iteration 201: a number in a heading is a
+promise to do maintenance, and the maintenance is what fails.*
 
 *Each of these is a place where the system is **correct** and a reviewer will reasonably want to
 know why it looks the way it does. Each was checked in the iteration named. **None is a defect.***
@@ -1112,6 +1184,41 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > which resolves to nothing from the repo root — it is under `netlify/functions/` — and it dropped
 > **audit**, which `agent/sol.md:110` has and which is the half that makes an escalation attributable.*
 
+
+**8. "The rules flag things — but how do I know the gate actually holds?"** — *iteration 214*
+
+> **Measured in production, not asserted.** Eight proposals exist against thirteen inquiries. Checked every one
+> against that property's own thresholds:
+>
+> | inquiry | ask | that property's caps | breach | proposal status |
+> |---|---|---|---|---|
+> | INQ-2001 Chicago | 18 rooms, 10% | 25 / 12 | no | **sent** |
+> | INQ-2006 Providence | 12 rooms, 5% | 15 / 10 | no | **sent** |
+> | INQ-2005 Sacramento | 22 rooms, 8% | **20** / 10 | rooms | awaiting_approval |
+> | INQ-2007 Providence | 20 rooms, 10% | **15** / 10 | rooms | awaiting_approval |
+> | INQ-2008 Columbus | 28 rooms, 12% | **20** / **10** | both | awaiting_approval |
+> | INQ-2009 Phoenix | 15 rooms, **17%** | 35 / **15** | discount | awaiting_approval |
+> | INQ-2002 Tampa | **40** rooms, **22%** | **35** / **15** | both | rejected |
+> | INQ-2011 Tampa | 20 rooms, 10% | 35 / 15 | no | draft |
+>
+> **Every breaching proposal is flagged or rejected. Both sent proposals are inside the rules. Nothing outside
+> the rules has ever been sent.**
+>
+> And the gate is not passive: **`proposal.send_blocked` appears 16 times** in the audit log, each with the
+> blocking rule attached — against a signed-in `group_sales` user, against anonymous callers, and against two
+> deliberately hostile testers (`tester-hostile`, `tester-iter31`). **PRP-2009 was blocked on four separate
+> occasions by four different actors and has never been sent.**
+>
+> The one proposal that did clear shows the designed path end to end: `send_blocked` →
+> `submitted_for_approval` → `approved` with a human's note, *“Repeat sports-team business, worth the extra
+> rooms”* → `marked_sent`. **An override is a recorded decision by a named person, not a bypass.**
+>
+> *One more thing falls out of the same rows: the audit detail stores `b***@harlowvance.com` and
+> `s***@blueanchorevents.com`. **The masking reaches the audit log**, which is where PII usually survives.*
+>
+> **The honest caveat, and it is item 1 on your list:** this is the application gate. Until the `drop policy`
+> SQL is applied, a signed-in rep can still set `status` directly in the database and leave no audit row at
+> all. **Everything above is what the product enforces; the SQL is what makes the database agree.**
 ---
 
 # ▶ OPEN WORK — three things for Enrique to DO, three decisions that need no action
@@ -2359,6 +2466,361 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 216, 06:23 EST — green again, and the working tool was not broken to get there
+
+**`npx vitest run`: 872 passed, 61 files, 0 failed.** And the thing I cared about: **`netlify/functions/tools/rules.ts` is still stamped 13:11 yesterday.** The three sentences that quote Policy 7 and Policy 15 were not touched.
+
+#### The guard was scoped instead
+
+```
+REASON_ROOTS = ['src/lib/rules', 'src/components/admin', 'netlify/functions/group']
+```
+
+The group-approval path, and nothing else. Its own comment now carries the distinction, in its own words:
+
+> *"The defect is not the words 'general manager' appearing anywhere; it is a GROUP APPROVAL verdict naming a
+> tier the app will not enforce. **A guard that could not tell those apart would have pushed me to break a
+> working tool to keep itself green.**"*
+
+**I am not claiming that call.** The Implementer's file changed at **06:19** and my note went into the plan at
+**06:20**, so it got there first and reasoned it out itself. Recording the timestamps because the alternative —
+letting the sequence imply I steered it — is the kind of small false credit that makes a log untrustworthy.
+
+#### The guard is stronger than the one it replaced, in three layers
+
+1. **The matcher is proved both ways**: two `HISTORICAL` sentences must fire, and *"a judgment call on one
+   segment of the stay"* must **not** — because `judgment` and `segment` both contain `gm`.
+2. **A runtime sweep over the real dataset**: every verdict of every inquiry, with two vacuity floors
+   (`inquiries.length > 5`, `reasonsChecked > 30`).
+3. **A source sweep** over `human_reason` literals under the three roots. I counted them independently: **60**
+   against a floor of **40**. Narrowing the scope dropped it from 66 to 60 and **the floor was not lowered to
+   match**, which is the failure mode that would have made the whole case cosmetic.
+
+#### T60's item 3 landed, and better than I wrote it
+
+`inquiries.test.ts` now reads *"does not promise an approver role the system does not have, **in ANY of its
+verdicts**"* — it loops every verdict INQ-2002 produces, **pass and flag alike**, with `verdicts.length > 3` as
+its vacuity guard. Its comment records the finding in the project's own idiom:
+
+> *"the rooms-cap reason kept the phrase and said it TWICE, for months, one verdict away from the assertion
+> banning it. The reasoning above was about the rule; only its subject was narrow."*
+
+**And it caught something I had not**: the rooms-cap **pass** branch carried the phrase too, *"on five other
+inquiries."* I only ever looked at the flagged text, because that is what `show-verdict.ts` prints.
+
+> **My instrument shaped my finding.** The script prints flags, so I audited flags. The passing verdicts were
+> equally visible on the dashboard and equally wrong, and I had even written *"`show-verdict.ts` prints flags
+> only"* in T60 without following that sentence to its conclusion. **Noting a tool's blind spot is not the same
+> as covering it.**
+
+#### Where that leaves the plan
+
+**T60 is closed** — all four items, verified in the file rather than read from a log entry. Remaining and
+unworked: **T58's two one-line items** (`:177` names SOL-TPA, which lies *before* the slice; `:226` judges every
+match by the first occurrence's context) and **T59**, the net-new tool's missing behavioural test.
+
+Inbox and In progress empty. Tester silent since 20:26 (**9h57m**). No lock held; I took none.
+
+
+### Iteration 215, 06:20 EST — the suite is red, and the obvious way to make it green would make the agent misquote the policy
+
+**`npx vitest run`: 1 failed of 871.** It149 is mid-flight — `engine.ts` changed at 06:14 and no log entry
+exists yet — so this is work in progress rather than an abandoned red suite. But the next move is a judgement
+call, the obvious one is wrong, and I have the evidence, so it goes in the plan now rather than after.
+
+#### T60 is fixed, and fixed better than I asked
+
+```
+show-verdict.ts INQ-2002
+  FLAG GRP-ROOMS-CAP         "...5 rooms past the line and needs a named approver to sign it off before it goes out."
+  FLAG GRP-DISCOUNT-CEILING  "...7 points over what we can authorise ourselves, and it needs a named approver..."
+```
+
+The duplication is gone, **both verdicts now use the same vocabulary**, and `general manager` survives in
+`engine.ts` only inside a comment at `:334` explaining what it used to say. The pass branch and the lead-time
+sentence were swept too, which T60 did not ask for.
+
+#### The red test is a new sweep, and its three findings are the data talking
+
+`approver-vocabulary.test.ts` (new, 06:17) checks **every** `human_reason` literal in `src`, `netlify`, `shared`
+and `scripts` against `/general manager|\bGM\b/i`. Three offenders, all in `netlify/functions/tools/rules.ts`:
+
+```
+:229  "Policy 15: anything involving guest safety, a threat, or law enforcement goes straight to the
+       General Manager and Regional Security..."
+:247  "Policy 15 does not name legal threats. We route them above front-desk authority to the GM..."
+:274  "Policy 7 and Policy 15: comps over $50, or a full comped night, need AGM or GM sign-off the same day."
+```
+
+I read the interviewers' document rather than judging the strings:
+
+- **Policy 7:** *"Anything above $50, or a full comped night, **needs AGM or GM sign-off**."*
+- **Policy 15, titled ESCALATION MATRIX:** *"Anything involving guest safety, a threat, or law enforcement goes
+  **straight to the General Manager** and Regional Security, any hour, no exceptions."*
+
+**Those sentences are near-verbatim reports of the source data.**
+
+#### Why the original objection does not reach them
+
+The objection that produced all of this was specific: a sentence **promised an approver role the product cannot
+enforce**, because `staff_role` is `(concierge, group_sales, admin)` and `approveProposal` tests nothing beyond
+`group_sales|admin`. That is a promise about *who clicks approve in our product*.
+
+These three are about **where the hotel routes a case**, and the system genuinely models that:
+`route.notify` carries `['General Manager','Regional Security']` and `['Manager on duty','AGM']`; the Chen beat
+I drove at 06:09 produced *"Escalation cfe69036… **to agm**"*; the Webb beat measures `$55 -> agm`.
+
+> **Scrubbing them would make the agent misreport Policy 7 — which is inventing a policy, the one thing the brief
+> forbids.** And `:247` is the best sentence of the three: it says *"Policy 15 does not name legal threats"* and
+> then states our assumption, which is exactly what the brief calls *"a positive signal, not a gap."*
+
+**So the fix is the guard, not the sentences**: scope it to the proposal and approval path it was born from, or
+exempt a reason that cites a policy number. **A guard that forces the product to misquote its source data is
+worse than the defect it was written for.** That note is now at the head of T60, where whoever makes the suite
+green will meet it.
+
+#### What is genuinely still open in T60
+
+`inquiries.test.ts:99` still reads **only** `GRP-DISCOUNT-CEILING`. The no-GM assertion has not been widened to
+both verdicts of INQ-2002 — which was T60 item 3, and is the one part of this the new sweep does not cover,
+because the sweep reads source literals and this reads engine output.
+
+*(T60 item 4 is done: the superseded fixture in `send-gate-bypass.test.ts` is gone.)*
+
+#### Also verified
+
+The new guard has an anti-vacuity case of its own — *"finds the population it claims to check"*, asserting more
+than 40 `human_reason` literals match, **"a floor, not a count"** — and two `HISTORICAL` strings proving the
+matcher fires on the real sentences it was written for. That is the right shape; only its scope is wrong.
+
+**T58's two one-line items are still untouched.** Inbox and In progress empty. Tester silent since 20:26
+(**9h54m**). No lock held; I took none.
+
+
+### Iteration 214, 06:15 EST — the strongest evidence in the package was sitting in a table nobody had summarised
+
+**No new tasks.** T60, T58's two one-line items and T59 are open and none is being worked; nothing has moved
+since 06:04. So I verified the brief's headline group guardrail against **live production rows** rather than
+against a test.
+
+The brief's words: *"Any group proposal outside standard rules (discount past a threshold, block size above a
+limit, blackout dates) gets **flagged for a human, not auto-approved**."*
+
+#### Every proposal, against its own property's thresholds
+
+| inquiry | ask | that property's caps | breach | proposal status |
+|---|---|---|---|---|
+| INQ-2001 Chicago | 18 rooms, 10% | 25 / 12 | no | **sent** |
+| INQ-2006 Providence | 12 rooms, 5% | 15 / 10 | no | **sent** |
+| INQ-2005 Sacramento | 22 rooms, 8% | **20** / 10 | rooms | awaiting_approval |
+| INQ-2007 Providence | 20 rooms, 10% | **15** / 10 | rooms | awaiting_approval |
+| INQ-2008 Columbus | 28 rooms, 12% | **20** / **10** | both | awaiting_approval |
+| INQ-2009 Phoenix | 15 rooms, **17%** | 35 / **15** | discount | awaiting_approval |
+| INQ-2002 Tampa | **40** rooms, **22%** | **35** / **15** | both | rejected |
+| INQ-2011 Tampa | 20 rooms, 10% | 35 / 15 | no | draft |
+
+**Every breaching proposal is flagged or rejected; both sent proposals are inside the rules.** Nothing outside
+the rules has ever been sent. Eight proposals, thirteen inquiries, checked one at a time against the per-property
+caps in `thresholds.ts` rather than against a remembered number.
+
+#### The gate is not passive, and the audit log proves it
+
+**`proposal.send_blocked` appears 16 times** in 265 audit rows, each carrying the blocking rule — against a
+signed-in `group_sales` user, against anonymous callers, and against two deliberately hostile testers
+(`tester-hostile`, `tester-iter31`). **PRP-2009 was blocked on four separate occasions by four different actors
+and has never been sent.**
+
+And the one proposal that did clear shows the designed path end to end:
+
+```
+proposal.send_blocked  ->  proposal.submitted_for_approval  ->  proposal.approved
+   note: "Repeat sports-team business, worth the extra rooms."  ->  proposal.marked_sent
+```
+
+**An override is a recorded decision by a named person, not a bypass.** That is a better answer to *"can your
+sales team just click through it"* than any description of the code.
+
+#### A guardrail I was not looking for, confirmed by the same rows
+
+The audit detail stores `sent_to: "b***@harlowvance.com"` and `"s***@blueanchorevents.com"`. **The masking layer
+reaches the audit log** — which is exactly where PII usually survives a redaction pass, because the audit writer
+is the one component nobody thinks of as user-facing.
+
+#### Filed where a panel member will actually meet it
+
+This became **`▶ IF THEY ASK` #8**, *"The rules flag things — but how do I know the gate actually holds?"*, with
+the table, the sixteen blocks and the approval chain, and with the honest caveat attached: **this is the
+application gate; until the `drop policy` SQL runs, a signed-in rep can still set `status` directly in the
+database and leave no audit row.** Everything above is what the product enforces; the SQL is what makes the
+database agree.
+
+> **And the heading lost its count.** It read *"seven answers"* while I was adding the eighth — the same failure
+> `▶ OPEN WORK` was cured of at iteration 201. **A number in a heading is a promise to do maintenance, and the
+> maintenance is the thing that fails.** Two other places said *"seven"*; both now say neither.
+
+#### One repeat mistake of my own
+
+I queried `audit_log.target` and got `column audit_log.target does not exist` — **a column I have already been
+wrong about once tonight**, and the schema is one request away (`select=*&limit=1`). The correct column is
+`subject`. **Reading a schema costs one call; guessing one costs two.**
+
+**Inbox and In progress empty.** Tester silent since 20:26 (**9h49m**). No lock held; I took none.
+
+
+### Iteration 213, 06:10 EST — drove the beat Enrique opens with, and found a better line than the one on the card
+
+**No new tasks.** T60, T58's two one-line items and T59 are all still open and none is being worked — It148
+logged at 06:04 without touching either T58 item, and `engine.ts` has not moved since **15:08 yesterday**.
+
+So I drove **row one of the cheat sheet** — the first thing he does on stage — on production. Nobody had this
+segment; It143 drove the Webb row.
+
+#### Three turns, one session, exactly what the card promises
+
+```
+"Confirmation R55004, last name Chen"
+  identify_guest            -> Verified Michael Chen (Platinum)
+  "You're verified, Michael. What can I help you with regarding your reservation R55004?"
+
+"Can I have a late checkout?"
+  check_late_checkout       -> Late checkout 14:00: guaranteed
+  "As a Platinum member, you're guaranteed late checkout until 2:00 PM - that's confirmed, no need to
+   ask at the desk."
+
+"I'd like a suite upgrade for this stay please."
+  check_upgrade_eligibility -> Upgrade to Suite: policy_gap_manager_decision
+  create_escalation         -> Escalation cfe69036... to agm
+  "Suites are showing sold out for your stay date, so I can't confirm that upgrade myself. Your Platinum
+   guarantee still applies, though, so I'm having the manager on duty look at it directly."
+```
+
+**Both halves of the card's measured claim hold**: the 2PM guarantee is confirmed outright, and the suite is
+refused and escalated. Turn latencies 3214ms, 3297ms, 7061ms; first tokens 2959 / 2794 / 2543ms.
+
+#### The tool's own decision label is a better stage line than the card's
+
+The card cites `may_promise: false`. The live tool returns **`decision: 'policy_gap_manager_decision'`** with
+`policy_gap: true`, and its reason cites the interviewers' own document:
+
+> *"Policy 6 guarantees Platinum the next room class based on same-day inventory, and there is no Suite inventory
+> on that date. **Policy 6 states plainly that competing claims on the last room are a judgment call for the
+> manager on duty.** Do not promise the upgrade and do not invent a tiebreak."*
+
+**Saying "the tool's decision is literally `policy_gap_manager_decision`" is stronger than quoting a boolean** —
+it says the system has a name for the case the policy admits it cannot answer. Iteration 212 verified that Policy
+6 really contains that sentence, so the chain is: their document says it is a judgment call → the tool has a
+decision for exactly that → the agent escalates instead of guessing.
+
+#### Two guardrails confirmed live in the same reply
+
+- **The "sold out" phrasing is grounded, not invented.** `stayBenefits.ts:238` passes the model
+  `availability: { rooms_available, total_rooms, provenance, assumption }`. Sol paraphrased a field.
+- **The staff directive was followed and not read back.** The tool's reason ends *"say the guarantee is being
+  honoured through the manager on duty and hand it over"*; Sol said *"Your Platinum guarantee still applies…
+  I'm having the manager on duty look at it directly"* and quoted none of the instruction, which is
+  `solPrompt.ts:48`'s rule working in the wild.
+
+#### And it makes T59 concrete rather than prudent
+
+That refusal exists because `sameDayAvailability()` returned no Suite inventory for the date. **The best moment
+in the demo is the output of the one capability with zero behavioural tests** — `AVAILABILITY_MODE`,
+`AVAILABILITY_OVERRIDES`, `rooms_available` and `occupancy_pct` appear in no test file. T59 now says this with
+the measurement attached, so whoever picks it up knows what it is protecting.
+
+**Inbox and In progress empty.** Tester silent since 20:26 (**9h44m**). No lock held; I took none.
+
+
+### Iteration 212, 06:05 EST — the brief is readable after all, and the recipe is two lines
+
+**No new tasks.** The plan stands: T60, the two one-line items in T58, then T59. This iteration went at ground
+truth instead.
+
+#### The document everything rests on could not be read, and now can
+
+`HUMAN_INTERVENTION.md` records an agent's honest limitation: *"I tried to read the PDF to check our deliverables
+against its own list, and my text extraction pulled embedded font data rather than page text… I am recording that
+I did **not** independently re-verify it."* I reproduced that failure exactly — decompressing every stream and
+scraping parenthesised strings yields **57,410 characters of font tables**, including the Poppins repository URL,
+and **zero** hits for the word *"days"*.
+
+**`fitz` (PyMuPDF) is installed in this environment and reads it in one call.** Four pages, **7,501 characters**
+of real text:
+
+```python
+import fitz
+doc = fitz.open('FDE_Project_Challenge.pdf')
+text = ' '.join(p.get_text() for p in doc)
+```
+
+*(On Windows, wrap stdout in UTF-8 or the `charmap` codec throws on the brief's curly quotes — which is a
+separate failure that looks like an extraction failure.)* **Any agent can now check a claim against the brief
+instead of against our memory of it.**
+
+#### Two quotes I have been relying on, now verbatim from their document
+
+- **The banner's deadline reasoning.** *"Estimated effort is 4 to 5 hours. **You'll have 5 business days from
+  receipt to submit.** We'll send you the submission address with your challenge package."* Received Thursday
+  2026-09-24, so the real deadline is ~Thursday 2026-10-01 and Enrique is early **by choice**. Confirmed, not
+  remembered.
+- **A number we attribute to them.** `docs/where-this-goes.md` says *"the two-day quote becomes twenty minutes,
+  **which is the number in their own brief**."* Their words: *"the group sales team is still building multi-room
+  block quotes by hand in spreadsheets, so **a request that should take twenty minutes takes two days**."*
+  **Both numbers and the attribution are exact.**
+
+#### The brief's own list, re-read from the text rather than from memory
+
+Every named deliverable is present: concierge agent, agentic group workflow, custom interface (*"cannot just be
+Claude or ChatGPT"*), net-new tool, architecture diagram with **degradation** (a named requirement, and the
+drawio's third page), integration recommendation, self-set latency target, agent config `.md` with sample
+transcripts, native export. The five guardrail clauses map to shipped behaviour, including *"any group proposal
+outside standard rules… gets flagged for a human, not auto-approved"* — **which is exactly what Enrique's
+`drop policy` paste enforces in the database rather than only in the UI.**
+
+#### A near-miss: I audited the wrong file for a named bonus
+
+The brief offers *"bonus points if you address the very real fear at the front desk that 'the AI is coming for
+our jobs' with something more useful than a platitude."* I read `docs/where-this-goes.md` end to end, found
+nothing answering it, and was one step from filing *"a named bonus is unaddressed."*
+
+**It is answered in `docs/integration-recommendation.md:88`** — a different file, whose four headings map
+one-to-one onto the brief's three asks plus the bonus: *"What a chain like Solstice is actually running"* (OPERA,
+Mews, Cloudbeds, Agilysys; SynXis and Amadeus; Revinate, Cendyn, Salesforce), *"How we would plug in"*, *"What we
+would tell a nervous IT team"* — the brief's own phrase — and *"The front desk question."*
+
+> **Third time this segment I nearly filed a gap that existed under another name** — the diagram said *Escalation
+> queue* when I grepped for *notif*, the SVG was hand-authored rather than stale, and now the recommendation
+> lives in the file named after it. **One grep answered each.**
+
+And it is not a platitude: it grounds the limit in the interviewers' own data. I checked that quotation too —
+Policy 6 really says *"two Platinum guests both wanting the same last suite… **That one's a judgment call for the
+manager on duty**."* The document's claim, *"the policy reference itself admits the limit… We did not automate
+that"*, is exact.
+
+#### Checked and deliberately not filed
+
+The brief lists the policy file as **`solstice-property-policies.txt`**; ours is
+`data/SOLSTICE HOTEL GROUP — FRONT DESK POLICY REFERENCE.md`, renamed to its own heading. The three CSVs keep the
+brief's exact names. **Nothing in the package references the original filename**, so there is no dangling
+pointer — only a cosmetic difference from the brief's list, and renaming it hours before submission would touch
+every path that reads it. **Recorded so it is not re-litigated at 09:00.**
+
+#### Also verified while there
+
+- **Eleven rule ids** in the engine — `GRP-BLACKOUT`, `COMPLETENESS`, `DATA-QUALITY`, `DISCOUNT-CEILING`,
+  `INSURANCE-CERT`, `INVENTORY`, `LEAD-TIME`, `MEETING-CAPACITY`, `OVERFLOW-ROUTING`, `ROOMS-CAP`,
+  `SEASONAL-RATE-NOTE` — listed, not counted, so *"the eleven rules your managers override most often"* is exact.
+- **`getReservation` and `getPropertyRate` both exist** in the tool layer, so the recommendation's *"the tool
+  layer already speaks in `getReservation` and `getPropertyRate`, not vendor field names"* is not a dangling
+  reference.
+- **It148's new case reads the decoy line numbers out of the document** rather than hardcoding them, and its own
+  comment records why: an earlier version listed `[10, 54, 93]` as constants and a red-check passed because *"the
+  case was checking numbers I had typed rather than the claims the presenter reads."*
+
+**T58's two one-line items are still open** (`:177` names SOL-TPA, `:226` uses `indexOf`), and **`engine.ts` is
+untouched since 15:08 yesterday**, so T60 has not started. Inbox and In progress empty. Tester silent since 20:26
+(**9h39m**). No lock held; I took none.
+
+
 ### Iteration 211, 05:58 EST — red-checked someone else's guard without touching the repo, and it held
 
 **T58's instruction is fixed.** `docs/live-modification.md` at 05:56 now reads *"change the
@@ -3165,7 +3627,7 @@ Inbox and In progress empty. No lock held. Tester silent **8h00m**.
 
 #### The section I had never swept
 
-`▶ IF THEY ASK` is seven prepared answers to questions the package invites — the most-read part of this file
+`▶ IF THEY ASK` is the prepared answers to questions the package invites — the most-read part of this file
 after the banner, and **written across iterations 114 to 145 and never re-checked.** I have corrected the banner
 five times and never once looked at these.
 
