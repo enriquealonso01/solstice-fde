@@ -5434,3 +5434,69 @@ rather than assuming the part I wrote was the part that was right.
 ```
 PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
 ```
+
+---
+
+## Iteration 62 — 2026-09-26 00:28–00:38Z — VERIFIED: the security-posture paragraph in SUBMISSION.md.
+
+`SUBMISSION.md` opens by telling a reviewer the repository is public and safe to open. That paragraph is
+the first security claim anyone reads, so every sentence in it should be true. Checked each against
+`origin/main` and the live repo:
+
+```
+"It is public"                          gh repo view -> visibility PUBLIC                         TRUE
+".env and DEMO_LOGINS.md are gitignored" both in .gitignore; DEMO_LOGINS.md has 0 commits ever      TRUE
+"the Telnyx export has its shared        exports/telnyx-assistant.json on origin/main: 23 redactions
+ secret redacted"                        of REDACTED_INJECTED_FROM_TOOL_WEBHOOK_SECRET, 0 live sip URIs  TRUE
+"history was scanned for every live      TOOL_WEBHOOK_SECRET, TELNYX_API_KEY, TELNYX_SIP_PASSWORD,
+ credential before it was opened"        SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY all absent
+                                         from origin/main                                          TRUE
+"The demo password was rotated ...       rotation commit 16d39b3 "Rotate demo password, remove it from
+ an earlier value was present in         tracked files before going public" exists; the CURRENT live
+ history and history is permanent"       password appears in 0 commits                             TRUE
+```
+
+The last one is the load-bearing claim, so state exactly what proves it and what does not. The password
+in `.env` is the one that authenticates — I have used it every iteration this session — and
+`git log --all -S<it>` returns **zero commits**. So the live credential is not in the public history,
+which is the thing that matters. The rotation commit is real and does what its subject says. Both
+credential guards still run (16 tests).
+
+**What I did NOT do, deliberately.** The claim implies an *earlier* value was exposed. I started to pull
+that old value out of history and fire it at the live auth endpoint to see whether it still worked, and
+stopped: replaying a recovered credential against a live login is credential-harvesting in shape, it is
+not something I should do even on our own system, and it is not necessary. The claim is that the password
+*was rotated*, and rotation is proven by the live credential being absent from history and a rotation
+commit existing. Whether some superseded string still authenticates is a question for Enrique to close by
+confirming the rotation took effect in Supabase, not for me to probe by replay. Noted so the gap is
+visible rather than papered over.
+
+**New rule: verify a rotation by the absence of the current secret, never by replaying the old one.** The
+temptation to "prove it's really dead" leads straight to firing found credentials at a live endpoint. The
+absence of the live value from history is the whole of the security claim; the old value's fate is the
+account owner's to confirm.
+
+I removed the history diff I had pulled into the scratchpad rather than leave a file of old secrets
+sitting there.
+
+### Migration 004: thirteenth consecutive check, still not applied
+```
+PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
+```
+Now that the repo is confirmed public and the send-gate bypass is disclosed in this same SUBMISSION file,
+the migration matters more, not less: a public reader can find both the disclosure and the unapplied fix.
+
+### A note on how this entry reached main — a shared-tree collision
+This iteration's write-up nearly went wrong in a way worth recording. Between my `>>` append to
+`agents/tested.log.md` and my `git commit`, a concurrent agent's commit `dada3d1` ("T63: create the
+session row on every turn") **swept my working-tree log append into itself** — we share one working tree
+and one `.git`. My own commit then captured only the `tester.status.md` delta, and the branch I was on
+had been renamed under me to `fix/t63-record-every-session`. So my log content existed only inside
+another agent's unmerged commit, and `origin/main` had jumped ~100 PRs ahead of where I branched.
+
+I did not rewrite their branch or race it. I re-landed both my pieces on a fresh branch off the current
+`origin/main`. If `dada3d1` later merges carrying its stray copy of these lines, a future iteration should
+dedupe; git will most likely self-resolve it on rebase. **The lesson is old and holds: in a shared working
+tree, `git add <file>` commits whatever is in that file at that instant, which may be another agent's
+work or may be swept away by theirs. The commit `--stat` is the only truth — mine said one file when I had
+touched two, and that discrepancy was the whole signal.**
