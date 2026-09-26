@@ -1,13 +1,13 @@
 # Master plan: the whole picture
 
-> ## 06:32 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> **Three agent tasks are open: T60, then two one-line items inside T58, then T59.**
-> **T58's instruction is FIXED** (It148, 05:56): the paragraph now names the field instead of a distance,
-> and a guard fails on any *“N lines below”* that is not describing the old mistake. **64 green**, and I
-> red-checked that guard in memory rather than trusting it — it fires. **Two one-line items remain in it**:
-> a message naming the wrong neighbour, and an `indexOf` that judges every match by the first occurrence.
-> **T58 and T60 are both CLOSED** and the suite is green — **872 tests, 61 files**. **One agent task is left:
-> T59**, a behavioural test for the net-new tool. Everything else on the board is yours.
+> ## 06:42 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **NOTHING IS OPEN FOR AN AGENT.** T59 shipped at 06:40 and every numbered task in this file is closed.
+> The suite is **898 tests / 62 files**, green. The new file pins the Platinum refusal to the inventory
+> service and **inverts it under `wide_open`**, so the beat cannot quietly stop depending on the data.
+> **What is left is yours: three things to do, three decisions that need no action.**
+> **A reviewer can run the suite from a `git clone` or a **Download ZIP** and it passes** — checked at 06:38:
+> the two gitignored files are asserted absent-from-tracking, never present-on-disk, the environment is
+> stripped, and `shipped-files.test.ts` carries a git-free fallback proved against the git path.
 > **Measured at 06:09: the Chen suite refusal — your opening beat — is that function's output.**
 > Driven end to end on production: 2PM guarantee confirmed outright, suite refused, escalated to the AGM.
 > **Better stage line than the card's:** the tool's decision is literally `policy_gap_manager_decision`, and
@@ -15,21 +15,16 @@
 > **The brief itself is now re-readable by any agent**: `fitz` (PyMuPDF) is installed and extracts all four
 > pages; the naive stream-scrape that failed at It117 returns font tables. Two quotes re-verified verbatim —
 > *“5 business days from receipt to submit”* and *“a request that should take twenty minutes takes two days.”*
-> **T56 shipped at It144 — and it corrected me.** I handed the Implementer a
-> census p90 of **1488ms** and called the 1.5s first-signal target met. **That figure was one index low.**
-> Nearest-rank is **1502ms**, linear interpolation **1492ms**, and **10.1% of turns exceed 1500ms**, so the p90
-> sits exactly on the line. The deliverable now reads **“met at p50 (1079ms), level at p90”** and prints both
-> conventions with the exceedance beside them. **I corrected a sampling error by committing a convention error,
-> in the same direction — towards the answer I wanted.** The median half was right: 1079ms against 1500ms.
-> **T57** — the guard behind the live-modification beat checks that its snippet appears *somewhere in
-> `thresholds.ts`*, so **Phoenix's two numbers can change and the suite stays green**, because Tampa carries the
-> identical pair. Nothing is broken today — every line pointer in that document is correct as of 05:05 — but the
-> thing that would catch it breaking is what is thin.
-> *T38–T55 are closed*, T55 shipped at It142 and I ran it myself — the seven line pointers into
-> `HUMAN_INTERVENTION.md` that route you are **machine-guarded now**; the suite fails if that file moves them.
+> **This banner no longer narrates individual tasks.** It carried *“T57 — the guard … is what is thin”* for
+> an hour after T57 shipped, plus *“T38–T55 are closed”* while T56–T60 closed under it. **That is the eighth
+> time this file's first screen has gone stale, and I committed it in the same edit where I announced that
+> nothing was open.** Task history is in the dated log below, which has never been wrong; this screen now
+> carries only what is open, what is yours, and the live numbers.
+>
 > `sol.md`, the committed export and the live phone agent all sit at **29,784** and are **byte-identical**,
-> re-verified at **04:52**, and `npx vitest run` is green — **800+ tests across 58 files**, which is a floor
-> and not a count, because it goes up every hour.
+> re-verified at **04:52**. `npx vitest run` is green at **898 tests**, which is a floor rather than a count.
+> The seven line pointers into `HUMAN_INTERVENTION.md` that route you are **machine-guarded**: the suite
+> fails if that file moves them.
 >
 > **⏱ You are submitting early by choice, and that is worth knowing if something breaks at 10:00.** The
 > brief says *"You'll have **5 business days** from receipt to submit."* Received **Thursday 2026-09-24**,
@@ -875,7 +870,21 @@ move), and now the offset added by T57's own fix. **Each fix has introduced the 
 offset comes back; the slice case asserts one `property_code:` and its message names the real neighbour;
 `npx vitest run` green.
 
-### T59. The brief's "net-new tool" is named in five reader-facing places and has **no behavioural test**
+### T59 — SHIPPED (It151, 06:40). **26 tests, and it pins the beat as well as the function.**
+
+> **Verified at 06:42, not read from a log entry** — the entry is not written yet. `npx vitest run` is
+> **898 / 62 files**, up 26. The file covers everything below and four things it did not ask for: a
+> *"contains no clock and no random source"* case, a nonsense `AVAILABILITY_MODE` falling back instead of
+> throwing *"on stage"*, a malformed `AVAILABILITY_OVERRIDES` ignored rather than thrown, and documented
+> precedence — an override beats the mode.
+>
+> **The last block is the one that matters**: *"the Platinum upgrade refusal is this service talking."* It
+> pins `rooms_available: 0`, the provenance and the assumption text on the refusal — the grounding I
+> measured live at 06:09 — and then **inverts it under `wide_open` to `guaranteed`**, with the reason in
+> the assertion: *"If this stays a refusal, the decision is not reading the inventory service at all and
+> the case above proves nothing."* **The anti-vacuity argument is written into the failure message.**
+>
+> Both env knobs are saved and restored around every case, so nothing leaks into another file.
 
 *It is correct — I read every branch. **Nothing asserts it stays correct**, and one of its switches is the stage
 control for the best refusal in the demo. Same shape as the auto-triage gap: a headline capability, documented
@@ -2486,6 +2495,133 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 220, 06:42 EST — nothing is open for an agent
+
+**T59 shipped at It151. Every numbered task in this file is now closed.** What remains is Enrique's six, and the
+`drop policy` paste is the only one nobody else can do.
+
+#### Verified rather than read — the log entry is not written yet
+
+`availability-service.test.ts`, **26 tests**, and the suite is **898 / 62 files**, up 26 from 872.
+
+It covers all five things T59 asked for and four it did not:
+
+- **a case asserting the module contains no clock and no random source** — the structural property I could only
+  check by reading, now pinned;
+- **a nonsense `AVAILABILITY_MODE` falls back to the simulation** instead of throwing *"on stage"*;
+- **a malformed `AVAILABILITY_OVERRIDES` is ignored** rather than thrown, *"because this is typed by hand
+  mid-demo"*;
+- **documented precedence** — an override beats the mode.
+
+Bounds are checked across **every property and every class**, not a sample, plus a class that is not on the
+ladder at all. Provenance is asserted on the simulated path, both stage modes, the override path and across
+`availabilityByClass`. `houseOccupancy` is checked for agreement with the by-class figures it is built from.
+
+#### The last block pins the beat, not just the function
+
+*"The Platinum upgrade refusal is this service talking."* It asserts `rooms_available: 0`, the provenance and the
+assumption text on the refusal — **the exact grounding I measured live at 06:09** for Sol's *"suites are showing
+sold out"* — and then **inverts it**: under `wide_open` the same reservation returns `guaranteed` and
+`may_promise: true`.
+
+> The reason is written into the assertion message: *"If this stays a refusal, the decision is not reading the
+> inventory service at all and the case above proves nothing."* **The anti-vacuity argument lives in the failure
+> text, where the person who breaks it will read it.**
+
+And the refusal case's message says what a failure would cost: *"If this now says 'guaranteed', the panel
+watches Sol promise a suite."*
+
+Both env knobs are saved and restored around every case, so nothing leaks into another file. I checked that
+rather than assuming it, because a leaked `AVAILABILITY_MODE` would make some other suite flaky later and the
+symptom would appear nowhere near the cause.
+
+#### Reconciliation, stated honestly
+
+**The Tester has been silent since 20:26 — 10h16m — so by the working agreement T59 is not "closed" by two
+agents agreeing.** One agent shipped it and one agent verified it, and neither was the Tester. Shipped, green,
+independently checked: that is what it is, and I am saying which rather than rounding up. Same treatment as T55.
+
+#### Where the board stands
+
+```
+T1-T60   closed
+open     nothing for an agent
+Enrique  3 to do, 3 decisions that need no action
+```
+
+The demo path is verified end to end against production (opening Chen beat, group deflection, parking refusal),
+the group gate is verified across every proposal and 265 audit rows, the brief's deliverable list is checked
+against the PDF's own text, and the suite passes from a clone or a ZIP. **The `drop policy` paste is the only
+item left that nobody else can do for him.**
+
+Inbox and In progress empty. No lock held; I took none.
+
+
+### Iteration 219, 06:38 EST — went looking for a red suite on a fresh clone; it was already solved twice
+
+**The plan is accurate and correctly ordered. T59 is the only open agent task, and nothing new is filed.**
+
+#### What I went after
+
+It150 swept the `indexOf`-judges-by-the-first-occurrence defect across eight guards and fixed two more, one of
+them **`doc-paths.test.ts`** — a guard I run over my own file every iteration. Verified in place: its gitignore
+exemption now walks **every** mention rather than the first, with the measurement recorded — *"SUBMISSION.md
+names `DEMO_LOGINS.md` three times and only the first two say it is gitignored… reorder those paragraphs and
+the exemption evaporates."* 28 tests green; it still does for me what it did before.
+
+Its dropped hypothesis is the interesting part: It150 briefly thought `doc-paths` might pass only because
+untracked files exist on this machine, which would mean **a red suite for anyone who cloned the repository**
+hours before submission. It disproved that correctly (`PATHISH` requires a source extension; `.env` never
+matched) — and noted it had reconstructed the pattern from memory rather than reading it.
+
+**So I asked the general version, because the brief says reviewers dig into the code and `README.md` invites
+them to run the suite.**
+
+#### Two gitignored files are read by tests, and both are asserted in the safe direction
+
+`.gitignore` hides exactly two files the tests name: `DEMO_LOGINS.md` and `FDE_Project_Challenge.pdf`. Both are
+asserted **absent from the tracked tree** and **present in `.gitignore`** — never asserted to exist on disk:
+
+```
+expect(trackedFiles()).not.toContain('FDE_Project_Challenge.pdf')
+expect(ignoreLines).toContain('FDE_Project_Challenge.pdf')
+```
+
+That is the clone-safe shape. `vitest.setup.ts` strips credentials from the environment, so no test can depend
+on a local `.env` either. And `data/generated/*.json`, which several tests read, is tracked — not ignored.
+
+#### And the harder version was solved at iteration 137, before I thought to ask
+
+`shipped-files.test.ts` exists because the invitation to run the suite **broke for anyone using GitHub's
+Download ZIP** rather than `git clone`. Its header records the measurement:
+
+```
+FAIL  no-committed-credentials.test.ts   fatal: not a git repository
+FAIL  repo-floors.test.ts                fatal: not a git repository
+FAIL  suite-integrity.test.ts            fatal: not a git repository
+Test Files  3 failed (3)        Tests  no tests
+```
+
+> **"They did not fail an assertion. They failed to collect"** — twelve credential assertions reported a git
+> error in place of a result. `shippedFiles` now prefers git and falls back to walking the tree with
+> `.gitignore` applied, which for a ZIP is the same set by construction, and a subset case proves the fallback
+> faithful where both paths work. **6 tests green.**
+
+Together with iteration 112's fresh **LF clone** run, the question I came to file a task about is answered in
+two directions — clone and archive — by guards that run on every suite pass. **Nothing to file.**
+
+> **The lesson for me is about sequence, not content.** I had a real submission-risk hypothesis, and the right
+> move was to look for the existing answer before writing the task. Twice in three iterations the gap I found
+> already had a name somewhere else in the package — *Escalation queue* for *notif*, `integration-recommendation.md`
+> for the jobs bonus, now this. **Search the package for the answer before filing the question.**
+
+#### State
+
+Suite green at **872 / 61 files**. T59 remains: the net-new tool still has no behavioural test, and it produces
+the opening beat's refusal. Enrique's six are unchanged with the `drop policy` paste first. Inbox and In
+progress empty. Tester silent since 20:26 (**10h12m**). No lock held; I took none.
+
 
 ### Iteration 218, 06:32 EST — T58 closed, and a transcript re-driven against production
 

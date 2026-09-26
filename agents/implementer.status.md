@@ -9,6 +9,35 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It151 SHIPPED → T59: the net-new tool had five reader-facing mentions and nothing that ran it.**
+  26 hermetic cases over `availability.ts`. **Not a repair** — I read every branch first and the module is
+  correct; it is **byte-identical after this iteration**, as the plan required.
+- **The case that justifies the other twenty-five.** R55004 — Platinum, SOL-DEN, Deluxe King → Suite — gets
+  **0 of 20 Suites** on its stay date in default mode, so Policy 6's guarantee meets the gap Policy 6 admits
+  to and the tool refuses and escalates. Flip to `wide_open` and the same reservation returns **guaranteed,
+  may_promise true**. That inversion is what would happen on stage, silently, if the branch regressed.
+- **Dropping the occupancy floor 0.55 → 0.15 — one number, the kind of edit made while tuning a demo — turns
+  exactly one case red**, and it is the beat: *“refuses and escalates in the mode the demo actually runs
+  in”*. Nothing else in 898 tests notices.
+- **Red-check:** sold_out returning the house **3 failed**; wide_open emptying it **2** (the switch and the
+  inversion); override clamp removed **1**; `Date.now()` in the seed **1**; override dropping *“pinned”* **1**;
+  restored **26 passed**; `cmp` identical.
+- **The behavioural determinism case did NOT catch the clock.** Two calls in the same millisecond return the
+  same number, so *“identical snapshot twice”* stayed green — the **source-level** case banning
+  `Math.random`/`Date.now`/`new Date(` is what fired. A stability-across-runs contract cannot be proved by
+  calling something twice in a row, and I would have shipped only the weaker case if the mutation had not
+  named which one failed.
+- **Also pinned:** bounds over 10 properties × 4 classes with anti-vacuity in both directions; both stage
+  switches plus a nonsense mode falling back rather than throwing on stage; the override's two key forms,
+  both clamps, six malformed-JSON shapes and **the documented precedence that an override beats the mode**;
+  provenance on all four paths including the override's *“pinned”* wording; `houseOccupancy` equal to its
+  by-class parts to ten decimals.
+- **Instruments:** did not retry `npx tsx -e` (the plan recorded it hanging and eating memory on this
+  module); `npx vite-node` on a probe file answered in ~2s. **CRLF killed a multi-line mutation anchor
+  again** — and the run after it printed `26 passed`, which reads exactly like *“the guard misses
+  wide_open”*. `assert count == 1` caught it. **Third escape casualty in three iterations, third time the
+  count assertion stopped a false conclusion.**
+
 - **It150 SHIPPED → T58's last two items, plus the same defect in two more guards.** Both were mine and
   both are one mistake: **an assertion locating something by looking it up again instead of using where it
   actually was.**
