@@ -86,7 +86,7 @@ export default function Login() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
+              className="mt-1.5 w-full rounded-xl border border-faint/60 bg-card px-3 py-2 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
               placeholder="you@solsticehotels.com"
             />
           </label>
@@ -99,7 +99,7 @@ export default function Login() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
+              className="mt-1.5 w-full rounded-xl border border-faint/60 bg-card px-3 py-2 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
               placeholder="••••••••"
             />
           </label>
