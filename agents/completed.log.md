@@ -5486,3 +5486,59 @@ wrong here: **never merge another agent's file by judgement.** You cannot tell a
 from one they are mid-way through.
 
 Suite re-run on `main` after the resolution: **574 tests / 48 files** green.
+
+## It101 — ran the curls the deliverables hand a reviewer; the boundary proof is exact
+
+No task open. It98 ran every documented `npm run`; the **shell** commands in the documents had never
+been exercised, and those are the ones a reviewer is most likely to try, because they need no
+checkout. There are three, and one of them carries the Tester's last open item: iteration 60 filed
+*"the walkthrough's boundary proof shows a redirect, not the 403 it promises"* as **FIXED-PENDING**.
+The prose was corrected in PR #102; nobody had re-run the command since.
+
+**`docs/role-walkthroughs.md` — "Proving the boundary, in ten seconds". Exact, both halves.**
+
+```
+GET /api/group/proposals   with a concierge token   -> 403
+{"ok":false,"error":"This role cannot see group sales. Group sales inquiries are readable by
+ group_sales and admin only, which is what row level security enforces in the database as well."}
+
+GET /api/group/proposals   with no header           -> 401
+{"ok":false,"error":"Authorization: Bearer <supabase access token> is required."}
+```
+
+Both bodies are what the page prints, character for character, and both status codes are what it
+claims. **The Tester's iteration-60 item is verified** — the section now rests on the API rather than
+on a router redirect, and the API answers what it says.
+
+**The database claim underneath is accurate too.** The same concierge token reading `inquiries`
+straight through PostgREST returns **0 rows of 13**; `group_sales` reading `sessions` returns **0** of
+180-plus. The page says *"Neither is a filtered view — the rows are not there to be had"*, and that is
+what 0 rows with a 200 means.
+
+**The runbook's warm-up figures hold.** `/api/chat` 0.32s then **0.23s**; `/api/tools` 0.99s then
+**0.22s**, against documented warm reads of ~0.21s and ~0.26s. Chat was already partly warm from the
+previous deploy check, which is why its first read was faster than the ~1.3s cold figure. The
+instruction that matters — *"once the second run is fast, they are warm"* — is right.
+
+### What I pinned, and why the status code is half of it
+
+Both error strings are literals in `netlify/functions/group/auth.ts`, each beside its status code. The
+section's argument is not that the API refuses; it is that it refuses **two different ways**, because
+*"who are you"* and *"you are not allowed"* are different questions. A guard that checked only the
+text would sit happily through a 403 quietly becoming a 401 — which would destroy the argument while
+leaving every quoted sentence true.
+
+So `walkthrough-quotes.test.ts` now pins, for each refusal: the doc still quotes it, the source still
+contains it, and the status code within sixty characters of it is still the documented one.
+Red-checked both ways — reword the message in source and the source case fires; change that one
+`status: 403` to `401` and the pairing case fires with the right explanation.
+
+**A mistake of mine worth recording.** My first version built the status assertion with
+`new RegExp(...)` and a `\s` escape inside a heredoc. The heredoc ate a backslash level, so the
+pattern compiled as `/status:s*403/` and matched nothing — both status cases failed while both text
+cases passed, which is the tell. Replaced with a literal `toContain`, which needs no escaping at all.
+Sixth time this session a lost backslash level has produced a silently wrong instrument; the standing
+fix is `chr(92)` or, better, not needing an escape.
+
+`npx tsc -b` clean. `npx vitest run` **580 tests / 48 files** green (up 6). Nothing written anywhere:
+three GETs, two of them refused.

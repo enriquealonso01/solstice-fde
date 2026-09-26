@@ -4,48 +4,45 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 135 — 2026-09-25 ~22:58 EST
+## Iteration 137 — 2026-09-25 ~23:08 EST
 
-### The plan is accurate and correctly ordered.
+### The paste in my own banner was missing the reason it is safe, and the recovery if it is not
 
-### Checked the reviewer's setup path as a property; #130 scoped it correctly
+PR #132, while testing whether `demo_flags` has the same hole (**it does not** — 403 signed-in
+concierge, 401 anon, migration 003's write policy live), read the policy set and found this about
+**the paste Enrique performs by hand**:
 
-README's *"Running it locally"* pastes six commands. Step 5 needs **`DEMO_PASSWORD`**, the script
-**deliberately has no default**, and the variable was in **no file**. It survived because
-`.env.example` lists both siblings, `DEMO_EMAIL` and `DEMO_PHONE`, **so the group looked complete.**
+> *"Dropping a `FOR ALL` policy **also drops the read it granted**, so those three lines are safe
+> only because `schema.sql` declares `inq_read`, `prop_read` and `fup_read` separately. Migration
+> 004 restates them in a `do`-block; **the pasted lines do not carry it. Nothing asserted the reads
+> existed.**"*
 
-I extracted **every** env var read under `scripts/` and compared:
+`rls-policies.test.ts` now pins it.
 
-```
-listed in .env.example 22 · read by scripts/ 20 · read but not documented 6 (all provision.mjs)
-```
+### The gap was in my file, on the most important item in the package
 
-**The six are not a gap** — every one is optional with a fallback (`|| baseUrl`, `|| DEMO_PHONE`,
-`|| DEFAULT_GREETING`, a literal model name), and **`provision.mjs` is not one of the README's setup
-commands**.
+**My banner is the paste source.** It said *"Safe — nothing in the client writes these tables"* —
+true, and not the whole reason. It never said the safety rests on the reads being declared
+separately, and **it pointed at `HUMAN_INTERVENTION.md:753` for deleting the disclosure while saying
+nothing about :580**, where the recovery has sat all evening:
 
-> **#130 documented exactly the two that blocked and did not pad the example with six optional
-> overrides.** The check confirms the scoping was **right**, not incomplete — a more useful thing to
-> say than "nothing is missing."
+> *"If the inbox goes blank after applying it, the read policies did not survive; re-run the
+> `do $$`."*
 
-### The password guard, and my own file under it
+Someone pasting three lines at 10:30 and watching the sales board empty needs the second pointer,
+not the first. **Fixed: the item now carries why it is safe, what the three lines omit that the
+migration file has, and what to run if the inbox goes blank.**
 
-`DEMO_LOGINS.md` holds a working admin password protected by **one `.gitignore` line with no test**
-— in a repo that has already committed a live SIP credential and a scratch `inq.json` via
-`git add -A`. Three cases now: not tracked, still gitignored, **no tracked file carries a filled
-password line**.
+> **A correct instruction is not a sufficient instruction.** *"Safe, paste this"* is correct. It is
+> not enough for someone doing it alone, before a demo, with no way to tell a slow paste from a
+> broken one.
 
-Its author notes the third *"flagged the email draft's placeholder, **the plan quoting it**, and its
-own comment"* — **my file was a false positive**, so I checked directly:
+### Also checked
 
-```
-plans/06-master-plan.md   real password present: false
-agents/planner.status.md  real password present: false
-```
-
-Clean. The guard now *"matches what a password looks like rather than the prose about one."*
-**Rules suite: 459 passed.**
+README's setup block is complete — `npm install`, `cp .env.example .env`, then the four commands.
+**No missing step**, which is what I went looking for after T44.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.**
+**The `drop policy` paste** — now with its safety reason and its recovery. **T44** is the only agent
+item.

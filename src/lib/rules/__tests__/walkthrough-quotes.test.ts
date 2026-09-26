@@ -180,3 +180,71 @@ describe('quotations of the provided policy document', () => {
     expect(readFileSync(join(repoRoot, policy), 'utf8').length).toBeGreaterThan(1000)
   })
 })
+
+/**
+ * The refusals a walkthrough promises must be the refusals the code returns, with their status codes.
+ *
+ * `docs/role-walkthroughs.md` has a section called *"Proving the boundary, in ten seconds"*. It is the
+ * answer the document gives when a panel member asks whether the security is real or just the UI, and
+ * it works by quoting two exact responses: a **403** with a sentence about row level security when a
+ * concierge token asks `/api/group/proposals`, and a **401** with
+ * `Authorization: Bearer <supabase access token> is required.` when the header is dropped. Its point
+ * is that these are *two different refusals*, because "who are you" and "you are not allowed" are two
+ * different questions.
+ *
+ * Both strings are literals in `netlify/functions/group/auth.ts`, each sitting beside its status code.
+ * Reword either, or swap a code, and the walkthrough is wrong in the one place it invites a reviewer
+ * to check it with a command — and nothing would have said so. The Tester had already caught the
+ * earlier version of this section promising a 403 where the browser only produced a redirect
+ * (iteration 60), which is how the section came to be written around the API in the first place.
+ *
+ * Verified live in iteration 101 before pinning: the deployed function returns exactly these two
+ * bodies and codes, and underneath them a concierge token reading `inquiries` through PostgREST gets
+ * 0 rows of 13 while `group_sales` reading `sessions` gets 0 of 180.
+ */
+describe('refusals the walkthrough quotes', () => {
+  const doc = 'docs/role-walkthroughs.md'
+  const source = 'netlify/functions/group/auth.ts'
+  const flat = (s: string) => s.replace(/\s+/g, ' ')
+
+  const CASES = [
+    {
+      label: 'the 403 a concierge gets from the group lane',
+      status: 403,
+      message:
+        'This role cannot see group sales. Group sales inquiries are readable by group_sales and ' +
+        'admin only, which is what row level security enforces in the database as well.',
+    },
+    {
+      label: 'the 401 for a request with no token',
+      status: 401,
+      message: 'Authorization: Bearer <supabase access token> is required.',
+    },
+  ]
+
+  it.each(CASES)('$label is still the text the doc quotes', ({ message }) => {
+    expect(flat(readFileSync(join(repoRoot, doc), 'utf8'))).toContain(flat(message))
+  })
+
+  it.each(CASES)('$label is still what $source returns', ({ message }) => {
+    expect(
+      flat(readFileSync(join(repoRoot, source), 'utf8')),
+      `${doc} tells a reviewer to run a curl and shows this exact body. ${source} no longer ` +
+        `contains it, so the command a panel member is invited to paste prints something else.`,
+    ).toContain(flat(message))
+  })
+
+  it.each(CASES)('$label keeps its status code, which is the whole point', ({ message, status }) => {
+    // The two refusals are only evidence because they differ. Matching the message and the code
+    // together is what stops one of them quietly becoming the other.
+    const text = flat(readFileSync(join(repoRoot, source), 'utf8'))
+    const at = text.indexOf(flat(message))
+    expect(at, `${message} is not in ${source}`).toBeGreaterThan(-1)
+    const window = text.slice(at, at + flat(message).length + 60)
+    expect(
+      window,
+      `${source} returns that message with a different status than the ${status} ${doc} shows. ` +
+        `The section's argument is that "who are you" and "you are not allowed" answer differently.`,
+    ).toContain(`status: ${status}`)
+  })
+})
