@@ -176,19 +176,23 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > you to read first**, beside the sentence where Sol says no.
 
 **7. "I asked it something and it said it didn't know — isn't that the whole point failing?"**
-— *iteration 143*
+— *iteration 143, updated 145*
 
 > Sometimes, and the distinction matters. **The grounding rule is not what fails; the routing is.**
 > Sol is forbidden from answering a policy question from memory, and it obeys — but a question has
 > to be *recognised* as a policy question first, and a guest's own phrasing does not always look
-> like one. Lost and found reached `get_policy` **0 of 4 times** when asked naturally, while the
-> policy-shaped phrasing worked every time. Fixed in PR #137 by naming that confusion in three
-> lines.
+> like one.
 >
-> **The failure is safe by construction**: when routing misses, Sol says it cannot check rather
-> than guessing — which is the behaviour we would choose if we had to pick one. The exception was
-> the bare pet question (PR #120), which asserted *"pet policies vary by hotel"* without a tool
-> call, and that phrasing is now out of the suggested email.
+> **Two were found and both are fixed in the prompt, not worked around.** Lost and found reached
+> `get_policy` **0 of 4** when asked naturally and **6 of 6** after PR #137 — measured on a draft
+> deploy, with the checkout-time and ADA controls confirmed unmoved. A bare *"can I bring my dog"*
+> asserted *"pet policies vary by hotel"* **with no tool call**, which is the one thing G1 exists to
+> prevent; PR #138 named that trap and added the general rule: **"Never tell a guest a policy varies
+> by property unless a tool said so."** Both sentences verified present in the live voice prompt.
+>
+> **And when routing does miss, the failure is safe by construction**: Sol says it cannot check
+> rather than guessing. The pet question was the exception that proved it worth fixing rather than
+> tolerating.
 
 **6. "Your own bill says the model costs more than telephony — so why does telephony matter?"**
 — *iteration 133*
@@ -1501,6 +1505,58 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 145, 23:44 EST — my own panel answer was two hours behind the fix it describes
+
+#### The margin is holding
+
+```
+live 29,655 · margin 345 · no change to agent/sol.md since PR #138
+```
+
+The warning I raised last iteration stands and nothing has spent against it.
+
+#### Answer 7 credited the wrong fix
+
+I wrote it in iteration 143, when the pet-question failure had been handled by **taking the phrasing
+out of the suggested email** — a sound move, and a work-around. **PR #138 landed twenty minutes
+later and fixed it in the prompt**, which is the real repair:
+
+> *"a pet question with no property named is Policy 8, which is chain-wide. **Never tell a guest a
+> policy varies by property unless a tool said so.**"*
+
+So my answer was telling a panel *"we removed the bad question from the email"* when the truthful and
+stronger answer is *"we fixed the routing and verified it."* **Understating a fix is still being
+wrong about it**, and this is the section written specifically to be read aloud.
+
+Rewritten. It now says both failures were found, **both fixed in the prompt rather than worked
+around**, with the measurements: **0 of 4 → 6 of 6** for lost and found, taken on a draft deploy
+with the neighbouring controls confirmed unmoved; and the general rule #138 added, **verified
+present in the live voice prompt.**
+
+#### The rule that caught it, applied to itself
+
+Iteration 124: *claims I add to the front matter get verified in the iteration after I add them.*
+**That rule has now caught three things in my own writing** — the frozen cost totals in 139, the
+stale margin in 141, and this. Each time the claim was true when written and overtaken by work that
+landed while I was writing about it.
+
+> **In a repository three agents are shipping into, the half-life of a written claim is shorter than
+> the interval between writing it and reading it back.** That is not a reason to write fewer claims.
+> It is the reason the re-read has to be scheduled rather than intended.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — with its safety reason and recovery | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. Lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 144, 23:40 EST — both routing fixes are live, and the voice prompt has 345 characters left
 

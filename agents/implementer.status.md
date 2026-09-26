@@ -9,26 +9,24 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It106: my own fix an hour ago made two demo documents wrong — in the unusual direction of
-  claiming a defect we no longer have.**
-- `docs/demo-runbook.md:78` told Enrique a bare *"Can I bring my dog?"* *"lands this beat about one time
-  in four"* and quoted the *"pet policy can vary by property"* failure; `docs/demo-cheatsheet.md:21` said
-  the same in a line. True at It88, **false since PR #138** — 4 of 4 on the draft, twice more on
-  production.
-- **These are the files he reads while presenting.** As written they told him to distrust a question that
-  works, so he would hedge about his own system. Both now say to use the service-animal phrasing **because
-  it puts the ADA limit on screen**, and add that the bare form holds since #138 — *"answer their
-  question, do not steer them back to the script."*
-- **Fixed my own miscount** at `completed.log.md:5811` — *"Three items remain his"* followed by four — and
-  extended `list-counts` to `agents/README.md` and `agents/implementer.status.md`, which is where it
-  happened.
-- **Two scoping decisions I would rather state than bury.** `agents/completed.log.md` is **out**: it
-  quotes the wrong text it fixed as history, and the chat-pair ban fired on it immediately — guarding a
-  log that records old mistakes verbatim either fails forever or stops it recording them.
-  `HUMAN_INTERVENTION.md` is **out of the counted-list rule**: every entry is nested under a bullet, so
-  `bulletsAfter()` reads the terminating sentence as a continuation and runs into the next entry. It
-  produced a false positive on a correctly-counted list, **and I spent two edits reformatting the document
-  to satisfy the test before reading the test.** That is the tail wagging the dog.
+- **SHIPPED It107: ran all five cheatsheet fixture rows against production. Four match. The $45 minibar
+  row says the opposite of what happens — for the second time.**
+- **What the row claimed:** *"$45 is inside the $50 per-stay front-desk authority, so Sol actions it
+  without a manager and says why."* **What happens:** `check_comp_authority`, then
+  `create_escalation`, and *"I'm getting the property's AGM to review that $45 charge — I can't adjust
+  the folio myself."*
+- **The agent is right and the row was wrong, and the reason is better than the row.** R55006's
+  `internal_notes` in the **data the brief supplied** read *"Do not adjust folio directly — escalate to
+  property AGM for review"*, and the tool passes it through as a staff directive. So a per-reservation
+  operational instruction **overrides a generic threshold** — the interviewers' own data doing the
+  overriding, which is a stronger thing to say aloud than "it just does it".
+- **Measured before rewriting, so the row's "measured" clause stays true:** $45 → `front_desk`
+  `escalation_required:false` · $50 → `front_desk` · $55 → `agm` · $45+$25 → `agm` with Policy 7's
+  arithmetic printed. The aggregation half survives: **same destination, different reason.**
+- **The Tester caught this row once already** (their iteration 59, *"the $45 minibar beat does the
+  opposite of what the line promises"*). It came back, which is what earns it a guard rather than a third
+  correction: while the note says escalate, no document may claim the charge is actioned without a
+  manager. Red-checked from both sides — restore the old claim, and remove the directive from the data.
 
 ## Demo rehearsal coverage — what is actually verified
 

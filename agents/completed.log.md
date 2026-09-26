@@ -5870,3 +5870,68 @@ with the file, line and both counts.
 
 `npx tsc -b` clean. `npx vitest run` **601 tests / 48 files** green. No prompt change, so no re-provision:
 compile === export === live still 29,655, margin 345.
+
+## It107 — the cheat sheet's $45 row says the opposite of what happens, for the second time
+
+Three prompt changes landed tonight (#136, #137, #138) and nothing had re-run `docs/demo-cheatsheet.md`
+since. That table is what Enrique reads **during** the demo: each row is a confirmation number and a
+claimed outcome, so a wrong row means he asserts something the screen contradicts, in front of the panel.
+
+**Four of five rows match production exactly:**
+
+| Row | Claimed | Observed |
+|---|---|---|
+| R55004 Chen | guaranteed 2PM outright | *"as a Platinum member, checkout at 2:00 PM is guaranteed on R55004"* |
+| R55005 Franklin | refuses honestly, escalates | cites the 72-hour deadline, refuses the reversal, `create_escalation` |
+| R55001 Bennett | no automatic perk, subject to availability | *"as a Silver member you don't have a guaranteed late checkout… subject to same-day availability"* |
+| R55003 Subramaniam | Corporate Negotiated, 72-hour free cancellation | names the closed window and what it would have cost before it |
+
+**R55006 Webb does not.** The row said *"$45 is inside the $50 per-stay front-desk authority, so Sol
+actions it without a manager and says why."* What actually happens:
+
+```
+tools: identify_guest, check_comp_authority, create_escalation
+"I'm getting the property's AGM to review that $45 minibar charge and remove it if it wasn't yours --
+ I can't adjust the folio myself."
+```
+
+**The agent is right and the row was wrong.** I went to the tool rather than assuming either way:
+
+```
+$45  -> authority_required front_desk, escalation_required false, may_promise true
+$50  -> front_desk        $55 -> agm        $45 + $25 -> agm, escalation_required true
+staff_directives[0]: "Guest disputes a $45 minibar charge on 2026-07-11 folio, says minibar was
+                      untouched. Do not adjust folio directly -- escalate to property AGM for review."
+```
+
+That directive is `internal_notes` on R55006 at `data/generated/reservations.json:90`, compiled from the
+CSVs **the brief supplied**. So the authority check says front desk, the reservation's own note says do
+not touch the folio, and Sol obeys the stricter one. That is a **better** beat than the row claimed: a
+per-reservation operational instruction overriding a generic threshold, with the override coming from the
+interviewers' own data. The row now says that, and keeps its measured numbers because I re-verified every
+one of them.
+
+The aggregation half survives with a correction worth making: adding the $25 housekeeping charge sends it
+to the **same** AGM, so the demo value is not a change of destination but a change of **reason** — the
+tool prints *"minibar charge $45.00 + late housekeeping $25.00 = $70.00. That exceeds the $50.00 per-stay
+front-desk authority"*. That is still the rule a human would forget.
+
+### Why this one gets a guard
+
+**The Tester already caught this row once** — their iteration 59, *"THE FINDING — the $45 minibar beat
+does the opposite of what the line promises"* — and it was marked FIXED-PENDING. It came back. A row that
+has now been wrong twice, in the file read aloud during the demo, has earned a pin rather than a third
+correction.
+
+`walkthrough-quotes.test.ts` now ties the row to the data it describes: while R55006's `internal_notes`
+say *"escalate to property AGM"*, the cheat sheet may not claim the charge is handled without a manager,
+and it must still tell the presenter to expect the escalation. The first case reads the directive out of
+the generated data, so if the data ever changes the test fails **there** first and says so, rather than
+silently allowing the old claim back.
+
+Red-checked from both sides: restoring the original sentence fails the no-claim case with the Tester's
+iteration number in the message; deleting the directive from `reservations.json` fails the data case.
+`npm run data:check` confirms the generated files are back in step with their sources afterwards.
+
+`npx tsc -b` clean. `npx vitest run` **604 tests / 48 files** green (up 3). No prompt change, so no
+re-provision: compile === export === live still 29,655, margin 345.

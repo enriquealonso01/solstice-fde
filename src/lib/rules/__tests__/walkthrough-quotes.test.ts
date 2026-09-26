@@ -329,3 +329,60 @@ describe('the invented policy phrase stays gone', () => {
     expect(flat(readFileSync(join(repoRoot, SELF), 'utf8'))).toContain(PHRASE)
   })
 })
+
+/**
+ * The cheat sheet's $45 row must not promise what the reservation's own data forbids.
+ *
+ * `docs/demo-cheatsheet.md` told Enrique that a disputed $45 minibar charge is inside the $50
+ * per-stay front-desk authority *"so Sol actions it without a manager and says why."* Run against
+ * production it does the opposite: it calls `check_comp_authority`, then `create_escalation`, and says
+ * *"I'm getting the property's AGM to review that $45 charge -- I can't adjust the folio myself."*
+ *
+ * The agent is right and the row was wrong. R55006's `internal_notes`, in the data the brief supplied,
+ * read *"Do not adjust folio directly -- escalate to property AGM for review"*, and the tool passes that
+ * through as a staff directive. So a per-reservation operational instruction overrides a generic
+ * threshold — which is a better beat than the row claimed, and it is the interviewers' own data doing
+ * the overriding.
+ *
+ * The Tester found this row wrong once before (iteration 59, *"the $45 minibar beat does the opposite of
+ * what the line promises"*). It came back. That is what earns it a guard rather than a third correction:
+ * while the note says escalate, no document may say the charge is actioned without a manager.
+ *
+ * Verified against production before pinning: $45 and $50 return `front_desk` with
+ * `escalation_required: false`, $55 returns `agm`, and $45 + $25 returns `agm` with Policy 7's sum
+ * printed. Those numbers are what make the row's "measured" clause true, so they stay in it.
+ */
+describe('the disputed-charge row against the reservation it names', () => {
+  const RES = 'R55006'
+  const flat = (s: string) => s.replace(/\s+/g, ' ')
+
+  function internalNotes(): string {
+    const raw = readFileSync(join(repoRoot, 'data/generated/reservations.json'), 'utf8')
+    const rows = JSON.parse(raw) as { reservation_id?: string; internal_notes?: string | null }[]
+    const row = (Array.isArray(rows) ? rows : []).find((r) => r.reservation_id === RES)
+    expect(row, `${RES} is not in data/generated/reservations.json`).toBeTruthy()
+    return row?.internal_notes ?? ''
+  }
+
+  it('reads the directive the demo data actually carries', () => {
+    expect(flat(internalNotes()).toLowerCase()).toContain('escalate to property agm')
+  })
+
+  it('does not tell the presenter the charge is actioned without a manager', () => {
+    // Only meaningful while the directive is there; if the data changes, the first case fails first.
+    const sheet = flat(readFileSync(join(repoRoot, 'docs/demo-cheatsheet.md'), 'utf8'))
+    for (const claim of ['actions it without a manager', 'without manager approval', 'no manager needed']) {
+      expect(
+        sheet,
+        `docs/demo-cheatsheet.md claims the ${RES} charge is handled without a manager, and that ` +
+          `reservation's internal_notes say "escalate to property AGM for review". The Tester caught ` +
+          `this row saying the opposite of what happens once already, at iteration 59.`,
+      ).not.toContain(claim)
+    }
+  })
+
+  it('still tells the presenter the escalation is what to expect', () => {
+    const sheet = flat(readFileSync(join(repoRoot, 'docs/demo-cheatsheet.md'), 'utf8'))
+    expect(sheet.toLowerCase()).toContain('escalate to property agm')
+  })
+})
