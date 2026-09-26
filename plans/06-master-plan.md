@@ -74,6 +74,39 @@
 
 *Everything below this section is closed, or evidence.*
 
+> ### ⚡ THE THREE FIXES, READY TO PASTE — all in two files, under two minutes
+>
+> *Whoever reads this next, including Enrique: these do not need a task, a lock or a plan. They are
+> three replacements. **Iteration 112 established that the protocol never routes plan tasks to
+> anyone** — `agents/README.md:35` says only *"read the other agents' status files and pick
+> something disjoint"* — so these have sat open not through anyone's neglect but because nothing
+> tells anyone to take them.*
+>
+> **1 — `docs/live-modification.md:22`** · replace *"Search for the second occurrence, not the
+> first."* with:
+>
+> > **Edit the `SOL-PHX` entry, not the first match.** The header comment quotes this same snippet
+> > and two other properties share the same 15% ceiling, so a search for
+> > `max_discount_auto_approve_pct: 15` finds three wrong lines before the right one. Search for
+> > `'SOL-PHX'` and change the value on the entry below it, around line 106. The tell that you
+> > edited the wrong line is that "allowed 15" stays 15.
+>
+> **2 — `docs/demo-runbook.md:217`** · replace *"and all three costed options move together"* with:
+>
+> > the verdict, the threshold it cites, and the sentence a rep reads all move together, and the
+> > price the customer asked for does not — because the ceiling changed, not the rate.
+>
+> **3 — `docs/demo-runbook.md`, the "phone call fails" row** · replace with:
+>
+> > **If it is a carrier or signal problem:** use the mic in the chat bubble — same agent, same
+> > tools, say so and move on. **If Telnyx is out of credit the mic fails too** (same account, same
+> > balance), so fall back to the **text** chat bubble, which runs on Anthropic and does not touch
+> > Telnyx.
+>
+> *And one more line in the same file, the tidy item, which says "run it with no flag" without ever
+> giving the command: the dry run is `node scripts/cleanup-phantom-sessions.mjs`; `npm run
+> demo:tidy` is the same script with `--delete`.*
+
 > **Ordering, stated because it is my job to state it — iteration 111.** **T38, T39 and T40 come
 > before any further guard work.** They are three sentences, all in documents Enrique reads *while
 > presenting*, and T38 in particular costs thirty seconds of visible confusion in front of the panel
@@ -1200,6 +1233,76 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 112, 21:08 EST — my tasks were never routed to anyone, and that is a design gap, not neglect
+
+Three one-sentence fixes have sat open across several iterations. Last iteration I responded by
+stating the priority more loudly. **That was the wrong diagnosis and I should have checked before
+asserting.**
+
+#### The diagnostic
+
+```
+plan task numbers cited in the last 14 commits   1
+T38/T39/T40 mentioned in implementer.status.md   0
+```
+
+And the cause, in `agents/README.md:35` — **the only work-selection rule the protocol contains:**
+
+> *"before editing, read the other agents' status files and **pick something disjoint**."*
+
+**Nothing anywhere tells any agent to take work from the plan's queue.** The ownership table lists
+`plans/06-master-plan.md` as *"Planner writes, others read"* — a document, not a backlog.
+
+So T30, T33, T35, T36 and T37 were picked up **voluntarily**, by an Implementer who happened to read
+the plan and chose to act on it. That mechanism worked while they had no queue of their own. It
+stopped working when their own auditing started producing finds faster than mine — and **#112, which
+landed while I was writing this, is the same class of defect I have been filing**: a vision document
+asserting something the README discloses as broken. They are not declining this work. They are
+finding their own instances of it.
+
+#### What I got wrong last iteration
+
+I wrote *"T38, T39 and T40 come before any further guard work"* as though I had authority to
+sequence another agent's queue. **I do not, and the protocol never gave me any.** Worse, the note
+implied the agents were mis-prioritising when the actual answer was that nobody had ever been told
+my file was a source of work.
+
+**Assert a mechanism exists before appealing to it.** I spent an iteration raising my voice inside a
+channel that was never wired up.
+
+#### What I did instead — remove the dependency on being read as a queue
+
+The three fixes are now at the very top of `▶ OPEN WORK` as **exact replacement text, ready to
+paste**, with a line saying plainly that they need no task, no lock and no plan — two files, under
+two minutes, and Enrique can do them himself if no agent gets there.
+
+That is the version that survives the thing I just discovered: **if nothing routes work to a reader,
+the work has to cost nothing to do the moment someone's eye lands on it.**
+
+#### The fourth item, folded in
+
+The tidy line — *"run it with no flag"* — now carries the command it was missing:
+`node scripts/cleanup-phantom-sessions.mjs` for the dry run, `npm run demo:tidy` for the delete.
+
+#### Not a criticism of the agents, and the record should be clear
+
+Eight guards and a dozen document corrections in three hours, every one found by auditing rather
+than by being told. **The coordination gap is mine**: I built a queue inside a file the protocol
+describes as reading material, then treated silence as a priority problem.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **The three fixes — now paste-ready at the top of OPEN WORK** | anyone |
+
+Inbox empty. No lock held.
+
 
 ### Iteration 111, 21:04 EST — everything the plan asserts is true; I made the ordering explicit instead of assuming it
 

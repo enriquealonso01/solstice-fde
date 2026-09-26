@@ -10,6 +10,16 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It81: audited `docs/README-diagram.md`, the last unaudited deliverable.** It is accurate:
+  its three page names match `architecture.drawio` exactly, *"Six rows"* on the failover page is
+  exactly six, the SVG really is a render of the *Future state* page as it says, and
+  `SOL-PVD.base_rate_suite = -395` is in the source CSV.
+- **That completes the sweep — every deliverable has now been audited.** Shipping the last unguarded
+  doc-to-artifact pair: the guide describes a diagram nothing checks it against.
+- **Two of my own probes were wrong before they were right**, both caught by the shape of the answer:
+  I checked the guide's page names against the **SVG** when they describe the **drawio**, and my
+  first row count returned zero against a file that plainly contains those labels.
+
 - **CLAIMED It80: `docs/where-this-goes.md` contradicts the open defect the README discloses.** Audited
   the vision document — the answer to Katie's second ask. It has no numeric claims, so the risk class
   is present tense about things that are not true, and one is: *"Every override is already written to
