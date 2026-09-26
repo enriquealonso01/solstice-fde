@@ -4,70 +4,59 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 175 — 2026-09-26 02:24 EST
+## Iteration 177 — 2026-09-26 02:32 EST
 
-**The plan is accurate and correctly ordered. One agent task is open: T51.**
+**The plan is accurate and correctly ordered.** T51 is claimed (It130); nothing else is open for an agent.
 
-### T51 — the README breaks the one rule this repo wrote a guard for
+### Their diagnosis of my routing failure is right, and I acted on it
 
-`README.md:69`, first file a reviewer opens:
+It129 closed the auto-triage gap and named why it sat open:
 
-> **Elapsed: about 24 hours, of which under 5 were active.** First commit 2026-09-24 12:35 EDT.
+> *"the work was addressed to a **role** instead of to a **capability**."*
 
-```
-first commit         2026-09-24 12:35 EDT
-now                  2026-09-26 02:21  ->  37.8 h
-at submission 11:00  2026-09-26 11:00  ->  46.4 h      README says: about 24
-```
+**Correct.** My own sentence said it needed *"the service-role key or a signed-in `group_sales` session, both
+of which belong to the agents holding the lock"* — I wrote the capability down and then put a **job title**
+in the owner column. **Fourteen consecutive state tables carried it**, while the Tester has now been silent
+six hours.
 
-**Understated by 14 hours now, 22 at send.** The sentence **hands the reader the first-commit timestamp**, so
-anyone who checks gets twice the claim — T43's pattern exactly. **It errs in the flattering direction**,
-which is the worse one.
+**And the cost was not delay but a worse plan.** I framed it as *"re-run the sweep against production"*. They
+found **no test mentioned `triageInbox` — 52 files, 710 tests, zero** — and wrote one instead:
+*"Re-running it would have produced a second session's word. A test produces something that survives the
+night."* Hermetic, 15 cases; second pass returns `skipped_existing` for every worked inquiry and drafts
+nothing. **My risk analysis was also wrong in the safe direction:** two of the four "bare" inquiries come
+back `skipped_blocked`.
 
-**The repair is already the next sentence:** *"two windows — 12:35 to 16:21 on day one, and a second session
-on day two."* Only the headline rots. *"Two calendar days, with under 5 hours of committed work"* is true at
-any future reading. **Also settle "under 5 were active" — it does not say whose hours.** Day one is 3h46m;
-day two's loop has run over nine hours of wall clock.
+### So I applied the lesson to the rest of my own table
 
-### Part B is the more interesting half: the guard bans this in its own header
+Items 1 and 3 read identically — *"Enrique — do"* — and are **not the same kind of thing:**
 
-`list-counts.test.ts:162`: *"**A deliverable may not state elapsed time since a fixed past event as a figure,
-because it grows.**"* Its assertions are narrower — both are shaped around `agent/sol.md`'s
-`312h after checkout` and key on the word *checkout*. **`Elapsed: about 24 hours` is anchored to a first
-commit, matches neither, and the suite is green at 700 with it in place.**
+| | capability |
+|---|---|
+| **1. `drop policy` ×3** | **Nobody else can.** DDL; PostgREST cannot execute `drop policy` and the repo has no RPC path (verified: `grep rpc(` across `netlify/` and `scripts/` returns nothing). Needs the SQL editor in a browser. |
+| **3. T21, two rows** | **An agent could, and chose not to.** `HUMAN_INTERVENTION.md:27`: *"Neither the Tester nor I **will** delete production rows the night before."* **Will, not can.** |
 
-**T47's shape for the third time tonight:** a guard's header states a property, its body tests the instances
-its author had in front of them. **A guard is only as good as the distance between its comment and its
-regex.** T51 part B names the wrinkle: `READER_FACING` exempts `agents/` and `HUMAN_INTERVENTION.md` on
-purpose; **`plans/` is not exempt and my file now quotes the offending sentence.**
+**Item 3 is delegable; item 1 is not.** Until now my table gave Enrique no way to tell, and at 10:00 that
+difference is the whole value of the table. Both rows now say which.
 
-### Two corrections to me
+### Reconciled
 
-**They were right and I was wrong:** I called the auto-triage re-verification *"the one thing only a Tester
-can do."* It129: *"it needs the service-role key or a signed-in `group_sales` session, **both of which belong
-to the agents holding the lock.** I hold both."* **The blocker was credentials, not role** — I turned a
-capability into a job title. Now theirs, correctly.
-
-**⏱ And the time note stands.** No document states a demo time — I searched the runbook, cheat sheet,
-`SUBMISSION.md` and README; the runbook says *"about 18 minutes of demo"* and nothing fixes a clock. **The
-only fixed point is the 11:00 submission, ~8h40m away.** It128's *"about five hours"* and It129's *"three
-hours of demo margin"* are not derived from anything written down.
+**Auto-triage re-verification: CLOSED**, by a test rather than a re-run — removed from the state table and
+from the banner. `BACKLOG.md` Inbox and In progress both empty. T51 claimed at It130.
 
 ### Open
 
 | # | Item | Owner |
 |---|---|---|
-| 1 | **`drop policy` ×3.** Reads proven live (13/10/3); gate proven clean | Enrique — **do** |
-| 2 | **Top up Telnyx** — number confirmed live and active; balance is the only blocker | Enrique — **do** |
-| 3 | **T21** — re-confirmed undone; cascade count first | Enrique — **do** |
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — needs a payment method; number confirmed live, balance is the only blocker | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement, not capability | Enrique — **do** |
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
-| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree; only the old commit holds it. **Leave it** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
-| T51 | README's elapsed figure + the guard that already bans it | any agent |
-| — | **Auto-triage re-verification** | **CLAIMED It129** |
+| T51 | README's elapsed figure + the guard that already bans it | **CLAIMED It130** |
 
-**Tester silent 5h57m.** Inbox empty. No lock held.
+**Tester silent 6h06m.** Inbox empty. No lock held.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** T51 is the only agent work, and it is one sentence plus a regex.
+**The `drop policy` paste** — and it is now the only item on the list nobody else could do for him.

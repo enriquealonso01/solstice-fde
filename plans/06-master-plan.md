@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 02:23 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 02:32 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **One agent task is open: T51** — the README states *"Elapsed: about 24 hours"* next to a first-commit
 > timestamp that makes it **37.8** now and **46.4** at 11:00, and the guard that bans exactly this does not
 > catch it. *T38–T50 are closed. `sol.md`, the committed export and the live phone agent all sit
@@ -15,9 +15,9 @@
 > the demo is the binding event and the package ships at 11:00. But if a step fails at the last minute,
 > shipping is not lost.**
 >
-> **One thing only a Tester can do:** re-verify the auto-triage agent, `BACKLOG.md:50`'s open caveat —
-> it writes drafts, so it needs the service-role key or a signed-in rep. **The largest unverified surface in
-> the package**, and I explain in iteration 161 why I could not close it.*
+> **The auto-triage gap is CLOSED** — not by a re-run but by a test: `triage.test.ts`, 15 cases, hermetic,
+> asserting idempotency on both stores. It sat open for fourteen state tables because **I addressed it to a
+> role ("a Tester") instead of to a capability**, and the agent holding the key read past it. Iteration 177.*
 > **Six items are yours — three to do, and three decisions where the recommendation is to do nothing**
 > (T34 the SIP credential; the brief PDF in history, `HUMAN_INTERVENTION.md:962`; and your own email
 > address in this file, which removing breaks nothing and on which I have no recommendation).
@@ -473,9 +473,9 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > filed T45 for.
 | # | Enrique's item | Why it is first / what it costs |
 |---|---|---|
-| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr` | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at **`HUMAN_INTERVENTION.md:804`** (re-verified 00:55; `:753` is now a blank line, and the SQL to paste is at **596**, summarised for you at **63**). **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. |
+| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr`. **Only you can do this** — it is DDL, PostgREST cannot execute `drop policy`, and the repo has no RPC path; it needs the SQL editor in your browser. | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at **`HUMAN_INTERVENTION.md:804`** (re-verified 00:55; `:753` is now a blank line, and the SQL to paste is at **596**, summarised for you at **63**). **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. |
 | 2 | **Top up Telnyx to at least $20** | **Under $4 and falling.** It has been quoted as $3.63, $3.15, $3.09 and $3.03 in four places on the same night, because every test call spends it. Do not trust a figure; top up to $30. **$20 is the project's own gate**, in `SUBMISSION.md`'s pre-send checklist: *"Telnyx balance above $20, or do not invite them to call the number."* One call then settles **beat 3**, the live intent check, and **G16's voice half** — the last unverified guardrail. Nobody has made a voice call all day. |
-| 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. **Verified safe three ways:** two deliverables cite `INQ-2011`/`INQ-2010`, the demo runbook names `INQ-2007`/`2009`/`2011`, and **neither row T21 deletes appears in either**. Both confirmed live: `INQ-2012` Vantage Labs `needs_review`, `INQ-2013` Vantage Labs DELETE-ME `auto_approvable`. Exact SQL in `HUMAN_INTERVENTION.md`. |
+| 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. **Verified safe three ways:** two deliverables cite `INQ-2011`/`INQ-2010`, the demo runbook names `INQ-2007`/`2009`/`2011`, and **neither row T21 deletes appears in either**. Both confirmed live: `INQ-2012` Vantage Labs `needs_review`, `INQ-2013` Vantage Labs DELETE-ME `auto_approvable`. Exact SQL in `HUMAN_INTERVENTION.md`. **An agent *could* do this — the service-role key deletes rows over PostgREST — and chose not to.** `HUMAN_INTERVENTION.md:27` says *"Neither the Tester nor I **will** delete production rows the night before"*: **will**, not **can**. So unlike item 1, **this one is delegable** if you are short of time at 10:00. |
 | 6 | **Your own email address is in this file, and it is the only real address left in the repo.** | The Implementer removed the hiring contact's work address from four tracked files at It124 — right call, and I have no objection. **`enrique@provensolved.com` is still here**, in the email-delivery check, and they left it because it is yours. The guard allowlists that domain with a comment saying it is deliberate, **so removing it breaks nothing**; the same neutral phrasing works. **No recommendation from me — a public repository under your name is a thing you may want your address on.** |
 | 5 | **The interviewers' own brief was published in our public repo — already fixed; only history is left.** | `FDE_Project_Challenge.pdf` is out of the tracked tree, in `.gitignore:19`, and guarded three ways — **verified green at 01:03**, and the file is still on disk because the agents read it as ground truth. What remains is whether to rewrite history to remove it from the one commit that has it. **The recommendation is no**, for the same reason as T34: it invalidates every commit id the deliverables cite, to remove a document from a repository whose reader wrote it. Full entry and the short answer if a reviewer raises it: **`HUMAN_INTERVENTION.md:962`** — and **T47** is what puts it in front of you, because the index at `:63` does not have it. |
 | 4 | **T34 — decide about the SIP credential. The recommendation is *accept it*.** | A credential *username* is in git history at `10b63e8` and `c09f04d`; the password never was. **`HUMAN_INTERVENTION.md:715` recommends option 1 — accept it and rotate *after* the demo** — and this row said "rotate" for hours against that advice. Rotating tonight changes `TELNYX_SIP_USERNAME`, the SIP URI **and the live assistant's transfer target**, and needs a re-provision plus a re-check of the supervisor WebRTC leg: that is the beat-3 path, hours before the demo. **Rewriting history is the one to avoid** — it invalidates commit ids the deliverables cite. **Doing nothing is the recommended option**, so this is the one item where no action is a decision. |
@@ -1674,6 +1674,154 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 177, 02:32 EST — "a Tester" was a role, not a capability, and it cost the package a test for fourteen state tables
+
+#### The diagnosis is theirs and it is about me
+
+It129 closed the auto-triage gap and named why it sat open:
+
+> *"the thing filed as 'only a Tester can do this' was, on its own stated terms, mine — the Planner had
+> correctly identified the blocker and correctly identified who could remove it, and then it sat there because
+> the description said 'a Tester' and no Tester came back. **Worth noticing as a routing failure rather than
+> a research one: the work was addressed to a role instead of to a capability.**"*
+
+**That is exactly right.** My own sentence said it needed *"the service-role key or a signed-in `group_sales`
+session, both of which belong to the agents holding the lock"* — I wrote the capability down and then put a
+**job title** in the owner column. **Fourteen consecutive state tables carried it**, and the Tester has now
+been silent **six hours**.
+
+#### What it cost, and what they built instead
+
+Not a delay — **a better outcome, arrived at late.** I had framed it as *"re-run the sweep against
+production"*. They found that **no test mentioned `triageInbox`: 52 files, 710 tests, zero.** The agentic
+group workflow is a named brief deliverable and *"its entire verification was one session's word that it
+worked."*
+
+> *"Re-running it against production would have produced a second session's word. **A test produces something
+> that survives the night.**"*
+
+And it needed no production at all: `vitest.setup.ts` strips every credential, so `tryGetDb()` returns null
+and the real `triageInbox` runs in-process against the real generated dataset. **15 cases** — first pass
+drafts 7 proposals and 1 follow-up (INQ-2004, the only inquiry the parser cannot complete); second pass
+returns **`skipped_existing` for every worked inquiry and drafts nothing.** Idempotency asserted rather than
+described, on both stores, plus a source-level check that **no delivery symbol is reachable from
+`triage.ts`** — because *"a send path that merely is not reached today is one refactor from being reached."*
+
+**And my risk analysis was wrong in the safe direction.** I refused to run the sweep because bare inquiries
+would put draft rows on the board. They did the read I could not: four looked bare, and the test showed
+**INQ-2003 and INQ-2010 come back `skipped_blocked`** — blackout windows, no artifact written. **Fewer rows
+at risk than I assumed, and I would never have learned that by declining.**
+
+#### So I applied the lesson to the rest of my own table
+
+Items 1 and 3 read identically — *"Enrique — do"* — and **they are not the same kind of thing:**
+
+| | capability |
+|---|---|
+| **1. `drop policy` ×3** | **Nobody else can.** It is DDL; PostgREST cannot execute `drop policy`, and the repo has no RPC path — verified, `grep` for `rpc(` across `netlify/` and `scripts/` returns nothing. It needs the SQL editor in a browser. |
+| **3. T21, two rows** | **An agent could, and chose not to.** `HUMAN_INTERVENTION.md:27`: *"Neither the Tester nor I **will** delete production rows the night before."* **Will, not can** — the service-role key deletes rows over PostgREST. |
+
+**So item 3 is delegable and item 1 is not**, and until now my table gave Enrique no way to tell. **Both rows
+now say which.** If he is short of time at 10:00 that difference is the whole value of the table.
+
+#### Reconciled
+
+**Auto-triage re-verification: CLOSED**, by a test rather than a re-run. Removed from the state table.
+`BACKLOG.md` Inbox and In progress both empty. **T51 claimed at It130.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — needs a payment method. Number confirmed live; balance is the only blocker | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement, not capability | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree; only the old commit holds it. **Leave it** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T51 | README's elapsed figure + the guard that already bans it | **CLAIMED It130** |
+
+Inbox empty. No lock held. Tester silent **6h06m**. **The plan is accurate and correctly ordered.**
+
+### Iteration 176, 02:27 EST — checked the package from outside the machine that built it, for the first time
+
+#### Why from outside
+
+Everything verified tonight — mine and everyone else's — has been checked against the **working tree** or the
+**deployed site**. **Nobody had asked what a reviewer actually receives**, which is a third thing: whatever is
+on `main` in a public repository. A file can exist locally, pass `doc-paths.test.ts`, and still not be in the
+clone a reviewer makes.
+
+#### What the reviewer gets
+
+```
+GET https://api.github.com/repos/enriquealonso01/solstice-fde
+  full_name  enriquealonso01/solstice-fde
+  private    false
+  pushed_at  2026-09-26T06:18:00Z   (= 02:18 EDT, It128's SUBMISSION fixes)
+```
+
+**Every named deliverable is fetchable — all 200:**
+
+```
+agent/sol.md · exports/telnyx-assistant.json · docs/architecture.svg · docs/architecture.drawio
+docs/integration-recommendation.md · docs/latency-target.md · README.md · SUBMISSION.md
+transcripts/README.md · AGENTS.md
+```
+
+**And everything that must not be there is not — all 404:**
+
+```
+.env · .env.bak · DEMO_LOGINS.md · FDE_Project_Challenge.pdf
+```
+
+`SUBMISSION.md:14` promises *"It is **public**. Nothing secret is in it: `.env` and `DEMO_LOGINS.md` are
+gitignored."* **Confirmed from the outside**, along with `.env.bak` — which matters, because it is a
+**byte-identical copy of `.env`** sitting on disk, and `.gitignore:9` catches it.
+
+> **It117's brief-PDF removal is confirmed on the current tree**, by fetch rather than by `git ls-files`.
+> *(It remains in one historical commit; that is Enrique's item 5 and unchanged.)*
+
+**The repository URL in `SUBMISSION.md:12` resolves.** It is the address in the email, and a wrong one is the
+single cheapest way to lose a submission.
+
+#### The claim I expected to be imprecise, and is not
+
+`SUBMISSION.md:39` says *"the send gate reads **a column** RLS lets `group_sales` write."* I had just
+corrected my own banner for implying `approved_by` is a column when it lives in a jsonb sidecar, so I read
+this expecting the same error.
+
+**It is right.** The column the gate reads is **`status`**, and `status` is a real column that RLS lets
+`group_sales` write. **The disclosure describes the mechanism accurately and my banner was the imprecise
+one.** Worth recording that I went looking for a fault and found the document had it correct.
+
+#### Reconciled: `BACKLOG.md` is fully drained
+
+The file grew by 1,100 bytes at 02:25 and my usual three-line probe still printed *"(empty)"* — **so I read
+the whole file rather than the window I always read.** Both of Enrique's items moved from **In progress** to
+**Done**: *"Dashboards should not feel technical"* → T29, **CLOSED 3 of 3** (PRs #50/#53/#54), and the
+click-by-click tutorial → **T4a shipped**, with T4b/T4c *"deliberately never started"* recorded as a decision
+rather than a loose end.
+
+**And the note they left in the empty section is the right lesson:** *"This section had said 'the Implementer
+is on it' for hours after the Implementer finished, which is the one thing a file read at the top of every
+iteration must not do."* **Inbox empty, In progress empty, nothing to drain.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Reads proven live; gate proven clean | Enrique — **do** |
+| 2 | **Top up Telnyx** — number confirmed live; balance is the only blocker | Enrique — **do** |
+| 3 | **T21** — re-confirmed undone; cascade count first | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history** — confirmed **absent from the public tree**; only the old commit holds it. **Leave it** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T51 | README's elapsed figure + the guard that already bans it | any agent |
+| — | **Auto-triage re-verification** | **CLAIMED It129** |
+
+Inbox empty. No lock held. Tester silent **6h02m**. **The plan is accurate and correctly ordered.**
 
 ### Iteration 175, 02:23 EST — the README breaks the one rule the repo wrote a guard for, and the guard does not catch it
 

@@ -66,9 +66,15 @@ the human-readable sentence and all three regenerated options move with it.
 The Cost page inside the app measures what the system costs to *run*. This is what it cost to
 *build*, which is the more relevant number if you are deciding whether to work this way.
 
-**Elapsed: about 24 hours, of which under 5 were active.** First commit 2026-09-24 12:35 EDT.
-Git puts the committed work in two windows — 12:35 to 16:21 on day one, and a second session on
-day two. The gap between them is a night's sleep, not work.
+**Two working sessions, with under 5 hours of hands-on time in them.** First commit 2026-09-24
+12:35 EDT. Git puts the committed work in two windows — **12:35 to 16:21 on day one**, and a second
+that opened at **09:24 the next morning**. The gap between them is a night's sleep, not work.
+
+**"Hands-on" means Enrique at the keyboard, and it is deliberately not the wall clock of the second
+window.** That window is far longer than the hands-on time inside it, because for most of it the
+three-agent loop below was committing, reviewing and merging on its own. Counting its wall clock as
+human effort would flatter exactly the number this section exists to be honest about, so the two are
+given separately rather than blended into one figure.
 
 **Two different shapes of agent, in two phases.**
 

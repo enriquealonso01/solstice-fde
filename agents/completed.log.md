@@ -7477,3 +7477,120 @@ One consequence to flag for the Planner: **the caveat it cites as `BACKLOG.md:50
 and it no longer says what the citation was pointing at, because it is closed.
 
 `npx tsc -b` clean. `npx vitest run` **725 tests / 54 files** green (up 15).
+
+---
+
+## It130 — T51: the one sentence that invites the reader to check the number, and the guard that already banned it
+
+T51 was open and unclaimed, so it went first. The Planner had it right on both halves, which meant
+the interesting work was in the third thing neither of us had looked at.
+
+### Part A, and why I re-derived numbers the plan had already computed
+
+`README.md:69`, under *"What this cost to build"*:
+
+> **Elapsed: about 24 hours, of which under 5 were active.** First commit 2026-09-24 12:35 EDT.
+
+The sentence prints one end of the subtraction and then gets the answer wrong. I took the numbers
+from git rather than from the plan, on the grounds that It127 established: a restated figure is a
+figure nobody checked.
+
+```
+first commit         2026-09-24 12:35        day one   12:35 -> 16:21    25 commits
+day-two window opens 2026-09-25 09:24        gap       16:21 -> 09:24    the night's sleep
+last commit          2026-09-26 02:27        total     200 commits
+elapsed now                37.9 hours
+elapsed at 11:00           46.4 hours        README said  about 24
+```
+
+The plan's arithmetic holds. Understated by fourteen hours when it was found and twenty-two by the
+time it is sent, in the first file a reviewer opens, **in the direction that flatters us** — which is
+the worse direction, because the paragraph's argument is *"this was fast"* and a reviewer who does
+the subtraction reads the speed claim as dressed up.
+
+### The commit histogram said two more things the task had not
+
+Printing commits per hour rather than just the endpoints turned up two claims in the same paragraph
+that are also wrong, and neither was in T51.
+
+**"a second session on day two"** is not a session. The second window opens at 09:24 on 09-25 and has
+commits in **every single hour** through to 02:27 on 09-26 — seventeen hours, spanning two calendar
+dates, 175 commits. Calling that a session, next to a day-one window of 3h46m, invites the reader to
+picture two comparable sittings.
+
+**"under 5 were active"** has no stated referent, and the two available readings differ by a factor
+of four. Day one's window alone is 3h46m. If *active* means the committed windows, day two breaks the
+claim on its own. If it means Enrique's hands on the keyboard, it may well be right — and the README
+never says, while the sentence is doing persuasive work. The Planner flagged this as a "check while
+you are there"; the histogram is what made it unambiguous.
+
+So the replacement does three things rather than one:
+
+> **Two working sessions, with under 5 hours of hands-on time in them.** First commit 2026-09-24
+> 12:35 EDT. Git puts the committed work in two windows — **12:35 to 16:21 on day one**, and a second
+> that opened at **09:24 the next morning**. The gap between them is a night's sleep, not work.
+>
+> **"Hands-on" means Enrique at the keyboard, and it is deliberately not the wall clock of the second
+> window.** That window is far longer than the hands-on time inside it, because for most of it the
+> three-agent loop below was committing, reviewing and merging on its own. Counting its wall clock as
+> human effort would flatter exactly the number this section exists to be honest about, so the two are
+> given separately rather than blended into one figure.
+
+"Two working sessions" is true at any future reading. The two windows are given as clock times, which
+are fixed. The hands-on figure is Enrique's own claim, kept, but labelled — I did not invent a number
+and I did not delete his. And the second paragraph turns the awkward part into the argument: the
+reason the wall clock and the effort diverge **is the thing being demonstrated**.
+
+I checked the rest of the section for the same rot while I was in it. `25 commits` for day one is
+exactly right. `over 4,900 lines` of `tested.log.md` is a floor, which only grows truer — the durable
+form, already in use two paragraphs down from the sentence that was not.
+
+### Part B — the guard's header was right and its body was a transcript
+
+`list-counts.test.ts` opens the describe with the rule in one line:
+
+> *A deliverable may not state elapsed time since a fixed past event as a figure, because it grows.*
+
+Its two assertions both anchor on the literal word **"checkout"**, because the bug that produced them
+was `agent/sol.md`'s `312h after checkout`. `Elapsed: about 24 hours` is anchored to a first commit,
+so neither could ever have seen it. **The suite was green at 700 tests with that sentence sitting in
+the README.** Same shape as T47: a guard whose header states a property and whose body tests the
+instances its author had in front of them.
+
+Widened to two new cases. The first bans `Elapsed: <figure>` outright — a stopwatch label has no stop
+whatever it is anchored to, so the anchor is the wrong thing to key on. The second is the sharper one:
+a soft duration (*"about N hours/days"*) in the **same paragraph** as an absolute date. That pairing is
+worse than a wrong number alone, because the paragraph hands the reader both ends of the subtraction
+and invites them to do it — which is precisely how this one reads, the timestamp arriving one clause
+after the figure. Paragraph scope rather than line scope, because markdown wraps and the pairing is an
+argument made across sentences, not a coincidence of where the line broke.
+
+Blast radius checked before writing either: across every reader-facing doc, exactly one line matched,
+and it was the offending one. `plans/` is not in `DOCS` at all and `agents/` is already filtered out,
+so both stay exempt — which matters, because this very log and the plan quote the bad sentence on
+purpose.
+
+**A third case, because both of the above pass by finding nothing.** That is also what they do if the
+regex stops matching or the paragraph filter selects nothing, and neither failure announces itself.
+So: the patterns are asserted to still match the exact sentence they were written for, and the corpus
+is asserted to still contain dated paragraphs. Five guards in this project have passed while broken;
+all five were vacuous rather than wrong.
+
+Red-checked by putting the T51 sentence back verbatim: **both new cases fire**, and only those two.
+
+### My own guard caught me, three iterations later
+
+The full suite came back with one failure, and it was mine:
+
+```
+FAIL  doc-paths.test.ts > the four build-phase plans > README.md:179 still says what a plan correction cites it for
+```
+
+Adding six lines to the README moved `README.md:179` — the line `plans/02-voice-realtime.md`'s
+correction cites for the supervisor's audio limit — down to `:185`. That citation table was written at
+It127 with the note that *"a citation into a moving file is a live wire"*, and the first thing to move
+the wire was me. Renumbered in the plan and in the `CITED` table, and the reverse case kept both in
+step. First time one of my own guards has fired on my own edit rather than on someone else's, which is
+the better direction for it to work in.
+
+`npx tsc -b` clean. `npx vitest run` **748 tests / 54 files** green (up 23).
