@@ -9,6 +9,30 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It164 SHIPPED → the argument for pinning *“25 tools”* was written down, and applied to one file of
+  four.** `diagram-guide` says it itself: *“that is only an argument if it is true, so it is checked against
+  the committed export rather than trusted”* — and checks `docs/architecture.drawio` alone.
+- **Measured: six statements across five documents, five pinned by nothing.** `25 tools` ×3 (README:28,
+  README-diagram:43 and :50), `seven tabs` ×2 (runbook:244, role-walkthroughs:244), `ten inquiries` ×1
+  (README:40). Sources: **export tools 25, `MAP_TABS` 7, `listInquiries()` 10** — all six correct today.
+- **Nothing was wrong; the arrangement was.** A re-provision would turn the **diagram's** case red and leave
+  three documents quietly disagreeing — green on the file nobody reads the number from, wrong in the README.
+- **The decisive pair:** README says `24 tools` → new guard **1 failed**; the same drift judged by
+  `diagram-guide` alone → **24 passed, nothing failed.**
+- **Both directions:** README-diagram 26 tools **1** · runbook eight tabs **1** · **an eighth tab added to
+  `MAP_TABS` while the docs still say seven → 1** · README nine inquiries **1** · restored **7 passed**, four
+  files byte-identical.
+- **Sources read, not restated:** `MAP_TABS` is **imported** rather than counted by `label: '` occurrences —
+  the model has `label:` on nodes too, so a string count would have been a second copy of the answer.
+- **One case earns its place:** the parser must read *“seven”* as well as *“25”*, because the documents use
+  both. A digits-only parser would have found four of six and called the rest absent — a sweep reporting
+  clean because it could not see the claims.
+- **Also checked and left alone deliberately:** `$0.1085` is a Telnyx list price no test can verify, and the
+  runbook already handles it with care; the three group prices and the `$188.10` spread are pinned by
+  `group-beat-prices.test.ts`; *“fewer than one call in fifteen sessions”* is a bound in the safe direction.
+- Written and run in `.scratch-it164/` first, **green on the first attempt there**, so the shared tree never
+  saw a draft.
+
 - **It163 SHIPPED → `tool-naming.test.ts` guarded *“the files a reviewer reads”* with six hardcoded paths,
   and **none of the nine `docs/*.md` files was among them** — including `docs/README-diagram.md`, whose subject
   is the diagram two entries above it in the same list. All nine are clean today; none was checked.

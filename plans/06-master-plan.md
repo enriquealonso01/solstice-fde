@@ -61,6 +61,12 @@
 > - **`sol.md`, the committed export and the live phone agent are byte-identical at 29,784 characters**
 >   (re-verified 04:52), and the seven line pointers into `HUMAN_INTERVENTION.md` that route you are
 >   **machine-guarded** — the suite fails if that file moves them.
+> - **The honest-handoff beat lands on the second question, not the first.** `SUBMISSION.md` sends a reviewer
+>   to that transcript first because *"asked point blank whether a human is joining, Sol says no"* — and
+>   **that is turn two.** Driven at 08:45: *“Is a human being joining this chat right now, yes or no?”* →
+>   **“No — no one has joined this chat yet. I've put this in front of the manager on duty today…”** Turn one
+>   is an escalation and reads warmer; in my single run it said the manager *“will pick things up with you
+>   here”*. **Ask the yes-or-no question. It is the whole beat.**
 >
 > *The brief is re-readable by any agent now: `fitz` (PyMuPDF) extracts all four pages, where the naive
 > stream-scrape returned font tables. Two quotes re-verified verbatim — "5 business days from receipt to
@@ -2735,6 +2741,67 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 245, 08:42 EST — swept the deliverables for phantom identifiers and found none; my instrument found three
+
+**Nothing is open for an agent. No new tasks.** It163 widened `tool-naming.test.ts` from six paths to sixteen
+surfaces after finding **none of the nine `docs/*.md` was in "the files a reviewer reads"**. That guard chases
+**one** phantom name. I asked the general question: **does any identifier a deliverable names fail to exist?**
+
+#### The sweep
+
+Twelve documents — `README.md`, `SUBMISSION.md`, `AGENTS.md` and all nine in `docs/` — every backtick-quoted
+`function()`, `snake_case` name and `file.ext` path, checked against `src`, `netlify`, `shared`, `scripts`,
+`supabase` and `agent`:
+
+```
+functions   0 that do not exist
+tools       1 flagged   ->  stale_as_of
+paths       2 flagged   ->  group-beat-prices.test.ts · supervisor-archive.test.ts
+```
+
+**All three are my instrument, not the documents.**
+
+- **`stale_as_of`** is in the diagram's *Read cache* node — *"Amazon ElastiCache… TTL plus a `stale_as_of` stamp
+  on every hit."* **A FUTURE node.** It describes what would exist, and my regex cannot tell a design from a
+  reference.
+- **Both test files exist**: `src/lib/rules/__tests__/group-beat-prices.test.ts` and `supervisor-archive.test.ts`.
+  I checked whether the *name appeared inside some file's contents* rather than whether **a file with that name
+  exists** — and a test file almost never contains its own filename.
+
+> **Fourth instrument error of the night in the same family** — `audit_log.target`, `select=id` on tables keyed
+> `guest_id`, `proposals.proposal_id`, now this. Each time I asked a question about a name in the wrong place.
+> **The fix is the same one I keep writing down: ask the system what it has before asking whether it has what I
+> think.** Here that was one `find` and it turned two defects into two false positives.
+
+**Corrected result: zero phantom identifiers across the twelve deliverables.** Every function, tool and path a
+reviewer can look up resolves.
+
+#### And the false positive handed me something I did not know existed
+
+`group-beat-prices.test.ts` is real, and **it pins the three prices I verified by arithmetic at iteration 228**:
+*"keeps the spread that is the whole point of the beat"* and *"orders them the way discounts actually work,
+which is the sanity check on all of it."* **5 tests, green**, with `supervisor-archive.test.ts` alongside it.
+
+> At 228 I closed the arithmetic from one measured anchor and wrote *"the runbook had them verified at iteration
+> 108; they are verified again now."* **They were also guarded the whole time and I did not know.** A hand
+> check and a guard are not redundant — the guard holds them tomorrow — but the honest note is that my
+> verification was the second line of defence, not the first.
+
+#### Worth recording from It163, because it is the same shape twice
+
+It163 *"nearly filed the A5 row as a defect before reading sixteen lines up"*: `availability_service` survives in
+eight tracked files and **every one is right** — correction blocks quoting it to correct it, the rows those
+blocks supersede, archived plans, and the logs of removing it. **That is my iteration-226 near-miss exactly**,
+in another agent, two hours later. *The pattern is not a personal failing; it is what a repository full of
+dated corrections does to anyone grepping it.*
+
+#### State
+
+Suite green at **944 / 66 files** as of 08:21, plus these two files green at 08:41. Enrique's six unchanged,
+`drop policy` first. Inbox and In progress empty. Tester silent since 20:26 (**12h16m**). No lock held; I took
+none.
+
 
 ### Iteration 244, 08:39 EST — reproduced the attack the README had been understating
 

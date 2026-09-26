@@ -10796,3 +10796,80 @@ case into a loop over an empty list, which is the vacuity failure It157 swept th
 
 `npx tsc -b` clean. `npx vitest run` **959 tests / 66 files** green (up 11 — ten new per-file cases and the
 floor).
+
+---
+
+## It164 — the argument for pinning "25 tools" was written down, and applied to one file of four
+
+Empty board. `list-counts.test.ts` pins one kind of count — a sentence claiming a number followed by that
+many items, where the list is its own evidence. There is a second kind: a count whose evidence is
+**elsewhere in the repository**. *"25 tools"*, *"seven tabs"*, *"ten inquiries"* are claims about committed
+artifacts a reviewer can open.
+
+`diagram-guide.test.ts` already makes the case, in its own words:
+
+> *"25 tools" is allowed to be a number because it only moves on a re-provision. That is only an argument if
+> it is true, so it is checked against the committed export rather than trusted.*
+
+Exactly right — and applied to `docs/architecture.drawio` alone.
+
+### Measured: six statements, five documents, five of them pinned by nothing
+
+```
+25 tools        README.md:28 · docs/README-diagram.md:43 · docs/README-diagram.md:50
+seven tabs      docs/demo-runbook.md:244 · docs/role-walkthroughs.md:244
+ten inquiries   README.md:40
+
+export tools 25   MAP_TABS 7   listInquiries() 10      all six correct today
+```
+
+Nothing was wrong. What was wrong is that a re-provision changing the tool count would turn the **diagram's**
+case red and leave three documents quietly disagreeing with it — green on the file nobody reads the number
+from, and wrong in the README. That is worse than none of them being checked, because the suite would look
+like it had an opinion.
+
+### The decisive pair
+
+```
+README.md says "24 tools", judged by the new guard        1 failed
+the same drift, judged by diagram-guide alone            24 passed   (NOTHING FAILED)
+```
+
+The second line is the pre-It164 coverage. The README could state a wrong tool count and the guard that
+exists specifically to pin that number would not notice, because it reads the drawio.
+
+### Both directions, and the sources are read rather than restated
+
+```
+docs/README-diagram.md says 26 tools                      1 failed
+the runbook says eight tabs                               1 failed
+an eighth tab added to MAP_TABS, documents still say 7    1 failed   <- the code drifting, not the document
+README.md says nine inquiries                             1 failed
+restored                                                  7 passed   four files byte-identical
+```
+
+The tab count comes from `MAP_TABS` **imported** from the model the screen renders, not from counting
+`label: '` occurrences — a string count would have been a second copy of the answer, and the file has
+`label:` fields on nodes as well as tabs. The tool count comes from the export's own `tools` array and the
+inquiry count from `listInquiries()`, as the app calls it.
+
+### One case earns its place for a reason worth naming
+
+The parser has to read *"seven"* as well as *"25"*, because the documents use both forms. A digits-only
+parser would have found four of the six and treated the other two as absent — a sweep that reports clean
+because it could not see the claims. So the first case asserts `toNumber('seven') === 7`,
+`toNumber('25') === 25`, and that an unsupported spelling comes back `undefined` rather than `0`.
+
+### Also checked and clean, before picking this
+
+- **`$0.1085`** in the runbook is a Telnyx list price. No test can verify a vendor's price list, and the
+  runbook already handles it with unusual care — *"say this about the projection, not about the measured
+  row"*, and *"do not say it about the numbers on screen, because they show the opposite"*. Left alone
+  deliberately.
+- **The three group prices and the `$188.10` spread** are pinned by `group-beat-prices.test.ts`, which the
+  runbook cites in its own parenthetical.
+- **"fewer than one call in every fifteen sessions"** is a bound in the safe direction: sessions grow every
+  iteration and calls do not, so it becomes truer rather than staler.
+
+`npx tsc -b` clean. `npx vitest run` **966 tests / 67 files** green (up 7). Written and run in
+`.scratch-it164/` first and green on the first attempt there, so the shared tree never saw a draft.

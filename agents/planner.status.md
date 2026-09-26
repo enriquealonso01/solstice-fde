@@ -4,54 +4,53 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 244 — 2026-09-26 08:41 EST
+## Iteration 245 — 2026-09-26 08:43 EST
 
 **The plan is accurate and correctly ordered. Nothing is open for an agent. No new tasks.**
 
-It162 found `README.md` calling the proposal link's path segment *"32-character **random**"* when it is
-`HMAC-SHA256(PROPOSAL_LINK_SECRET, "proposal:" + code)` truncated to 32, and corrected it. I checked whether my
-own file repeats the error — and then whether the consequence is real.
+It163 widened `tool-naming.test.ts` from six paths to sixteen surfaces after finding **none of the nine
+`docs/*.md` was among "the files a reviewer reads"**. That guard chases one phantom name, so I asked the general
+question: **does any identifier a deliverable names fail to exist?**
 
-### My file says *unguessable*, which is accurate and partial
+### The sweep
 
-The diagram and my plan say *"32-character unguessable path"*, not *random*. **Unguessable** is a claim about an
-attacker without the secret and it survives; **random** implies independent entropy per object, which is what
-It162 struck. **But accurate-and-partial is how the README's version started**, so I amended my own passage
-rather than leave the fix to the README alone.
-
-### Then I reproduced it, because a security claim deserves more than a citation
-
-Computing the HMAC in Python from `PROPOSAL_LINK_SECRET` and the code alone — no repository code involved:
+Twelve documents — `README.md`, `SUBMISSION.md`, `AGENTS.md`, all nine in `docs/` — every backtick-quoted
+`function()`, `snake_case` name and `file.ext`, checked against the whole codebase:
 
 ```
-derived token appears in the stored pdf_path:  6 of 6 live proposals
-  PRP-2001 · PRP-2001-2 · PRP-2002 · PRP-2007 · PRP-2008 · PRP-2011
-deterministic: yes    length: 32
+functions  0 missing
+tools      1 flagged  ->  stale_as_of
+paths      2 flagged  ->  group-beat-prices.test.ts · supervisor-archive.test.ts
 ```
 
-**That is the whole attack, executed** — secret plus a sequential code yields every customer's link offline, and
-the codes go `PRP-2011`, `PRP-2012`.
+**All three are my instrument, not the documents.** `stale_as_of` is in a **FUTURE** diagram node describing a
+cache that does not exist yet. Both test files **do** exist — I checked whether the name appeared *inside some
+file's contents* rather than whether **a file with that name exists**, and a test file almost never contains its
+own filename.
 
-> **No token value appears anywhere in my file**, which is the same reason the finding matters: the path *is*
-> the credential, so quoting one to prove the point would be the leak I was describing. **The boolean is the
-> evidence; the value is the vulnerability.**
+> **Fourth instrument error of the night in the same family** — `audit_log.target`, `select=id` on tables keyed
+> `guest_id`, `proposals.proposal_id`, now this. **Ask the system what it has before asking whether it has what
+> I think.** Here that was one `find`, and it turned two defects into two false positives.
 
-The design stays defensible — `store.ts:150` says why, and its second clause is a real property: the table holds
-the path, so keeping the token out of a column is what the derivation buys.
+**Corrected result: zero phantom identifiers across the twelve deliverables.**
 
-### One thing added to Enrique's row 1
+### The false positive handed me something I did not know existed
 
-It162 also measured that **the pending `drop policy` SQL does not touch any of this** — the three statements are
-on `proposals`, `inquiries` and `follow_ups`, which are tables; the PDFs live in a bucket. Added to row 1,
-because it removes a worry at 10:55 rather than adding one.
+`group-beat-prices.test.ts` is real and **pins the three prices I verified by arithmetic at iteration 228** —
+*"keeps the spread that is the whole point of the beat"*, *"orders them the way discounts actually work"*. 5
+tests, green.
 
-### Two process faults of my own
+> At 228 I wrote *"they are verified again now."* **They were also guarded the whole time and I did not know.**
+> A hand check and a guard are not redundant — the guard holds them tomorrow — but my verification was the
+> second line of defence, not the first.
 
-- **The first of my two edits failed its assertion and the second did not**, so for about a minute the log entry
-  described amendments that were not in the file. **A log entry written before the edit is a forecast.** Both
-  are applied and read back now.
-- **I spliced into a wrapped sentence again** — the same fault as iteration 242. The mechanical form: **insert
-  after a line that ends a sentence, not after the line that happens to contain the anchor.**
+### Worth recording from It163
+
+It163 *"nearly filed the A5 row as a defect before reading sixteen lines up"*: the phantom `availability_service`
+survives in eight tracked files and **every one is right** — correction blocks quoting it to correct it, the rows
+they supersede, archived plans, the logs of its removal. **That is my iteration-226 near-miss exactly**, in
+another agent, two hours later. *Not a personal failing — it is what a repository full of dated corrections does
+to anyone grepping it.*
 
 ### Open
 
@@ -64,7 +63,7 @@ because it removes a worry at 10:55 rather than adding one.
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
 
-Nothing for an agent, nothing waiting on the Tester (silent since 20:26, **12h15m**). Suite green at **944 / 66
+Nothing for an agent, nothing waiting on the Tester (silent since 20:26, **12h17m**). Suite green at **944 / 66
 files**. Inbox and In progress empty. No lock held; I took none. Plan guards re-run: **104 green**.
 
 ### The single most important remaining item
