@@ -1,7 +1,13 @@
 # Master plan: the whole picture
 
-> ## 05:30 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> **One agent task is open: T57.** **T56 shipped at It144 — and it corrected me.** I handed the Implementer a
+> ## 05:40 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **One agent task is open: T58, and it is `!!`.** `docs/live-modification.md` — the rehearsed answer to the one
+> change the brief says the panel will ask to watch — tells the presenter to edit the line **“two lines below”**
+> the search hit. **It is three.** Two lands on `group_block_auto_approve_max_rooms: 35,`, and editing *that*
+> leaves *“allowed 15”* reading 15 — **the exact tell the same paragraph defines as “the edit did not land.”**
+> One word, on stage, found 8 minutes after it was written. **T57 shipped at It146** and the rest of it is right:
+> the guard is scoped to the Phoenix object now, with count assertions, 62 green.
+> **T56 shipped at It144 — and it corrected me.** I handed the Implementer a
 > census p90 of **1488ms** and called the 1.5s first-signal target met. **That figure was one index low.**
 > Nearest-rank is **1502ms**, linear interpolation **1492ms**, and **10.1% of turns exceed 1500ms**, so the p90
 > sits exactly on the line. The deliverable now reads **“met at p50 (1079ms), level at p90”** and prints both
@@ -705,7 +711,7 @@ comment, where nothing reads it.
 six-turn table survives with its date; the *"45ms over the 1.5s target"* conclusion is gone; the three target
 strings are unchanged; `npx vitest run` green.
 
-### T57. The guard on the live-modification beat checks the file, not the object — and its anchor matches the comment first
+### T57 — SHIPPED (It146, both halves; verified 62 green at 05:38). The guard on the live-modification beat checked the file, not the object — and its anchor matches the comment first
 
 *The brief says the panel will ask us to modify the system while they watch, and `docs/live-modification.md` is
 the rehearsed answer. **Its guard passes if SOL-PHX's two numbers change**, because a neighbouring property
@@ -766,6 +772,67 @@ broken; the thing that would catch it breaking is what is thin.**
 
 **Check when done:** flipping SOL-PHX's ceiling turns the suite red; flipping Tampa's does not; the doc names a
 single-match search string; `npx vitest run` green.
+
+### T58. `docs/live-modification.md` now says "two lines below it". It is three, and two lands on the neighbouring field.
+
+*!! **The wrong line produces exactly the symptom the paragraph exists to prevent.** One word, on the one edit
+the brief says the panel will ask to watch. Filed at 05:38, eight minutes after the sentence was written.*
+
+#### What it says, and what the file is
+
+T57's doc half added, correctly, that the presenter should search for a string that occurs once. Then it says:
+
+> *"**Search for `property_code: 'SOL-PHX',` instead — that string occurs exactly once in the file** — and change
+> the `max_discount_auto_approve_pct` **two lines below it**, around line 106."*
+
+`src/lib/rules/thresholds.ts`, counted at 05:38:
+
+```
+102    'SOL-PHX': {
+103      property_code: 'SOL-PHX',          <- the search lands here
+104      property_name: 'Solstice Phoenix Camelback',
+105      group_block_auto_approve_max_rooms: 35,   <- "two lines below it"
+106      max_discount_auto_approve_pct: 15,        <- three lines below; the line to edit
+```
+
+**Two lines below 103 is the rooms cap, not the discount ceiling.** A presenter who counts as instructed edits
+`group_block_auto_approve_max_rooms: 35,` to `12`, runs `show-verdict.ts`, and sees **"allowed 15" stay 15** —
+*the exact tell the same paragraph defines as the signal that the edit did not land*, reached by a different
+route. Thirty confusing seconds in front of the panel, which is the failure this document was written to remove.
+
+**This paragraph has now been wrong four times**: T38 (the search landed on the wrong hotel), the Tester's
+iteration 61 (the comment at line 10 matched before the entry), T57 (the guard could not see Phoenix's value
+move), and now the offset added by T57's own fix. **Each fix has introduced the next defect in the same sentence.**
+
+#### What to change
+
+1. **Delete the relative count rather than correcting it to three.** A relative offset rots the moment anyone
+   adds a field to that object — the same failure as the absolute line numbers this very paragraph warns about,
+   and the project already has the rule: **when a figure cannot be kept true, remove it rather than promising to
+   maintain it.** Name the field instead: *"…and change the `max_discount_auto_approve_pct` line inside that
+   object — line 106 today."* The field name cannot drift; the count can.
+2. **Guard it by forbidding the shape, not by pinning the number.** Assert that the paragraph gives **no relative
+   line offset** for this edit — no *"N lines below/under/after"* near `max_discount_auto_approve_pct`. A guard
+   that pinned "three" would need editing every time the object gains a field, which is the same trap one level up.
+3. **Fix the over-slice message in `walkthrough-quotes.test.ts`.** The new case asserts the SOL-PHX slice
+   `not.toContain('SOL-TPA')` and explains that otherwise *"it has run past the end of the object and the value
+   assertions could be satisfied by Tampa's identical pair again."* **Tampa is at line 89 — before Phoenix at
+   102.** A slice that runs long runs **forward**, into **`SOL-CLT` at 118**; it can never reach Tampa. The
+   assertion still earns its place (it catches the slice starting at the header comment, which would swallow
+   Austin and Tampa), but the message names the wrong direction. **Assert instead that the slice contains exactly
+   one `property_code:` line** — direction-agnostic, and it fails on either mistake.
+
+#### Verified while filing this
+
+- The slice itself is **correct today**: 11 lines, `'SOL-PHX': {` through the line before `\n  },`, no SOL-TPA,
+  and the next property after it is `SOL-CLT`. I reproduced the guard's own slice logic to check.
+- The doc's new claim *"that string occurs exactly once in the file"* is **true** — one occurrence.
+- `walkthrough-quotes.test.ts` is **62 green** (up 2 from 60), and everything else T57 asked for is there: the
+  unique anchor, the count assertions, the first-occurrence-is-a-comment case, and the object-scoped fragments.
+
+**Check when done:** the paragraph names the field and carries no relative offset; a guard fails if a relative
+offset comes back; the slice case asserts one `property_code:` and its message names the real neighbour;
+`npx vitest run` green.
 
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
@@ -2130,6 +2197,72 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 208, 05:40 EST — T57's fix introduced the next defect in the same sentence, and it is the one the panel watches
+
+T57 shipped at **It146** while I was mid-iteration — `docs/live-modification.md` at 05:30, the guard at 05:31, no
+log entry yet. I verified it instead of waiting, and the guard half is exactly right. **The doc half added a new
+error in the sentence it was fixing.**
+
+#### The finding: "two lines below it" is three, and two is worse than wrong
+
+The new sentence reads:
+
+> *"**Search for `property_code: 'SOL-PHX',` instead — that string occurs exactly once in the file** — and change
+> the `max_discount_auto_approve_pct` **two lines below it**, around line 106."*
+
+```
+102    'SOL-PHX': {
+103      property_code: 'SOL-PHX',                  <- the search lands here
+104      property_name: 'Solstice Phoenix Camelback',
+105      group_block_auto_approve_max_rooms: 35,    <- "two lines below it"
+106      max_discount_auto_approve_pct: 15,         <- three lines below; the line to edit
+```
+
+**Two lines below 103 is the rooms cap.** A presenter who counts as instructed changes `35` to `12`, runs
+`show-verdict.ts`, and sees **"allowed 15" stay 15** — *which the same paragraph defines as the signal that the
+edit did not land.* The document exists to remove exactly those thirty seconds and has just created a second road
+to them.
+
+**This paragraph has now been wrong four times, and each fix introduced the next defect in it:** T38 (the search
+landed on the wrong hotel), the Tester's iteration 61 (line 10's comment matched before line 106's entry), T57
+(the guard could not see Phoenix's value move), now the offset T57 added. **T58 filed, `!!`, top of the plan.**
+
+> **T58 says to delete the count rather than correct it to three.** A relative offset rots when anyone adds a
+> field to that object — the same failure as the absolute line numbers this very paragraph warns about. Name the
+> field; the field name cannot drift. And guard the *shape*: fail if any relative offset comes back, rather than
+> pinning "three" and needing an edit every time the object grows.
+
+#### The guard half is right, and I checked it rather than reading its comment
+
+Everything T57 asked for is there: the unique anchor `property_code: 'SOL-PHX',` instead of `'SOL-PHX': {` (which
+matches the header comment first), a count assertion on both strings, a case that the first occurrence **is** a
+comment line, and the five fragments asserted **inside the sliced object**. 62 tests, green — up 2.
+
+I reproduced the guard's own slice logic rather than trusting its description: **11 lines, `'SOL-PHX': {` to the
+line before `\n  },`, no SOL-TPA, and the property after it is `SOL-CLT`.** Correct today.
+
+**And that last detail is the third item in T58.** The new case asserts the slice `not.toContain('SOL-TPA')` and
+explains that otherwise *"it has run past the end of the object and the value assertions could be satisfied by
+Tampa's identical pair again."* **Tampa is line 89 — before Phoenix at 102.** A slice that runs long runs
+*forward*, into `SOL-CLT`; it can never reach Tampa. The assertion still earns its place — it catches the slice
+starting at the header comment, which would swallow Austin *and* Tampa — but **its message names the wrong
+direction**, so the next reader will believe it covers a case it cannot. Asserting *exactly one `property_code:`
+line* in the slice covers both directions and needs no story.
+
+> **My own rule, one order gentler than usual:** *a guard is only as good as the distance between its comment and
+> its regex.* Here the regex is right and the comment is wrong — the less dangerous order, and still a trap for
+> whoever reads it next.
+
+#### Also verified
+
+- The doc's new claim *"that string occurs exactly once in the file"* — **true**, one occurrence.
+- `docs/live-modification.md`'s other pointers are unchanged and still correct: the comment near **10**, Austin
+  **54**, Tampa **93**, Phoenix's ceiling **106**.
+
+**Inbox and In progress empty.** Tester silent since 20:26 (**9h14m**); its ledger has no open findings. No lock
+held; I took none.
+
 
 ### Iteration 207, 05:30 EST — two near-misses and one real correction, all in a panel answer nobody had re-driven
 

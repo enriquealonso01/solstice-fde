@@ -4,81 +4,78 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 207 — 2026-09-26 05:33 EST
+## Iteration 208 — 2026-09-26 05:42 EST
 
-**One agent task is open: T57.** I re-drove panel answer **#5, "So how does the manager actually find out?"** —
-an answer Enrique says out loud that concedes a gap, so every clause is a claim about the code. Four clauses:
-**three held, one was wrong twice.**
+**One agent task is open: T58, and it is `!!`.** T57 shipped at It146 while I was mid-iteration. Its guard half is
+exactly right. **Its doc half introduced a new error in the sentence it was fixing — on the one change the brief
+says the panel will ask to watch.**
 
-### The real correction
+### "Two lines below it" is three, and two is worse than wrong
 
-The answer said *"`_delivery/` carries proposals only."*
+The new sentence in `docs/live-modification.md`:
 
-- **That path resolves to nothing from the repo root** — it is `netlify/functions/_delivery/`. A panel member who
-  types `ls _delivery` finds nothing, on the one answer whose purpose is to show we know exactly what we did not
-  build.
-- **It dropped "audit."** The shipped deliverable, `agent/sol.md:110`, says *"carries proposals **and audit**
-  only"*, and audit is the half that makes an escalation attributable. **My own verification log already had the
-  right version** — `plans/06-master-plan.md:9848`, *"carries proposals and audit ✓ audit.ts config.ts index.ts
-  telnyx.ts — no escalation path."* The correct measurement was in my file and the spoken answer never got it.
-  **Same failure as iteration 203's, except this time the note was mine.**
+> *"**Search for `property_code: 'SOL-PHX',` instead — that string occurs exactly once in the file** — and change
+> the `max_discount_auto_approve_pct` **two lines below it**, around line 106."*
 
-The answer now names `rules.ts:216` for the inert array, gives the full path with *and audit*, states that the
-`escalations` table is touched in exactly one file and **never in the UI**, and **names the diagram node to point
-at**: *"Escalation queue — on-call rota and an SLA timer; the human opens with everything the agent already
-tried."* The T33 draft at `:1560` carries the same correction inline.
+```
+102    'SOL-PHX': {
+103      property_code: 'SOL-PHX',                  <- the search lands here
+104      property_name: 'Solstice Phoenix Camelback',
+105      group_block_auto_approve_max_rooms: 35,    <- "two lines below it"
+106      max_discount_auto_approve_pct: 15,         <- three lines below; the line to edit
+```
 
-### Two near-misses, both worth more than the correction
+**Two lines below 103 is the rooms cap.** Edit that instead and `show-verdict.ts` prints **"allowed 15"** — which
+this same paragraph defines as *the signal the edit did not land*. The document exists to remove exactly those
+thirty confusing seconds and has just built a second road to them.
 
-**I searched for our word, not theirs.** Checking *"the diagram already marks that FUTURE"*, I grepped the diagram
-for `notif` and got **zero hits** — a false correction, one step from being filed. The diagram says **Escalation
-queue** and **Alerting and on-call**. Extracting every FUTURE node's text instead of searching for a remembered
-word found it immediately.
+**The paragraph has now been wrong four times, and every fix introduced the next defect in it:** T38 (the search
+landed on the wrong hotel), Tester it61 (line 10's comment matched before line 106's entry), T57 (the guard could
+not see Phoenix's value move), now T57's own offset.
 
-**The export that looked stale is hand-authored on purpose.** `architecture.drawio` was edited at 04:31;
-`architecture.svg` last written 03:34; T52's corrected storage wording is in the source and **absent from the
-SVG**. That reads exactly like a fix that never reached the deliverable. It is not: `README-diagram.md:6` says the
-SVG is *"a hand-authored render of the **Future state** page"* and that *"there is no drawio CLI in this
-environment"* — and T52 fixed a node on the **Today (MVP)** page. Three pages in the source, the SVG renders the
-first, the README row says *"future-state production"*, the guide names all three.
+**T58 says delete the count, not correct it to three.** A relative offset rots the moment that object gains a
+field — the same failure as the absolute line numbers this paragraph already warns about. Name the field; guard
+the *shape* by failing if any relative offset returns, rather than pinning "three".
 
-> **Before filing drift between two artifacts, read the document that explains their relationship.** Two
-> timestamps and a missing string are enough to write a confident task, and the answer was one line into a file
-> written to answer it.
+### The guard half is right, and I checked it rather than reading its comment
 
-### A count in a deliverable, verified node by node
+Unique anchor instead of `'SOL-PHX': {` (which matches the header comment first), count assertions on both
+strings, a case that the first occurrence **is** a comment, and the fragments asserted **inside the sliced
+object**. **62 green, up 2.** I reproduced its slice logic: 11 lines, `'SOL-PHX': {` to the line before `},`, no
+SOL-TPA, next property `SOL-CLT`. Correct today.
 
-`README-diagram.md:36` claims *"24 LIVE nodes, 0 PENDING, and 1 BLOCKED — SMS."* Counting the words on the Today
-page gives **25 / 1 / 2**, which looks like three errors. Each status word also appears **once in the legend**.
-Listing all 28 occurrences instead of counting them: **24 LIVE, 0 PENDING, 1 BLOCKED (Telnyx SMS 10DLC).** **The
-claim is exactly right.** Third time tonight that counting a word was not counting the thing — **open the lines,
-don't count them.**
+**That last detail is T58's third item.** The new case asserts the slice `not.toContain('SOL-TPA')` because
+otherwise it *"has run past the end of the object… satisfied by Tampa's identical pair again."* **Tampa is line 89
+— before Phoenix at 102.** An over-long slice runs *forward*, into `SOL-CLT`; it can never reach Tampa. The
+assertion still earns its place (it catches a slice that starts at the header comment), but **its message names
+the wrong direction**, so the next reader will trust it for a case it cannot cover. Asserting *exactly one
+`property_code:`* covers both directions and needs no story. *A guard is only as good as the distance between its
+comment and its regex — here the regex is right and the comment is wrong, which is the gentler order and still a
+trap.*
 
-### Also checked
+### Also verified
 
-- **The seven pointers still resolve** after `HUMAN_INTERVENTION.md`'s 05:26 in-place edit: 27, 63, 609, 632, 728,
-  817, 975.
-- **It145 is logged** and matches what I verified last iteration, with one lesson worth keeping: its new guard
-  passed a red-check because the paragraph it had just appended named all three filenames — **a guard that reads a
-  file you are also editing is a guard whose evidence you are contaminating.**
+- The doc's new claim *"that string occurs exactly once in the file"* — **true**, one occurrence.
+- Its other pointers unchanged and correct: comment near **10**, Austin **54**, Tampa **93**, Phoenix **106**.
 
 ### Open
 
 | # | Item | Owner |
 |---|---|---|
+| **T58** | **`!!` "two lines below it" is three — the presenter edits the rooms cap and the tell says nothing moved** | any agent — **now** |
 | 1 | **`drop policy` ×3** — **only Enrique can.** SQL at **609**, ***"### What to run"***. **Breaks nothing; verified three ways** | Enrique — **do** |
 | 2 | **Top up Telnyx** — $3.03, no credit line, ~6 calls, hard stop at zero | Enrique — **do** |
 | 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
-| T57 | Scope the live-modification guard to the SOL-PHX object | any agent |
 
-Tester silent since 20:26 (**9h07m**); its ledger has no open findings. Inbox and In progress empty. No lock held;
-I took none. Guards re-run after my edits — `intervention-routing`, `doc-paths`, `list-counts`, `diagram-guide`:
-**128 green**.
+Tester silent since 20:26 (**9h16m**); its ledger has no open findings. Inbox and In progress empty. No lock held;
+I took none. Guards re-run after my edits — `intervention-routing`, `doc-paths`, `list-counts`,
+`walkthrough-quotes`: **166 green**.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** Unchanged, and now with the three reasons someone might hesitate over it checked and
-written into the row he reads.
+**T58, for the next few minutes** — it is one word in the instruction Enrique reads aloud while the panel watches
+him type, and it currently points at the wrong line. **Then the `drop policy` paste**, which remains the only item
+nobody else can do for him.

@@ -9220,3 +9220,98 @@ longer land on the line that changes nothing.
 This is the thing that would have caught it breaking.
 
 `npx tsc -b` clean. `npx vitest run` **854 tests / 60 files** green (up 2).
+
+---
+
+## It147 — swept T57 as a class, and the half of the beat the panel sees was unchecked
+
+Nothing was open. T57 shipped last iteration and it would have been easy to stop there, but the defect it
+described was not really about Phoenix and Tampa. It was about a **shape**:
+
+> `expect(sourceText).toContain(fragment)` proves nothing about *which* occurrence satisfied it.
+
+Any fragment appearing more than once in its target is a guard that can be satisfied by the wrong thing.
+Fixing the instance and not the class is what this project has punished repeatedly — iteration 141 swept
+all 25 diagram nodes after three separate passes had each found exactly one, and turned up a fourth.
+
+### The sweep
+
+Scanned every `.toContain('literal')` in all 60 test files against every file that test reads by literal
+path. **26 ambiguous pairs.**
+
+Twenty-five are benign, and being specific about why matters more than the count. They are
+identifier-presence checks:
+
+```
+endSentence         netlify/functions/group/proposal.ts    3
+classify_intent     netlify/functions/chat.ts              2
+loadInquiries()     netlify/functions/group/index.ts       2
+prop_read           supabase/migrations/004_….sql          2
+REDACTED_INJECTED…  exports/telnyx-assistant.json         23
+```
+
+The assertion in each is *"this symbol is referenced"* or *"this secret is redacted everywhere"*, and any
+occurrence — or in the export's case, all 23 — is proof. An import and a use are not two candidates for the
+same claim.
+
+**One was different in kind.** `named approver` occurs twice in `docs/live-modification.md`, and the two
+occurrences are not a definition and a use. They are **two states of the same system**.
+
+### Before is checked; After is what the panel sees
+
+The document shows two captures of the same command:
+
+```
+Before   asked 17, allowed 15    "…We can approve up to 15% on our own, so this is 2 points over…"
+After    asked 17, allowed 12    "…We can approve up to 12% on our own, so this is 5 points over…"
+```
+
+`docs-quote-drift.test.ts` asserts the document quotes the live refusal verbatim. **The live ceiling is 15**,
+so the Before block satisfies that assertion on its own and the After block is never looked at.
+
+After is the half that matters most. It is the output on screen *after* the panel asks for a change and
+watches Enrique make it. The Tester drove it by hand once, at its iteration 61 — changed 15 to 12, re-ran,
+got the documented block verbatim — and nothing has checked it in the sixty-odd iterations since. A reworded
+`human_reason` template would have failed the Before case loudly and left After quietly wrong, in the same
+document, nine lines apart.
+
+### Derived, not trusted
+
+Four cases now take the live sentence and substitute:
+
+- the **Before gap** must be the arithmetic it claims: `17 − ceiling`, so the engine saying "allowed 15, 2
+  points over" is checked rather than read;
+- the **After block** must be exactly what the engine would emit with the ceiling at 12 — built by replacing
+  `up to 15%` with `up to 12%` and `this is 2 points` with `this is 5 points` in the *live* string, so a
+  reworded template fails both blocks instead of one;
+- the **live ceiling must differ from 12** — if `thresholds.ts` ever already carried 12, the panel would
+  watch him type and see nothing move, which is a worse demo failure than a wrong number;
+- the **price must be identical in both blocks**, because *"the price did not move"* is the sentence the
+  whole beat builds to. A ceiling is an authority rule, not a rate, and two different prices on screen would
+  contradict the narration while he says it.
+
+All four passed on the first run, which means the document is correct and the Tester's hand-check has held.
+That is the outcome to want: this is not a repair, it is the thing that would catch it changing.
+
+Red-checked four ways, both files restored byte-identical:
+
+```
+After ceiling 12 -> 13      1 failed
+After gap 5 -> 4            1 failed
+After price 7806.15 -> …    1 failed
+live ceiling set to 12      2 failed
+```
+
+### My first scan was too narrow, again
+
+The first version looked only inside `it.each([...])` lists and reported **one** pair — `"public"` in
+`README.md`, which is a word-presence check and harmless. I nearly wrote that up as "the class has one
+instance and it is benign."
+
+Most assertions in this suite are inline `expect(text).toContain('…')`, not `it.each` lists, so the scan was
+measuring a small corner of the surface it claimed to cover. Widening it turned up 26 pairs and the one that
+mattered. Sixth time this session a first pattern has been narrower than the thing it was written to find,
+and the tell each time is the same: **a sweep that returns a suspiciously small number is a sweep to
+re-examine, not a clean bill of health.**
+
+`npx tsc -b` clean. `npx vitest run` **858 tests / 60 files** green (up 4).
