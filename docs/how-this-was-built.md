@@ -168,6 +168,14 @@ it is *incapable* of releasing a lock the agent does not hold.
 The document defining single-writer ownership also had no declared writer of its own, which is why
 the fix sat unowned for an iteration. It has one now.
 
+**A note on what this repository does not contain.** The agents' own coordination record — the plan
+documents in `plans/`, the per-agent status files, and the two logs in `agents/` (`tested.log.md`
+alone is over 5,400 lines, including every refusal that failed on its first attempt) — is part of
+the working tree but deliberately kept out of the public repository. The evidence a claim in the
+README points at is real and can be produced; it just ships with the working tree, not with the
+public URL. This file and `agent/sol.md` are tracked, so the substance of every quoted claim is
+checkable here.
+
 ---
 
 ## The honest summary

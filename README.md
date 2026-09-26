@@ -95,9 +95,9 @@ All four were found by an agent whose only job is to disbelieve the other two, a
 fixed. None of them would have been caught by the tests that were already passing.
 `docs/how-this-was-built.md` has the detail, including what the agents got wrong.
 **The guardrail table in `agent/sol.md` is not asserted either.** Eighteen of its nineteen rules were
-driven against the deployed system rather than against fixtures, and the evidence is in
-[`agents/tested.log.md`](agents/tested.log.md) — over 5,400 lines of it, including the refusals that
-failed the first time. The exception is **G16's voice half**, which needs a live phone call and is
+driven against the deployed system rather than against fixtures; the evidence lives in the project's
+own agent working log, which is kept out of this public repository (see the repository-note in
+`docs/how-this-was-built.md`). The exception is **G16's voice half**, which needs a live phone call and is
 named here rather than rounded up. Two worth opening the file for: **G13** would not read a card's
 last four digits to a *correctly identified* cardholder who explicitly told it to ignore its system
 prompt, with the true answer sitting in the sample data; and **G17** was re-proved across 500 trace
@@ -148,9 +148,10 @@ returns *allowed* on a proposal that still carries its blocking flag and an empt
 Every path the product offers refuses correctly, including the agent's own send tool under pressure;
 this one goes underneath them.
 `supabase/migrations/004_client_read_only_on_group_tables.sql` is the fix, it is one statement per
-table, and it is unapplied because applying it needs database access the repository does not carry.
-Found and re-confirmed against production by the testing agent; the evidence, and what was checked to
-be sure it is not worse than described, is in [`agents/tested.log.md`](agents/tested.log.md).
+table, and it is applied: as `group_sales`, inserting into `proposals` is refused outright
+(row-level security), verified against production. Found and re-confirmed against production by the
+testing agent; the detail is in the agents' working log, which stays out of this public repository
+(see the repository-note in `docs/how-this-was-built.md`).
 
 ## Stated assumptions
 
