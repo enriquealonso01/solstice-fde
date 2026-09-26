@@ -4,56 +4,51 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 200 — 2026-09-26 04:29 EST
+## Iteration 201 — 2026-09-26 04:34 EST
 
 **The plan is accurate and correctly ordered.** One agent task open: **T55**.
 
-### The pointer under Enrique's number-one item was aiming at the wrong line
+### The block carrying the rule against this had broken it six times, including in its own heading
 
-My open region cites eight line numbers in `HUMAN_INTERVENTION.md`. **Six had rotted, uniformly by +13** —
-thirteen lines were appended between 63 and 563, and everything below moved:
+The `▶ OPEN WORK` heading read *"…and **T51** for an agent."* **T51 shipped at It130**; T52, T53, T54 have shipped
+since, and **T55 is open now.** The heading was five tasks out of date. The block beneath said *"T49 shipped in
+It123 and T50 in It126. **Nothing is left for an agent**"* — while five tasks came and went.
 
-```
-563→576 · 592→605 · 596→609 · 619→632 · 715→728 · 804→817 · 962→975
-27 and 63 unchanged
-```
+**And three paragraphs above that stale sentence, the same block says:**
 
-**Item 1 read *"the SQL to paste is at 596"*. At 04:26, line 596 is prose about GM sign-off.** The single most
-important instruction in the package pointed at the wrong text, and Enrique would have followed it at 10:00 —
-the one paste he cannot delegate, aimed past the SQL.
+> *"…the failure is always the same shape: a summary written when it was accurate, appended to, and never re-read
+> top-down. **So the rule, for whoever edits this next: when you close a task, delete its entry from this screen
+> in the same edit.**"*
 
-### The two that survived say exactly why
+**I wrote that rule at iteration 157 and then broke it six times, in the block the rule lives in.**
 
-**27 and 63 are both in the opening region** — the region `intervention-routing.test.ts` already guards, pointer
-by pointer. **All six that rotted are in the body, which nothing guards.** The guard's own header describes this
-mechanism: *"writing the update shifted every line below it by 37, so the numbers I had just verified were wrong
-by the time I saved it."*
+> **Six recurrences, not five** — 108, 112, 119, 123, 157, now. And the rule did not fail through forgetfulness:
+> **a rule is a promise to do maintenance, and the maintenance was already the thing failing.** Writing *"remember
+> to update this"* beside something that needs updating is the weakest available fix, and I reached for it because
+> it was cheapest.
 
-> **It learned the lesson about the file it lives next to, not about the file that cites it** — the same shape as
-> It125's eight corrections missing a ninth, and the 15:30 list nobody reopened. **A fix scoped to where the pain
-> was felt rather than to where the property holds.** Filed as **T55**: extend the existing describe to the
-> plan's pointers, with the verification log exempted because it quotes stale numbers on purpose.
+### So the fix is not another rule
 
-### What I changed, which matters more than the numbers
+**The heading and the block no longer carry task numbers at all**, and the heading says why in its own text: the
+banner names the open item and the banner is rewritten every iteration. **One place carries it — the one place I
+demonstrably do rewrite — and everything else points there.**
 
-Every pointer now **leads with a quoted heading** and carries the number as a hint —
-``**`HUMAN_INTERVENTION.md:817`**, heading ***"The three places that mention it"***`` — plus, on item 1,
-*"search the quoted headings, not the numbers — they shifted by 13 in the last three hours."*
+**Same move as every durable fix tonight:** floors instead of counts, quoted headings instead of line numbers, a
+ratio instead of a share, a fixed date instead of elapsed hours. **When a figure cannot be kept true, remove it
+rather than promising to maintain it.** The others were about someone else's figures; this one is mine, and it is
+the one where the rule already existed and still failed.
 
-**A stale pointer now degrades to a search instead of to wrong prose.** Same move as floors instead of counts, a
-ratio instead of a share, a date instead of an elapsed hour count: **when a figure cannot be kept true, carry the
-thing that finds it.**
+### Also verified
 
-### Verified after fixing
-
-All seven resolve to the text they claim (27, 63, 609, 632, 728, 817, 975). **Zero stale numbers left in the open
-region.**
+All seven `HUMAN_INTERVENTION.md` pointers re-anchored at iteration 200 **still resolve** (27, 63, 609, 632, 728,
+817, 975) — re-checked because that file is appended to all night and moving pointers was last iteration's whole
+finding.
 
 ### Open
 
 | # | Item | Owner |
 |---|---|---|
-| 1 | **`drop policy` ×3** — **only Enrique can.** **SQL is at 609, heading *"### What to run"*** | Enrique — **do** |
+| 1 | **`drop policy` ×3** — **only Enrique can.** SQL at **609**, heading ***"### What to run"*** | Enrique — **do** |
 | 2 | **Top up Telnyx** — $3.03, no credit line, ~6 calls, hard stop at zero | Enrique — **do** |
 | 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
@@ -61,8 +56,8 @@ region.**
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
 | T55 | Extend the pointer guard to cover the plan's citations | any agent |
 
-**Tester silent 8h00m.** Inbox and In progress empty. No lock held.
+**Tester silent 8h05m.** Inbox and In progress empty. Lock held by another agent; not mine to take and I did not.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — and as of this iteration its pointer finally aims at the SQL.
+**The `drop policy` paste** — the only item nobody else could do for him.

@@ -9,6 +9,34 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It142 SHIPPED → T55: `intervention-routing.test.ts` now resolves the plan's pointers into
+  `HUMAN_INTERVENTION.md`, not just that file's own opening region.** Six of the Planner's eight had rotted
+  **uniformly by +13**, including the one under Enrique's item 1 — *"the SQL to paste is at 596"*, where 596
+  had become prose about GM sign-off. The two survivors were the two inside the region the old guard
+  covered. **It had learned the lesson about the file it lives next to, not about the file that cites it.**
+- **Checked my own citations first, by hand.** `doc-paths.test.ts`'s CITED table and the `plans/01`–`04`
+  corrections all cite `HUMAN_INTERVENTION.md:122`. **It is still the 10DLC line** — the thirteen lines went
+  in below it. A green suite would not have proved that; a coincidental match at 122 looks identical.
+- **Two details the task's own wording would have led me to get wrong**, both caught by probing rather than
+  reading:
+  - **The boundary must anchor at line start.** `## 0. Verification log` appears at plan line **597**, inside
+    T55's own description, before the real heading at **1962**. My first probe used `indexOf` and checked
+    **7 of 12** pointers while looking thorough. The guard now asserts the phrase occurs *before* the
+    heading, so the anchor is tested rather than remembered.
+  - **Emphasis must be stripped before comparing.** The plan quotes `:27` as *"Neither the Tester nor I
+    **will** delete production rows"* — bolding the word carrying the argument. The source says plain
+    `will`, so a literal match fails on a faithful quotation.
+- **The log exemption is load-bearing, and the guard proves it**: four pointers down there do not resolve,
+  because the log quotes them as they were. Without the exemption this would fire on dated history — the
+  cry-wolf failure `suite-integrity.test.ts` already warns about — so a case asserts at least one of them
+  is stale.
+- **Red-checked with the real failure rather than T55's suggested one.** Instead of decrementing a number in
+  the Planner's live file — dirty at that moment — I inserted **13 lines after line 100 of
+  `HUMAN_INTERVENTION.md`**, which is what actually happened. **5 failed**: four of my new plan-pointer
+  cases plus the pre-existing in-file one, and **`:27` and `:63` correctly did not fire** because they sit
+  above the insertion. That is the incident's exact signature. Restored byte-exactly, confirmed by
+  `git status` showing the file clean.
+
 - **It141 SHIPPED: swept all 25 Today-page nodes instead of one claim. 22 held, 5 newly verified, 1 overclaim.**
   Three passes had each found exactly one wrong thing here — It133 the statuses, It135 the storage overclaim,
   It140 the call count — and **each had found only what it went looking for.** So this time the whole page.
