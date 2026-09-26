@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 04:29 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 04:32 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **One agent task is open: T55** — six of my eight line pointers into `HUMAN_INTERVENTION.md` had
 > rotted by +13, including the one under item 1. **All corrected and re-anchored to quoted headings.**
 > *T38–T54 are closed.* `sol.md`, the committed export and the live phone agent
@@ -726,9 +726,11 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 ---
 
-# ▶ OPEN WORK — three things for Enrique to DO, three decisions that need no action, and **T51** for an agent.
+# ▶ OPEN WORK — three things for Enrique to DO, three decisions that need no action
 
-*Everything below this section is closed, or evidence.*
+*Everything below this section is closed, or evidence.* **This heading deliberately does not name the open
+agent task. The banner at the top does, and it is rewritten every iteration; a task number here has to be
+edited every time one closes, and six times it was not.**
 
 > ### ⚡ NOTHING IS LEFT TO PASTE — rewritten at iteration 157, and this is why
 >
@@ -736,16 +738,25 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > are T43 and T45. Verified against the live files at 00:55 with the whitespace-normalised match,
 > not `grep`. The list of what was checked and what each file now says is in **T44's section above**.
 >
-> **This is the fifth time this file's first screen has gone stale while the dated log below stayed
-> true** — iterations 108, 112, 119, 123, and now. The failure is always the same shape: a summary
+> **This was the fifth time this file's first screen had gone stale while the dated log below stayed
+> true** — iterations 108, 112, 119, 123, and 157. *There has since been a sixth; see the amendment at the
+> end of this block.* The failure is always the same shape: a summary
 > written when it was accurate, appended to, and never re-read top-down. So the rule, for whoever
 > edits this next: **when you close a task, delete its entry from this screen in the same edit.** The
 > record lives in the verification log; it does not need a second home above the work.
 >
-> **T49 shipped in It123 and T50 in It126. Nothing is left for an agent.** What remains for Enrique is the items in the
-> table below, and every one of them now also appears in `HUMAN_INTERVENTION.md` — items 1 and 4
-> reached it at 00:05 in the update block at **line 63**, which closed the routing gap iteration 156
-> filed T45 for.
+> **For what is open right now, read the banner, not this block.** T38–T54 are closed; whatever is open is
+> named at the top and re-stated every iteration. **What remains for Enrique is the table below**, and every
+> item in it also appears in `HUMAN_INTERVENTION.md` — items 1 and 4 reached it at 00:05 in the update block
+> at **line 63**, ***"## Update, 2026-09-26"***, which closed the routing gap iteration 156 filed T45 for.
+>
+> **Amended at 04:31, and the amendment is the point.** This block said *"nothing is left for an agent"* while
+> T51, T52, T53, T54 and T55 came and went, and its heading still advertised **T51** five tasks after T51
+> shipped. **Six recurrences now, not five** — and the rule written three paragraphs above, *"when you close a
+> task, delete its entry from this screen in the same edit,"* **is a rule I wrote and then broke six times.**
+> So the fix is no longer a rule: **the heading and this block no longer carry task numbers at all.** Same move
+> as floors instead of counts, headings instead of line numbers, a ratio instead of a share — **when a figure
+> cannot be kept true, remove it rather than promising to maintain it.**
 | # | Enrique's item | Why it is first / what it costs |
 |---|---|---|
 | 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr`. **Only you can do this** — it is DDL, PostgREST cannot execute `drop policy`, and the repo has no RPC path; it needs the SQL editor in your browser. | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at **`HUMAN_INTERVENTION.md:817`**, heading ***"The three places that mention it"*** (re-verified 04:26; the SQL to paste is at **609** under ***"### What to run"***, summarised for you at **63**). **Search the quoted headings, not the numbers — they shifted by 13 in the last three hours.**. **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. |
@@ -1949,6 +1960,73 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 201, 04:32 EST — the block that carries the rule against this had broken it six times, including in its own heading
+
+#### What I found in my own file
+
+The `▶ OPEN WORK` heading read:
+
+> `# ▶ OPEN WORK — three things for Enrique to DO, three decisions that need no action, and **T51** for an agent.`
+
+**T51 shipped at It130.** T52, T53, T54 have shipped since, and **T55 is open right now.** The heading was
+advertising a task five tasks out of date.
+
+And the block beneath it read *"**T49 shipped in It123 and T50 in It126. Nothing is left for an agent.**"* —
+**while five tasks came and went.**
+
+#### The part that is worth writing down
+
+That same block, three paragraphs above the stale sentence, contains this:
+
+> *"This is the fifth time this file's first screen has gone stale while the dated log below stayed true… The
+> failure is always the same shape: a summary written when it was accurate, appended to, and never re-read
+> top-down. **So the rule, for whoever edits this next: when you close a task, delete its entry from this screen
+> in the same edit.**"*
+
+**I wrote that rule at iteration 157 and then broke it six times, in the block the rule lives in.**
+
+> **Six recurrences, not five** — 108, 112, 119, 123, 157, and now. And the reason the rule failed is not that it
+> was forgotten. **It is that a rule is a promise to do maintenance, and the maintenance is the thing that was
+> already failing.** Writing *"remember to update this"* next to something that needs updating is the weakest
+> possible fix, and I reached for it because it was the cheapest.
+
+#### So the fix is not another rule
+
+**The heading and the block no longer carry task numbers at all.** The heading now says, in its own text, why:
+
+> *"This heading deliberately does not name the open agent task. **The banner at the top does, and it is
+> rewritten every iteration**; a task number here has to be edited every time one closes, and six times it was
+> not."*
+
+**One place carries the open item — the banner — because that is the one place I demonstrably do rewrite.**
+Everything else points at it.
+
+> **This is the same move as every other durable fix tonight**: floors instead of counts, quoted headings instead
+> of line numbers, a ratio instead of a share, a fixed date instead of an elapsed hour count. **When a figure
+> cannot be kept true, remove it rather than promising to maintain it.** Five of those were about someone else's
+> figures. This one is about mine, and it is the one where I had already written the rule and still failed.
+
+#### Also verified
+
+All seven `HUMAN_INTERVENTION.md` pointers I re-anchored at iteration 200 **still resolve** — 27, 63, 609, 632,
+728, 817, 975 — checked again at 04:32 because that file has been appended to all night and the whole point of
+last iteration was that these move.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can.** SQL at **609**, heading ***"### What to run"*** | Enrique — **do** |
+| 2 | **Top up Telnyx** — $3.03, no credit line, ~6 calls, hard stop at zero | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T55 | Extend the pointer guard to cover the plan's citations | any agent |
+
+Inbox and In progress empty. Lock held by another agent; not mine to take and I did not. Tester silent **8h05m**.
+**The plan is accurate and correctly ordered.**
 
 ### Iteration 200, 04:29 EST — the pointer under Enrique's number-one item was aiming at the wrong line
 

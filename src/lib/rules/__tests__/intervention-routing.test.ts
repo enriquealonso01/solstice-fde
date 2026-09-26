@@ -149,3 +149,113 @@ describe('the decisions the short list routes to', () => {
     ).toEqual([])
   })
 })
+
+/**
+ * T55. The case above resolves pointers written *inside* `HUMAN_INTERVENTION.md`. The pointers that
+ * actually route Enrique are in `plans/06-master-plan.md`, and nothing checked those.
+ *
+ * Measured at the Planner's iteration before this one: of its eight pointers into this file, **six had
+ * rotted by exactly +13** — thirteen lines had been inserted above them and everything below shifted. The
+ * two that survived were the two inside the opening region the case above covers. **The guard had learned
+ * the lesson about the file it lives next to and not about the file that cites it.**
+ *
+ * The one that mattered was under Enrique's number-one item: *"the SQL to paste is at 596"*, where line
+ * 596 had become prose about GM sign-off. The single most important instruction in the package aimed at
+ * the wrong text for three hours, and he would have followed it at 10:00.
+ *
+ * Two details this had to get right, both found by checking rather than by reading the task:
+ *
+ * - **The region boundary must anchor at line start.** The string `## 0. Verification log` appears at plan
+ *   line 597, inside the task describing this work, before the real heading at 1962. A first probe used
+ *   `indexOf` and silently checked 7 of the 12 pointers.
+ * - **Emphasis has to be stripped before comparing.** The plan quotes `:27` as *"Neither the Tester nor I
+ *   **will** delete production rows"* — bolding the word that carries the argument. The source line says
+ *   plain `will`, so a literal comparison fails on a faithful quotation.
+ */
+describe("the master plan's pointers into HUMAN_INTERVENTION.md", () => {
+  const PLAN = 'plans/06-master-plan.md'
+  const plan = () => readFileSync(join(repoRoot, PLAN), 'utf8').replace(/\r\n/g, '\n')
+
+  /** Markdown emphasis is presentation, not content: a quote that bolds a word is still the quote. */
+  const plain = (s: string) => s.replace(/[*`]/g, '').replace(/\s+/g, ' ').trim()
+
+  /** Everything above the verification log, which quotes stale numbers on purpose. */
+  const split = () => {
+    const text = plan()
+    const heading = /^## 0\. Verification log/m.exec(text)
+    return { text, heading, open: heading ? text.slice(0, heading.index) : text, log: heading ? text.slice(heading.index) : '' }
+  }
+
+  interface Pointer {
+    line: number
+    quote: string | null
+  }
+
+  const pointersIn = (region: string): Pointer[] => {
+    const out: Pointer[] = []
+    for (const m of region.matchAll(/HUMAN_INTERVENTION\.md:(\d+)/g)) {
+      const tail = region.slice(m.index + m[0].length, m.index + m[0].length + 130)
+      const q = /\*\*\*"([^"]+)"\*\*\*|\*"([^"]+)"\*/.exec(tail)
+      out.push({ line: Number(m[1]), quote: q ? (q[1] ?? q[2]) : null })
+    }
+    // One entry per (line, quote), so the same pointer repeated is checked once.
+    return [...new Map(out.map((p) => [`${p.line}|${p.quote}`, p])).values()]
+  }
+
+  it('finds the open region by a heading at line start, not by the string anywhere', () => {
+    const { text, heading } = split()
+    expect(heading, `${PLAN} has no "## 0. Verification log" heading; this whole describe is inert`).toBeTruthy()
+
+    // The trap, asserted rather than remembered: the phrase occurs before the heading does.
+    const firstMention = text.indexOf('## 0. Verification log')
+    expect(
+      firstMention,
+      'the phrase no longer appears before the heading, so the line-start anchor is untested here. It did ' +
+        'at iteration 142, and an indexOf boundary checked 7 of 12 pointers while looking thorough.',
+    ).toBeLessThan((heading as RegExpExecArray).index)
+  })
+
+  const open = pointersIn(split().open)
+
+  it('finds pointers to resolve, so this cannot pass by matching nothing', () => {
+    expect(
+      open.length,
+      `no HUMAN_INTERVENTION.md pointers found in ${PLAN}'s open region. If the form changed, change the ` +
+        'pattern with it rather than letting this go quiet.',
+    ).toBeGreaterThanOrEqual(4)
+    expect(open.filter((p) => p.quote !== null).length, 'no pointer carries a quote to resolve').toBeGreaterThanOrEqual(3)
+  })
+
+  it.each(open.map((p) => [p.line, p.quote] as const))(
+    'HUMAN_INTERVENTION.md:%d is where the plan says it is',
+    (line, quote) => {
+      const all = lines()
+      expect(
+        line > 0 && line <= all.length,
+        `${PLAN} cites HUMAN_INTERVENTION.md:${line} and the file has ${all.length} lines.`,
+      ).toBe(true)
+      if (quote === null) return
+
+      expect(
+        plain(all[line - 1] ?? ''),
+        `${PLAN} sends Enrique to HUMAN_INTERVENTION.md:${line} for "${quote}" and that line says something ` +
+          `else. Six of these shifted by +13 in three hours, including the one under his item 1, where the ` +
+          `SQL pointer had become prose about GM sign-off. Search the quoted heading and re-point it.`,
+      ).toContain(plain(quote))
+    },
+  )
+
+  it('exempts the verification log, and the exemption is doing real work', () => {
+    // Not decoration: the log deliberately quotes pointers as they were, so several do not resolve. If
+    // none of them failed, the exemption would be untested and could be removed without anything noticing.
+    const all = lines()
+    const stale = pointersIn(split().log).filter(
+      (p) => p.quote !== null && !plain(all[p.line - 1] ?? '').includes(plain(p.quote)),
+    )
+    expect(
+      stale.length,
+      'no pointer in the verification log is stale, so nothing proves the log needs exempting. Either the ' +
+        'log was rewritten — in which case it stopped being a dated record — or the split is wrong.',
+    ).toBeGreaterThan(0)
+  })
+})

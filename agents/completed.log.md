@@ -8737,3 +8737,86 @@ Red-checked both ways: restoring the five-field version fails 1, and weakening i
 green, per It140.
 
 `npx tsc -b` clean. `npx vitest run` **829 tests / 58 files** green (up 1).
+
+---
+
+## It142 — T55: the guard knew about the file it lived next to, not the file that cites it
+
+T55 was open. `src/lib/rules/__tests__/intervention-routing.test.ts` already resolves `line N` pointers
+written **inside** `HUMAN_INTERVENTION.md` — its own header explains why, because writing an update block
+once *"shifted every line below it by 37"*. The pointers that actually route Enrique are in
+`plans/06-master-plan.md`, and nothing checked those.
+
+The Planner measured its own eight and found **six rotted by exactly +13**. The two that survived were the
+two inside the opening region the existing case covers; the six that rotted were all in the body, which
+nothing guarded. And the one that mattered was under item 1: *"the SQL to paste is at 596"*, where line 596
+had become prose about GM sign-off. The most important instruction in the package, aimed at the wrong text
+for three hours, on the morning it would be followed.
+
+### First: my own citations point into the same body
+
+Before building anything I checked the pointers I own. `doc-paths.test.ts`'s `CITED` table and the
+correction blocks in `plans/01`–`04` all cite **`HUMAN_INTERVENTION.md:122`** for *"10DLC registration not
+started on the funded account."* Thirteen lines were inserted somewhere between 63 and 563, so whether 122
+moved depended entirely on where.
+
+`sed -n '122p'` — still the 10DLC line. The insertion went in below it.
+
+Worth being explicit about why I checked rather than inferred from the green suite: my guard asserts that
+line 122 *contains that string*. If the file had shifted and some other line happened to carry similar
+text, the guard would pass and I would have believed it. A green assertion is evidence about the assertion,
+not about the world.
+
+### Two details the task's own wording would have led me to get wrong
+
+T55 says to guard *"everything above `## 0. Verification log`"*. Implemented literally with `indexOf`, that
+is wrong in a way that looks right.
+
+**The boundary has to anchor at line start.** The phrase `## 0. Verification log` occurs at plan line
+**597** — inside T55's own description of this work — before the real heading at **1962**. My first probe
+cut the region at 597 and reported **7 pointers**; the correct region has **12**. A guard built on that
+would have checked a third of the pointers and passed confidently. The test now asserts that the phrase
+occurs *before* the heading match, so the anchor is a tested property rather than a remembered one.
+
+**Emphasis has to be stripped before comparing.** The plan quotes `:27` as *"Neither the Tester nor I
+**will** delete production rows the night before"* — bolding `will`, because the whole argument is *will*
+rather than *can*. The source line says plain `will`, so a literal comparison fails on a quotation that is
+entirely faithful. Both sides are normalised for `*`, backticks and whitespace now. That was the one
+pointer of six that did not resolve on my first pass, and reading the line rather than trusting the boolean
+is what distinguished a formatting artefact from a rotted pointer.
+
+### The log exemption is load-bearing, so the guard proves it
+
+Below the boundary, four pointers do **not** resolve — `:27`, `:580`, `:605`, `:962` — because the
+verification log quotes them as they read at the time. That is the point of a dated log, and it is the same
+exemption `agents/` and `HUMAN_INTERVENTION.md` already get from the elapsed-time and chat-pair bans.
+
+An exemption nothing tests can be deleted without anything noticing, so one case asserts that **at least
+one pointer in the log region is stale**. If that ever comes back empty, either the log was rewritten — in
+which case it stopped being a record — or the split is wrong. Either is worth stopping for.
+
+### Red-checked with the real failure instead of the suggested one
+
+T55 asks for a red-check by decrementing one pointer by 13. That means editing `plans/06-master-plan.md`,
+which the Planner had dirty at that moment and has written mid-ship twice tonight. Rather than open that
+window, I reproduced **what actually happened**: inserted 13 lines after line 100 of
+`HUMAN_INTERVENTION.md`, shifting everything below.
+
+```
+× points every "line N" at what it says is there          (the pre-existing case)
+× HUMAN_INTERVENTION.md:975 is where the plan says it is
+× HUMAN_INTERVENTION.md:632 is where the plan says it is
+× HUMAN_INTERVENTION.md:817 is where the plan says it is
+× HUMAN_INTERVENTION.md:728 is where the plan says it is
+```
+
+**Five failures, four of them the new cases** — and `:27` and `:63` correctly did **not** fire, because they
+sit above line 100 and so did not move. That is the incident's exact signature: the survivors are the
+pointers in the unshifted region. A decrement-by-13 would have tested the same assertion from the other
+side; this tests the mechanism that produces the bug.
+
+Restored byte-exactly and confirmed with `git status` rather than by eye — the file shows **0 changes**,
+which for a committed file is proof rather than an impression. That check exists because It140 lost a fix to
+a mis-timed snapshot and It135 lost one to `git checkout`.
+
+`npx tsc -b` clean. `npx vitest run` **838 tests / 58 files** green (up 9).
