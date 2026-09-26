@@ -22,6 +22,8 @@ staff console behind three scoped logins. Same agent on both channels, same tool
 | How this was built, and what the agents caught in each other's work | [`docs/how-this-was-built.md`](docs/how-this-was-built.md) |
 | Where this goes next, in business outcomes | [`docs/where-this-goes.md`](docs/where-this-goes.md) |
 | Demo runbook, beat by beat | [`docs/demo-runbook.md`](docs/demo-runbook.md) |
+| Changing the system live, rehearsed | [`docs/live-modification.md`](docs/live-modification.md) — the Phoenix discount ceiling, 15% to 12%, with the command and the real captured output |
+| The three staff roles, click by click | [`docs/role-walkthroughs.md`](docs/role-walkthroughs.md) — start here for the staff side without a guided demo |
 | At least one net-new tool | `sameDayAvailability()` in [`netlify/functions/tools/availability.ts`](netlify/functions/tools/availability.ts), reached by the `check_late_checkout` and `check_upgrade_eligibility` guest tools and by `check_availability` on the group side — see Assumptions below |
 | Native platform export | [`exports/telnyx-assistant.json`](exports/telnyx-assistant.json) — the live assistant, 25 tools, secret redacted. Provisioned from source by [`scripts/telnyx/provision.mjs`](scripts/telnyx/provision.mjs) |
 
@@ -111,6 +113,18 @@ HEAD`, `git ls-files | wc -l` and `npx vitest run` are the live answers and they
 here for it, and inventing one would undercut everything else on this page that *is* measured.
 What is measured is the runtime cost, and it is on the Cost page at real numbers: spend to date,
 cost per conversation, and the live Telnyx balance read from their API while you watch.
+
+**One defect is open at the time of writing, and it is a real one.** The approval gate that stops a
+flagged group proposal being sent reads the proposal's own `status` column, and row-level security
+grants `group_sales` write access to that table. So a signed-in sales rep — not an anonymous
+visitor — can set `status` to `approved` from the browser with the public anon key, and the gate then
+returns *allowed* on a proposal that still carries its blocking flag and an empty `approved_by`.
+Every path the product offers refuses correctly, including the agent's own send tool under pressure;
+this one goes underneath them.
+`supabase/migrations/004_client_read_only_on_group_tables.sql` is the fix, it is one statement per
+table, and it is unapplied because applying it needs database access the repository does not carry.
+Found and re-confirmed against production by the testing agent; the evidence, and what was checked to
+be sure it is not worse than described, is in [`agents/tested.log.md`](agents/tested.log.md).
 
 ## Stated assumptions
 

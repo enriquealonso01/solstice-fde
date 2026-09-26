@@ -36,6 +36,7 @@ Sign in at `/login`. Paste the password into the email; do not commit it here.
 | Source code | the repository |
 | Agent configuration `.md`: prompts, tools, guardrails | `agent/sol.md` |
 | Guardrail evidence | `agents/tested.log.md` — over 4,900 lines, **18 of the 19 guardrails verified against production**, by the agent whose only job was to disbelieve the other two. The exception is **G16's voice half**, which needs a live call. |
+| Known open defect | the send gate reads a column RLS lets `group_sales` write, so a signed-in rep can mark their own flagged proposal `approved` from the browser and the gate stops refusing it. `supabase/migrations/004_client_read_only_on_group_tables.sql` is the one-statement fix, unapplied. Found and re-confirmed against production by the testing agent |
 | Sample transcripts | `transcripts/` — five chat, one real phone call. Start with `honest-handoff.md`: asked point blank whether a human is joining, Sol says no |
 | Architecture diagram, future state | `docs/architecture.drawio`, `docs/architecture.svg` |
 | Integration recommendation | `docs/integration-recommendation.md` |
@@ -43,12 +44,14 @@ Sign in at `/login`. Paste the password into the email; do not commit it here.
 | Latency target and its justification | `docs/latency-target.md` |
 | Net-new tool | the same-day availability service, `netlify/functions/tools/availability.ts`, consumed by `check_late_checkout` and `check_upgrade_eligibility` (and `check_availability` on the group side), documented in `agent/sol.md` §4 and the README |
 
-Three things they did not ask for, which answer their email rather than the PDF:
+Four things they did not ask for, which answer their email rather than the PDF:
 
 - `docs/how-this-was-built.md` — the six agents, and the bugs they found in each other's work
 - `docs/where-this-goes.md` — the vision, in outcomes
 - `docs/role-walkthroughs.md` — the three staff roles click by click, and what each click proves.
   Start here if you want the staff side without a guided demo.
+- `docs/live-modification.md` — the rehearsed answer to *"change it while we watch"*: the Phoenix
+  discount ceiling, 15% to 12%, with the edit, the command and the real captured output.
 
 ---
 
