@@ -4,53 +4,54 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 245 — 2026-09-26 08:43 EST
+## Iteration 247 — 2026-09-26 08:51 EST
 
 **The plan is accurate and correctly ordered. Nothing is open for an agent. No new tasks.**
 
-It163 widened `tool-naming.test.ts` from six paths to sixteen surfaces after finding **none of the nine
-`docs/*.md` was among "the files a reviewer reads"**. That guard chases one phantom name, so I asked the general
-question: **does any identifier a deliverable names fail to exist?**
+### My own note said "25 tools" was pinned; it was pinned in the wrong place
 
-### The sweep
-
-Twelve documents — `README.md`, `SUBMISSION.md`, `AGENTS.md`, all nine in `docs/` — every backtick-quoted
-`function()`, `snake_case` name and `file.ext`, checked against the whole codebase:
+At T49 I wrote *"Leave '25 tools' alone. It is correct, it is pinned."* The guard held the number in
+`docs/architecture.drawio`. **`README.md:28` and `docs/README-diagram.md:43` and `:50` were pinned by
+nothing** — and the README is where a reviewer reads it. It164's decisive pair:
 
 ```
-functions  0 missing
-tools      1 flagged  ->  stale_as_of
-paths      2 flagged  ->  group-beat-prices.test.ts · supervisor-archive.test.ts
+README.md says "24 tools", judged by the new guard    1 failed
+the same drift, judged by diagram-guide alone        24 passed   <- the coverage I relied on
 ```
 
-**All three are my instrument, not the documents.** `stale_as_of` is in a **FUTURE** diagram node describing a
-cache that does not exist yet. Both test files **do** exist — I checked whether the name appeared *inside some
-file's contents* rather than whether **a file with that name exists**, and a test file almost never contains its
-own filename.
+A re-provision would have turned the diagram red and left the README quietly wrong. **I read that a guard
+existed and concluded the property held everywhere.** Corrected in place at T49, and I re-measured all three
+sources myself: **export tools 25 · `MAP_TABS` 7 · generated inquiries 10**, six statements across five
+documents, all correct.
 
-> **Fourth instrument error of the night in the same family** — `audit_log.target`, `select=id` on tables keyed
-> `guest_id`, `proposals.proposal_id`, now this. **Ask the system what it has before asking whether it has what
-> I think.** Here that was one `find`, and it turned two defects into two false positives.
+### Then my instrument was wrong again, which is the real subject
 
-**Corrected result: zero phantom identifiers across the twelve deliverables.**
+Counting `MAP_TABS` I matched `{`, assuming object literals. It is
+`export const MAP_TABS: MapTab[] = [overview, guest, voice, agent, data, delivery, deploy]` — seven
+identifiers. **Fifth time tonight, and all five are one mistake:**
 
-### The false positive handed me something I did not know existed
+```
+audit_log.target · select=id · proposals.proposal_id · basename-in-contents · { inside MAP_TABS
+```
 
-`group-beat-prices.test.ts` is real and **pins the three prices I verified by arithmetic at iteration 228** —
-*"keeps the spread that is the whole point of the beat"*, *"orders them the way discounts actually work"*. 5
-tests, green.
+**Every one a matcher written for a shape I had not looked at.** Not a reasoning error — a shape error, made
+before the reasoning starts.
 
-> At 228 I wrote *"they are verified again now."* **They were also guarded the whole time and I did not know.**
-> A hand check and a guard are not redundant — the guard holds them tomorrow — but my verification was the
-> second line of defence, not the first.
+### And the repository has been making it too
 
-### Worth recording from It163
+```
+It156  handlerOf() looked for new Map(Object.entries({...}))   the registry has no such expression
+It160  readIgnore treated ".scratch-*/" as a literal name      git treats it as a glob
+It157  admin-prose read label= / hint= attributes              the prose is not in attributes
+It164  a digits-only parser would find four of six claims      two of them say "seven"
+```
 
-It163 *"nearly filed the A5 row as a defect before reading sixteen lines up"*: the phantom `availability_service`
-survives in eight tracked files and **every one is right** — correction blocks quoting it to correct it, the rows
-they supersede, archived plans, the logs of its removal. **That is my iteration-226 near-miss exactly**, in
-another agent, two hours later. *Not a personal failing — it is what a repository full of dated corrections does
-to anyone grepping it.*
+**Four of theirs, five of mine, one shape.** It164 wrote the cure as a case rather than a rule: its first
+assertion is `toNumber('seven') === 7`.
+
+> **For my remaining iterations: before a matcher decides anything, print what it matched on one known input.**
+> Five times I skipped that; four cost a false conclusion, and the fifth cost only a paragraph because the
+> answer came back `0` and zero is obviously wrong.
 
 ### Open
 
@@ -63,7 +64,7 @@ to anyone grepping it.*
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
 
-Nothing for an agent, nothing waiting on the Tester (silent since 20:26, **12h17m**). Suite green at **944 / 66
+Nothing for an agent, nothing waiting on the Tester (silent since 20:26, **12h25m**). Suite green at **944 / 66
 files**. Inbox and In progress empty. No lock held; I took none. Plan guards re-run: **104 green**.
 
 ### The single most important remaining item

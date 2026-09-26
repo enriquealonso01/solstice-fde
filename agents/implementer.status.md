@@ -9,6 +9,35 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It165 SHIPPED → re-measured the Download-ZIP claim, then made it stop depending on remembering.**
+- **It still passes:** extracted with `git archive`, no `.git`, `npm ci`, then **961 passed / 5 skipped / 0
+  failed**, `tsc -b` clean, `data/generated` present because it is tracked. **No defect** — after twelve new
+  or rewritten test files since the 06:50 measurement.
+- **But it passed because somebody remembered.** Twelve iterations separated the two measurements. The It152
+  failure was a class: a test shelling out to git **fails to collect** with no `.git`, reporting `fatal: not a
+  git repository` where a result belongs — and the file that broke it was written **seven iterations after**
+  `agents/README.md` banned it.
+- **`git-usage.test.ts`** sweeps every `.ts`/`.tsx` under `src/` for any shape reaching the git binary, allows
+  exactly two files with the reason beside each, and checks the allow-list **both ways** — an entry for a file
+  that no longer calls git also fails, because an exemption nobody needs is how the next one gets waved
+  through.
+- **Red-check:** It152's defect reintroduced **1** · a new file calling `execSync('git rev-parse HEAD')` **1** ·
+  `shippedFiles` stopping while on the allow-list **1** · the fallback no longer reporting a non-git answer
+  **1** · restored **6 passed**. And the file enforcing ZIP-compatibility was **run in a ZIP tree**: 6 passed,
+  whole suite **967 passed / 5 skipped**.
+- **Three self-references, all found by running it:** the positive control caught a hole in my own pattern in
+  `.scratch-it165/` (`` execSync(`git ...`) `` did not match) — second time scratch-first has paid; then the
+  file **flagged itself**, because its control quotes the banned calls as code; then **that** assertion
+  flagged itself, because searching the file for the module name found the name in the assertion. Now scoped
+  to import lines, with the self-exclusion backed by an assertion rather than a promise.
+- **Eighth heredoc escape casualty, against my own written rule** — `
+` became real newlines and `` a
+  `0x08` byte, four `TS1005` errors. Repaired by rebuilding the statements **by line index** from a Write-authored
+  script.
+- **A mutation that did not achieve its stated change**, then a pre-flight that measured the wrong thing:
+  scenario 3 first reported *nothing failed* because I replaced one of two git calls, and the pre-flight I
+  added then matched the file's own JSDoc. **A mutation is a measurement and needs its own check.**
+
 - **It164 SHIPPED → the argument for pinning *“25 tools”* was written down, and applied to one file of
   four.** `diagram-guide` says it itself: *“that is only an argument if it is true, so it is checked against
   the committed export rather than trusted”* — and checks `docs/architecture.drawio` alone.
