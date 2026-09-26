@@ -892,3 +892,32 @@ $3.52.
 saying a policy varies by property *unless a tool said so* — and the correct parking answer does say it
 varies by hotel, because Policy 12 genuinely has no chain-wide rate and `get_property_info` ran. It
 held. That was the case worth testing before shipping, not after.
+
+## `demo:tidy` now has a `--minutes` flag, and the number has moved again (2026-09-26, iteration 110)
+
+**Not a decision — an update and a better tool.** An entry above says the tile read **85 active** and
+that tidying was urgent. Measured this morning:
+
+```
+251 sessions   228 active   23 ended   2 taken_over
+of the 228 active, 179 are older than 30 minutes
+```
+
+**So the default tidy would have left 49 conversations on screen**, and the supervisor tile is the first
+number a panel sees when beat 3 opens. That is the 30-minute floor, not the agent loop — it bites even
+after the loop is stopped, which the runbook's warning did not cover.
+
+`scripts/cleanup-phantom-sessions.mjs` now takes `--minutes N`:
+
+```bash
+npm run demo:tidy                    # unchanged: closes anything idle over 30 minutes
+npm run demo:tidy -- --minutes 2     # once the loop is stopped, closes the rest
+```
+
+At two minutes the same measurement went from **49 left** to **0**. The default is untouched at 30,
+because thirty minutes is the honest answer to *"is this conversation over"* for a guest who closed a
+tab; two minutes is an operator asserting there are no real guests, which is true in a rehearsal and
+nowhere else. It refuses anything under 1, and `--minutes` with no value.
+
+**Your sequence is unchanged and now finishes the job:** stop the loop, `npm run demo:tidy -- --minutes 2`,
+then warm the functions. Both forms are in `docs/demo-runbook.md` and `SUBMISSION.md`'s checklist.

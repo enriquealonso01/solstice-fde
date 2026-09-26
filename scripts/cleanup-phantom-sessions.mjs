@@ -32,6 +32,30 @@ const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'content-type': 'applic
 
 const execute = process.argv.includes('--delete')
 
+/**
+ * How many minutes of silence mean a session is over. 30 by default, overridable with
+ * `--minutes N`, because the default is wrong for the one moment this script exists for.
+ *
+ * Measured on 2026-09-26, hours before the demo: 251 sessions, 228 of them still `active`. A
+ * 30-minute sweep closes 179 and LEAVES 49 on screen -- and that tile is the first number a panel
+ * sees when beat 3 opens. docs/demo-runbook.md already warns that a tidy at 10:55 is undone by
+ * agent traffic at 10:56; the floor is the other half of the same problem, and it bites even when
+ * the loop has been stopped.
+ *
+ * The default stays 30 because that is the honest answer to "is this conversation over" for a real
+ * guest who closed a tab. A lower value is an operator asserting "there are no real guests right
+ * now", which is true in a rehearsal and nowhere else, so it has to be typed on purpose.
+ */
+function staleMinutes() {
+  const i = process.argv.indexOf('--minutes')
+  if (i === -1) return 30
+  const raw = Number(process.argv[i + 1])
+  if (!Number.isFinite(raw) || raw < 1) {
+    throw new Error(`--minutes needs a number of minutes, 1 or more. Got: ${process.argv[i + 1]}`)
+  }
+  return raw
+}
+
 /** Last four digits of our own number: a session attributed to it was never a guest. */
 const OWN_TAIL = (env.TELNYX_PHONE_NUMBER ?? '').slice(-4)
 if (!OWN_TAIL) throw new Error('TELNYX_PHONE_NUMBER must be set so we know which number is ours')
@@ -80,8 +104,9 @@ console.log(`\nDeleted ${removed} of ${doomed.length}.`)
 // A chat session is opened on the first message and nothing ever closes it: there is no hangup
 // event on the web the way there is on a phone call. Left alone, the supervisor dashboard fills
 // with conversations that ended hours ago but still read as live, which is both wrong and, on a
-// demo screen, embarrassing. Anything with no activity for 30 minutes is over.
-const STALE_MINUTES = 30
+// demo screen, embarrassing. Anything silent for STALE_MINUTES is over -- 30 by default, or
+// whatever `--minutes` said. staleMinutes() above explains why the default is not lower.
+const STALE_MINUTES = staleMinutes()
 const cutoff = new Date(Date.now() - STALE_MINUTES * 60_000).toISOString()
 
 const stillActive = await get('sessions?status=eq.active&select=id,channel,started_at&limit=500')

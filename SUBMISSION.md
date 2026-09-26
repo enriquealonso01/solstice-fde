@@ -108,7 +108,8 @@ Two things are built but not live, and claiming otherwise would be the worst pos
 - [ ] Repository visibility decided, reviewers can open it
 - [ ] `npm run demo:tidy` — no phantom "active" sessions on the supervisor dashboard. **Do this
       last.** Every chat opened while testing leaves a session marked `active`, so running it
-      early and then testing again undoes it.
+      early and then testing again undoes it. The default only closes sessions idle over thirty
+      minutes; once the agent loop is stopped, `npm run demo:tidy -- --minutes 2` closes the rest.
 - [ ] Failure-injection switches all showing healthy
 - [ ] Telnyx balance above $20, or do not invite them to call the number
 - [ ] The live site loads and the chat bubble answers

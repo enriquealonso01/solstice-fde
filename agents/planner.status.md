@@ -4,47 +4,48 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 147 — 2026-09-25 ~23:54 EST
+## Iteration 149 — 2026-09-26 ~00:04 EST
 
-### The same cheat-sheet row was corrected twice, and the second is the better beat
+### The latency target is now met, and the document shows it being met
 
-**PR #98** said a **$45** minibar charge is inside the $50 front-desk authority so Sol actions it
-without a manager. **The arithmetic was and is right** — $45/$50 → `front_desk`, $55 → `agm`,
-$45+$25 → `agm` with Policy 7 printed.
-
-**PR #140** re-ran the five fixture rows against production: the agent calls
-`check_comp_authority`, then `create_escalation`, and says it **cannot adjust the folio.**
-
-**The agent is right, and the reason is in the supplied data.** Verified against the source CSV:
+#142 re-ran the published figures because three prompt changes add input tokens to **every** turn:
 
 ```
-R55006 internal_notes: "Do not adjust folio directly -- escalate to property AGM for review."
-reservations carrying such a directive: 1   ← the only one
+                  pass 1   pass 2   committed
+first signal p50   905ms   1009ms   ≤ 1500ms    ← was missed by 45ms; now met with room
+first token p50   2589ms   2246ms   ≤ 4000ms
+voice, 60 warm calls  p50 102ms · p95 135ms · max 164ms · nothing over 300ms
 ```
 
-Whoever wrote the fixtures **planted a per-reservation override** and left it to be noticed.
+**The prompt got longer and the latency got better** — input tokens are the cheap, cached part of a
+turn.
 
-### Why the second correction is stronger
+### The document does the harder thing
 
-First version: *the threshold says $45 is fine.* Second: *a human wrote an instruction on this
-reservation and it beats the rule.* **That is what a hotel cares about**, and it is not inferable
-from the policy document — it exists in one row of one CSV.
+The 09-25 section keeps its admission verbatim — *"currently missed, narrowly… **We are not moving
+the target to match the measurement**"* — and the next heading reads *"Re-measured at 2026-09-26 —
+the signal target is now met."*
 
-**Added to `▶ IF THEY ASK` answer 1**, the grounding question: *"how do you know it isn't inventing
-things"* is answered better by **a supplied instruction being obeyed** than by a compile-time proof,
-because the panel wrote the instruction.
+> **A reader going top-down sees the target missed, refused to be moved, and then met.** Deleting
+> the admission would have been accurate and told no story. **The measurement came to the target**,
+> which is the only version of "we set a target and hit it" that means anything.
 
-### The shape of the mistake
+And the bad news went in beside the good: one turn reached **6086ms**, outside the published
+870–5040ms range, **recorded in the same edit as the win**.
 
-#98 was **correct about the general case and wrong about the instance.** **A rule verified against
-the rule engine is not verified against a row that overrides it.**
+### The restraint is the part worth copying
 
-It had also **come back** — the Tester caught this row saying the opposite once before. #140 pinned
-it, and the test **reads the directive from the generated data** so a data change moves the test.
+A first run of 20 voice calls gave **p95 950ms**. They did not publish it: *"one cold instance, and
+at n=20 is the worst of twenty by construction."*
 
-> **A guard that reads the fixture rather than restating it is the only kind that survives the
-> fixture changing** — the same move as `supervisor-archive.test.ts` reproducing the production
-> distribution instead of asserting the constant.
+**They made exactly this mistake at iteration 53** and wrote it up as a rule. **Tonight the rule
+fired before the error did** — the first time in this project a recorded lesson visibly prevented
+its own repeat instead of explaining one afterwards.
+
+### It corroborates the margin warning
+
+*"The prompt grew by about 650 characters that night"* — the same 650 that took the voice margin
+from roughly a thousand to **345**, seen from the latency side.
 
 ### The single most important remaining item
 

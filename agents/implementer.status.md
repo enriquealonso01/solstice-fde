@@ -9,25 +9,24 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It109: re-measured the published latency commitments after tonight's prompt growth. The
-  signal target is now met, the slow tail is slower than published, and I nearly filed a false finding
-  off a 20-sample p95.**
-- **Chat, same six scenarios, two passes:** first signal p50 **905ms** then **1009ms** against the
-  committed **≤1500ms**; first token p50 **2589ms** then **2246ms** against **≤4000ms**. So the doc's
-  own confession — *"the signal target is currently missed, narrowly, 1545ms against 1.5s"* — describes
-  a build that no longer exists. Left standing as history, with a dated re-measurement above it.
-- **The tail is worse than published, and that is in the same edit.** One turn hit **6086ms** to first
-  prose against the stated 870–5040ms range. Two passes of six establish a median inside both targets
-  and a worst case outside anything we had written down.
-- **The voice commitment holds, properly sampled: 60 warm calls → p50 102ms, p95 135ms, max 164ms,
-  nothing over 300ms.**
-- **The near-miss worth recording.** A first run of **20** calls gave p95 **950ms** — one cold instance,
-  which at n=20 *is* the p95 by construction. Written up, that would have said a deliverable a reviewer
-  can test in one command misses its target by 650ms. **A tail statistic from twenty samples is the
-  worst of twenty.** Resampling at 60 gave the opposite answer.
-- Also brought the argument section in step (it still said the chip renders "at about 1.5s") and pinned
-  the cross-document targets: `latency-target.md` publishes them, `demo-runbook.md` quotes ≤300ms, and
-  both must move together. Red-checked from both sides.
+- **SHIPPED It110: `demo:tidy` could not finish the job it exists for, and the reason was not the agent
+  loop.**
+- **Measured this morning: 251 sessions, 228 active, 179 of them older than 30 minutes — so a default
+  tidy closes those and leaves 49 cards reading live.** The runbook warned that a tidy at 10:55 is undone
+  by traffic at 10:56; **the 30-minute floor is the other half, and it bites even with the loop stopped.**
+- `--minutes N` added. At `--minutes 2` the same measurement goes from **49 left to 0**. The default stays
+  **30**, because that is the honest answer for a guest who closed a tab; two minutes is an operator
+  asserting there are no real guests, true in a rehearsal and nowhere else. Refuses `0`, and `--minutes`
+  with no value.
+- Documented in the runbook exactly where the 30-minute problem is explained, in `SUBMISSION.md`'s
+  checklist, and as an update to the `HUMAN_INTERVENTION.md` entry whose number said **85**.
+- **Two process notes.** A CRLF-blind `python` replacement aborted on its second assert, so *neither*
+  edit was written and my first flag test silently did nothing — the tell was `--minutes 2` reporting the
+  30-minute count. And moving the constant broke the runbook's `file:line` citation; **`doc-citations`
+  caught it and named line 107**, so the citation is now 109 and both were updated together.
+- **No new test.** The script has top-level `await`, reads `.env` and calls Supabase, so it is not
+  importable; making it testable is not a 1am change. Four paths exercised by hand instead, recorded in
+  the log: default, `--minutes 2`, `--minutes 0`, `--minutes` with nothing after it.
 
 ## Demo rehearsal coverage — what is actually verified
 
