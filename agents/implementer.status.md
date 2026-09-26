@@ -9,6 +9,25 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It163 SHIPPED → `tool-naming.test.ts` guarded *“the files a reviewer reads”* with six hardcoded paths,
+  and **none of the nine `docs/*.md` files was among them** — including `docs/README-diagram.md`, whose subject
+  is the diagram two entries above it in the same list. All nine are clean today; none was checked.
+- **Checked four plausible gaps first and three were already handled**, which is worth recording rather than
+  inventing work: all three SUBMISSION invitations are covered (the parking refusal **driven against
+  production**, plan line 4286); `sol.md` ↔ export parity is pinned by `voice-prompt-size`;
+  `how-this-was-built.md`'s anecdote by `built-doc-counts`; and the phantom `availability_service` survives in
+  eight tracked files, **every one correctly** — correction blocks that quote it to correct it, the rows they
+  supersede, archived plans, and the logs. **I nearly filed the A5 row as a defect before reading sixteen
+  lines up.**
+- **The fix is not nine more paths** — that is the same list one entry longer and misses the tenth document on
+  the day it is written. `docs/` is **enumerated**, so a new deliverable is covered because it exists.
+  `AGENTS.md` joined the fixed list. **16 surfaces, up from 6.**
+- **Red-check, the decisive pair:** the same phantom sentence planted in `docs/README-diagram.md` →
+  **guard BEFORE: 8 passed, nothing failed** · **guard AFTER: 1 failed**, naming the file. Before, a
+  reader-facing document could advertise a tool that does not exist and the guard called the deliverables
+  clean. Plus `AGENTS.md` planted → 1 · **the enumeration filtered to nothing → 1** (the floor: 14 surfaces,
+  8 documents, so it cannot narrow silently) · restored **19 passed**, three files byte-identical.
+
 - **It162 SHIPPED → the README called a derived HMAC token “random”, in the paragraph that states a
   security limit.** T62's header was two minutes stale (its own section says SHIPPED at It161, Planner
   verified 08:22), so the board was empty.

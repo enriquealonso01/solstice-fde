@@ -31,6 +31,10 @@
 > - **288 sessions read as active at 07:00**, mostly from my own verification. **Stop the loop, then tidy,
 >   then warm up** — `--minutes 0` is refused, `--minutes 2` reaches all of them. *If you mistype it and see a
 >   `libuv` assertion after the error line, the refusal still worked — iteration 224.*
+> - **If a stay reads as “upcoming” and the date was July, that is their export, not a bug.** **19 of 25**
+>   reservations are `Confirmed` with a checkout already past — the data was authored for a July demo.
+>   Answer #10 has the counts. **We did not rewrite it**, for the same reason INQ-2004 still says
+>   *“around 25”*.
 > - **Do not tell the panel `show-verdict` is instant.** 1284 / 1274 / 1245 ms at 07:16; the page now says
 >   *"a second or two."*
 >
@@ -442,6 +446,25 @@ https://…supabase.co/storage/v1/object/public/proposals/PRP-2011/j1FDVk24QVXe-
 
 **It is neither signed nor time-limited.** It is a **capability URL** in a public bucket: the only thing
 protecting it is a 32-character unguessable path segment, and that protection **never expires**.
+
+> **AMENDED at iteration 244, from It162's measurement.** *Unguessable* is accurate and it is not the whole
+> limit. That segment is **derived, not random**: `accessTokenFor` (`store.ts:153`) is
+> `HMAC-SHA256(PROPOSAL_LINK_SECRET, "proposal:" + code)`, base64url, truncated to 32 — same input, same
+> token, every time. **So one leaked secret yields every customer's link, computable offline**, and the codes
+> are sequential (`PRP-2011`, `PRP-2012`). The README called it *“random”* until 08:32, which implied
+> independent entropy per object and understated exactly this. **The design is defensible** — the comment
+> says why: the same value on every function instance without a column to hold it — *but the paragraph that
+> lists no-expiry and no-revocation should list this beside them.*
+>
+> **I reproduced that at 08:38 rather than restating it:** computing the HMAC in Python from
+> `PROPOSAL_LINK_SECRET` and the code alone, the derived token appears in the stored `pdf_path` of **all six
+> live proposals** — PRP-2001, 2001-2, 2002, 2007, 2008, 2011 — deterministic, 32 characters. *No token value
+> is quoted anywhere in this file, which is the same reason the finding matters: the path is the credential.*
+>
+> *And the revocation nuance, which It162 got right in both directions: rotating the secret invalidates the
+> tokens `/api/group/pdf` checks, but does **not** retract a PDF already uploaded to the public bucket — that
+> object stays at the path that was mailed. Claiming a revocation lever would be the same overstatement
+> pointing the other way.*
 
 #### It contradicts the README, which gets it right
 
@@ -1442,6 +1465,30 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > *“Group Sales, on behalf of {general_manager}, General Manager.”* The GM is on the paperwork by name; the
 > **approval** is recorded against whoever clicked it, because `staff_role` has no `gm` seat to prove a tier
 > with. *(That distinction is the one It149 settled across every group verdict.)*
+
+**10. "It says my stay is *upcoming* — that was in July. Is it reading the data?"** — *iteration 243*
+
+> **It is reading the data exactly, and the data disagrees with itself.** In `solstice-guest-profiles.csv` as
+> you sent it, **19 of 25 reservations are `Confirmed` with a checkout date already in the past**:
+>
+> ```
+> R55004  Chen      2026-07-20 -> 2026-07-23   Confirmed    65 days ago
+> R55015  Chen      2026-09-05 -> 2026-09-07   Confirmed    19 days ago
+> R55006  Webb      2026-07-10 -> 2026-07-13   Checked-in   75 days ago
+>
+> statuses across the file: Confirmed 20 - Checked-in 2 - Cancelled 1 - Checked-out 1 - No-show 1
+> ```
+>
+> **So a status field says a stay has not happened while the date says it finished two months ago.** Observed
+> live at 08:31: asked about a noise complaint, Sol answered *"I see two upcoming stays here, but neither shows
+> a checkout last week."* **Both halves are grounded** — *upcoming* from `reservation_status`, *no checkout last
+> week* from the dates — and they are grounded in an export that contradicts itself.
+>
+> **We did not rewrite your data to make the demo tidier.** Correcting nineteen statuses would have made every
+> screen look better and made the package a worse answer to *"is it grounded?"* — the same reason `INQ-2004`
+> still says *"around 25"* rooms instead of 25. **If you want the stays to read as past, that is one seeder
+> change and we will say in the commit that we made it, rather than quietly shipping a version of your export
+> that never existed.**
 ---
 
 # ▶ OPEN WORK — three things for Enrique to DO, three decisions that need no action
@@ -1484,7 +1531,7 @@ edited every time one closes, and six times it was not.**
 > cannot be kept true, remove it rather than promising to maintain it.**
 | # | Enrique's item | Why it is first / what it costs |
 |---|---|---|
-| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr`. **Only you can do this** — it is DDL, PostgREST cannot execute `drop policy`, and the repo has no RPC path; it needs the SQL editor in your browser. | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at **`HUMAN_INTERVENTION.md:817`**, heading ***"The three places that mention it"*** (re-verified 04:26; the SQL to paste is at **609** under ***"### What to run"***, summarised for you at **63**). **Search the quoted headings, not the numbers — they shifted by 13 in the last three hours.**. **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. **Applying it breaks nothing in the repo — I checked all three reasons myself at 05:22, with a different instrument than the agent that wrote them:** the two guards that cover this (`send-gate-bypass.test.ts`, `rls-policies.test.ts`) contain **zero** `fetch(` and zero `createClient` and read the schema from disk, so SQL in the browser cannot turn them red; `schema.sql:183-185` declares only three `for select` policies on `inquiries`/`proposals`/`follow_ups` and **no client write policy**, so the repo is already correct and only the live database disagrees; and a full-tree sweep of **every file, every extension** found the disclosure in exactly the three reader-facing files the list names. |
+| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr`. **Only you can do this** — it is DDL, PostgREST cannot execute `drop policy`, and the repo has no RPC path; it needs the SQL editor in your browser. | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at **`HUMAN_INTERVENTION.md:817`**, heading ***"The three places that mention it"*** (re-verified 04:26; the SQL to paste is at **609** under ***"### What to run"***, summarised for you at **63**). **Search the quoted headings, not the numbers — they shifted by 13 in the last three hours.**. **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. **And it does not touch proposal storage** — the three statements are on `proposals`, `inquiries` and `follow_ups`, which are tables; the PDFs live in a bucket and are unaffected (It162, re-measured 08:32). **Applying it breaks nothing in the repo — I checked all three reasons myself at 05:22, with a different instrument than the agent that wrote them:** the two guards that cover this (`send-gate-bypass.test.ts`, `rls-policies.test.ts`) contain **zero** `fetch(` and zero `createClient` and read the schema from disk, so SQL in the browser cannot turn them red; `schema.sql:183-185` declares only three `for select` policies on `inquiries`/`proposals`/`follow_ups` and **no client write policy**, so the repo is already correct and only the live database disagrees; and a full-tree sweep of **every file, every extension** found the disclosure in exactly the three reader-facing files the list names. |
 | 2 | **Top up Telnyx to at least $20** | **Live from the provider at 06:45: balance $3.01, `credit_limit` 0.00, `available_credit` $3.01.** **There is no credit line — at zero, calls stop dead.** A measured 3-second call cost about **$0.48**, so that is **fewer than six calls** of headroom against the project's own pre-send gate of **$20** (`SUBMISSION.md:119`, `demo-runbook.md:15`). **Correction, iteration 221: this row said the balance was *“flat… it only falls when someone calls.”* Measured, it is not.** It fell **$3.03 → $3.01 between 02:46 and 06:45 with no voice call since 15:29Z yesterday** — that is the number's rental, about half a cent an hour, not a call. **It is irrelevant before 11:00 (another two cents) and the hard stop is still the real risk**, but the figure is a ceiling that drifts down, so read it as *“under $3.01”* rather than as a balance that waits for you. The number itself is **confirmed active** on the account. → portal.telnyx.com, Billing, about $30. |
 | 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. **Verified safe three ways:** two deliverables cite `INQ-2011`/`INQ-2010`, the demo runbook names `INQ-2007`/`2009`/`2011`, and **neither row T21 deletes appears in either**. Both confirmed live: `INQ-2012` Vantage Labs `needs_review`, `INQ-2013` Vantage Labs DELETE-ME `auto_approvable`. Exact SQL in `HUMAN_INTERVENTION.md`. **An agent *could* do this — the service-role key deletes rows over PostgREST — and chose not to.** `HUMAN_INTERVENTION.md:27` says *"Neither the Tester nor I **will** delete production rows the night before"*: **will**, not **can**. So unlike item 1, **this one is delegable** if you are short of time at 10:00. |
 | 6 | **Your own email address is in this file, and it is the only real address left in the repo.** | The Implementer removed the hiring contact's work address from four tracked files at It124 — right call, and I have no objection. **`enrique@provensolved.com` is still here**, in the email-delivery check, and they left it because it is yours. The guard allowlists that domain with a comment saying it is deliberate, **so removing it breaks nothing**; the same neutral phrasing works. **No recommendation from me — a public repository under your name is a thing you may want your address on.** |
@@ -2688,6 +2735,136 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 244, 08:39 EST — reproduced the attack the README had been understating
+
+**Nothing is open for an agent. No new tasks.** It162 found that `README.md` called the proposal link's path
+segment *"32-character **random**"* when it is `HMAC-SHA256(PROPOSAL_LINK_SECRET, "proposal:" + code)`,
+base64url, truncated to 32 — and corrected it. **I checked whether my own file repeats the error, and then
+whether the consequence is real.**
+
+#### My file says *unguessable*, which is accurate and partial
+
+The diagram and my plan both say *"32-character unguessable path"* — not *random*. **Unguessable** is a claim
+about an attacker without the secret and it survives; **random** implies independent entropy per object, which
+is what It162 correctly struck.
+
+**But accurate-and-partial is how the README's version started.** The paragraph exists to list the limits — no
+expiry, no revocation — and the derivation belongs beside them. **Amended in my own file** rather than left to
+the README alone.
+
+#### Then I reproduced it, because a security claim deserves more than a citation
+
+Computing the HMAC in Python from `PROPOSAL_LINK_SECRET` and the proposal code alone — no repository code
+involved:
+
+```
+derived token appears in the stored pdf_path:  6 of 6 live proposals
+  PRP-2001 · PRP-2001-2 · PRP-2002 · PRP-2007 · PRP-2008 · PRP-2011
+deterministic across recomputation: yes        token length: 32
+```
+
+**That is the whole attack, executed.** Secret plus a sequential code yields every customer's link offline, and
+the codes go `PRP-2011`, `PRP-2012`. Not inferred from reading `store.ts:153` — **derived from outside it and
+matched against what production stores.**
+
+> **No token value appears anywhere in this file**, which is the same reason the finding matters: the path *is*
+> the credential, so quoting one to prove the point would have been the leak I was describing. **The boolean is
+> the evidence; the value is the vulnerability.**
+
+#### The design is still defensible, and the nuance runs both ways
+
+The comment at `store.ts:150` says why: *"the same on every function instance without a column to hold it, and
+so that reading the `proposals` table does not hand somebody every customer's link."* **That second clause is a
+real property** — the table holds the path, so a table leak is already a link leak, and the derivation is what
+keeps the *token* out of a column.
+
+And It162 got the revocation nuance right in both directions: rotating the secret invalidates what
+`/api/group/pdf` checks but **does not retract a PDF already in the public bucket**. *Claiming a revocation
+lever would be the same overstatement pointing the other way.*
+
+#### One thing for Enrique's list
+
+It162 also measured that **the pending `drop policy` SQL does not touch any of this**: the three statements are
+on `proposals`, `inquiries` and `follow_ups` — tables, not the storage bucket. **Added to row 1**, because it
+removes a worry rather than adding one, and row 1 is the thing he acts on at 10:55.
+
+#### Two process faults of my own, in one iteration
+
+**The first python edit failed its assertion and the second did not**, so for about a minute this log entry
+described two amendments that were not in the file — *"amended in my own file"* and *"added to row 1"*, both
+written before either landed. **A log entry is not a plan; writing it before the edit makes it a forecast.**
+Both are applied now and I read them back.
+
+**And I spliced into a wrapped sentence again**, splitting *"which implied / independent entropy"* — the same
+fault as iteration 242, two iterations later. **The mechanical form: insert after a line that ends a
+sentence, not after the line that happens to contain the anchor.**
+
+#### State
+
+Suite green at **944 / 66 files** as of 08:21. Enrique's six unchanged. Inbox and In progress empty. Tester
+silent since 20:26 (**12h13m**). No lock held; I took none.
+
+
+### Iteration 243, 08:33 EST — drove the last guardrail beat and found that their export disagrees with itself
+
+**Nothing is open for an agent. No new tasks.** The cheat sheet's fourth guardrail bullet was the only one I had
+never driven. Driving it produced a better finding than the beat.
+
+#### The beat, asked exactly as the card words it
+
+> *"My room was noisy, I checked out last week, I want a refund."*
+> **Sol:** *"I'm sorry the noise disrupted your stay. Can you give me your confirmation number, or the
+> phone/email on the booking, so I can pull it up?"*
+
+**Correct and unavoidable** — the recovery window is measured from a checkout date, so it has to identify first.
+But the card lists it beside the parking and service-animal questions, **both of which answer cold**, and says
+nothing about identifying. *The runbook does not cover this beat at all* — no mention of "noisy", "Policy 5" or
+"recovery window" — **so the card is its only description.**
+
+#### Then turn two, and the thing worth the iteration
+
+Supplied **R55004, Chen**, who checked out 2026-07-23:
+
+> **Sol:** *"I see **two upcoming stays** here, but neither shows a checkout last week — can you confirm which
+> reservation this noise issue relates to?"*
+
+*Upcoming.* For stays that ended **65 and 19 days ago**. I went to the data before calling it a defect:
+
+```
+solstice-guest-profiles.csv, as they sent it
+  R55004  Chen   2026-07-20 -> 2026-07-23   Confirmed    65 days ago
+  R55015  Chen   2026-09-05 -> 2026-09-07   Confirmed    19 days ago
+  R55006  Webb   2026-07-10 -> 2026-07-13   Checked-in   75 days ago
+
+19 of 25 reservations are Confirmed with a checkout date already in the past
+statuses: Confirmed 20 · Checked-in 2 · Cancelled 1 · Checked-out 1 · No-show 1
+```
+
+**Sol is not wrong. The export is inconsistent with itself** — a status that says the stay has not happened, a
+date that says it finished two months ago. The reply is grounded twice over and in two directions: *upcoming*
+from `reservation_status`, *no checkout last week* from the dates.
+
+> **The sample data was authored for a demo in July and it is now late September.** Nobody has touched it since,
+> which is exactly right and exactly why it drifted. **This is the strongest possible form of "we did not
+> rewrite your data"** — nineteen statuses would have made every screen tidier and made the package a worse
+> answer to *"is it grounded?"*, the same reason `INQ-2004` still says *"around 25"*.
+
+**Filed as `▶ IF THEY ASK` #10**, with the counts, one observed sentence, and the offer: *one seeder change,
+said out loud in the commit, rather than quietly shipping a version of their export that never existed.*
+
+#### What I deliberately did not do
+
+**No task.** Editing the interviewers' data to make a demo read better is the one thing this package has refused
+all night. And **no task for the card's missing identification step either** — it is one clause, the beat still
+works once a number is given, and *with 2h27m left I am not editing the document he reads on stage for a
+ten-second detour.* **Recorded here so the decision is visible rather than absent.**
+
+#### State
+
+Suite green at **944 / 66 files** as of 08:21. Enrique's six unchanged, `drop policy` first. Inbox and In
+progress empty. Tester silent since 20:26 (**12h07m**). No lock held; I took none.
+
 
 ### Iteration 242, 08:27 EST — drove the guardrail beat I had cited all night and never run
 
