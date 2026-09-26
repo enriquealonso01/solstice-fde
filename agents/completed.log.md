@@ -5104,3 +5104,80 @@ re-provision: compile === live === export still 29,411, margin 589.
 
 **Still open and not mine:** the Telnyx balance is the only checklist item that fails, and it is the
 same item that blocks beat 3 and G16 on voice.
+
+## It96 — the voice prompt compiled differently on every machine, and every margin figure was wrong
+
+No agent task was open — the Planner's banner now says all agent work is closed and four items are
+Enrique's. So I went looking, starting from the fetch-window class of defect I fixed last iteration.
+
+**First, the negative result, which is worth recording.** Every limited admin query, against real row
+counts: `inquiries` 13 of a 200 window, `proposals` 10 of 200, `audit_log` 265 against a window of 25
+— but that panel is titled **"Recent decisions"**, so 25 is what it says it is. Only `sessions` was
+lying, and that was It95. No other window is a defect.
+
+**Then the real find, which started as a one-line wording fix.** `agent/sol.md` told a reader the
+voice compile *"is 1.4KB from a hard 30,000-char cap"*. Measured: margin 589, about 0.6KB. Stale by
+more than double, in the sentence that tells anyone editing the file whether an addition needs
+wrapping.
+
+I fixed the sentence, then re-measured to confirm the compile had not moved — and it had, by **405
+characters**, with no content change. That is the fifth time this session an unexplained number was
+the only signal something was wrong.
+
+**The cause.** `*.md` is not pinned in `.gitattributes`, so `agent/sol.md` is checked out **CRLF** on
+Windows and **LF** everywhere else. `compileInstructions` collapsed blank-line runs with a bare
+newline pattern, which matches nothing in CRLF text, and then measured the result against
+`MAX_INSTRUCTION_CHARS`. My Python edit had rewritten the working file to LF, so the collapse
+suddenly worked.
+
+```
+same commit, CRLF checkout : 29,411 chars   margin 589
+same commit, LF   checkout : 29,006 chars   margin 994
+difference                 : 400 carriage returns + 5 blank-line runs, no content
+```
+
+**Two consequences, and the second is the one that matters to a reviewer.**
+
+1. Every margin figure this project has recorded was phantom. My status file said **589**; the plan's
+   banner says **681**. The real head-room is **994**. Anyone wrapping an addition in `voice:exclude`
+   to save characters was working from a number 405 too small.
+2. `exports/telnyx-assistant.json` is what the **live assistant returned** — that is the right design,
+   it is evidence rather than a copy. But the live assistant had been provisioned from a CRLF
+   checkout, so a reviewer compiling the source on their own machine would get 29,006 and not
+   reproduce the 29,411 in the export. The one artifact whose whole purpose is to show that the
+   deliverable and the running system agree could not be reproduced from the deliverable.
+
+**The fix** is one line in `compileInstructions`, placed before anything collapses or measures:
+normalise line endings first. Then `--refresh` re-provisioned the live assistant and
+`export-assistant.mjs` re-pulled from it:
+
+```
+compile : 29006
+export  : 29006   (0 carriage returns)
+IDENTICAL compile === export === live : true
+margin  : 994
+```
+
+I checked the content before touching the live assistant rather than trusting the character count:
+the only difference between the old live prompt and the new compile was **five blank lines**. No
+wording, no guardrail, no tool changed — 25 tools refreshed and reused, assistant id unchanged. The
+refresh cost 11 Telnyx API calls and no telephony spend; balance still $3.03.
+
+**Guarded, in `voice-prompt-size.test.ts`:**
+
+1. A CRLF and an LF copy of the same markdown must compile to **identical bytes** — the property the
+   export's reproducibility rests on.
+2. The compiled output must contain no carriage return.
+3. Blank-line runs must actually collapse, from either input.
+4. The head-room claim in `sol.md` is now a **bucket** — *"under a thousand characters of
+   head-room"* — pinned to the measured margin, and the `N KB from a hard ...` form is banned by
+   name, because that is the form that went stale. An exact count in a file edited every iteration is
+   guaranteed to rot; a claim nobody can check is how the last one survived being wrong.
+
+Red-checked twice: remove the normalisation and cases 1–3 fail with *"The same commit compiles
+differently depending on the checkout"*; put *"1.4KB"* back and case 4 fails.
+
+`npx tsc -b` clean. `npx vitest run` **546 tests / 46 files** green (up 6).
+
+**Flagged, not edited:** the plan's banner still says the margin is 681 (29,319 of 30,000). Both
+numbers are the CRLF artifact. That file is the Planner's.

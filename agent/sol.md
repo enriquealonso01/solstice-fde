@@ -94,8 +94,8 @@ inquiry lands on the group sales board. A human reads the escalation and routes 
 <!-- voice:exclude -->
 <!--
   Chat-only clarification, and excluded from the voice compile for two reasons. A guest on a call
-  has no use for it, and the compile sits a few hundred characters under a hard 30,000 cap — an unwrapped
-  addition spends margin that PR #67 already had to correct once. Wrapped, the compile moves by a
+  has no use for it, and the compile has under a thousand characters of head-room against a hard
+  30,000 cap — an unwrapped addition spends margin that PR #67 already had to correct once. Wrapped, the compile moves by a
   single whitespace character rather than by the length of the text.
 -->
 **Where that queue is today.** No screen lists escalations. The row is durable and RLS-scoped to
@@ -395,8 +395,11 @@ deliberate, defensible choice, and each is visible in the code rather than burie
 <!-- voice:exclude -->
 <!--
   Assumption 16 is entirely about the CHAT runtime's prompt. It has no bearing on a phone call, and
-  the voice compile is 1.4KB from a hard 30,000-char cap, so it is chat-only by exclusion rather
-  than by omission: a reader of this file still sees it, the phone agent is not asked to carry it.
+  the voice compile has under a thousand characters of head-room against a hard 30,000-char cap, so
+  it is chat-only by exclusion rather than by omission: a reader of this file still sees it, the phone
+  agent is not asked to carry it. (This said "1.4KB" until iteration 96 -- true when written, wrong by
+  more than double by then. An exact figure in a file edited every iteration rots, so the wording is
+  bucketed and voice-prompt-size.test.ts pins the bucket to the measured margin.)
 -->
 16. **RESOLVED. The live chat prompt used to tell guests "Sales will follow up"; it no longer does.**
     PR #28 shipped the wording *"call `create_escalation` so it reaches Sales with the details, and

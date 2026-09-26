@@ -9,26 +9,30 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It95: no agent task was open, so I ran `SUBMISSION.md`'s pre-send gate — and it found a
-  live defect on a demo screen.**
-- **T32 needs no work.** PR #79 already added the *"Where that queue is today"* paragraph to
-  `agent/sol.md`, wrapped in `voice:exclude` — exactly what T32 asks for. The plan never marked it.
-  Flagged for the Planner rather than edited into their file.
-- **The gate, item by item:** repo **PUBLIC** · failure injection **all three healthy**
-  (`demo_flags` read directly) · production **serving the latest commit** (last ready deploy
-  02:23:05Z, last commit 02:22:44Z) · `npx vitest run` **green** · site and `/api/chat` **200** ·
-  Telnyx **$3.03**, which **fails** its own ">= $20" item and is already Enrique's · `demo:tidy`
-  not run, correctly — it is the last step and the loop is still running.
-- **The defect: the supervisor Archive was rendering "No ended sessions yet" with 23 ended
-  conversations in the database.** `sessions` held **180** rows — 155 active, 23 ended, 2 taken
-  over — and `useSessions` fetched the **100 newest** by `started_at`. Nothing closes a chat session
-  on the web, so active rows pile up and the ended ones age out of the window: all 100 were active,
-  so "Archived" read **0**. The runbook narrates that panel and says *"it will not be empty"*.
-- **Fixed the window, not just the symptom.** `SESSION_FETCH_LIMIT = 500`, named and reasoned; the
-  grid now says *"newest 500 only"* when it really is a window, and the empty state distinguishes
-  *nothing has ended* from *nothing ended is in view*. `demo:tidy` is still the cure for a crowded
-  live tile — the Archive just no longer depends on it. Red-checked by putting 100 back: the test
-  fails with the screen that was live.
+- **SHIPPED It96: the compiled voice prompt depended on whose machine compiled it — and every margin
+  figure this project has recorded was wrong because of it.**
+- Started from a stale sentence: `agent/sol.md` said the compile *"is 1.4KB from a hard 30,000-char
+  cap"*. Chasing the real number found the cause. `*.md` is not pinned in `.gitattributes`, so
+  `sol.md` is CRLF here and LF on a reviewer's machine, and `compileInstructions` collapsed blank
+  lines with a bare-newline pattern that **matches nothing in CRLF text** — then measured the result
+  against the cap.
+- **Same commit, two artifacts:** 29,411 characters here, **29,006** on an LF checkout — 400 carriage
+  returns plus 5 blank-line runs that should have collapsed. So the **589** margin in this file and
+  the **681** in the plan's banner were both phantom. The real head-room is **994**.
+- **And the export could not have been reproduced by a reviewer.**
+  `exports/telnyx-assistant.json` is what the live assistant returned, so compiling the source on
+  their machine gave a different artifact than the export it is supposed to demonstrate.
+- **Fixed in `compileInstructions`** — normalise line endings before anything collapses or measures
+  them. `--refresh` then re-provisioned and `export-assistant.mjs` re-pulled from live:
+  **compile === export === live at 29,006, margin 994, zero carriage returns**, and now identical on
+  any platform. The prompt *content* never changed: the pre-fix diff was five blank lines.
+- **Guarded**: CRLF and LF inputs must compile to identical bytes, no `
+` in the output, blank-line
+  runs must actually collapse; and the head-room claim in `sol.md` is now a **bucket** pinned to the
+  measured margin, with the KB form banned because that is the form that rotted. Red-checked by
+  removing the normalisation and by putting "1.4KB" back.
+- Found by accident — a Python edit rewrote the file to LF and the compile dropped 405 characters with
+  no content change. **Fifth time this session an unexplained number was the only signal.**
 
 ## Demo rehearsal coverage — what is actually verified
 
@@ -58,7 +62,8 @@ in `agents/completed.log.md`, not here.
 
 ## Standing state
 
-- `compile === live === export`, **29,411**, margin **589**. Re-checked whenever `agent/sol.md` moves.
+- `compile === live === export`, **29,006**, margin **994**, and now **platform-independent** — the
+  old 29,411/589 was a CRLF artifact (It96). Re-checked whenever `agent/sol.md` moves.
 - Guards I own, each red-checked by reintroducing the defect it catches: `admin-prose`,
   `voice-prompt-size`, `doc-citations` (counts, links), `list-counts`, `export-redaction`,
   `escalation-dedupe`, `walkthrough-quotes`, `data-seam`, `browser-env`, `doc-paths`,
