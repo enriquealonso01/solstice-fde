@@ -132,7 +132,7 @@ projection advice is unchanged; the split still supports the claim that our own 
 all chat.
 
 
-# ▶ IF THEY ASK — six answers to questions the package invites
+# ▶ IF THEY ASK — seven answers to questions the package invites
 
 *Each of these is a place where the system is **correct** and a reviewer will reasonably want to
 know why it looks the way it does. Each was checked in the iteration named. **None is a defect.***
@@ -167,6 +167,21 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > is the heaviest in the package: **three tool calls before the first word**, including the
 > escalation that makes the refusal honest. **We did not exclude it. It is in the transcript we tell
 > you to read first**, beside the sentence where Sol says no.
+
+**7. "I asked it something and it said it didn't know — isn't that the whole point failing?"**
+— *iteration 143*
+
+> Sometimes, and the distinction matters. **The grounding rule is not what fails; the routing is.**
+> Sol is forbidden from answering a policy question from memory, and it obeys — but a question has
+> to be *recognised* as a policy question first, and a guest's own phrasing does not always look
+> like one. Lost and found reached `get_policy` **0 of 4 times** when asked naturally, while the
+> policy-shaped phrasing worked every time. Fixed in PR #137 by naming that confusion in three
+> lines.
+>
+> **The failure is safe by construction**: when routing misses, Sol says it cannot check rather
+> than guessing — which is the behaviour we would choose if we had to pick one. The exception was
+> the bare pet question (PR #120), which asserted *"pet policies vary by hotel"* without a tool
+> call, and that phrasing is now out of the suggested email.
 
 **6. "Your own bill says the model costs more than telephony — so why does telephony matter?"**
 — *iteration 133*
@@ -1479,6 +1494,67 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 143, 23:34 EST — every deliverable path resolves, and the second instance of a real pattern
+
+#### The deliverables map, re-checked end to end
+
+Iteration 116 mapped the brief to files and verifiers. Since then twelve PRs have landed, so I
+re-resolved **every path** the two entry documents point at:
+
+```
+paths checked in README.md and SUBMISSION.md : 33
+actually missing                              : 0
+```
+
+One flagged and it was **my own false positive**: `SUBMISSION.md:40` says *"`transcripts/` — five
+chat, one real phone call. Start with `honest-handoff.md`."* My pattern matched the backticked
+filename as a path; the directory is named in the same cell, and the real markdown link lives in
+`transcripts/README.md`. **Caught before recording it**, which is the third time tonight a pattern
+of mine flagged something correct.
+
+#### PR #137 independently confirms my iteration-118 sweep
+
+> *"The quoted-span sweep and the Policy N references came back clean: **twelve numbers cited, all
+> real**, and last iteration's fabrication was the only invented quotation."*
+
+I checked the same thing from a different angle in iteration 118 — **34 citations across 12 files,
+all in range and on topic.** Two methods, same answer.
+
+#### And it found the second instance of a pattern worth naming
+
+Three policies are never mentioned in the prompt, so they asked all three **as a guest**. Smoking
+and the incidental hold answered correctly with a tool call. **Lost and found reached `get_policy`
+0 of 4 times** — Sol said it had no visibility and pointed at the property, never stating the 90-day
+hold, the donation, shipping on the guest, or the absence of an exception process.
+
+> *"The policy-shaped phrasing worked; the guest's own phrasing did not."*
+
+**The prompt already forbids answering from memory, so the rule was not being ignored — the question
+was not being recognised as one.**
+
+**That is the second time**, after the bare pet question in PR #120. The generalisation is worth
+having: **what fails is routing, not grounding.** And the two differ in an important way —
+
+- **Lost and found failed safely**: *"I cannot check"* rather than a guess.
+- **The pet question did not**: it asserted *"pet policies vary by hotel"* **without a tool call**,
+  which is the one G1 exists to prevent, and that phrasing is now out of the suggested email.
+
+Added to `▶ IF THEY ASK` as the seventh answer, because a panel asking something in their own words
+may well get *"I don't know"* and deserve the real explanation rather than an apology.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — with its safety reason and recovery | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 142, 23:30 EST — re-ran the conclusion my broken method produced. It holds
 

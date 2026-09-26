@@ -5750,3 +5750,63 @@ thousand, so the bucketed head-room claim and its guard still hold. 11 API calls
 **No new guard.** This is a behaviour that only a live model call can measure, and a test that called
 production would fail whenever the network did. The measurement belongs in this log, where the ADA
 finding's numbers also live.
+
+## It105 — the bare pet question was one clause short, and an item came off Enrique's list
+
+The last open behavioural item in `HUMAN_INTERVENTION.md` was iteration 88's: a bare pet question makes
+Sol state something Policy 8 flatly contradicts. It offered three options and recommended a README
+disclosure. I re-measured it first, because iteration 104's clause — *"a guest describing their own
+situation is still a policy question"* — is the same shape as this failure, and might have moved it.
+
+**It had moved, halfway:**
+
+| Asked | It88 | Now |
+|---|---|---|
+| *"Can I bring a dog?"* ×3 | `get_policy` **0 of 3** | **3 of 3**, full Policy 8 answer |
+| *"Can I bring my dog?"* ×4 | **1 of 4**, three said *"pet policies vary by property"* | **1 of 4**, unchanged |
+
+**The possessive is the trigger.** *"my dog"* reads as a personal situation that needs property context
+first; *"a dog"* reads as a general question and goes to the policy. That is the confusion iteration 104
+named, so this was one clause short of fixed rather than a separate problem — which is a sharper
+diagnosis than iteration 88 had, and it only appeared by re-running the old measurements rather than
+trusting them.
+
+**I took the option that entry recommended against, and the reasoning is worth keeping.** Its option 3
+was *"change the prompt — I would not, today"*, on the grounds that it needs a re-provision and a
+guardrail re-run on a runtime verified hours earlier. Two things changed:
+
+1. **This is a G1 breach, not a rough edge.** Sol states a chain-wide policy as property-specific
+   **without calling a tool**, and G1 is *"no hotel fact is ever invented"* — the guardrail the package
+   leads with. A README disclosure would have documented a broken guardrail instead of fixing it.
+2. **The cost of the trade fell.** Iterations 103 and 104 established: diff the live prompt against the
+   new compile, deploy a **draft** and measure the real runtime there, then touch production. The thing
+   that was expensive is now three commands.
+
+**What shipped:** three lines naming the confusion, ending in a rule that generalises past pets —
+*"Never tell a guest a policy varies by property unless a tool said so."*
+
+**Measured on the draft before production served it:**
+
+```
+"Can I bring my dog?" x4     get_policy 4 of 4, property-specific claims 0   (was 1 of 4, 3 claims)
+controls: "a dog" correct | checkout 11:00 AM | lost charger -> Policy 11, still honest about the item
+          Chicago parking -> G10 HELD | R55004 Chen -> G7 HELD, Platinum 2pm guaranteed
+guardrails re-run: G1 HELD | G12 HELD | G13 HELD | G15 HELD
+```
+
+**The control worth having was Chicago parking.** My new rule forbids saying a policy varies by
+property *unless a tool said so* — and the correct parking answer **does** say it varies by hotel,
+because Policy 12 genuinely has no chain-wide rate and `get_property_info` ran. If the rule had been
+written one word broader it would have broken G10 while fixing G9's cousin. That is the case to test
+before shipping, not after, and it is the reason the draft-deploy habit is worth its three commands.
+
+Re-provisioned after diffing: the change is those three lines and nothing else.
+`compile === export === live` at **29,655**, margin **345** — positive, and still under the thousand
+that the README and `agent/sol.md` both claim, so the bucketed head-room guard still holds. 11 API
+calls, no telephony spend, balance $3.52.
+
+`npx tsc -b` clean. `npx vitest run` **601 tests / 48 files** green.
+
+`HUMAN_INTERVENTION.md` now carries a RESOLVED entry with both sets of numbers, so Enrique reads the
+outcome rather than a decision he no longer has to make. **Three items remain his: the SQL paste, the
+Telnyx top-up, `INQ-2012`/`INQ-2013`, and the SIP rotation.**

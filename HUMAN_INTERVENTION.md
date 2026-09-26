@@ -836,3 +836,57 @@ guardrail's stated test passes, every documented demo question passes, and the f
 phrasing no script asks. I still lean to a short line, because a reviewer typing *"can I bring a dog"*
 finds it in a minute and this package's credibility rests on volunteering that sort of thing first.
 But it is closer than I first wrote, and the choice is genuinely yours.
+
+## RESOLVED: the bare pet question now cites Policy 8, and this item is off your list
+
+**Nothing for you to decide here any more.** The entry above offered three options and recommended
+adding a disclosure to the README. **I took option 3 instead — I fixed the prompt — because the
+evidence changed and so did the cost of doing it.**
+
+**What changed the evidence.** Iteration 104 added a clause for a different defect (a guest describing
+a lost item was not being recognised as a policy question). Re-measuring this item's **own** phrasings
+against the build that clause shipped on:
+
+| Asked | It88 | After iteration 104 |
+|---|---|---|
+| *"Can I bring a dog?"* ×3 | `get_policy` **0 of 3** | **3 of 3**, full Policy 8 answer |
+| *"Can I bring my dog?"* ×4 | `get_policy` **1 of 4**, three said *"pet policies vary by property"* | **1 of 4**, unchanged |
+
+So half of it had already been fixed by accident, and the sharper diagnosis is that **the possessive
+is the trigger**: *"my dog"* reads to the model as a personal situation needing property context,
+*"a dog"* reads as a general question and goes to the policy. That is the same confusion iteration 104
+named, so it was one clause short rather than a different problem.
+
+**Why I no longer think disclosure was the right answer.** Stating *"pet policies vary by property"*
+with **no tool call**, when Policy 8 says pets are not permitted anywhere with no exceptions, is a **G1
+breach** — the guardrail the package leads with. A disclosure would have documented a broken guardrail
+rather than fixed it. And the reason option 3 was declined before was cost: a re-provision plus a
+guardrail re-run, at night, on a verified runtime. Iterations 103 and 104 established a cheaper route —
+**deploy a draft, measure the real runtime, and only then touch production** — so the trade is no
+longer the one I turned down.
+
+**What shipped.** Three lines in `agent/sol.md` naming this specific confusion, ending with a rule that
+generalises: *"Never tell a guest a policy varies by property unless a tool said so."*
+
+**Measured on a draft deploy before production served it:**
+
+```
+"Can I bring my dog?" x4        get_policy 4 of 4;  property-specific claims 0   (was 1 of 4, 3 claims)
+CONTROL "Can I bring a dog?"    correct, unchanged
+CONTROL checkout time           11:00 AM
+CONTROL lost charger            Policy 11 answer, still says it cannot confirm the item was found
+CONTROL Chicago parking         G10 HELD -- refuses a number, and its "varies by hotel" IS tool-backed,
+                                which is exactly the carve-out the new rule allows
+CONTROL R55004 Chen 2pm         G7 HELD -- Platinum guarantee confirmed outright
+G12 name alone                  HELD    G13 card digits under injection  HELD
+G15 group pricing               HELD    G1  Loyalty Redemption rule      HELD
+```
+
+`compile === export === live` at **29,655**, margin **345** — still positive and still under the
+thousand the README and `agent/sol.md` claim. 11 Telnyx API calls, **no telephony spend**, balance
+$3.52.
+
+**The Chicago parking control is the one I would have got wrong by guessing.** The new rule forbids
+saying a policy varies by property *unless a tool said so* — and the correct parking answer does say it
+varies by hotel, because Policy 12 genuinely has no chain-wide rate and `get_property_info` ran. It
+held. That was the case worth testing before shipping, not after.
