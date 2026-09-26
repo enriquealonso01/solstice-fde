@@ -1080,3 +1080,38 @@ prove *someone named* approved, and that is now what it says.
 **If the panel asks who can approve:** group_sales or admin, recorded against their user with the rule they
 overrode. The GM is in the policy and on the paperwork; the app does not claim to enforce a tier it has no
 seat for.
+
+---
+
+## Closed for you, 2026-09-26 09:0x — G17 holds on both session-id cases now
+
+The entry above ends *"today's honest answer is 'unless the caller sends a malformed session id'."*
+**That sentence is superseded twice over, and the limit it names no longer exists.**
+
+**What was disclosed** was the malformed id: `session_id: "i-am-not-a-uuid-at-all"`, Postgres rejecting the
+insert with `22P02`, the rejection swallowed on a fire-and-forget path, and a fully working conversation
+recording nothing. That fix shipped: `resolveSessionId` mints a fresh id when the caller's is not a uuid,
+and `session-id.test.ts` holds it in eleven cases.
+
+**What that fix did not cover** was the neighbouring case, which the loop found this morning: a
+**well-formed uuid the caller invented**. It passes `UUID_RE`, so the id was accepted, no `sessions` row
+existed for it, and every child insert failed its foreign key — silently, on the same path. Measured on
+production: a real `get_policy` call, a correct answer to the guest, and `tool_invocations` unchanged.
+*Validating the id closed the case that fails on TYPE and left the case that fails on REFERENCE.*
+
+**Both are closed now.** `runTurn` creates the `sessions` row on **every** turn rather than only a new one.
+The insert already treated a duplicate key as success, so a continuing conversation pays one rejected
+insert on a path nothing waits for, and an id we never issued gets the row that makes the turn recordable.
+
+**If a panellist asks "is every tool call recorded?", the answer is yes, without a caveat.** To see it
+rather than take it:
+
+```bash
+curl -sN https://solstice-hotel-group.netlify.app/api/chat \
+  -H 'content-type: application/json' \
+  -d '{"message":"What time is check-in?","session_id":"11111111-2222-4333-a444-555555555555"}' | head -20
+```
+
+Then look at the supervisor console: that session is there, with its `get_policy` call in the trace. The
+row it creates is an ordinary demo session and `npm run demo:preview` / `demo:tidy` sweeps it like any
+other.

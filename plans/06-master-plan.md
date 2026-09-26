@@ -1,8 +1,13 @@
 # Master plan: the whole picture
 
-> ## 08:23 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> **NOTHING IS OPEN FOR AN AGENT.** T61 and T62 both shipped and I verified each by re-running the
-> measurement that found it, not by reading the diff. **Every numbered task in this file is closed.**
+> ## 09:17 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **ONE AGENT TASK IS OPEN AND IT IS `!!`: T63 — it is now a DEPLOY, not a fix.** `agent/sol.md:326` promises
+> *“Every tool call is recorded, masked.”* A caller who invents a well-formed UUID got a real answer, a real
+> `get_policy` call, and `tool_invocations` 1180 -> 1180. **It166 wrote the one-line fix into the tree at 09:10
+> and the suite is green at 980.** **I re-measured production three times — 09:10, 09:13, 09:15 — still 1180 -> 1180,
+> still no `sessions` row, and `agents/.lock` is free, so nobody is mid-deploy.** The code is right; **the deployed site is not running it yet.**
+> **And `HUMAN_INTERVENTION.md` already tells a panellist to `curl` for the proof** — that `curl` currently
+> disproves it. **Deploy, then re-run the measurement in T63.**
 > **What is left is yours: three things to do, three decisions that need no action.**
 >
 > **Run `npx vitest run` yourself before you package — this line carries neither a count nor a verdict.**
@@ -38,13 +43,22 @@
 > - **Do not tell the panel `show-verdict` is instant.** 1284 / 1274 / 1245 ms at 07:16; the page now says
 >   *"a second or two."*
 >
+> - **The native export is the live assistant, checked against Telnyx at 09:16.** `GET /v2/ai/assistants/…`
+>   returns **25 tools** (23 webhook, `transfer`, `hangup`), model `anthropic/claude-haiku-4-5`, and
+>   **instructions byte-identical to `exports/telnyx-assistant.json` — 29,784 characters, same on both.**
+>   The webhook split in `docs/how-this-was-built.md` checks out exactly too: **11** at `/api/tools/<name>`,
+>   **12** at `/api/group/tool`. No value from `.env` appears anywhere in the file.
+>
 > **Two things you can say to the panel, both checked from outside:**
 >
 > - **The link you hand over is public, current and clean.** `github.com/enriquealonso01/solstice-fde` **200**
 >   anonymously, `README.md` and `SUBMISSION.md` **200**, `DEMO_LOGINS.md` / `.env` / the brief PDF **404**.
 >   **All 272 published files compared by hash at 08:17, not a sample: 267 identical, 0 missing**, and every
->   difference was a file being written at that moment — two of mine, the implementer's status, and T62's
->   edit in flight. What a reviewer downloads is what we tested, from a clone **or a Download ZIP**.
+>   difference was a file being written at that moment. What a reviewer downloads is what we tested — and
+>   **the ZIP path was re-measured at 08:58: `git archive`, no `.git`, `npm ci`, then `961 passed | 5
+>   skipped | 0 failed`.** The five skips are deliberate. It no longer depends on anyone remembering:
+>   `git-usage.test.ts` now fails any new file that shells out to git, with two allowed and a reason
+>   beside each.
 > - **The three commands the README hands them all pass** (`typecheck`, `data:check`, `vitest`), the sending
 >   domain `enriquecodes.com` is **VERIFIED**, and the group beat's three prices are right to the cent:
 >   **$7,994.25 / $7,900.20 / $7,806.15**, closing on a gross of exactly $9,405.00.
@@ -1302,6 +1316,115 @@ true.
 
 **Check when done:** the three names are in `STRIPPED`; `npx vitest run` green; the sentence at `:106` is either
 true as written or replaced with what is.
+
+### T63. `!!` The fix is written and **production does not have it yet** — and a disclosure already says it does
+
+> ### Status at **09:13 EST**, measured on production, not read from the diff
+>
+> **It166 shipped the one-line fix into the tree at 09:10** — `ensureSession` unconditional, 980 tests green.
+> **The deployed site still has the defect.** I ran the measurement twice more, the second time consuming the
+> whole stream so an early close could not be blamed:
+>
+> ```
+> 09:10  invented uuid 77777777-...  tool events streamed  tool_invocations 1180 -> 1180   sessions row []
+> 09:13  the id the disclosure prints  2 tool events        tool_invocations 1180 -> 1180   sessions row []
+> ```
+>
+> **This is a deploy that has not landed, not a fix that failed.** The It166 entry claims a local suite and
+> never claims a deploy, and nothing in this repo pushes on its own. **Whoever holds the lock: deploy, then
+> repeat the two lines above.** T63 closes on a moved count, not on a merged diff.
+>
+> #### The part that is urgent even if the deploy is seconds away
+>
+> `HUMAN_INTERVENTION.md`'s new section **"G17 holds on both session-id cases now"** says **"Both are closed
+> now"**, says **"If a panellist asks 'is every tool call recorded?', the answer is yes, without a caveat"**,
+> and then prints a `curl` against the production URL with the promise *"that session is there, with its
+> `get_policy` call in the trace."*
+>
+> **I ran exactly that `curl` at 09:13. The session is not there.** Until the deploy lands, that section
+> invites a reader to disprove it in one command — which is worse than the defect it describes, because the
+> defect is a gap in an audit trail and this is a document being wrong about the thing it is demonstrating.
+> **Deploying fixes both.** If for any reason the deploy cannot happen, that section has to say *"fixed in the
+> code, shipping with this package"* instead of *"both are closed now"*.
+
+*`agent/sol.md:326` states **"Every tool call is recorded, masked."** Measured at 08:57: a caller who sends a
+well-formed UUID of their own invention gets a working, correct answer, a real tool call, and **zero rows**.
+The package's own caveat describes a case that is now closed while this one is open.*
+
+#### Measured, not inferred
+
+```
+POST /api/chat  {"message":"What time is check-in?","session_id":"11111111-2222-4333-a444-555555555555"}
+
+chat                      HTTP 200
+stream                    get_policy:running | get_policy:done
+reply                     "Standard check-in is 3:00 PM. Early check-in can happen if a room's ready..."
+tool_invocations          1180 -> 1180      <- the call ran and was not recorded
+sessions row for that id  []                <- none
+session_id echoed back    the invented one, so the caller keeps using it
+```
+
+**A real tool ran, the guest got a real answer, and nothing reached the audit trail.**
+
+#### Why the shipped fix does not cover it
+
+`HUMAN_INTERVENTION.md:328` disclosed the original: `session_id: "i-am-not-a-uuid-at-all"` → Postgres rejects the
+insert with `22P02 invalid input syntax for type uuid`, every write on that path is fire-and-forget, the failure
+is swallowed. The recommended fix was *"validate `session_id` against a uuid and mint a fresh one when it does
+not match."*
+
+**That shipped**, and `session-id.test.ts` holds it — 11 cases, including *"never echoes caller-controlled text
+back in the id it returns"*. `resolveSessionId` (`chat.ts:792`) is now:
+
+```ts
+if (raw && UUID_RE.test(raw)) return { sessionId: raw, isNewSession: false }
+return { sessionId: newUuid(), isNewSession: true }
+```
+
+**An invented UUID passes `UUID_RE`.** So `isNewSession` is false, no `sessions` row is created, and every
+child insert fails its foreign key — silently, on the same fire-and-forget path. *The validation closed the
+case that fails on type and left the case that fails on reference.*
+
+#### Two ways to make the package honest again, and they cost very differently
+
+1. **Fix it (preferred if the lock is free and the suite stays green).** When `UUID_RE` matches but no `sessions`
+   row exists, either mint a fresh id or insert the row. **Read `session-id.test.ts` first** — it pins the
+   current contract, and one of its cases is about not echoing caller text, which a change here must keep.
+   *Check: repeat the measurement above and watch `tool_invocations` move.*
+2. **Or widen the sentence, which is free and takes a minute.** `HUMAN_INTERVENTION.md:339` currently says the
+   honest answer is *"unless the caller sends a malformed session id"* That is no longer the limit. The
+   same applies to `docs/how-this-was-built.md:121`, which tells the story in the past tense as something the
+   loop *found*.
+
+> **Do not leave both.** The defect is survivable and disclosed defects are this package's habit; **a
+> disclosure that has drifted narrower than the defect is not.** If there is no time to fix the code, fix the
+> sentence — that is the smaller of the two and it keeps the guarantee honest.
+
+#### Do not let a fix here imply the *other* session_id issue is solved
+
+There are **two** session-id problems and they are not the same one:
+
+- **This one (T63):** an *invented* uuid — no `sessions` row, nothing recorded. **G17.**
+- **The other, already disclosed:** a *real* session id is a **permanent bearer credential**.
+  `chat.ts:257` turns a saved session into a verified identity (`if (!ctx.guest_id && saved?.guest_id)`),
+  with no expiry, so whoever holds an id holds that guest's stay — `get_reservation` runs and
+  `identify_guest` never does. **G12 bypassed, not defeated.** `HUMAN_INTERVENTION.md:341`.
+
+**That second one was decided at iteration 22: *state it, do not fix it*** — the identity path is what the
+whole demo runs on and the night before is the worst time to patch it. Nothing about T63 changes that.
+
+> **So if you rewrite `HUMAN_INTERVENTION.md:339`, rewrite only the sentence about recording.** A caveat that
+> reads *“session ids are handled correctly now”* would close a disclosure that is still true, which is the
+> same drift as T63 itself pointing the other way.
+
+#### Scope, honestly
+
+This needs a caller to invent a UUID; a browser never does. **It is not a data-loss bug and nothing leaks** —
+it is a gap in the audit guarantee the guardrail table asserts without qualification. *It is the same class the
+Tester found at G17 originally, one variant along.*
+
+**Check when done:** either the measurement above records a row, or the two sentences name the real limit;
+`npx vitest run` green either way.
 
 # ▶ IF THEY ASK — prepared answers to questions the package invites
 
@@ -2752,6 +2875,267 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 252, 09:17 EST — T63 still undeployed at 09:15, so I verified the native export against Telnyx
+
+**T63, third measurement: 1180 -> 1180, no `sessions` row, whole stream consumed, 2 tool events.** Nothing in
+the repo has moved since 09:11 and **`agents/.lock` is free** — so this is not a deploy in progress, it is a
+deploy nobody has started. The close condition is unchanged: *a moved count, not a merged diff.*
+
+#### So I checked the one deliverable claim that reaches outside this machine
+
+`README.md` calls `exports/telnyx-assistant.json` **“the live assistant, 25 tools, secret redacted”**, and
+`docs/how-this-was-built.md` invites the reader to **“check rather than take on trust”**. Both were taken on
+trust by me until now. Read-only `GET /v2/ai/assistants/assistant-fee8d29d…`:
+
+```
+live tools     25   (23 webhook, 1 transfer, 1 hangup)   export 25, same breakdown
+tool names     identical sets
+model          anthropic/claude-haiku-4-5                identical
+instructions   29,784 chars on both, byte-identical
+```
+
+And the split the doc names, counted from the file rather than from the sentence:
+
+```
+11  https://solstice-hotel-group.netlify.app/api/tools/<name>
+12  https://solstice-hotel-group.netlify.app/api/group/tool
+ 2  transfer, hangup — no webhook, so they could not have returned a 401
+```
+
+Every number in that paragraph is exact. **No value from `.env` appears anywhere in the export**, checked key
+by key rather than by looking for the word `REDACTED` (there are 24 of those, which proves only that somebody
+typed it).
+
+> **A `GET` is free and a provision is not.** I read the assistant; I did not touch it. The parity claim is
+> now the only three-way one in the package that I have confirmed from outside the repo — and It166's decision
+> not to edit `agent/sol.md` for a citation fix is what kept it true.
+
+#### Not changed
+
+Inbox empty, In progress empty, no tester finding open, no task closable — It166 has no Tester entry yet and
+T63 does not close on one anyway. The plan is otherwise accurate and correctly ordered.
+
+### Iteration 251, 09:13 EST — the fix is in the tree and the deployed site does not have it
+
+**I promised in the last status file to verify T63 by re-running the measurement, “once its log entry says it
+shipped and a deploy has landed, not from the diff.”** It166 landed in `agents/completed.log.md` at 09:11.
+So I re-ran it.
+
+```
+09:10  session_id 77777777-8888-4999-a000-b11111111111   tool_invocations 1180 -> 1180   sessions []
+09:13  session_id 11111111-2222-4333-a444-555555555555   tool_invocations 1180 -> 1180   sessions []
+       (2 tool events, whole stream consumed)
+```
+
+**The second run exists because the first version of it was not evidence.** I piped the stream through
+`head -6`, which closes the connection early — a turn cut off mid-flight would also record nothing, and I
+would have had no way to tell that apart from the defect. I re-ran it reading the whole stream to a file
+and counting the `event: tool` lines. Same numbers, now for a turn that finished.
+
+> **New rule: if you cut a stream short, you measured your own `head`, not the system.**
+
+#### Deploy not landed, not fix failed — and the difference is the whole report
+
+It166's entry describes `npx tsc -b` clean and 980 tests green. **It does not claim a deploy, and no
+sentence in it mentions pushing.** A one-line change to `netlify/functions/chat.ts` cannot reach the
+running site without one. So the honest reading of 1180 -> 1180 is *the site is serving the old bundle*,
+and I say that rather than “the fix does not work” — iteration 230's lesson, in the other direction.
+
+*I tried to confirm it from the Netlify API and the token in `.env` returns `401 Access Denied`. Not chased:
+`SUBMISSION.md`'s last checklist box already asks Enrique to confirm production is serving the latest commit,
+and one expired token in a local env file is not a finding about the package.*
+
+#### The urgent half is a document, not the code
+
+`HUMAN_INTERVENTION.md` grew a section at 09:08 — **“G17 holds on both session-id cases now”** — which says
+**“Both are closed now”** and **“the answer is yes, without a caveat”**, then prints a production `curl` and
+promises *“that session is there, with its `get_policy` call in the trace.”*
+
+**That is the command I ran at 09:13, and the session is not there.**
+
+> Every other disclosure in this package is a defect stated plainly. This is the one paragraph that is
+> *wrong about the thing it is demonstrating* — and it hands the reader the command to find out. **It is
+> true of the tree and false of the URL it prints.** A deploy makes it true; nothing else does, except
+> softening it to “fixed in the code, shipping with this package”.
+
+**T63 therefore stays `!!` and open, with its close condition changed**: not a merged diff, a moved count.
+
+### Iteration 250, 09:07 EST — T63 is being written, so I verified something that is not moving
+
+**T63 is in flight.** `netlify/functions/chat.ts` changed at **09:05**, one minute before I looked. What I can
+see: `resolveSessionId` is **unchanged** — still `if (raw && UUID_RE.test(raw)) return { sessionId: raw,
+isNewSession: false }` — and a long new doc comment sits above it, describing the malformed case and ending
+*"a malformed id is treated exactly as an absent one… it does not get to opt out of being recorded."*
+
+> **I am not diagnosing it.** A file being edited is not evidence about anything, and the last time I read one
+> mid-write I published a wrong cause in the banner (iteration 230). The log entry will say what it did; until
+> then the honest report is **"chat.ts changed at 09:05 and the function I measured has not"** — which is a
+> statement about a file at a moment, not about a fix.
+
+#### So I swept the staff-side deliverable instead
+
+`SUBMISSION.md` says of `docs/role-walkthroughs.md`: *"Start here if you want the staff side without a guided
+demo."* Last touched 20:25, stable, and I had only ever read its boundary-proof section. Its checkable claims
+are two tile tables:
+
+```
+walkthrough                              component                            <Metric> count
+Active now · Human in control ·          SupervisorDashboard.tsx:62,70,71,76        4
+  Archived · Realtime
+Open inquiries · Needs a decision ·      GroupInbox.tsx:91-94                        4
+  Ready to send · Awaiting the guest
+```
+
+**Both exact, label for label, and the hints match too** — *"Supervisor took the call"*, *"Full transcript
+retained"*, *"Rules flagged or failed"*, *"Within every rule"*, *"Clarifying questions out"*. Four `<Metric>`
+in each file, so *four tiles* is a count of the tiles and not of the ones somebody listed.
+
+#### And the instrument nearly undercounted, which is the lesson from last night arriving on time
+
+My first pattern was `<Metric[^>]{0,40}label="..."` and it matched **two of the four** — two of the tags wrap
+across lines. I printed the matches instead of the count, saw two where the file has four, and widened to
+`label="..."`, which returned all four in order.
+
+> **Printing what matched is what caught it**, one iteration after I wrote that rule down. *A count alone
+> would have read as a finding: "the walkthrough says four tiles, the component has two."* That is the shape
+> of every false positive I have filed tonight, and the cure took one extra line of output.
+
+#### State
+
+Plan guards **108 green**. T63 in flight, nothing else open. Enrique's six unchanged, `drop policy` first.
+Inbox and In progress empty. Tester silent since 20:26 (**12h41m**). No lock held; I took none.
+
+
+### Iteration 249, 09:02 EST — separated the two session-id problems before someone fixes one and closes the other's disclosure
+
+**T63 is open and unstarted** — `netlify/functions/chat.ts` is still stamped 02:16. Nothing else is open.
+
+#### The amendment, and why it is worth the lines
+
+T63 says *"when `UUID_RE` matches but no `sessions` row exists, either mint a fresh id or insert the row"*, and
+its second option is *"widen the sentence at `HUMAN_INTERVENTION.md:339`."* **Both invite an edit to a caveat
+that covers two different defects**, and I only wrote about one:
+
+```
+T63 (mine)          an INVENTED uuid    -> no sessions row, nothing recorded       G17
+already disclosed   a REAL session id   -> a permanent bearer credential           G12 bypassed
+                    chat.ts:257 turns a saved session into a verified identity,
+                    no expiry; get_reservation runs, identify_guest never does
+```
+
+**The second was decided at my own iteration 22: *state it, do not fix it*** — the identity path is what the
+demo runs on, and the night before is the worst time to patch it. *Nothing about T63 changes that.*
+
+> **So T63 now says: if you rewrite `:339`, rewrite only the sentence about recording.** A caveat that reads
+> *"session ids are handled correctly now"* would close a disclosure that is still true — **the same drift as
+> T63 itself, pointing the other way.** *A fix and a disclosure can each be correct and still combine into a
+> false impression; that is the failure mode nobody writes a guard for.*
+
+#### Checked and deliberately not added to Enrique's table
+
+The bearer-credential item is a *"Your call"* entry in the file he reads, and it is **not** among my six. I
+went looking before assuming that was an omission: my plan carries it at iteration 22, **CONFIRMED**, with the
+recommendation *"state it, do not fix it"* and the reasoning. **It needs no action and it is stated where he
+will meet it.** Adding a seventh row two hours out would put noise on the screen I spent four iterations
+trimming. *Recorded as a decision rather than left as a silence.*
+
+#### The ZIP claim is now measured twice and guarded once
+
+It165 re-ran it because **twelve test files have been written or rewritten since 06:50**, several reading
+`.env.example`, `docs/`, `exports/`, `node_modules/.bin` and the compiled dataset:
+
+```
+git archive, no .git, npm ci    ->  961 passed | 5 skipped | 0 failed
+```
+
+**And it stopped depending on anyone choosing to look.** `git-usage.test.ts` — **6 cases, green when I ran it
+at 09:01** — sweeps every `.ts`/`.tsx` under `src/` for anything reaching the git binary, allows exactly two
+with a written reason, **and fails an allow-list entry that no longer needs to be there.** That last direction
+is the one worth noticing: *an exemption nobody needs is how the next unguarded call gets waved through.*
+
+*Banner updated: the ZIP line now carries the 08:58 re-measurement and the guard, instead of a single
+timestamp from 06:50.*
+
+#### State
+
+Plan guards **108 green** after my edits. Enrique's six unchanged, `drop policy` first. Inbox and In progress
+empty. Tester silent since 20:26 (**12h36m**). No lock held; I took none.
+
+
+### Iteration 248, 08:58 EST — G17 is still falsifiable, and the disclosure has drifted narrower than the defect
+
+**T63 filed, `!!`.** I went to read `docs/how-this-was-built.md` — Katie's *"build with agents"* ask, and a
+document I had never opened — and one of its own sentences pointed at something still live.
+
+#### The sentence, and what it led to
+
+> *"A malformed `session_id` bought a fully working but completely untraced conversation, which falsified
+> **G17** in `agent/sol.md`'s guardrail table — 'every tool call is recorded, masked'."*
+
+I checked the quote against `agent/sol.md:326`: **exact.** Then I read `resolveSessionId` before testing
+anything, and the fix for the malformed case is there and works — `UUID_RE` now rejects
+`"i-am-not-a-uuid-at-all"` and mints a fresh id, with `session-id.test.ts` holding it in 11 cases.
+
+**But `UUID_RE` passes a UUID the caller invents.** So I measured:
+
+```
+POST /api/chat  session_id: 11111111-2222-4333-a444-555555555555
+  HTTP 200 · stream shows get_policy:running | get_policy:done
+  reply "Standard check-in is 3:00 PM..."
+  tool_invocations  1180 -> 1180        <- the call ran and was not recorded
+  sessions row      []                  <- none
+  the invented id is echoed back, so the caller keeps using it
+```
+
+**A real tool ran, the guest got a correct answer, and nothing reached the audit trail.** The validation closed
+the case that fails on *type* and left the case that fails on *reference* — the foreign key, swallowed on the
+same fire-and-forget path.
+
+> **The defect is survivable; the drift is the problem.** `HUMAN_INTERVENTION.md:339` still says the honest
+> answer to *"is every tool call recorded?"* is *"unless the caller sends a malformed session id"* **That
+> sentence now describes the case we fixed.** Disclosed defects are this package's habit and its strength — a
+> disclosure that has narrowed while the defect has not is the one thing that turns that strength into a
+> liability. **T63 offers both paths and says to take one: fix the code, or widen the sentence.**
+
+#### Checked in the same document and deliberately not filed
+
+- *"in a suite of fifty"* — reads as stale against today's **68 test files**, but the sentence is **past-tense
+  narrative**: the suite had about fifty *when that gap was found*. True then, true now. **Not stale.**
+- *"Five separate guards turned out to be passing while broken"* — the loop has found at least four more since
+  that was written at 02:56 (It157, It160, It163, It164). **But the sentence does not say "only five", and its
+  work is done by the clause after it.** It understates the loop's own case, which is self-harming rather than
+  dishonest. *Not false, so not filed — the test I keep applying is "is the current text wrong?", not "could it
+  be better?"*
+
+#### A silent no-op of my own, six iterations long
+
+The banner's timestamp read **08:23** while I had been reporting 08:46, 08:51, 08:58. At iteration 241 I
+rewrote that block and every `s.replace("> ## 08:46 …")` since has matched **nothing** — and `str.replace`
+returns the string unchanged rather than complaining.
+
+> **I assert on every content edit and I had never asserted on the timestamp one.** That is the cheapest
+> possible version of this segment's lesson: *print what the matcher matched*. Six iterations of a header
+> quietly disagreeing with the entries beneath it, in the file I tell Enrique to read first. **Fixed, and found
+> only because I happened to print the line after editing near it.**
+
+#### And the T55 guard caught me twice inside two minutes
+
+Adding a new pointer to `HUMAN_INTERVENTION.md:339`, I quoted the line **with my own emphasis inside the
+quotation** — `a **malformed** session id` — and the guard went red immediately. Unbolded it, and it went red
+again: the file ends that sentence `session id".` and I had written `session id."`. **One character of
+punctuation order.**
+
+> **Quote the words and stop before the punctuation.** Both failures were mine, both were caught in under a
+> minute by the guard T55 exists to provide, and **the second would have been invisible to a human reading
+> the two lines side by side.** *This is the guard I filed against my own file at 04:26 doing exactly what I
+> built it for, on the day it mattered.*
+
+#### State
+
+Suite green at **944 / 66 files** as of 08:21. Enrique's six unchanged, `drop policy` first. Inbox and In
+progress empty. Tester silent since 20:26 (**12h32m**). No lock held; I took none.
+
 
 ### Iteration 247, 08:50 EST — five of my mistakes tonight are one mistake, and the repository has been making it too
 
