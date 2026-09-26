@@ -7923,3 +7923,109 @@ stated principle outliving its implementation, and the funniest, since the block
 exactly this. Fixed, with the measurement rather than another assertion.
 
 `npx tsc -b` clean. `npx vitest run` **783 tests / 56 files** green (up 7).
+
+---
+
+## It134 — the same defect on the screen the panel actually looks at
+
+Nothing was open. It133 had just found six false status markings on `docs/architecture.drawio`'s Today
+page, and the guide to that file says something that turned the fix into a lead:
+
+> Both are built from the same component model as the in-app Backend page
+> (`src/components/admin/backendMapModel.ts`): the same components, the same real provider names …
+> **The app map is the live, narratable version**; these two files are the submittable one.
+
+If the submittable copy was a day stale on status, the narratable one was the obvious next place. It was
+worse, and it matters more.
+
+### 22 status badges, 2 of them true
+
+`backendMapModel.ts` opens with *"Editing a node here changes what Enrique narrates."* It carried
+**16 `pending` and 6 `blocked`**. `BackendNode.tsx` renders those as pills — amber **pending**, rose
+**blocked** — so this is not a code comment, it is what appears on screen. Beat 7 of the runbook puts
+this page up in front of the technical panel.
+
+```
+blocked   Claude                                    <- the model
+blocked   API key                                   <- the credential
+blocked   Phone number + Call Control                <- the number on the landing page
+blocked   AI Assistant "Sol"                         <- the voice agent
+pending   /api/chat, Chat runtime (Claude), Claude system prompt
+pending   Support phone number, Guest calls the number, Voice runtime
+pending   call.ai_gather.message_history_updated, /api/telnyx/events
+pending   POST /api/voice/supervisor, Supervisor leg, Supervisor joins from the browser, ai_assistant_stop
+pending   Email API, Delivery adapter, Assistant config (JSON), Mission Control
+blocked   SMS (10DLC), 10DLC registration            <- the only two that were right
+```
+
+A panellist reading the badges would have seen a system whose model, credentials, phone number and
+voice agent are all marked broken, while Enrique narrated the opposite over the top of it. The
+contradiction is the damaging part: one of the two is lying and the audience has no way to tell which,
+and the badge is the thing they can read for themselves.
+
+### Evidence per node, not a bulk promotion
+
+It133's live reads were minutes old and still stood — Anthropic answering **200** on `claude-sonnet-5`,
+`+13057866217` **active**, the assistant at **29,784** characters and **25** tools, the sending domain
+`enriquecodes.com` **verified**, six voice sessions in Postgres carrying **3-9 transcript turns** each,
+four proposals **sent** by email. Two nodes needed something It133 had not checked, because they are
+about the browser supervisor path rather than the guest path:
+
+```
+GET /v2/telephony_credentials/<id>   -> solstice-supervisor-webrtc, expired: false
+GET /v2/credential_connections/<id>  -> "Solstice FDE - Supervisor WebRTC", active: true
+```
+
+So: 20 promoted, 2 left blocked. The file is now **65 live / 0 pending / 2 blocked**. The edit was done
+by line number with the node's title asserted above each one before touching it, because a
+search-and-replace on `status: 'pending'` across a 729-line model is how you promote the wrong node and
+never find out.
+
+### The one place I refused to round up
+
+The supervisor ladder is live. A session in Postgres is `taken_over`, which is `ai_assistant_stop`
+having actually run on a real call. But the monitor hears the **guest and not Sol** — an assistant leg
+injects its synthesized audio rather than streaming it — and `README.md` states that limit deliberately,
+under *"Partly working, and stated precisely because it matters."*
+
+There is no `partial` badge; the type is `'live' | 'pending' | 'blocked'`. Adding one at 03:15 before an
+11:00 demo would mean touching the type, the component and the tests for a vocabulary change, which is
+more risk than the problem justifies. Leaving it `pending` would have been false — pending means
+*written and waiting on an account*, and it has run. So it is `live` with the limit in its own detail
+line, where a panellist reading the map sees it at the same moment they see the badge:
+
+> *"… Verified on a live call: the supervisor hears the GUEST, not Sol, because an assistant leg injects
+> its own audio rather than streaming it. The transcript carries both sides regardless."*
+
+That is the same sentence the README carries, in the place the claim is made. A guard asserts it stays
+there, so the node cannot quietly become a bare `live` later.
+
+### The guard pins the invariant, not the audit
+
+`src/lib/rules/__tests__/backend-map-status.test.ts`, 13 cases, importing `MAP_TABS` and walking the
+real model rather than grepping the source.
+
+The load-bearing case is **nothing may be `pending`**, with the reason in the failure message: pending
+means waiting on an account, the account is funded and active, the key answers, the domain is verified
+and the schema is applied — so a pending badge on this page is a claim that the thing being
+demonstrated does not work. `blocked` must be exactly the 10DLC pair. Six named nodes must be live,
+which is the non-vacuity anchor: if `Claude` stops existing under that title the case says so instead of
+passing.
+
+And then the cross-file case, which is the one I most wanted: **the map and the `.drawio` Today page must
+agree** — neither may have anything pending, both may be blocked only on 10DLC. `README-diagram.md`
+claims they share one component model; that claim is exactly what made this bug findable from the other
+file, and it is only worth anything if something checks it. The guide now says so out loud, including
+that the two drifted and that each was findable from the other.
+
+Red-checked four ways, each restored by `git checkout` and re-applying the fix script: `/api/chat` back
+to `pending` fails 3, `Claude` back to `blocked` fails 3, dropping the ladder's limit sentence fails 1,
+and putting a single `PENDING` back on the `.drawio` Today page fails 1.
+
+### Worth noting about the suite
+
+The new file imports the model, which drags `reactflow` into the test graph. First run took **21
+seconds** while vitest pre-bundled it; every run after is normal and the whole suite is **6.3s**. Worth
+recording so the next agent who sees one slow run does not go looking for a hang.
+
+`npx tsc -b` clean. `npx vitest run` **796 tests / 57 files** green (up 13).
