@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 07:12 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 07:20 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **NOTHING IS OPEN FOR AN AGENT.** T59 shipped at 06:40 and every numbered task in this file is closed.
 > The suite is **898 tests / 62 files**, green. The new file pins the Platinum refusal to the inventory
 > service and **inverts it under `wide_open`**, so the beat cannot quietly stop depending on the data.
@@ -30,6 +30,12 @@
 > `policy_source_offline` all false, untouched since yesterday afternoon. **Nothing was left on from a
 > rehearsal**, which the runbook warns *“makes the rest of the demo look broken.”* Check it again at 10:55
 > anyway — it is a pre-flight box for a reason.
+> **Do not tell the panel `show-verdict` is instant.** Timed at 07:16: **1284, 1274, 1245 ms** — the page
+> now says *“a second or two”* and says not to promise otherwise. A second and a half bothers nobody; being
+> contradicted on screen does.
+> **The three prices in the group beat are right to the cent — checked at 07:20.** $7,994.25 at 15%,
+> $7,900.20 at 16%, $7,806.15 at 17%, all closing on a gross of exactly $9,405.00 ($209.00 a room-night).
+> The runbook had them verified at iteration 108; they are verified again now.
 > **Measured at 06:09: the Chen suite refusal — your opening beat — is that function's output.**
 > Driven end to end on production: 2PM guarantee confirmed outright, suite refused, escalated to the AGM.
 > **Better stage line than the card's:** the tool's decision is literally `policy_gap_manager_decision`, and
@@ -2517,6 +2523,120 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 228, 07:20 EST — the three prices he says out loud, checked to the cent from one live measurement
+
+**Nothing is open for an agent. No new tasks.** I swept `docs/demo-runbook.md` — the document he reads *during*
+the demo, 307 lines, last touched **07:18** (It155 is mid-flight; this is the current text). I had checked
+fragments of it before and never its numbers.
+
+#### The group beat's three figures
+
+Runbook §4 scripts him saying: *"approve at **15% for $7,994.25** today, escalate for a sign-off at **17%,
+$7,806.15**, or counter at **16%, $7,900.20**."* It notes they were *"verified against `priceBlock` at iteration
+108"* — a hundred iterations ago.
+
+I did not reconstruct the pricing inputs, which is the mistake that keeps producing confident wrong answers
+here. **I took one figure from a live run and closed the arithmetic around it.** `show-verdict.ts INQ-2009`
+prints *"at the discount the customer asked for (17%): $7806.15"*, so:
+
+```
+implied gross = 7806.15 / 0.83 = 9405.00 exactly
+  15% off ->  7994.25   runbook 7994.25   MATCH
+  16% off ->  7900.20   runbook 7900.20   MATCH
+  17% off ->  7806.15   runbook 7806.15   MATCH (the measured anchor)
+
+9405.00 / (15 rooms x 3 nights) = 209.00 per room-night, exactly
+counterPct(15, 17) = 16, matching the counter point in the script
+```
+
+**All three to the cent, and the implied nightly rate lands on a round $209.00** — a wrong figure anywhere would
+have left the arithmetic ragged instead of closing. The numbers he will say to the product owner are right, and
+they are right *today* rather than at iteration 108.
+
+> **Worth keeping as method.** Reconstructing `priceBlock`'s input meant assembling a Property, dates and a room
+> type by hand — exactly the shape that produced the `audit_log.target` and `check_comp_authority` errors
+> earlier tonight. **One measured anchor plus arithmetic verified three figures with nothing assembled from
+> memory.** When a set of numbers shares a derivation, check the derivation, not each number.
+
+#### Also confirmed in the same pass
+
+- **`/admin/inquiries/INQ-2009` really does not work**, as the runbook warns: the inquiries table carries both
+  `id` (uuid) and `inquiry_code`, and INQ-2009's row id is `c9661623-…`. *"Click it from the inbox list"* is the
+  correct instruction, and it is the kind of thing that eats thirty seconds on stage if discovered live.
+- The support number in §3, **+1 (305) 786-6217**, is the one in the landing page HTML and on the live Telnyx
+  assistant — checked earlier tonight from both ends.
+
+#### State
+
+Every numbered task closed. Enrique's six unchanged, `drop policy` first. Inbox and In progress empty. Tester
+silent since 20:26 (**10h54m**). No lock held; I took none.
+
+
+### Iteration 227, 07:16 EST — checked It154's three claims by running them, and found the thing that already closes its risk
+
+**Nothing is open for an agent. No new tasks.** It154 fixed a sentence on the live-modification beat and guarded
+the `npx` commands. All three of its claims hold, and one of them is safer than it says.
+
+#### Timed the command rather than reading the correction
+
+```
+npx vite-node scripts/show-verdict.ts -- INQ-2009
+  run 1  1284 ms      run 2  1274 ms      run 3  1245 ms
+```
+
+**Never under a second**, which is what It154 found (1.3s / 2.2s / 1.3s) and what the page now says:
+*"It takes a second or two… so do not promise the panel it is instant."* My three runs are tighter than theirs
+— warm cache, no 2.2s outlier — and sit inside the range the page publishes. **The old claim, "under a second",
+was false on both machines.**
+
+#### `vite-node` really is undeclared
+
+```
+package.json  dependencies: no vite-node      devDependencies: no vite-node, vitest ^2.1.2
+```
+
+Confirmed: the binary the stage beat runs is reachable only through vitest's tree.
+
+#### And the thing that already closes their risk, which their entry did not name
+
+It154 frames it as a future hazard *"with nothing in the repository to notice"*. There is:
+
+```
+package-lock.json        144,841B, lockfileVersion 3, committed
+  node_modules/vite-node    2.1.9      <- its own pinned entry
+  node_modules/vitest       2.1.9
+raw.githubusercontent.com/.../package-lock.json   HTTP 200
+```
+
+**The lockfile pins `vite-node` explicitly and is published**, so a reviewer installing today gets it
+deterministically — the transitive path cannot silently become a registry fetch on the machine in front of the
+panel. **Their new guard is still worth having**: it covers the case where someone changes the lockfile, which
+is exactly when the pin stops protecting anyone. *Their risk is real one level up from where they put it.*
+
+#### Considered and deliberately not filed
+
+`README.md:267` tells a reviewer `npm install`, not `npm ci`, and no document mentions the lockfile. With a
+committed lockfileVersion 3, `npm install` installs the locked tree, so **this is a preference, not a defect** —
+`npm ci` would make determinism guaranteed rather than merely probable, and would match the package's own
+reproducibility ethos.
+
+> **Not filed, and the reason is the ethos rather than the risk.** It is one word in the first file a reviewer
+> reads, three and a half hours out, and the current text is not wrong. **I checked the guard first**
+> (`documented-commands.test.ts` pins `npm run X` to real scripts and now `npx` tools; neither covers the
+> install verb), so this is a judgement call rather than an unnoticed gap — recorded so it is a decision and not
+> an oversight.
+
+#### Verified after the doc change
+
+`walkthrough-quotes`, `documented-commands` and `docs-quote-drift`: **93 green** — including T58's offset ban,
+since `docs/live-modification.md` changed again. Full suite **910** — It154's seven new cases landed between my writing 903 in the draft of this entry and running it again two minutes later, which is the whole reason the README states a floor.
+
+#### State
+
+Every numbered task closed. Enrique's six unchanged, `drop policy` first. Inbox and In progress empty. Tester
+silent since 20:26 (**10h50m**). No lock held; I took none.
+
 
 ### Iteration 226, 07:12 EST — a fourth near-miss, and the pre-flight item that would make the demo look broken
 

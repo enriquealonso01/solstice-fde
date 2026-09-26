@@ -10012,3 +10012,95 @@ and the restore are separate bash steps, so no interpreter failure can leave a d
 destructive edits inside a process that can die between write and restore was the actual mistake.
 
 `npx tsc -b` clean. `npx vitest run` **910 tests / 63 files** green (up 7).
+
+---
+
+## It155 — can a reviewer actually log in? Verified live, then guarded the link a test can keep
+
+Fourth iteration with an empty board. The reviewer's path is now verified end to end except for one step:
+**signing in**. They read SUBMISSION.md, clone or download, run the suite, open the live site — and then they
+have to get into the staff console. Nothing had ever checked that they can.
+
+### Verified against production, and it works
+
+The chain has five links, and I measured every one rather than reasoning about it. Read-only, plus one
+sign-in each, which is exactly what a reviewer does:
+
+```
+supervisor@solsticehotels.com   auth yes  confirmed  profile role concierge     SIGNED IN  session reads role: concierge
+sales@solsticehotels.com        auth yes  confirmed  profile role group_sales   SIGNED IN  session reads role: group_sales
+admin@solsticehotels.com        auth yes  confirmed  profile role admin         SIGNED IN  session reads role: admin
+
+3 auth users, 3 profile rows, 0 extras
+```
+
+Each session read its own role back **through RLS with the anon key**, using the password
+`scripts/seed-users.mjs` sets and `DEMO_LOGINS.md` records. So: documented address → auth user → confirmed
+email → profile role → password sign-in → role visible to that session. **No defect.** The credentials
+story is also handled correctly — they live in the email body and never in the public repository, which
+SUBMISSION.md states and `no-committed-credentials.test.ts` enforces.
+
+### The link a test can keep true, which nothing was keeping
+
+The addresses that *exist* are whatever `seed-users.mjs` creates. The addresses a reviewer is *told* to
+type appear in SUBMISSION.md twice, plus `README.md`, `docs/demo-runbook.md`, `docs/role-walkthroughs.md`
+and a migration comment. **Nothing tied any of those to the script.**
+
+Rename a seeded address, or add a fourth login and mention it in one document, and a reviewer types
+something that does not exist, gets *"invalid credentials"* from the live site, and concludes the package is
+broken — on their first interaction with the deployed app, before they have seen anything work.
+
+Six cases: no document may name an address the seed script does not create; both lists in SUBMISSION.md
+must carry every seeded login; the two lists must agree with each other; seeded roles must be values the
+`staff_role` enum actually has; and all three roles must be covered, because two concierges and no
+group_sales would satisfy everything else while making half the demo unshowable.
+
+Scoped to prose on purpose: `Login.tsx` uses `you@solsticehotels.com` and `AdminHome.tsx`
+`name@solsticehotels.com` as form placeholders. Those are correct, and flagging them would have been the
+mistake — I checked what they were before deciding they were strays.
+
+`DEMO_LOGINS.md` is read when present and skipped when absent, because it is gitignored: requiring it would
+fail for the Download-ZIP reviewer, which is the failure It152 spent an iteration removing.
+
+### The red-check found a hole in my own guard, and it was the case that mattered
+
+Five mutations, and **the third one passed**:
+
+```
+a seeded address is renamed                      2 failed
+a document names an unseeded address             1 failed
+the reviewer email loses one of the three        5 PASSED   <- should have failed
+a seeded role is outside the schema enum         2 failed
+two logins share a role                          1 failed
+```
+
+I had written `read('SUBMISSION.md').includes(email)` — the whole file. Deleting
+`sales@solsticehotels.com` from the credentials block left the email template sixty lines below still
+mentioning it, so the check passed on the wrong occurrence.
+
+**That is It145's defect exactly**, in a guard written ten iterations after I logged that one: a file-wide
+containment check proves nothing about *which* occurrence satisfied it, and here the two occurrences do two
+different jobs — the block Enrique reads and the blockquote he pastes into the email. Both have to be
+complete. Now sliced per region, and each region asserted non-empty first.
+
+```
+credentials block loses one login   2 failed
+email template loses one instead    2 failed
+```
+
+**The mutation that mattered was the one that did not fire**, which is the whole argument for red-checking
+every case rather than the ones you doubt.
+
+### And then the region extraction was wrong too
+
+My first slice ran from the "Staff credentials" heading to `search(/\n```[\s\S]*?\n```/)` — and `search`
+returns where the fence **begins**, so the slice stopped one line in and held the heading alone. That failed
+loudly on the unmutated file rather than passing on nothing, which is the good version of the mistake, but
+it is the same family as an over-long slice. Fixed by printing both regions and reading them before
+trusting either: the fence contents by capture group, the template as the contiguous run of quoted lines.
+
+Three self-inflicted problems in one iteration, all caught: the file-wide containment by the red-check, the
+broken slice by the first run, and two probe-shaped mistakes before that. The process is doing the work the
+prose cannot.
+
+`npx tsc -b` clean. `npx vitest run` **916 tests / 64 files** green (up 6).
