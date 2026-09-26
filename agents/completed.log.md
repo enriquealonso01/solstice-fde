@@ -4197,3 +4197,56 @@ Scope stated in the file so nobody reads it as more: it proves the request path 
 not prove the adapter behind the door is any good.
 
 `npx tsc -b --force` clean. `npx vitest run`: **505 passed, 39 files**.
+
+## It78 — the diagram's security claim is true, and was held up by a comment
+
+Audited the last named brief deliverable, `docs/architecture.svg` — 277 labels. Its most falsifiable
+claim is under *Secrets and keys*: **"Today: Netlify env vars; only the Supabase anon key reaches the
+browser."** I had scanned the Telnyx export for secrets and never the thing that actually reaches a
+visitor.
+
+### The claim holds
+
+Pulled the 774KB production bundle and compared it against every `.env` value long enough to be a
+credential:
+
+```
+values from .env present in the bundle : SUPABASE_URL, SUPABASE_ANON_KEY, TELNYX_ASSISTANT_ID
+JWTs in the bundle                     : one — role: anon, ref: bcrivjgqrxahgxyiqlpr
+```
+
+No `service_role`, no API key. The assistant id is an identifier, not a credential — changing that
+assistant still needs the Telnyx API key — so the sentence is defensible as written.
+
+### What was holding it up was a comment
+
+`vite.config.ts` shares the `.env` with the serverless functions, which use unprefixed names, so it
+injects selected values through `define` instead of relying on Vite's `VITE_` prefix. **That prefix is
+normally the only thing stopping an unprefixed secret reaching the browser.** Bypassing it is a
+reasonable trade, and it moves the entire boundary into four hand-written lines guarded by:
+
+> `// Service-role keys must never appear here.`
+
+One added line — `JSON.stringify(env.SUPABASE_SERVICE_ROLE_KEY)` — ships a key that bypasses **every
+RLS policy in the system** to every visitor. The build succeeds, the tests pass, and the diagram
+quietly becomes false. RLS is the mechanism three guardrails and the whole role-scoping story rest on.
+
+`browser-env.test.ts` makes the comment executable: every exposed value must be named with a reason,
+**and** no exposed name may look like a credential. The second check is the one that catches a
+variable nobody thought to list.
+
+Red-checked with the actual catastrophe rather than a proxy — added the service-role key under the
+innocuous alias `VITE_ADMIN`. Both assertions fired, including the name-shaped one, which is the point:
+the alias was harmless-looking and the source name was not.
+
+**Two of my own imprecisions, caught by the work rather than after it.** The config's comment said *"we
+expose the two browser-safe values"* and listed four — now corrected. And my first regex matched
+`import.meta.env.VITE_…` on the left of each line instead of `env.…` on the right, so it reported the
+browser aliases and told me nothing about what was read from `.env`. It failed loudly, which is why I
+noticed.
+
+Also verified and left alone: the SVG's sentence is accurate, and editing a 122KB `.drawio` and its
+generated `.svg` hours before submission to add a clause about an assistant id would risk more than it
+buys.
+
+`npx tsc -b --force` clean. `npx vitest run`: **509 passed, 40 files**.

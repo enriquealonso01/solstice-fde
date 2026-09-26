@@ -4,38 +4,37 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 107 — 2026-09-25 ~20:42 EST
+## Iteration 108 — 2026-09-25 ~20:46 EST
 
-### I drove the pre-send checklist and found three stale facts in my own file
+### I audited my own file's headings. Two more contradicted their own contents
 
-**1. The Telnyx item did not say what it requires.** `SUBMISSION.md`'s checklist says *"Telnyx
-balance above **$20**, or do not invite them to call the number."* My table said only *"Telnyx
-top-up, $3.09"* — which reads as **the amount to add**. Someone could put in $5, mark item 2 done,
-and learn at the final checklist that the panel must not be invited to call — after the email went
-out. **Corrected to "top up to at least $20", with the gate quoted.**
+**The OPEN WORK heading said there was nothing to do, directly above two things to do.** Line 73
+read *"nothing is left for an agent; all four items are Enrique's"* while **T39 sits at line 109 and
+T38 at line 160**, both open, both agent work. I wrote that heading in iteration 95 when it was
+true, filed both tasks under it in 104 and 105, and never looked back up.
 
-**2. The balance is $3.03, not $3.09.** Measured: `balance 3.03 USD, available 3.03`. Drifted six
-cents while I quoted an hours-old figure in the file that is supposed to be current — the same class
-of staleness this project fixed twice in the README.
+**T17's heading has been wrong since PR #56.** It reads *"WRITTEN, uncommitted"*; the telephony-only
+note is live at `agent/sol.md:77-80` and present at HEAD. Iteration 75 recorded that it needed no
+work and I never returned to the heading. Marked CLOSED with the correction inline; the body is left
+as written with its stale present tense flagged.
 
-**3. The banner still counted T36 as open.** It **closed in PR #90**, verified live. One call now
-settles **three** things, not four: beat 3, the live intent check, **G16 on voice**.
+### What this says about the file
 
-**Three stale facts in two adjacent lines of the file I own.** I have spent five iterations checking
-other people's documents by executing them, and had not once executed my own.
+**Each of the last three stale facts was in the part of the plan that claims to be current, and each
+was written by me and then outlived by events I recorded myself.** The verification log stays
+accurate because every entry is dated and never touched again. **The current-state sections rot
+precisely because they are the ones meant to change.**
 
-### The rest of the checklist is sound
+`doc-citations.test.ts` and `list-counts.test.ts` guard the eleven deliverable documents. **Nothing
+guards this file** — and it is the one three agents read first. Not proposing a guard at 20:46 with
+four items outstanding, but the next person keeping a long-lived planning document should know that
+its dated log will stay true and its summary will not.
 
-Repository visibility · `demo:tidy` **last**, with the reason · failure switches healthy · site
-loads · `npx vitest run` green · and a deploy check that **ships the command rather than describing
-it**, earned from a real incident: *"a deploy can fail silently: one errored at 18:45 and left
-`main` ahead of production until a retry two minutes later. Nobody was notified."*
+### Everything else above the log checks out
 
-### T38 and T39 remain open
-
-One phrase each, both on the live-change beat.
+T19–T37 headings carry accurate CLOSED markers with PR numbers; guardrail coverage reads **18 of
+19**; T21's heading correctly frames it as Enrique's database call.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** And **item 2 is now "to $20+", not "$3.09"** — the old wording could
-have been completed without clearing the project's own gate.
+**The `drop policy` paste.** Agent work is **T38 and T39**, one sentence each.

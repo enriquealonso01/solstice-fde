@@ -10,6 +10,17 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It78: the architecture diagram's security claim is true and guarded by nothing.** Audited
+  the last named deliverable, `docs/architecture.svg` (277 labels). Its most falsifiable claim is
+  *"only the Supabase anon key reaches the browser"*, and I had never checked the **shipped bundle**.
+- **It holds:** the only JWT in the 774KB bundle is `role: anon`; no `service_role` key, no API key.
+  The bundle also carries `TELNYX_ASSISTANT_ID`, an identifier rather than a key, so the claim is
+  defensible as written.
+- **But the mechanism is four hand-written lines.** `vite.config.ts` uses `define` to inject arbitrary
+  unprefixed `.env` values, **deliberately bypassing Vite's `VITE_` prefix safety**, and its own
+  comment says *"Service-role keys must never appear here"* — a rule enforced by attention. One added
+  line ships a privileged credential to every browser. Making the comment executable.
+
 - **CLAIMED It77: `docs/integration-recommendation.md` overstates its central claim by one exception.**
   Last unaudited named brief deliverable. Its architectural argument is that an OPERA swap is *"a change
   to that file's implementation, not a rewrite"* because **`data.ts` holds all seven imports of

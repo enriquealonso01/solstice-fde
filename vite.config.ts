@@ -3,8 +3,12 @@ import react from '@vitejs/plugin-react'
 import path from 'node:path'
 
 // The .env is shared with the serverless functions, which use unprefixed names.
-// Rather than duplicate every key with a VITE_ prefix, we expose the two
+// Rather than duplicate every key with a VITE_ prefix, we expose the four
 // browser-safe values explicitly. Service-role keys must never appear here.
+//
+// This bypasses Vite's VITE_ prefix convention, which is the only thing that normally stops an
+// unprefixed secret reaching the browser -- so the list below IS the boundary. It is enforced by
+// src/lib/rules/__tests__/browser-env.test.ts rather than by whoever edits this file next.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
