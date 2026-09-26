@@ -29,7 +29,7 @@ export default function App() {
         </Route>
 
         {/* group sales */}
-        <Route element={<RequireRole allow={['group_sales', 'admin']} />}>
+        <Route element={<RequireRole allow={['group_sales', 'gm', 'admin']} />}>
           <Route path="/admin/inquiries" element={<GroupInbox />} />
           <Route path="/admin/inquiries/:id" element={<InquiryDetail />} />
         </Route>

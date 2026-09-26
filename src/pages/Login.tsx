@@ -10,6 +10,7 @@ import type { StaffRole } from '../../shared/types'
 const LANDING: Record<StaffRole, string> = {
   concierge: '/admin/sessions',
   group_sales: '/admin/inquiries',
+  gm: '/admin/inquiries',
   admin: '/admin',
 }
 

@@ -25,16 +25,25 @@
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { triageInbox, type TriageResult } from '../../../../netlify/functions/group/triage'
 import { loadInquiries } from '../../../../netlify/functions/group/_deps'
+import { setClock } from '../../../../netlify/functions/group/store'
 import type { GroupInquiry } from '../../../../shared/types'
+
+/** The ones the rules refuse to price: two blackouts, and INQ-2005's 300-seat session in a
+ *  140-seat hotel, which is a physical limit. */
+const REFUSED = ['INQ-2003', 'INQ-2005', 'INQ-2010']
 
 let inquiries: GroupInquiry[]
 let first: TriageResult
 let second: TriageResult
 
+afterAll(() => setClock(null))
+
 beforeAll(async () => {
+  // Before every arrival in the dataset, so the date rules do not rot with the calendar.
+  setClock(() => new Date('2026-07-15T12:00:00Z'))
   inquiries = await loadInquiries()
   first = await triageInbox('vitest')
   second = await triageInbox('vitest')
@@ -86,8 +95,15 @@ describe('the first sweep over an untouched inbox', () => {
     }
   })
 
+  it('refuses INQ-2005 on the physical limit, and says so', () => {
+    const o = by(first, 'INQ-2005')
+    expect(o?.action).toBe('skipped_blocked')
+    expect(o?.detail).toContain('300 people')
+    expect(o?.artifact_id).toBeUndefined()
+  })
+
   it('prices every other complete one instead of asking it questions', () => {
-    const blocked = new Set(['INQ-2003', 'INQ-2010'])
+    const blocked = new Set(REFUSED)
     const complete = inquiries
       .filter((i) => (i.missing_fields ?? []).length === 0)
       .map((i) => i.inquiry_id)
@@ -130,7 +146,7 @@ describe('the second sweep, which is a rep clicking the button twice', () => {
 
   it('recognises everything it worked, and says which artifact already exists', () => {
     expect(second.outcomes).toHaveLength(inquiries.length)
-    const blocked = new Set(['INQ-2003', 'INQ-2010'])
+    const blocked = new Set(REFUSED)
     for (const o of second.outcomes) {
       if (blocked.has(o.inquiry_id)) continue
       expect(o.action, `${o.inquiry_id} was not recognised as already worked`).toBe('skipped_existing')
@@ -140,10 +156,10 @@ describe('the second sweep, which is a rep clicking the button twice', () => {
     }
   })
 
-  it('refuses the blacked-out two again, identically, rather than relenting', () => {
+  it('refuses the same three again, identically, rather than relenting', () => {
     // A refusal that softens on the second attempt is worse than one that never happened: the
     // board would gain a quote for dates the property will not take, and nobody would see it land.
-    for (const id of ['INQ-2003', 'INQ-2010']) {
+    for (const id of REFUSED) {
       expect(by(second, id)?.action, `${id} was refused once and then not refused`).toBe('skipped_blocked')
       expect(by(second, id)?.detail).toBe(by(first, id)?.detail)
     }
@@ -157,7 +173,7 @@ describe('the second sweep, which is a rep clicking the button twice', () => {
 
   it('reports an inbox with nothing left to draft', () => {
     expect(second.summary).toBe(
-      '8 already had work on them, 2 could not be progressed. Nothing was sent; everything is waiting for a human.',
+      '7 already had work on them, 3 could not be progressed. Nothing was sent; everything is waiting for a human.',
     )
     expect(second.nothing_was_sent).toBe(true)
   })

@@ -13,6 +13,7 @@ import {
   nightsBetween,
   parseDate,
   speakDate,
+  startOfDay,
   stayOverlapsRange,
 } from './dates'
 import { rateFieldForRoomType, DEFAULT_ROOM_TYPE } from './pricing'
@@ -29,8 +30,11 @@ export interface EvaluateOptions {
   property?: Property | null
   /** Override the rule set. Defaults to the table in thresholds.ts. */
   rules?: PropertyRuleSet | null
-  /** When the inquiry arrived, for the lead-time rule. Defaults to today. */
+  /** When the inquiry arrived, for the lead-time rule. Falls back to `as_of`. */
   received_date?: string | null
+  /** "Today", for the arrival-in-the-past check. The caller passes it so the engine never reads
+   *  the clock; without it that check is skipped. */
+  as_of?: Date | null
   /** Raw, unparsed values so questions can quote the customer back to themselves. */
   raw_values?: Partial<Record<RequiredField, string>>
   /** Whether we hold any way of reaching this customer. Passed in because the inquiry record
@@ -128,6 +132,24 @@ export function evaluateGroupRules(options: EvaluateOptions): EvaluationResult {
     if (blocksThisBlock) pricingBlockedBy.push('GRP-DATA-QUALITY')
   }
 
+  // ------------------------------------------------------------------ arrival in the past
+  if (arrival && options.as_of) {
+    const today = startOfDay(options.as_of)
+    const past = arrival.getTime() < today.getTime()
+    verdicts.push(
+      verdict(
+        'GRP-ARRIVAL-PAST',
+        past ? 'fail' : 'pass',
+        speakDate(arrival),
+        `on or after ${speakDate(today)}`,
+        past
+          ? `The group wanted to arrive on ${speakDate(arrival)}, and that date has already passed. We cannot hold or price rooms for nights that are behind us, so the next step is to ask the customer whether they have new dates.`
+          : `The arrival date of ${speakDate(arrival)} is still ahead of us.`,
+      ),
+    )
+    if (past) pricingBlockedBy.push('GRP-ARRIVAL-PAST')
+  }
+
   // ------------------------------------------------------------------ blackout
   if (arrival && departure) {
     const hit = rules.blackout_dates.find((range) => stayOverlapsRange(arrival, departure, range))
@@ -215,6 +237,8 @@ export function evaluateGroupRules(options: EvaluateOptions): EvaluationResult {
           : `Seating ${needed} people fits comfortably in the ${max}-person space at ${rules.property_name}.`,
       ),
     )
+    // A physical limit: no approval makes the room bigger.
+    if (over) pricingBlockedBy.push('GRP-MEETING-CAPACITY')
   }
 
   // ------------------------------------------------------------------ inventory
@@ -233,12 +257,14 @@ export function evaluateGroupRules(options: EvaluateOptions): EvaluationResult {
             : `${rules.property_name} has ${available} ${roomType} rooms, so a ${rooms}-room block fits within the room type they asked for.`,
         ),
       )
+      if (over) pricingBlockedBy.push('GRP-INVENTORY')
     }
   }
 
   // ------------------------------------------------------------------ lead time
-  if (rules.lead_time && rooms !== null && arrival) {
-    const asOf = parseDate(options.received_date ?? null) ?? startOfToday()
+  const leadFrom = parseDate(options.received_date ?? null) ?? options.as_of ?? null
+  if (rules.lead_time && rooms !== null && arrival && leadFrom) {
+    const asOf = startOfDay(leadFrom)
     if (rooms > rules.lead_time.over_rooms) {
       const daysOut = daysBetween(asOf, arrival)
       const short = daysOut < rules.lead_time.min_days
@@ -329,17 +355,9 @@ function decide(verdicts: RuleVerdict[]): Decision {
 }
 
 /**
- * Who a flagged verdict says has to sign it off.
- *
- * This used to return `the general manager at ${property_name}`. There is no general manager:
- * `staff_role` is ('concierge', 'group_sales', 'admin') and `approveProposal` applies no test
- * beyond group_sales|admin, so the sentence promised a tier nothing enforces. Policy 13 does put
- * group block authority with "Sales and the General Manager", so the phrase was policy-grounded --
- * the objection is about ENFORCEMENT, and that objection stands.
- *
- * Every rule that names an approver now calls this, so the vocabulary cannot drift between two
- * verdicts of the same inquiry again. That is how it drifted the first time: the ceiling rule was
- * corrected and the rooms-cap rule, ten lines above it, was not.
+ * Who a flagged verdict says has to sign it off. Every rule calls this so two verdicts cannot word
+ * it differently. Who counts is enforced in the group function: an approver role (APPROVER_ROLES)
+ * who did not create or submit the proposal.
  */
 function describeApprover(): string {
   return 'a named approver'
@@ -347,11 +365,6 @@ function describeApprover(): string {
 
 function round1(value: number): number {
   return Math.round(value * 10) / 10
-}
-
-function startOfToday(): Date {
-  const now = new Date()
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
 }
 
 // ---------------------------------------------------------------- helpers for callers

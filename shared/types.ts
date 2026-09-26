@@ -3,7 +3,7 @@
 
 export type LoyaltyTier = 'None' | 'Silver' | 'Gold' | 'Platinum'
 export type Channel = 'voice' | 'chat'
-export type StaffRole = 'concierge' | 'group_sales' | 'admin'
+export type StaffRole = 'concierge' | 'group_sales' | 'gm' | 'admin'
 
 /** Every tool returns this envelope. `grounded:false` obliges the agent to say it
  *  cannot confirm and to escalate, never to improvise. */

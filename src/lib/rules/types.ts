@@ -2,7 +2,7 @@
 // The externally visible atom is `RuleVerdict` from shared/types.ts. Everything here
 // exists so that a threshold is a NUMBER IN A TABLE, never a sentence in a prompt.
 
-import type { DateRange, RuleVerdict } from '../../../shared/types'
+import type { DateRange, RuleVerdict, StaffRole } from '../../../shared/types'
 import type { Weekday } from './dates'
 
 /** Stable identifiers. They appear in verdicts, in the audit log, and in the UI,
@@ -19,9 +19,32 @@ export const RULE_IDS = [
   'GRP-INSURANCE-CERT',
   'GRP-DATA-QUALITY',
   'GRP-SEASONAL-RATE-NOTE',
+  'GRP-ARRIVAL-PAST',
 ] as const
 
 export type RuleId = (typeof RULE_IDS)[number]
+
+// ---------------------------------------------------------------- who may approve
+
+export const STAFF_ROLES: readonly StaffRole[] = ['concierge', 'group_sales', 'gm', 'admin']
+
+/** Policy 13 puts a block outside the property's thresholds with the General Manager. Admin runs
+ *  the platform and grants roles, so it does not also sign off discounts. */
+export const APPROVER_ROLES: readonly StaffRole[] = ['gm']
+
+/**
+ * The role a signed-in user acts as: `profiles.role`, except that app_metadata.staff_role 'gm'
+ * lifts a group_sales profile to gm. Only the service-role key can write app_metadata, and this is
+ * how gm exists before migration 006 adds it to the staff_role enum. Any other profile role wins,
+ * so moving someone to concierge or admin in the staff screen also takes gm away.
+ */
+export function effectiveRole(
+  appMetadata: Record<string, unknown> | null | undefined,
+  profileRole: string | null | undefined,
+): StaffRole | null {
+  if (appMetadata?.staff_role === 'gm' && (profileRole === 'group_sales' || profileRole === 'gm')) return 'gm'
+  return STAFF_ROLES.includes(profileRole as StaffRole) ? (profileRole as StaffRole) : null
+}
 
 /** A seasonal window expressed as data. `months` and `weekdays` are both
  *  membership tests against each NIGHT of the stay; a stay matches when at least
@@ -118,7 +141,7 @@ export interface EvaluationResult {
   verdicts: RuleVerdict[]
   /** The ceiling that actually applied, after any seasonal override. */
   effective_discount_pct_ceiling: number
-  /** Non-empty means we must not produce a priced proposal at all. */
+  /** Non-empty means no priced proposal: nothing is generated, approved or sent past these. */
   pricing_blocked_by: RuleId[]
   /** Things the rep must chase before the block can be confirmed. */
   required_follow_ups: string[]

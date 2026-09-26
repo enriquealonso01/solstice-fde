@@ -1,7 +1,7 @@
 -- Solstice FDE schema. Role scoping is enforced HERE, in the database, not in the UI.
 -- That is the answer when the panel asks how you know a sales rep cannot read guest calls.
 
-create type staff_role as enum ('concierge', 'group_sales', 'admin');
+create type staff_role as enum ('concierge', 'group_sales', 'gm', 'admin');
 
 create table profiles (
   id          uuid primary key references auth.users on delete cascade,
@@ -171,19 +171,14 @@ create policy tools_read    on tool_invocations for select using (my_role() in (
 create policy esc_read      on escalations for select using (my_role() in ('concierge','admin'));
 create policy esc_write     on escalations for update using (my_role() in ('concierge','admin'));
 
--- Group sales surface: group_sales + admin only. concierge is deliberately excluded.
--- Read-only from the browser, deliberately. These three tables carry the approval gate's own
--- inputs: `canSend` (group/store.ts:464) returns allowed as soon as proposals.status is 'approved',
--- so a client that can write that column can approve its own proposal and send a flagged block. A
--- rep did exactly that against production with the public anon key on 2026-09-25. Migration 004
--- drops the write policies; whether it has been APPLIED to production is tracked in
--- HUMAN_INTERVENTION.md, because applying it needs database access this repo does not carry.
--- Every real write goes through the Netlify functions on the service role key, which bypasses RLS,
--- and the client only ever calls .select() on these tables - so there is no write policy to grant.
-create policy inq_read   on inquiries for select using (my_role() in ('group_sales','admin'));
-create policy prop_read  on proposals for select using (my_role() in ('group_sales','admin'));
-create policy fup_read   on follow_ups for select using (my_role() in ('group_sales','admin'));
-create policy audit_read on audit_log for select using (my_role() in ('group_sales','admin'));
+-- Group sales surface: group_sales, gm and admin; concierge is excluded. Read-only from the
+-- browser: every write goes through the Netlify functions on the service role key, and canSend
+-- (group/store.ts) re-checks the rules and needs a signed GM approval in audit_log rather than
+-- trusting proposals.status.
+create policy inq_read   on inquiries for select using (my_role() in ('group_sales','gm','admin'));
+create policy prop_read  on proposals for select using (my_role() in ('group_sales','gm','admin'));
+create policy fup_read   on follow_ups for select using (my_role() in ('group_sales','gm','admin'));
+create policy audit_read on audit_log for select using (my_role() in ('group_sales','gm','admin'));
 create policy audit_ins  on audit_log for insert with check (auth.uid() is not null);
 
 -- Reference data is readable by any signed-in staff member; writes go through service role.

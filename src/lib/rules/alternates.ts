@@ -8,7 +8,7 @@
 // We never suggest a property that is not in the directory, and we never suggest dates that
 // collide with another blackout.
 
-import type { GroupInquiry, Property } from '../../../shared/types'
+import type { DateRange, GroupInquiry, Property } from '../../../shared/types'
 import {
   addDays,
   describeRange,
@@ -54,6 +54,8 @@ export interface AlternatesInput {
 export interface AlternatesResult {
   /** The customer's own answer to "would another hotel work?", honoured in the ordering. */
   customer_open_to_alternate_property: boolean
+  /** The blackout their stay falls in, or null when something else is the reason. */
+  closed_period: DateRange | null
   alternate_dates: AlternateDates[]
   alternate_properties: AlternateProperty[]
 }
@@ -180,8 +182,12 @@ export function findAlternateProperties(input: AlternatesInput): AlternateProper
 
 export function findAlternates(input: AlternatesInput): AlternatesResult {
   const rules = getPropertyRules(input.inquiry.preferred_property_code)
+  const arrival = parseDate(input.inquiry.arrival_date)
+  const departure = parseDate(input.inquiry.departure_date)
   return {
     customer_open_to_alternate_property: input.inquiry.alternate_property_ok,
+    closed_period:
+      (arrival && departure && rules?.blackout_dates.find((r) => stayOverlapsRange(arrival, departure, r))) || null,
     alternate_dates: findAlternateDates(input.inquiry, rules),
     alternate_properties: findAlternateProperties(input),
   }
@@ -189,10 +195,10 @@ export function findAlternates(input: AlternatesInput): AlternatesResult {
 
 /** One sentence summarising what we are offering instead, ordered by what the customer said
  *  they were willing to move. Read straight out in a call. */
-export function describeAlternates(result: AlternatesResult, rules?: PropertyRuleSet | null): string {
+export function describeAlternates(result: AlternatesResult): string {
   const parts: string[] = []
-  const blackout = rules?.blackout_dates?.[0]
-  if (blackout) parts.push(`Those nights fall inside a closed period, ${describeRange(blackout)}.`)
+  if (result.closed_period) parts.push(`Those nights fall inside a closed period, ${describeRange(result.closed_period)}.`)
+  const reasonOnly = parts.length
 
   const dateOffer = result.alternate_dates
     .map((d) => `${speakDate(d.arrival_date)} to ${speakDate(d.departure_date)}`)
@@ -207,6 +213,6 @@ export function describeAlternates(result: AlternatesResult, rules?: PropertyRul
     if (propertyOffer) parts.push(`If they can flex after all, ${propertyOffer} could take the group on the original dates.`)
   }
 
-  if (parts.length === 1) parts.push('We have no alternate that clears every requirement, so this needs a person.')
+  if (parts.length === reasonOnly) parts.push('We have no alternate that clears every requirement, so this needs a person.')
   return parts.join(' ')
 }

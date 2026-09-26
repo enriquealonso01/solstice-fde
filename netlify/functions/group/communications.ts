@@ -156,7 +156,7 @@ export async function getCommunications(inquiryIdOrUuid: string): Promise<Commun
         : 'The full proposal was sent in the body of the message.',
       status: 'sent',
       occurred_at: proposal.sent_at,
-      actor: proposal.approved_by ?? null,
+      actor: proposal.approver_name ?? proposal.approved_by ?? null,
       recipient,
       // The screen tells the truth about both: who it was for, and where it actually landed.
       demo_redirect_to: env.demo_mode

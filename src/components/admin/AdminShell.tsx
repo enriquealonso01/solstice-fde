@@ -1,9 +1,10 @@
 // Shared chrome for every staff surface. Nav is filtered by role purely so the UI
 // does not offer a door the database will slam; RLS is the actual enforcement.
 
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { effectiveRole } from '@/lib/rules/types'
 import type { StaffRole } from '../../../shared/types'
 import { useIdentity } from './useAdminData'
 
@@ -16,7 +17,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { to: '/admin', label: 'Overview', roles: ['admin'] },
   { to: '/admin/sessions', label: 'Live sessions', roles: ['concierge', 'admin'] },
-  { to: '/admin/inquiries', label: 'Group inbox', roles: ['group_sales', 'admin'] },
+  { to: '/admin/inquiries', label: 'Group inbox', roles: ['group_sales', 'gm', 'admin'] },
   { to: '/admin/backend', label: 'Backend map', roles: ['admin'] },
   { to: '/admin/cost', label: 'Cost', roles: ['admin'] },
 ]
@@ -24,7 +25,25 @@ const NAV: NavItem[] = [
 const ROLE_LABEL: Record<StaffRole, string> = {
   concierge: 'Concierge supervisor',
   group_sales: 'Group sales',
+  gm: 'General manager',
   admin: 'Super admin',
+}
+
+/** The signed-in user's role as the server decides it (see effectiveRole). Cosmetic here too;
+ *  the functions and RLS enforce it. */
+export function useStaffRole(): { email: string | null; role: StaffRole | null } {
+  const identity = useIdentity()
+  const [appMetadata, setAppMetadata] = useState<Record<string, unknown> | undefined>(undefined)
+  useEffect(() => {
+    let alive = true
+    void supabase.auth.getSession().then(({ data }) => {
+      if (alive) setAppMetadata(data.session?.user.app_metadata)
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
+  return { email: identity.email, role: effectiveRole(appMetadata, identity.role) }
 }
 
 export default function AdminShell({
@@ -39,7 +58,7 @@ export default function AdminShell({
   children: ReactNode
 }) {
   const navigate = useNavigate()
-  const { email, role } = useIdentity()
+  const { email, role } = useStaffRole()
   const visible = NAV.filter((n) => (role ? n.roles.includes(role) : false))
 
   async function signOut() {

@@ -1,83 +1,100 @@
-// The approval gate is only as strong as the row it reads.
+// The approval gate does not trust the row it is handed.
 //
-// Every application path into a send funnels through `send_proposal`, which asks `canSend`, and all
-// four refused the flagged PRP-2009 against production on 2026-09-25: /api/group/tool,
-// /api/group/send, /api/group/proposal-action, and the agent's own send_proposal tool (which never
-// even fired — the model read the gate and said so).
+// Before migration 004 is applied, RLS still grants `group_sales` FOR ALL on `proposals`, so a
+// signed-in rep can PATCH any column straight from the browser with the public anon key:
 //
-// But `canSend` decides from `proposal.status`, and RLS granted `group_sales` FOR ALL on the
-// proposals table. A signed-in rep could PATCH that column straight from the browser with the
-// public anon key:
+//     PATCH /rest/v1/proposals?id=eq.<row>   {"status":"approved"}   -> HTTP 200, row returned
 //
-//     PATCH /rest/v1/proposals?id=eq.35632960-…  {"status":"approved"}  -> HTTP 200, row returned
-//
-// These tests pin the two halves of that chain so neither can quietly come back:
-//   1. what `canSend` does with a forged 'approved' status, on the real PRP-2009 verdicts
-//   2. that the schema no longer hands the browser a write policy on the gate's own inputs
-//
-// Migration 004 drops the policies. Whether it has been applied to production is tracked in
-// HUMAN_INTERVENTION.md, not here — a test cannot assert the state of a live database it is
-// deliberately not allowed to reach.
+// `canSend` does not open on that column: it re-runs the rules as of today, re-prices the block,
+// and wants a signed approval in audit_log for the flags that remain. These cases write the
+// columns a browser could write and show that none of them opens the gate. The second half pins
+// that the schema no longer hands the browser a write policy on those columns either.
 
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { canSend } from '../../../../netlify/functions/group/store'
-import type { RuleVerdict } from '../../../../shared/types'
+import { clearAuditMemory } from '../../../../netlify/functions/_delivery/audit'
+import {
+  canSend,
+  getProposal,
+  resetProposalStore,
+  setClock,
+  type AuditReader,
+} from '../../../../netlify/functions/group/store'
+import { generate_proposal } from '../../../../netlify/functions/group/tools'
 
-/** PRP-2009's real verdicts, copied from the production row. One flag, six passes. */
-const PRP_2009_VERDICTS = [
-  { rule_id: 'GRP-COMPLETENESS', status: 'pass', actual: 'all required details supplied', threshold: 'arrival date, departure date, exact room count and a way to reach the customer', human_reason: 'The customer gave us everything we need to quote: dates, an exact room count, and a way to reach them.' },
-  { rule_id: 'GRP-BLACKOUT', status: 'pass', actual: 'July 28, 2026 to July 31, 2026', threshold: 'January 15, 2027 through January 19, 2027', human_reason: 'These dates are clear of every blackout window at Solstice Phoenix Camelback.' },
-  { rule_id: 'GRP-ROOMS-CAP', status: 'pass', actual: 15, threshold: 35, human_reason: '15 rooms is within the 35 rooms Solstice Phoenix Camelback lets us sign off on our own.' },
-  { rule_id: 'GRP-DISCOUNT-CEILING', status: 'flag', actual: 17, threshold: 15, human_reason: 'The customer asked for 17% off. We can approve up to 15% on our own, so this is 2 points over what we can authorise ourselves, and it needs a named approver to sign it off before it goes out.' },
-  { rule_id: 'GRP-MEETING-CAPACITY', status: 'pass', actual: 40, threshold: 350, human_reason: 'Seating 40 people fits comfortably in the 350-person space at Solstice Phoenix Camelback.' },
-  { rule_id: 'GRP-INVENTORY', status: 'pass', actual: '15 x Deluxe King', threshold: '45 x Deluxe King in the building', human_reason: 'Solstice Phoenix Camelback has 45 Deluxe King rooms, so a 15-room block fits within the room type they asked for.' },
-] as unknown as RuleVerdict[]
+// Before INQ-2009's arrival on 2026-07-28, so the date rule does not rot with the calendar.
+beforeAll(() => setClock(() => new Date('2026-07-15T12:00:00Z')))
+afterAll(() => setClock(null))
+beforeEach(() => {
+  resetProposalStore()
+  clearAuditMemory()
+})
 
-function proposal(overrides: Record<string, unknown> = {}) {
-  return {
-    proposal_id: 'PRP-2009',
-    row_id: '35632960-f30f-42dc-8daf-a1786f8ddc66',
-    inquiry_id: 'INQ-2009',
-    status: 'awaiting_approval',
-    verdicts: PRP_2009_VERDICTS,
-    approved_by: null,
-    approved_at: null,
-    rejected_reason: null,
-    revision: 1,
-    ...overrides,
-  } as never
+/** PRP-2009 as the engine produces it: one flag, the 17% asked against a 15% ceiling. */
+async function prp2009() {
+  const generated = await generate_proposal({ inquiry_id: 'INQ-2009' })
+  return (await getProposal(generated.data!.proposal_id))!
 }
 
 describe('the send gate, on the real flagged proposal', () => {
-  it('refuses while the flag stands, naming the shortfall', () => {
-    const gate = canSend(proposal())
+  it('refuses while the flag stands, naming the shortfall', async () => {
+    const gate = await canSend(await prp2009())
     expect(gate.allowed).toBe(false)
+    expect(gate.needs_approval).toBe(true)
     expect(gate.blocking.map((v) => v.rule_id)).toEqual(['GRP-DISCOUNT-CEILING'])
     expect(gate.human_reason).toContain('17% off')
     expect(gate.human_reason).toContain('15%')
   })
 
-  it('opens the moment the status column says approved, with nobody named', () => {
-    // This is the bypass, stated as a fact about the code rather than an accusation. The flag is
-    // still there and still blocking; only the status changed. If a client can write that column,
-    // it can write this verdict.
-    const gate = canSend(proposal({ status: 'approved' }))
-    expect(gate.allowed).toBe(true)
-    expect(gate.blocking.map((v) => v.rule_id)).toEqual(['GRP-DISCOUNT-CEILING'])
-    // And the sentence a rep would read credits an approver who does not exist.
-    expect(gate.human_reason).toContain('an authorised approver approved it')
-    expect(gate.human_reason).not.toContain('Diego')
+  it('stays shut when the status column says approved and audit_log holds no approval', async () => {
+    const p = await prp2009()
+    p.status = 'approved'
+    p.approved_by = 'someone who never approved it'
+    const noApprovals: AuditReader = async () => []
+    const gate = await canSend(p, { audit: noApprovals })
+    expect(gate.allowed).toBe(false)
+    expect(gate.human_reason).toContain('cannot go out yet')
   })
 
-  it('refuses a second send and a rejected one, so it is not merely reading the flag', () => {
-    expect(canSend(proposal({ status: 'sent' })).allowed).toBe(false)
-    expect(canSend(proposal({ status: 'rejected' })).allowed).toBe(false)
+  it('stays shut when a browser inserts its own approval row, because it cannot sign it', async () => {
+    const p = await prp2009()
+    p.status = 'approved'
+    const forged: AuditReader = async () => [
+      {
+        action: 'proposal.approved',
+        detail: { approved_by: 'user-gm', approver_role: 'gm', flags: ['GRP-DISCOUNT-CEILING'], signature: 'made-up' },
+      },
+    ]
+    expect((await canSend(p, { audit: forged })).allowed).toBe(false)
   })
 
-  it('allows a clean proposal, so the gate is not a constant refusal', () => {
-    const clean = canSend(proposal({ verdicts: PRP_2009_VERDICTS.filter((v) => v.status !== 'flag') }))
+  it('stays shut when the verdicts column is rewritten to all passes', async () => {
+    const p = await prp2009()
+    p.verdicts = p.verdicts.map((v) => ({ ...v, status: 'pass' as const }))
+    expect((await canSend(p)).allowed).toBe(false)
+  })
+
+  it('stays shut when the price is typed into the row by hand', async () => {
+    // A clean proposal, so no flag is in the way, then its total is edited in the row.
+    const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    const p = (await getProposal(generated.data!.proposal_id))!
+    expect((await canSend(p)).allowed).toBe(true)
+    p.pricing = { ...p.pricing, total_cents: 100 }
+    const gate = await canSend(p)
+    expect(gate.allowed).toBe(false)
+    expect(gate.human_reason).toContain('no longer matches')
+  })
+
+  it('refuses a second send and a rejected one', async () => {
+    const p = await prp2009()
+    expect((await canSend({ ...p, status: 'sent' })).allowed).toBe(false)
+    expect((await canSend({ ...p, status: 'rejected' })).allowed).toBe(false)
+  })
+
+  it('allows a clean proposal, so the gate is not a constant refusal', async () => {
+    const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    const clean = await canSend((await getProposal(generated.data!.proposal_id))!)
     expect(clean.allowed).toBe(true)
     expect(clean.blocking).toEqual([])
   })

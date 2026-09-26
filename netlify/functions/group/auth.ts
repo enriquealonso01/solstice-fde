@@ -10,9 +10,9 @@
 //
 //   2. A signed-in member of staff, whose browser is reading the inbox or pressing send. They
 //      prove themselves with their Supabase session, and we then check their role against the
-//      same rule RLS enforces in the database: group sales and admin see group work, concierge
-//      does not. The UI's convenience is not the access control; this is, and the database says
-//      it again underneath.
+//      same rule RLS enforces in the database: group sales, the general manager and admin see
+//      group work, concierge does not. The UI's convenience is not the access control; this is,
+//      and the database says it again underneath.
 //
 // A missing TOOL_WEBHOOK_SECRET leaves route 1 open, matching tools/index.ts, because a machine
 // caller that cannot authenticate is better than a demo that silently stops working. A missing
@@ -22,6 +22,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { timingSafeEqual } from 'node:crypto'
 import type { StaffRole } from '../../../shared/types'
+import { effectiveRole } from '../../../src/lib/rules'
 import { missingDbEnv, tryGetDb } from '../_lib/db'
 
 export interface AuthOk {
@@ -29,6 +30,8 @@ export interface AuthOk {
   /** 'assistant' for the shared-secret caller, otherwise the staff member's profile id. */
   actor: string
   role: StaffRole | 'assistant'
+  /** profiles.full_name, for sentences a person reads. Never used to decide anything. */
+  name?: string | null
 }
 
 export interface AuthErr {
@@ -90,13 +93,14 @@ export function authorizeToolCaller(req: Request): AuthResult {
   return { ok: true, actor: 'assistant', role: 'assistant' }
 }
 
-/** Mirrors `inq_read` / `prop_read` / `audit_read` in supabase/schema.sql. Concierge is
+/** Mirrors `inq_read` / `prop_read` / `audit_read` (gm joins them in migration 006). Concierge is
  *  deliberately excluded from group sales, in the database and here. */
-export const GROUP_ROLES: StaffRole[] = ['group_sales', 'admin']
+export const GROUP_ROLES: StaffRole[] = ['group_sales', 'gm', 'admin']
 
 /**
  * Route 2: the browser-facing staff endpoints.
- * Verifies the Supabase access token as the user, then reads their role from `profiles`.
+ * Verifies the Supabase access token as the user, then decides their role with `effectiveRole`:
+ * `profiles.role`, lifted from group_sales to gm when the service key has granted gm.
  */
 export async function authorizeStaff(
   req: Request,
@@ -131,6 +135,7 @@ export async function authorizeStaff(
 
   // Validate the token as the user, never as the service role.
   let userId: string
+  let appMetadata: Record<string, unknown> | undefined
   try {
     const asUser = createClient(url, anonKey, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -141,6 +146,7 @@ export async function authorizeStaff(
       return { ok: false, error: 'Invalid or expired session token.', status: 401 }
     }
     userId = data.user.id
+    appMetadata = data.user.app_metadata
   } catch (err) {
     return {
       ok: false,
@@ -158,12 +164,13 @@ export async function authorizeStaff(
     }
   }
 
-  const profile = await db.from('profiles').select('role').eq('id', userId).limit(1)
+  const profile = await db.from('profiles').select('role, full_name').eq('id', userId).limit(1)
   if (profile.error) {
     return { ok: false, error: `Could not read profile: ${profile.error.message}`, status: 503 }
   }
 
-  const role = (profile.data?.[0] as { role?: StaffRole } | undefined)?.role
+  const row = profile.data?.[0] as { role?: string; full_name?: string | null } | undefined
+  const role = effectiveRole(appMetadata, row?.role)
   if (!role || !allowed.includes(role)) {
     return {
       ok: false,
@@ -174,5 +181,5 @@ export async function authorizeStaff(
     }
   }
 
-  return { ok: true, actor: userId, role }
+  return { ok: true, actor: userId, role, name: row?.full_name ?? null }
 }

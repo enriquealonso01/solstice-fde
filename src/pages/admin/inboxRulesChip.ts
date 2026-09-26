@@ -38,7 +38,7 @@ export type RulesChip =
  * to price" (which sends a rep at something pricing may refuse) nor "cannot be priced" (which
  * claims a refusal that never happened).
  */
-export function rulesChipFor(inquiry: InquiryRow): RulesChip {
+export function rulesChipFor(inquiry: InquiryRow, asOf: Date = new Date()): RulesChip {
   if (inquiry.missing_fields.length > 0) return { kind: 'missing', count: inquiry.missing_fields.length }
   try {
     const evaluation = evaluateGroupRules({
@@ -49,6 +49,8 @@ export function rulesChipFor(inquiry: InquiryRow): RulesChip {
       // The portal payload carries date_received; the typed shape does not name it, and the
       // engine falls back to today when it is absent.
       received_date: (inquiry.payload as { date_received?: string }).date_received ?? null,
+      // Same clock as the server, so a past arrival reads as blocked here too.
+      as_of: asOf,
     })
     return isPriceable(evaluation) ? { kind: 'ready' } : { kind: 'blocked' }
   } catch {
