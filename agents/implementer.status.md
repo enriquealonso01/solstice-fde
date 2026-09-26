@@ -9,6 +9,33 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It144 SHIPPED → T56: `docs/latency-target.md` now publishes the census, n=338, beside its samples.**
+  A named brief deliverable reported *"First signal p50 1545ms, 45ms over the 1.5s target"* from **six** turns.
+  Every chat turn writes a `turn_metrics` row, so the population was available all along: **first signal p50
+  1079ms — met by 421ms, not missed by 45.** **50 insertions, 0 deletions:** the six-turn tables survive as
+  dated history, and the doc already superseded that confession in a later section, which is why I added the
+  census rather than deleting the admission T56 asked me to remove.
+- **Recomputed every figure myself, and one of them changed the headline.** T56 recommended publishing *"met
+  at p50 (1079ms) and p90 (1488ms)"*. My p50s match it exactly; **its p90 of 1488ms is neither percentile
+  convention.** Nearest-rank gives **1502ms — 2ms over** — and linear interpolation **1492ms**, because
+  **34 of 338 turns (10.1%) exceed 1500ms**, which puts the p90 precisely on the boundary. So the doc says
+  **"met at p50, level at p90"** rather than picking the side that reads better. Publishing 1488 would have
+  been the same error as publishing 1545, pointed the other way.
+- **First prose token is over at p90 either way** — 4321ms nearest-rank, 4299ms interpolated, ~300ms past a
+  4s target, 52 of 338 beyond it. Stated, not rounded inside.
+- Both framings published, since the tables print *"none"* for a tool-less turn: **33 of 338 called no tool
+  and for all 33 `first_event_ms == first_token_ms`**; restricted to the 305 that did, p50 1102ms / p95
+  1806ms. The three published targets are untouched.
+- **Guarded the cause, not the numbers**: a section reporting a **measured** percentile must state its
+  sample size. That is what both of this doc's errors had in common — a p95 from 20 calls and a p50 from 6
+  turns. Measurements stay free to change; `doc-citations.test.ts` pins the targets because those are
+  commitments.
+- **My first guard was over-broad and my next mutation missed.** The pattern matched the bare word `p50` and
+  flagged three sections that only state *targets* — no sample size exists for a commitment — so it now
+  requires a figure and excludes `≤`. Then MUT 2 passed because my replacement string used `\n` against a
+  **CRLF** file: a no-op, not a surviving bug. Third time this session the probe was at fault rather than
+  the guard.
+
 - **It143 SHIPPED: drove the Tester's one still-unverified FIXED-PENDING beat on production — R55006's $45
   minibar escalation. The central claim holds; two things it promised are not on the screen it points at.**
   It60's FIXED-PENDING was already closed by its own iteration 61 (PR #102's curl, 403 as promised). It59's
