@@ -10631,3 +10631,98 @@ It is now true as written, so it stands, and two independent facts make it true 
 explicitly rather than leaving a reader to infer the stronger one.
 
 `npx tsc -b` clean. `npx vitest run` **944 tests / 66 files** green (up 4). No scratch directory left behind.
+
+---
+
+## It162 — the README called a derived HMAC token "random", in the paragraph that states a security limit
+
+T62's header was two minutes stale — its own section says SHIPPED (It161) and the Planner verified it at
+08:22 — so the board was empty. I went after the README's capability-URL paragraph: the route is covered
+(`auth.test.ts` for the derived token, `diagram-guide` for the diagram's wording), but the paragraph's three
+**measured** claims were pinned by nothing.
+
+### Re-measured live, and all of them hold
+
+The `drop policy` SQL sitting at the top of Enrique's list touches policies, so a claim about who can
+enumerate customer pricing deserved a fresh measurement rather than a figure from an earlier iteration:
+
+```
+list, public anon key            HTTP 200, 0 entries
+list, signed-in sales rep token  HTTP 200, 0 entries
+the real URL, exactly as stored  HTTP 200, application/pdf, 2570 bytes
+one char changed in the token    HTTP 400
+the guessable PRP- code changed  HTTP 400
+random-looking segment           32 characters
+```
+
+**And the pending SQL does not touch any of it**: the three `drop policy` statements are on `proposals`,
+`inquiries` and `follow_ups` — tables, not storage. Worth saying to Enrique plainly, because it removes a
+worry rather than adding one.
+
+*One probe artifact on the way: my first attempt reported the real path as 400 too. `pdf_path` is stored as
+a complete public URL and I had prefixed it with the bucket URL again. The tell was that the **real** path
+failed, which is a construction error, not a product one — printed both, so it was visible.*
+
+### The finding is the word "random"
+
+> *"at a path containing a **32-character random segment**"*
+
+It is not random. `accessTokenFor` (`store.ts:153`) is `HMAC-SHA256(PROPOSAL_LINK_SECRET, "proposal:" +
+code)`, base64url, truncated to 32 characters. Measured: same input, same token, every time.
+
+That distinction is exactly what the paragraph exists to state:
+
+- **Random** means independent entropy per object. Leaking one link tells you nothing about the others, and
+  there is nothing to recompute.
+- **Derived** means **one leaked secret yields every customer's link**, computable offline — and the
+  proposal codes are sequential, `PRP-2011`, `PRP-2012`.
+
+The design is deliberate and defensible; the code comment says why (*"the same on every function instance
+without a column to hold it"*). The paragraph carefully lists the other two limits — no expiry, no
+revocation — so understating this one was the gap.
+
+Corrected to name the mechanism, cite the function, and state the consequence. Also added the precise
+revocation nuance: rotating the secret invalidates the tokens the `/api/group/pdf` fallback checks, but does
+**not** retract a PDF already uploaded to the public bucket — that object stays at the path that was mailed
+out. Overclaiming a revocation lever would have been the same mistake in the other direction.
+
+### Guarded, four cases
+
+In `auth.test.ts`, which already owns the customer PDF link, each asserted against the **sliced paragraph**
+rather than the README: the stated length must equal what `accessTokenFor` returns; the word "random" must
+not come back; the secret must be named with its consequence; and the three limits it already stated must
+stay.
+
+```
+README exactly as before It162          2 failed   <- the defect, caught
+"random token" reintroduced             1 failed
+the secret consequence removed          1 failed
+the token truncated to 8 chars in code  2 failed   <- and one was an existing case
+the "no expiry" limit softened          1 failed
+restored                               27 passed   both files byte-identical
+```
+
+The fourth is the one I would keep if I could keep only one: shortening the token in `store.ts` makes a
+customer's pricing URL guessable, and it fails both the new length case and `auth.test.ts`'s existing
+`token.length > 20`.
+
+### An existing guard caught me twice, which is the system working
+
+`doc-citations.test.ts` refused my new citation twice: first because `store.ts:153` does not resolve (it
+wants a repo-relative path), then because every `file:line` in a deliverable needs an `EXPECTED` entry
+naming a substring that line must contain. Both objections were right. The entry is
+`'netlify/functions/group/store.ts:153': 'accessTokenFor'`, eleven lines above the `tokenMatches` entry
+added at iteration 102 — so a line number in the README is only allowed when something keeps it true.
+
+It also caught a self-inflicted contradiction: my first pass corrected the prose while leaving the example
+path reading `<random>`. Now `<32-char token>`.
+
+### Instrument
+
+**Seventh heredoc escape casualty, and my own rule says not to.** I wrote a patch-editing script *inside* a
+heredoc to insert `\n`-joined import lines; the escapes collapsed and `patch.py` would not parse. Nothing
+was applied. `agents/README.md` already says anything with a backslash goes in `sed` or a file written
+directly — I reached for the heredoc anyway. Rewrote the script with the Write tool and it applied first
+time.
+
+`npx tsc -b` clean. `npx vitest run` **948 tests / 66 files** green (up 4).

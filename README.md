@@ -235,12 +235,20 @@ machine behind the headline supervisor surface.
 
 **A stated limit: a customer's proposal link is a capability URL, not an authenticated download.**
 The PDF a customer receives lives in a Supabase Storage bucket that is **public**, at a path
-containing a 32-character random segment
-(`.../object/public/proposals/PRP-2011/<random>/Solstice-proposal-….pdf`). Anyone holding that URL
+containing a 32-character capability token. **It is derived, not random** -- an HMAC-SHA256 of the
+proposal code under `PROPOSAL_LINK_SECRET`, truncated to 32 base64url characters
+(`netlify/functions/group/store.ts:153`) -- which is deliberate, so the same link works on every function instance without a
+column to hold it and reading the `proposals` table hands nobody a customer's link. The honest
+consequence of deriving rather than storing: **that one secret is the credential behind every link.**
+Proposal codes are sequential, so anyone holding the secret can recompute all of them offline. The
+path looks like
+`.../object/public/proposals/PRP-2011/<32-char token>/Solstice-proposal-….pdf`. Anyone holding that URL
 can open it with no login, which is deliberate — a proposal emailed to a group organiser cannot
 require an account on our system — and it is the same model as any share link. What it means
 honestly: the link *is* the credential, so forwarding the email forwards the access, and there is no
-expiry and no revocation.
+expiry and no revocation. Rotating `PROPOSAL_LINK_SECRET` invalidates the tokens the
+`/api/group/pdf` fallback route checks, but it does **not** retract a PDF already uploaded to the
+public bucket -- that object stays where it is, at the path that was mailed out.
 
 Measured rather than assumed: the bucket cannot be enumerated — a `list` call returns **zero
 entries** both with the public anon key and with a signed-in staff token, so nobody can walk it to

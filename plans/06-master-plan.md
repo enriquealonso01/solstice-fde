@@ -1,10 +1,8 @@
 # Master plan: the whole picture
 
-> ## 08:20 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> **One small agent task is open: T62** — `no-committed-credentials.test.ts` justifies its shape-based checks
-> with *“no test here can know the password's value”*, and **`DEMO_PASSWORD` is not in the strip list.**
-> Nothing exploits it and hermeticity is intact; three list entries make the sentence true. *(T61 shipped at
-> 08:06, one minute after filing.)* Everything else numbered is closed.
+> ## 08:23 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **NOTHING IS OPEN FOR AN AGENT.** T61 and T62 both shipped and I verified each by re-running the
+> measurement that found it, not by reading the diff. **Every numbered task in this file is closed.**
 > **What is left is yours: three things to do, three decisions that need no action.**
 >
 > **Run `npx vitest run` yourself before you package — this line carries neither a count nor a verdict.**
@@ -1188,7 +1186,25 @@ first**; this is worth one line and no more.
 **Check when done:** `.gitignore` carries the directory pattern; the rule in `agents/README.md` names it;
 creating `.scratch-test/` leaves the shipped-file set unchanged; `npx vitest run` green.
 
-### T62. `no-committed-credentials.test.ts` says no test can know the password's value. `DEMO_PASSWORD` is not stripped.
+### T62 — SHIPPED (It161, 08:21). The justification promised a guarantee the code did not give
+
+> **Verified at 08:22 by re-running the measurement that found it**, not by observing that the file
+> changed — which is the mistake T61 caught me in an hour ago.
+>
+> ```
+> stripped: 10 -> 13
+> credential-shaped in .env and still not stripped:  TELNYX_TELEPHONY_CREDENTIAL_ID
+> ```
+>
+> **That one is the exception this task asked for** — referenced by two non-test files, and an id is not a
+> secret the way a password is. **So the sentence at `:106` is now true as written** and was correctly left
+> alone rather than softened.
+>
+> **The guard is better than the task asked for.** Four cases, and two of them are the shape this suite keeps
+> having to learn: *"parses both lists, so nothing below is compared against nothing"*, and *"still deletes
+> every name on the list, **which is unobservable when the environment is empty**"* — because in a clean
+> checkout a broken strip and a working one look identical. It also derives the expected set from
+> `.env.example` rather than restating it. **944 green.**
 
 *A false justification inside a security guard. **Nothing is exploiting it** — the fix makes the sentence true
 rather than weakening it, and costs three lines in a list.*
@@ -1305,6 +1321,11 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > grounding is stable and the neighbours are not, which is what a search does. *Do not hand-edit the
 > capture to match: it says "every tool call below is real," so the only honest options are re-capture
 > or leave it. We left it.*
+>
+> **And it may return *one*: driven at 08:26 with the cheat sheet's own wording, the model supplied
+> `section_id: "8"` and the trace carries a single citation, `Policy 8 — Pets and service animals`, with no
+> neighbours at all.** So a reviewer may see three policies, a different three, or one — **and section 8 is in
+> every one of them.** That is the tool's two parameters doing what the catalogue says, not a tidied capture.
 
 **4. "Your latency doc says 5040ms, this transcript says 7450ms."** — *iteration 127*
 
@@ -2667,6 +2688,117 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 242, 08:27 EST — drove the guardrail beat I had cited all night and never run
+
+**Nothing is open for an agent.** Every numbered task is closed, so I went back to the demo arc and found a beat
+I had verified only by its policy number: the service-animal question, `▶ IF THEY ASK` #3's subject and the
+cheat sheet's second guardrail.
+
+#### All three parts of the claim, word for word
+
+The cheat sheet promises *"no pets anywhere, service animals always and free, and staff may ask what task it
+performs but not for papers."* Driven with its own wording:
+
+> *"Pets aren't allowed at any Solstice property, but **service animals are always welcome, chain-wide, free of
+> charge**. The front desk **may ask what task the animal is trained to do**, but **won't ask for certification,
+> documentation, or a demo**. You're all set to bring your service animal."*
+
+```
+get_policy {"query":"pet policy, service animals","section_id":"8"}  ->  Policy 8 — Pets and service animals
+grounded true · 1 tool call · first event 1253ms · first token 3019ms · turn 3804ms
+```
+
+**Three parts, all present, and the ADA limit stated in both directions** — what staff may ask and what they may
+not. That last half is the part a generic assistant gets wrong, and it is why this beat is on the card.
+
+#### And it sharpened a panel answer, because my trace did not match the transcript
+
+`transcripts/service-animal.md:14` records `get_policy — Policy 8, 4, 5`. Panel answer #3 exists to explain
+that: *"`get_policy` is a search when you give it a topic rather than a section number… the transcript shows the
+whole retrieval rather than a tidied list."* It was re-run at iteration 194 and returned **8, 5, 7** — different
+neighbours, same grounding.
+
+**My run returned one citation.** The model supplied **`section_id: "8"`** and skipped the search entirely.
+
+> The answer covered *"a different secondary set"*. It did not cover **no secondary set at all** — and a
+> reviewer who drives the question and sees a single clean citation could reasonably conclude the transcript's
+> three-policy retrieval was staged. **Added: a reviewer may see three policies, a different three, or one, and
+> section 8 is in every one of them.** The tool has both parameters and the model chooses; that is the
+> catalogue working, not a tidied capture.
+
+#### A loose end from iteration 232, closed
+
+At 232 I nearly published `"Stand00 AM."` as a quote and wrote that the clean parse *"found the prose under a
+key I had not accounted for."* **The key is `text`** — the envelope carries
+`citations · first_event_ms · first_token_ms · latency_ms · message_id · name · session_id · status · summary ·
+text`. My 232 parser required `type === 'text'` alongside it, a field that does not exist. **The parser was
+wrong about the shape, not the shape about the parser** — and this run's extraction, checking only for a string
+under `text`, read the whole reply cleanly.
+
+#### One repair of my own, caught by reading back
+
+My first insertion of the panel-answer clause landed **inside a wrapped sentence**, splitting *"Do not hand-edit
+the / capture to match"*. Found by reading the file after writing it, moved below the closing line. *The rule
+that catches this is the oldest one in my log: read the file back in the same breath you wrote it.*
+
+#### State
+
+Suite green at **944 / 66 files** as of 08:21. Enrique's six unchanged, `drop policy` first. Inbox and In
+progress empty. Tester silent since 20:26 (**12h01m**). No lock held; I took none.
+
+
+### Iteration 241, 08:22 EST — closed T62 by re-running the measurement that found it, which is the thing I failed to do for T61
+
+**Nothing is open for an agent. Every numbered task is closed.** Suite **944 green / 66 files**.
+
+#### T62, checked the way T61 should have been
+
+An hour ago I marked T61 shipped because the line I asked for was present. It was present and it did not work.
+So this time I did not read the diff — **I re-ran the comparison that produced the finding:**
+
+```
+stripped:  10 -> 13
+credential-shaped in .env and STILL not stripped:  TELNYX_TELEPHONY_CREDENTIAL_ID
+```
+
+**That one is the exception T62 asked for**: referenced by two non-test files, and an id is not a secret the way
+a password is. So `no-committed-credentials.test.ts:106` — *"no test here can know the password's value"* — is
+**now true as written**, and was correctly left alone rather than softened to match the code. *The fix made the
+sentence true; it did not make the sentence smaller.*
+
+#### The guard they built is better than the task I wrote
+
+Four cases, two of which are the shape this suite keeps having to relearn:
+
+- *"parses both lists, so nothing below is compared against nothing"* — the anti-vacuity floor.
+- *"still deletes every name on the list, **which is unobservable when the environment is empty**"* — **in a
+  clean checkout a broken strip and a working one look identical**, so the deletion is pinned separately from
+  its effect.
+- And it derives the expected set from `.env.example` rather than restating a list, so the assertion does not
+  hold its own copy of the answer.
+
+**The second of those is the one I would not have specified.** I asked for three names in a list; they asked
+what happens when the thing the list protects against is already absent.
+
+#### Where the board stands, and what it took
+
+```
+T1–T62   all closed
+open     nothing for an agent
+Enrique  3 to do, 3 decisions that need no action
+```
+
+The last three tasks all came from the same place: **reading a file because something named it, rather than
+because I had a question about it.** `agents/README.md` because my own prompt lists it (T61 via It157's rule),
+`vitest.setup.ts` because a claim in another file rested on it (T62), and the repository root because I had
+never looked at it as a listing. *None of the three came from a hunch.*
+
+#### State
+
+Enrique's six unchanged, `drop policy` first. Inbox and In progress empty. Tester silent since 20:26
+(**11h56m**). No lock held; I took none.
+
 
 ### Iteration 240, 08:20 EST — replaced a seven-file sample on the banner with all 272, and hit my own moving-target rule doing it
 

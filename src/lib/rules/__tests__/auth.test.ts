@@ -18,6 +18,10 @@ import {
   resetProposalStore,
 } from '../../../../netlify/functions/group/store'
 import { generate_proposal } from '../../../../netlify/functions/group/tools'
+import { readFileSync } from 'node:fs'
+import { join, resolve } from 'node:path'
+
+const repoRoot = resolve(__dirname, '../../../..')
 
 const SECRET = 'test-webhook-secret-0123456789'
 const ORIGINAL = { ...process.env }
@@ -207,5 +211,86 @@ describe('the customer PDF link', () => {
     // This is what makes a link minted by one request openable through another.
     expect(accessTokenFor('PRP-2001')).toBe(accessTokenFor('PRP-2001'))
     expect(accessTokenFor('PRP-2001')).not.toBe(accessTokenFor('PRP-2002'))
+  })
+})
+
+/**
+ * What README.md says about that link, against what the code does.
+ *
+ * The paragraph is the project's stated security limit for customer PDFs, and it described the path as
+ * containing a *"32-character random segment"*. It is not random. `accessTokenFor` is an HMAC-SHA256 of
+ * the proposal code under `PROPOSAL_LINK_SECRET`, truncated to 32 base64url characters -- deterministic,
+ * and the same for a given code on every instance, which is the whole reason it is derived rather than
+ * stored.
+ *
+ * The distinction is the reason the paragraph exists. A random segment gives each object independent
+ * entropy: leaking one link tells you nothing about the others, and there is nothing to recompute. A
+ * derived token means **one leaked secret yields every customer's link**, computable offline, and the
+ * proposal codes are sequential. The paragraph carefully lists the other two limits -- no expiry, no
+ * revocation -- so understating this one was the gap, not a missing feature.
+ *
+ * Measured live at iteration 162 rather than assumed, and all of it held: a storage `list` returns zero
+ * entries with the public anon key and with a signed-in sales rep's token; the real URL returns a
+ * 2,570-byte `application/pdf`; altering one character of the token returns **400**, and so does
+ * altering the guessable `PRP-` code. The three `drop policy` statements waiting to be pasted are on
+ * `proposals`, `inquiries` and `follow_ups` -- tables, not storage -- so none of that changes when they
+ * are applied.
+ *
+ * What a test can hold still is the description. These cases fail if the number drifts from the code or
+ * the mechanism is described as random again.
+ */
+describe('what README.md claims about the capability token', () => {
+  const readme = () => readFileSync(join(repoRoot, 'README.md'), 'utf8').replace(/\s+/g, ' ')
+
+  /** The paragraph, sliced, so none of this can be satisfied by prose elsewhere in a long README. */
+  const paragraph = (): string => {
+    const flat = readme()
+    const start = flat.indexOf('A stated limit: a customer')
+    expect(start, 'README.md no longer carries the capability-URL paragraph; re-point this rather than deleting it').toBeGreaterThan(-1)
+    const end = flat.indexOf('**Email:**', start)
+    const slice = end === -1 ? flat.slice(start) : flat.slice(start, end)
+    expect(slice.length, 'the paragraph came back too short to be it').toBeGreaterThan(400)
+    return slice
+  }
+
+  it('states the length the code actually produces', () => {
+    const token = accessTokenFor('PRP-2011')
+    expect(token.length, 'the capability token is no longer 32 characters').toBe(32)
+    expect(
+      paragraph(),
+      `README.md states a token length that is not ${token.length}, which is what accessTokenFor returns. ` +
+        `A shorter token is a guessable URL for a customer's pricing, and the paragraph is where this ` +
+        `project says how long it is.`,
+    ).toContain(`${token.length}-character`)
+  })
+
+  it('does not call a derived token random', () => {
+    expect(
+      accessTokenFor('PRP-2011'),
+      'accessTokenFor is no longer deterministic, so the wording below would be wrong the other way',
+    ).toBe(accessTokenFor('PRP-2011'))
+    expect(
+      paragraph(),
+      'README.md describes the capability token as random. It is an HMAC of the proposal code under ' +
+        'PROPOSAL_LINK_SECRET, so one leaked secret recomputes every customer link -- a different risk ' +
+        'from independent per-object entropy, in the paragraph whose job is to state the limit honestly.',
+    ).not.toMatch(/random segment|random token|random 32/i)
+  })
+
+  it('says the secret is the credential behind every link', () => {
+    const p = paragraph()
+    expect(p, 'README.md no longer names the secret the token is derived from').toMatch(/PROPOSAL_LINK_SECRET/)
+    expect(
+      p,
+      'README.md no longer states the consequence of deriving rather than storing: the secret is the ' +
+        'credential behind every link.',
+    ).toMatch(/derived, not random|credential behind every link/i)
+  })
+
+  it('keeps the limits it already stated, which are still true', () => {
+    const p = paragraph()
+    for (const claim of ['capability URL', 'the link *is* the credential', 'no expiry']) {
+      expect(p, `README.md no longer says "${claim}"`).toContain(claim)
+    }
   })
 })
