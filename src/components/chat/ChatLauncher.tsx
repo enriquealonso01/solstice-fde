@@ -24,7 +24,8 @@ export const ChatLauncher = forwardRef<HTMLButtonElement, ChatLauncherProps>(
         onClick={onClick}
         aria-expanded={false}
         aria-controls={panelId}
-        className="group sol-rise relative flex items-center gap-2.5 rounded-full border border-accent/30 bg-hero py-2 pl-2 pr-4 text-left shadow-xl transition duration-200 hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas motion-reduce:hover:translate-y-0"
+        aria-label="Ask Sol, concierge, any hour"
+        className="group sol-rise relative flex items-center gap-2.5 rounded-full border border-accent/30 bg-hero py-2 pl-2 pr-2 text-left shadow-xl transition duration-200 hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas motion-reduce:hover:translate-y-0 sm:pr-4"
       >
         <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-accent/25 to-accent/25 text-hero-text ring-1 ring-inset ring-accent/25">
           <SolMark className="h-5 w-5" />
@@ -36,7 +37,10 @@ export const ChatLauncher = forwardRef<HTMLButtonElement, ChatLauncherProps>(
           ) : null}
         </span>
 
-        <span className="flex flex-col leading-tight">
+        {/* Full label from sm up. On phones the pill collapses to the mark so it never covers
+            the stats band: a fixed pill is always over some scrolled content, and on 390px the
+            two-column facts grid puts text under the bottom-right corner. */}
+        <span className="hidden flex-col leading-tight sm:flex">
           <span className="font-display text-[15px] tracking-tight text-hero-text">Ask Sol</span>
           <span className="text-[10.5px] uppercase tracking-[0.13em] text-hero-text/55 transition group-hover:text-accent/90">
             Concierge, any hour
