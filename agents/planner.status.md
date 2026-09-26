@@ -4,44 +4,42 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 118 — 2026-09-25 ~21:34 EST
+## Iteration 119 — 2026-09-25 ~21:38 EST
 
-### Checked every policy citation as a property. All 34 hold
+### T42: a transcript is titled for the wrong policy, and the interviewers wrote the policy document
 
-T41 was one bad quotation found by reading one sentence. **PR #107's lesson is that finding one by
-inspection tells you nothing about how many there are**, so I did the whole set.
+Checked the policy **facts** the transcripts state, against the source. Most are exact —
+`platinum-late-checkout.md:28` matches Policy 6 word for word, guarantee included.
 
-The policy document defines **15 sections**. Every `Policy N` reference in every deliverable:
+**One is not, and it is the title:**
 
-```
-12 files · 34 distinct citations · out of range: 0
-```
+> `transcripts/refund-outside-window.md:1` — *"Refund request outside the service recovery window"*
 
-And the topics match where it matters: **1** checkout · **6** Platinum benefits and the
-two-Platinum judgment call · **7** per-stay comp authority · **8** pets and service animals ·
-**12** parking · **15** escalation matrix.
+**Two 72-hour windows exist, pointing opposite ways:** Policy 2 cancellation, **72h before
+check-in**; Policy 5 service recovery, **72h after checkout**.
 
-### The one that looked wrong is a design decision
+The guest cancelled and was charged a night. **Sol applies Policy 2 correctly.** The transcript
+cites **Policies 2 and 15 — Policy 5 appears nowhere in it.** And *"outside the window"* is
+backwards for Policy 2 as well: she cancelled **inside** the 72 hours, which is why she was charged.
 
-`transcripts/service-animal.md:14` shows `get_policy` returning **Policies 8, 4 and 5** for a
-service-animal question. `policy.ts:52-57` takes **either** a `section_id`, returning exactly that
-section, **or** a `query`, which **searches**. The transcript is a topic search: it returned what it
-matched, and **the transcript lists all of them with correct titles** rather than only the one used.
+**T42: change the H1 only.** Body correct, *"What this shows"* already accurate, filename must stay
+— `SUBMISSION.md`, `README.md` and the link guards point at it.
 
-Ready answer if asked:
+### Why it is worth more than its size
 
-> *"`get_policy` is a search when given a topic rather than a section number. Policy 8 grounded the
-> answer; 4 and 5 are what the search also surfaced. The transcript shows the whole retrieval rather
-> than a tidied list, because a citation list filtered after the fact is a claim you cannot check."*
+**The interviewers wrote the policy document.** A transcript titled for the wrong policy is the
+single mistake in this package **most likely to be caught by the person best placed to catch it**,
+on the first line of a named deliverable. The body would vindicate the system while the title
+contradicts it — worse than either alone.
 
-**In-range is not on-topic, and on-topic is not necessary.** The property check proves the first,
-reading proves the second, and the third was a design decision. **I nearly filed it as a defect.**
+### A gap noted and deliberately not filled
 
-### Also landed
-
-**PR #117** — beat 2's ADA question rephrased so it lands every time. The Implementer driving their
-own document, the same method that found T38's trap.
+**No transcript demonstrates Policy 5.** That is a gap, not a defect — the brief asks for *"a few"*
+and six is a few. **I told the task not to capture a new one**: it costs a live session and money,
+and **G3 is already verified against production** in the Tester's log, which is where that evidence
+belongs. Fix the title; do not chase the transcript.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** **T38, T39, T40, T41** remain paste-ready at the top of `▶ OPEN WORK`.
+**The `drop policy` paste.** **T38, T39, T40, T41, T42** are paste-ready at the top of `▶ OPEN
+WORK`.

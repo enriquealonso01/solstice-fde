@@ -9,6 +9,17 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It88: the email invites Katie to ask the one question I measured as unreliable.**
+  `SUBMISSION.md`'s draft says *"Call Sol directly … ask about checkout times, a late checkout, or
+  whether you can bring a dog."* Measured with the email's own phrasing: **0 of 3 reached
+  `get_policy`**, and all three answered *"Pet policies vary by hotel"* — which contradicts Policy 8
+  (*"not permitted at any Solstice property, no exceptions"*). With It85's runs that is **1 landing in
+  7 attempts**.
+- **Worse than the runbook case:** there I could reword what Enrique performs. This hands the
+  unreliable question to the evaluator, unsupervised, with nobody to recover it.
+- Fixing the email. **The underlying behaviour is Enrique's call to disclose**, so it goes to
+  `HUMAN_INTERVENTION.md` with the measurements and offered wording, not into a deliverable by me.
+
 - **It87: the demo is rehearsed end to end against the final build.** Every beat that can be run
   without spending money has been run, in order, as the runbook words it. Nothing left open for an
   agent: T1–T37 are closed and the four remaining plan items are Enrique's.
