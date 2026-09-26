@@ -7031,3 +7031,45 @@ address and tells the author to use a neutral reference or allowlist the domain 
 
 `npx tsc -b` clean. `npx vitest run` **681 tests / 52 files** green (up 2). No prompt change, so no
 re-provision: all three artifacts remain at 29,784.
+
+## It125 — the requirements audit understates the package in eight places
+
+It124 read the first forty lines of `plans/00-requirements.md` and found the hiring contact's email. This
+iteration finished the job: the remaining plans, about 420 lines, all of them files `AGENTS.md`'s first line
+routes a reader to.
+
+`plans/05-requirements-audit.md` is the one that matters, because it states **verdicts** — DONE, PARTIAL,
+MISSING — against the brief. It was written 2026-09-24 and eight rows have moved since, every one of them in
+the direction of **understating** what exists:
+
+| Row | It says | Measured today |
+|---|---|---|
+| A5 net-new tool | `availability_service` | that name is gone from the code and `tool-naming.test.ts` bans it |
+| B6 latency | *"missed the first target"* | **met** — first-signal p50 905ms then 1009ms against ≤1500ms |
+| C6 transcripts | 4 chat + 1 voice | **six** files in `transcripts/` |
+| C8 / D3 | PARTIAL, *"never been rehearsed"* | rehearsed end to end and written up in `docs/live-modification.md` |
+| D2 assumptions | 7 | **9** |
+| D5 | *"failure-injection demo missing, takeover unverified"* | both exercised; the takeover's one real limit is stated in the README |
+| D6 | *"no roadmap framed in business outcomes"* | `docs/where-this-goes.md`, which opens on exactly that distinction |
+| E flaky tests | *"8 failures then 0 with unchanged code"* | closed by `vitest.setup.ts`; **681 tests in 2.0s**, green in a fresh clone with no `.env` |
+
+**A reviewer reading *"PARTIAL — never been rehearsed"* concludes the work stopped short.** That is the same
+failure as iteration 106, where the runbook claimed a defect we had fixed, and iteration 119, where
+`AGENTS.md` asserted a dead API key — our own notes making the package look worse than it is, which is the
+rarer and more expensive direction of rot.
+
+**The original stays: 24 insertions, 0 deletions.** It is an honest snapshot with its date at the top and it
+reads as one. The correction sits above it as a table, each row naming what was measured, and it also records
+**what has not moved** — SMS/10DLC is still blocked and the follow-ups table is still unexercised, both
+already disclosed in the README.
+
+Guarded in `doc-paths.test.ts`: while the PARTIAL verdicts stand, the dated correction must stand with them.
+Rewriting the rows instead also satisfies it, which is the right latitude — the point is that a reviewer
+never meets the verdicts alone. A second case keeps the retired tool name from being presented as current
+without the sentence that says it is gone. Red-checked by stripping the correction: both fire.
+
+One thing I did **not** do: rewrite the verdicts in place. That would be tidier to read and would destroy the
+one thing the file is good for — showing what the team believed at a fixed point, two days before submission,
+which is exactly the kind of artifact `docs/how-this-was-built.md` is built out of.
+
+`npx tsc -b` clean. `npx vitest run` **684 tests / 52 files** green (up 3).

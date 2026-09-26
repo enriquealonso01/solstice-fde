@@ -201,3 +201,51 @@ describe('AGENTS.md, the root working agreement', () => {
     ).toContain('agents/README.md')
   })
 })
+
+/**
+ * A dated audit may keep its verdicts, but not silently.
+ *
+ * `plans/05-requirements-audit.md` states **verdicts** — DONE, PARTIAL, MISSING — against the brief's
+ * requirements, and `AGENTS.md`'s first line routes a reader into that family of files. It was written
+ * 2026-09-24 and by iteration 125 eight of its rows had moved, every one of them in the direction of
+ * understating the package: the latency target it records as missed is met, the live modification it calls
+ * unrehearsed is rehearsed and written up, the 7 assumptions are 9, the 5 transcripts are 6, the flaky-test
+ * risk is closed by `vitest.setup.ts`, and the net-new tool is named by a name a test now bans.
+ *
+ * A reviewer reading *"PARTIAL — never been rehearsed"* concludes the work stopped short. That is the same
+ * failure as iteration 106's runbook, where our own notes claimed a defect we had fixed, and iteration 119's
+ * `AGENTS.md`, which asserted a dead API key.
+ *
+ * The original stays: it is an honest snapshot and reads as one. What this pins is that the correction stays
+ * attached to it — the same shape as the `AGENTS.md` case above, and for the same reason.
+ */
+describe('the requirements audit', () => {
+  const FILE = 'plans/05-requirements-audit.md'
+
+  it('still states verdicts, which is why the correction matters', () => {
+    const text = readFileSync(join(repoRoot, FILE), 'utf8')
+    expect(text, `${FILE} no longer records PARTIAL verdicts; update or remove this case`).toMatch(/\*\*PARTIAL\*\*/)
+  })
+
+  it('carries a dated correction while those verdicts stand', () => {
+    const text = readFileSync(join(repoRoot, FILE), 'utf8')
+    expect(
+      text,
+      `${FILE} states 2026-09-24 verdicts with no dated update. Eight of them had moved by iteration 125, ` +
+        `all understating the package -- a reviewer reads "PARTIAL, never rehearsed" as work that stopped ` +
+        `short. Rewriting the rows instead of annotating them also satisfies this, once the PARTIALs are gone.`,
+    ).toMatch(/Update, \d{4}-\d{2}-\d{2} —/)
+  })
+
+  it('does not name the net-new tool by the name a test bans', () => {
+    // `availability_service` was renamed at PR #9 and tool-naming.test.ts exists to keep it gone from code.
+    // The audit named it as current; the correction says what it is now. Planning files may recall the old
+    // name as history, so this checks only that the correction is present to explain it.
+    const text = readFileSync(join(repoRoot, FILE), 'utf8')
+    if (!text.includes('availability_service')) return
+    expect(
+      text.replace(/\s+/g, ' '),
+      `${FILE} names availability_service without the correction that says the name is gone from the code.`,
+    ).toContain('that name no longer exists in the code')
+  })
+})

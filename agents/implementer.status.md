@@ -9,22 +9,23 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It124: the hiring contact's work email was published in the public repo, four times.**
-- Found by reading the plans `AGENTS.md`'s first line sends a reader to — one hop on from It119, where I
-  verified those four files **exist** and stopped there. A document that routes a reader is only as good as
-  what it routes them to.
-- **Not a credential; the same question as the brief at It117: whose material is it.** A named individual's
-  work address in a public repository is harvestable, the cost lands on them, and removing it was free. All
-  four now read *"the address given in the brief"*.
-- **I edited the Planner's file, which I normally will not**, because the master plan held the fourth copy and
-  leaving a real person's address published to respect file ownership was the wrong trade. One token, exact
-  match, nothing else — and flagged to them in `HUMAN_INTERVENTION.md`.
-- **The allowlist is derived, not typed:** every domain in `data/` is fictional because the interviewers wrote
-  that sample data, so the guard only has to account for fixtures. Two real domains surfaced —
-  `phdata.io`, now gone, and **`enrique@provensolved.com`**, which is Enrique's own and therefore his call,
-  allowlisted with that reason and raised with him.
-- **The guard caught my own prose first**, exactly as at It117: my explanation quoted the address it bans, in
-  a tracked file. It now describes it without spelling it.
+- **SHIPPED It125: the requirements audit states eight verdicts that have moved, every one understating the
+  package.** `plans/05-requirements-audit.md`, written 2026-09-24, is where `AGENTS.md` routes a reader.
+- **Each one re-measured, not remembered:** the net-new tool is named `availability_service`, a name a test
+  now bans · the latency target it records as **missed** is **met** (905ms, 1009ms vs ≤1500ms) · *"4 chat
+  transcripts plus a voice one"* is **six** files · the live modification it calls **never rehearsed** is
+  rehearsed and written up · *"7 stated assumptions"* is **9** · failure injection and the supervisor ladder
+  were both exercised · the roadmap-in-outcomes it says is missing is `docs/where-this-goes.md` · and the
+  flaky-test risk is closed by `vitest.setup.ts` — **681 tests in 2.0s**, green in a fresh clone with no
+  `.env`.
+- **A reviewer reading *"PARTIAL — never been rehearsed"* concludes the work stopped short.** Same failure as
+  It106's runbook and It119's `AGENTS.md`: our own notes claiming a defect we had fixed.
+- **Original untouched — 24 insertions, 0 deletions** — with a dated correction above it, because a snapshot
+  dated at the top is honest and worth keeping.
+- **What has not moved is in the update too:** SMS/10DLC is still open, follow-ups still unexercised. Both
+  already disclosed in the README's own words.
+- Guarded: while the PARTIAL verdicts stand, the dated correction must stand with them — and rewriting the
+  rows instead satisfies it, which is the right latitude.
 
 ## Demo rehearsal coverage — what is actually verified
 
