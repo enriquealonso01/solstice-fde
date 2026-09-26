@@ -8,6 +8,33 @@ purpose — it is all in the log.
 
 ---
 
+## Iteration 60 DONE — the walkthrough's boundary proof showed a redirect, not a 403 (PR #102)
+
+**PR #98 VERIFIED** re-measured fresh: $45/$50 `front_desk`, $55 `agm`, $45+$25 = $70 `agm`.
+
+**The G16 handoff VERIFIED and the drift closed.** The Implementer took the row I wrote and reverted at
+iteration 57 and re-provisioned: live prompt 29,363 chars, margin 637 — exactly 29,319 + 44 and 681 − 44 —
+row present verbatim, stale test case gone from the live prompt. Handing it to the agent that owns the
+provisioning tool was the right call.
+
+**Then `docs/role-walkthroughs.md`, zero mentions in 59 iterations**, and SUBMISSION tells a reviewer to
+*start here* without a guided demo — so it is followed alone. Its structural claims all hold: one nav item
+each for `supervisor@` and `sales@`, exactly five for `admin@`, and all three landing routes.
+
+**THE FINDING:** the section "Proving the boundary, in ten seconds" said typing `/admin/cost` as `sales@`
+returns "**403** … **not a redirect**". Driven as written, both its steps **redirect** — `sales@` to
+`/admin/inquiries`, `supervisor@` to `/admin/sessions`. A sceptical reviewer concludes the boundary is just
+the UI, which is the objection the section exists to answer. PR #102 (`9aa2903`) says the browser bounces
+you and that this proves nothing, then hands over the `curl` that really does return 403 (189 bytes, RLS
+message), the 401 for no header, and the PostgREST reading underneath.
+
+**Three attempts to write one two-line shell block** — a heredoc'd Python put a literal `
+` in the file,
+the retry did not fire, the file-edit tool worked. I have a rule against heredocs for this and ignored it
+twice. Then I verified it the way a reviewer uses it: extracted the block and ran `bash -n`.
+
+**Migration 004: eleventh consecutive check, still unapplied.**
+
 ## Iteration 59 DONE — cheatsheet audited; one beat promised an escalation that does not happen (PR #98)
 
 PR #95's disclosure is intact on `origin/main` and nothing has touched either file since. **VERIFIED.**
@@ -708,6 +735,14 @@ superseded wording; other agents' PR #11, #20, #25, #43.
 38. **Audit the file that is open during the demo.** The cheatsheet had never been checked end to end and
     one of its six beats promised the opposite of what the tool returns. Docs that drive a live
     performance deserve the same treatment as code.
+
+39. **A code block in a document is code — extract it and run it.** The `curl` I added to the walkthrough
+    had a literal `
+` in it and would have failed for the first reviewer who pasted it. `bash -n` on the
+    extracted block is the test, and it belongs to every doc change that ships a command.
+40. **Distinguish what the browser does from what the API does before writing either down.** The
+    walkthrough conflated a router redirect with an HTTP 403 and so told a reviewer to look at the weakest
+    evidence in the system while claiming it was the strongest.
 
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real

@@ -5281,3 +5281,89 @@ harness before the endpoint.**
 PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
 ```
 Now disclosed in the README and SUBMISSION, so if it ships it ships as a stated defect.
+
+---
+
+## Iteration 60 — 2026-09-27 00:14–00:24Z — VERIFIED PR #98 and the G16 handoff. FIXED-PENDING: the walkthrough's boundary proof shows a redirect, not the 403 it promises.
+
+### VERIFIED — PR #98, re-measured fresh
+```
+$45   authority=front_desk  escalation=False
+$50   authority=front_desk  escalation=False
+$55   authority=agm         escalation=True
+$45 + $25 = $70.00          authority=agm  escalation=True
+```
+Exactly what the corrected cheatsheet row now claims, including the aggregation route it offers as the
+better beat.
+
+### VERIFIED — the G16 row I handed over at iteration 57, and the drift is closed
+At iteration 57 I wrote the corrected G16 row, measured it at +44 characters, and **reverted it** rather
+than desynchronise the live voice prompt for a documentation cell. The Implementer took it and did the
+part I would not:
+```
+repo G16 row now: "voice: the native transfer's `warm_transfer_instructions`; chat: `transferToHuman`
+                   | Ask for a manager on a call and let the transfer ring out"
+live prompt length: 29,363 chars     margin under 30,000: 637
+repo G16 row present in the LIVE prompt verbatim: True
+live prompt still contains "Unset `TELNYX_TRANSFER_TARGET`": False
+```
+29,319 + 44 = 29,363, and margin 681 − 44 = 637. Both exactly as predicted, the row matches the repo
+verbatim, and the stale test case is gone from what the phone agent carries. **Handing it to the agent
+that owns the provisioning tool was the right call**, and this is what the alternative — shipping the
+edit and leaving the drift — would have cost nothing to avoid.
+
+### The document nobody had checked: `docs/role-walkthroughs.md`
+Zero mentions in this log across 59 iterations, and `SUBMISSION.md` points a reviewer at it with *"start
+here if you want the staff side without a guided demo"* — so it is followed **alone**, with nobody to
+recover a wrong instruction.
+
+**Its structural claims are all correct.** Driven with the role-verified harness:
+```
+supervisor@  lands /admin/sessions   nav ["Solstice.","Live sessions"]   -> exactly one nav item   OK
+sales@       lands /admin/inquiries  nav ["Solstice.","Group inbox"]     -> exactly one nav item   OK
+admin@       lands /admin            nav Overview · Live sessions · Group inbox · Backend map · Cost
+                                                                          -> exactly five          OK
+```
+The doc says "exactly one item" for the two scoped roles and "**five**" for admin. All three match.
+
+### THE FINDING — the section called "Proving the boundary, in ten seconds" proves the opposite
+It said:
+> 2. Type `/admin/cost` straight into the address bar, bypassing the hidden menu entirely.
+> 3. You are refused. The API returns **403** to that token, **not a redirect** and not an empty page.
+
+Driven exactly as written:
+```
+sales@      asked /admin/cost       REDIRECTED to /admin/inquiries   (13 INQ codes on the page)
+supervisor@ asked /admin/inquiries  REDIRECTED to /admin/sessions    (0 INQ codes)
+```
+Both steps produce **a redirect** — the thing the sentence explicitly says will not happen. A sceptical
+reviewer following that section concludes the boundary is just the UI, which is precisely the objection
+the section exists to answer. It is the weakest evidence in the system, and it was the only thing the
+reviewer was told to look at.
+
+The underlying claim is true, and I measured it again in place:
+```
+concierge token -> GET /api/group/proposals   HTTP 403, 189 bytes
+  "This role cannot see group sales. Group sales inquiries are readable by group_sales and admin only,
+   which is what row level security enforces in the database as well."
+no token        -> HTTP 401  "Authorization: Bearer <supabase access token> is required."
+```
+Two different refusals, because "who are you" and "you are not allowed" are different questions.
+
+### Fixed — PR #102, `9aa2903`
+The section now says the browser bounces you and that this proves nothing on its own, then hands the
+reviewer the `curl` that returns the 403 with its real body, the 401 for a missing header, and the
+PostgREST reading underneath (zero rows of thirteen; zero of the concierge's hundred-plus the other way).
+Docs only — no re-provision.
+
+**Three attempts to write one two-line shell block.** A heredoc'd Python replacement put a literal `\n`
+into the file; the second attempt did not fire at all; the third finally worked with the file-edit tool.
+I have a rule for this — write files with the file tool, not shell heredocs — and ignored it twice. Then
+I checked the result the way it will be used: extracted the block and ran `bash -n` on it, because a
+reviewer pastes it. A code block in a document is code, and mine was broken in the commit I nearly
+merged.
+
+### Migration 004: eleventh consecutive check, still not applied
+```
+PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
+```
