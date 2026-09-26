@@ -70,6 +70,109 @@ describe('the diagram guide against the diagram', () => {
 })
 
 /**
+ * The three promises `docs/README-diagram.md` makes about `architecture.svg`, checked against the file.
+ *
+ * The SVG matters more than its size suggests: it is the diagram a reviewer actually opens, because an
+ * `.svg` renders in any browser and a `.drawio` needs diagrams.net. Its guide says, in one sentence:
+ *
+ *   > a hand-authored render of the *Future state* page, **sized for a projector. Nothing under 12px,
+ *   > black-on-white contrast, and no meaning carried by colour alone.**
+ *
+ * Two of those were true when measured at iteration 136. Every text fill clears 4.5:1 against white by a
+ * wide margin, and the TODAY/FUTURE distinction is carried by border shape as well as colour -- 31
+ * dashed node borders against 31 FUTURE tags, exactly.
+ *
+ * The font size was not. `viewBox="0 0 2500 1670"` with a matching `width`, so the units are 1:1
+ * pixels, and **52 `<text>` elements sat at `font-size="11"`**. They were not incidental: 31 FUTURE and
+ * 21 TODAY, and nothing else in the file was under 12. So the smallest text in a diagram "sized for a
+ * projector" was the text doing the accessibility work -- the tags are the reason the distinction is not
+ * colour-only, and they were the hardest thing on the page to read. Raised to 12 rather than lowering
+ * the claim, because the tags are the labels that most deserve to be legible and there is 380px of
+ * clear space beside each one.
+ */
+describe('the SVG against the three promises its guide makes', () => {
+  const svg = readFileSync(join(repoRoot, 'docs/architecture.svg'), 'utf8')
+
+  /** Both spellings, so a switch to CSS-style attributes cannot slip under the floor. */
+  const fontSizes = [
+    ...[...svg.matchAll(/font-size="([0-9.]+)"/g)].map((m) => Number(m[1])),
+    ...[...svg.matchAll(/font-size:\s*([0-9.]+)/g)].map((m) => Number(m[1])),
+  ]
+
+  const textFills = [...svg.matchAll(/<text [^>]*fill="(#[0-9A-Fa-f]{6})"/g)].map((m) => m[1].toUpperCase())
+
+  /** WCAG relative luminance, so the contrast claim is computed rather than eyeballed. */
+  const contrastWithWhite = (hex: string): number => {
+    const channel = (v: number) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))
+    const [r, g, b] = [1, 3, 5].map((i) => channel(parseInt(hex.slice(i, i + 2), 16) / 255))
+    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    return 1.05 / (lum + 0.05)
+  }
+
+  it('has text and sizes to measure, so the floors below are not vacuous', () => {
+    expect(fontSizes.length, 'no font-size attributes found in the SVG').toBeGreaterThan(100)
+    expect(textFills.length, 'no <text> fills found in the SVG').toBeGreaterThan(100)
+    expect(guide, 'the guide no longer promises a size floor').toContain('Nothing under 12px')
+    expect(guide, 'the guide no longer promises the contrast').toContain('black-on-white contrast')
+    expect(guide, 'the guide no longer promises shape over colour').toContain(
+      'no meaning carried by colour alone',
+    )
+  })
+
+  it('puts nothing under 12px, which is what the guide promises', () => {
+    const under = fontSizes.filter((n) => n < 12).sort((a, b) => a - b)
+    expect(
+      under,
+      `docs/architecture.svg has ${under.length} text size(s) below 12: ${[...new Set(under)].join(', ')}. ` +
+        `The guide promises "Nothing under 12px" and the viewBox is 1:1 with the declared width, so these ` +
+        `are real pixels. The 52 that were at 11 were the TODAY/FUTURE tags -- the smallest text was the ` +
+        `text carrying the distinction.`,
+    ).toEqual([])
+  })
+
+  it('keeps every text colour above the WCAG AA floor against the page', () => {
+    // The page is white and no <text> uses a light fill, so white is the backdrop for all of them.
+    // If that ever stops being true this case would be measuring the wrong pair, so it is asserted.
+    const light = textFills.filter((f) => contrastWithWhite(f) < 3)
+    expect(
+      light,
+      `these text fills are too light to be sitting on white: ${light.join(', ')}. Either the SVG gained ` +
+        `reversed text on a dark band, in which case this case needs to pair text with its backdrop, or ` +
+        `something is genuinely unreadable.`,
+    ).toEqual([])
+
+    const failing = [...new Set(textFills)]
+      .map((f) => ({ fill: f, ratio: Number(contrastWithWhite(f).toFixed(2)) }))
+      .filter((c) => c.ratio < 4.5)
+    expect(
+      failing,
+      `these text colours fall below 4.5:1 on white: ${JSON.stringify(failing)}. The guide promises ` +
+        `"black-on-white contrast", and this file is meant to survive a projector.`,
+    ).toEqual([])
+  })
+
+  it('carries the TODAY/FUTURE distinction in the border shape, not only the colour', () => {
+    // A FUTURE node is dashed and a TODAY node is solid. The tag counts and the border counts have to
+    // agree, or some node reads FUTURE and draws as TODAY -- which is exactly the mismatch that made
+    // the .drawio's Today page wrong for a day.
+    const futureTags = [...svg.matchAll(/<text [^>]*font-size="12"[^>]*>FUTURE</g)].length
+    const dashedNodes = [...svg.matchAll(/stroke-dasharray="9 5"/g)].length
+    const solidNodes = [...svg.matchAll(/<rect [^>]*stroke="#[0-9A-Fa-f]{6}"[^>]*\/>/g)].filter(
+      (m) => !m[0].includes('stroke-dasharray'),
+    ).length
+
+    expect(futureTags, 'no FUTURE node tags found; the correspondence below would be vacuous').toBeGreaterThan(0)
+    expect(
+      dashedNodes,
+      `${futureTags} nodes are tagged FUTURE but ${dashedNodes} have the dashed border. A FUTURE node ` +
+        `drawn solid says one thing in text and the opposite in shape, and a reader who cannot see the ` +
+        `colour gets the wrong one.`,
+    ).toBe(futureTags)
+    expect(solidNodes, 'no solid-bordered nodes left, so the shape carries no contrast').toBeGreaterThan(0)
+  })
+})
+
+/**
  * The Today page's status markings, against what actually runs.
  *
  * This page exists to say *"what actually runs at the demo"*, and at iteration 133 six of its nodes

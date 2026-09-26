@@ -1,11 +1,9 @@
 # Master plan: the whole picture
 
-> ## 03:24 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> **One agent task is open: T52** — the architecture diagram's Today page says proposal PDFs are
-> *"time-limited signed URLs"*; they are **unsigned, permanent capability URLs in a public bucket**, and
-> `README.md` already says so correctly. *T38–T51 are closed.* `sol.md`, the committed export and the live phone
-> agent all sit at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **748 tests / 54 files
-> at 02:37**. It grows every hour, so read that as a vintage rather than a target.*
+> ## 03:31 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **No agent task is open. T38–T52 are all closed.** `sol.md`, the committed export and the live phone agent
+> all sit at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **799 tests / 57 files at
+> 03:31**. It grows every hour, so read that as a vintage rather than a target.*
 >
 > **⏱ You are submitting early by choice, and that is worth knowing if something breaks at 10:00.** The
 > brief says *"You'll have **5 business days** from receipt to submit."* Received **Thursday 2026-09-24**,
@@ -1740,6 +1738,88 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 188, 03:31 EST — G4 holds on the branch that differs from G3, and I checked the contract before calling a promise an over-promise
+
+#### T52 shipped (It135), and the fix says it better than I wrote it
+
+The Today page now reads:
+
+> **LIVE Storage** — Generated proposal PDFs. Handed out as **capability URLs: a 32-character unguessable path
+> in a public bucket, so **the link is the credential**. Not an authenticated download, and **no expiry or
+> revocation**. Signed URLs are the future-state answer.
+
+***"The link is the credential"*** is sharper than my proposed wording, and *"no expiry or revocation"* names
+both missing properties instead of one. **The Future-state node is untouched**, which is what I asked for.
+Suite **799 / 57 files**, up from 748.
+
+#### G4 — a complaint raised *during* the stay still counts
+
+The counterpart to the G3 I verified last iteration, and the reason both exist. R55020 Haidari, **Checked-in**
+at SOL-PHX, no staff directive on the record:
+
+> *"The air conditioning in my room has been broken since I checked in. I would like some compensation."*
+>
+> **"I'm sorry the AC has been an issue for your whole stay… I can apply a **$50 credit** to your stay for the
+> broken AC — that's within what I can approve directly at the front desk."**
+
+**No 72-hour lockout.** Compare last iteration's R55005, post-checkout: *"well past our 72-hour service recovery
+window (it closed June 11)… the only thing I can offer directly is loyalty points."* **Same policy, opposite
+answers, because one complaint is in-stay and the other is not.** That distinction is `issue_raised_during_stay`
+and it is the whole reason G3 and G4 are separate rows.
+
+**And it lands exactly on G5's ceiling** — $50, not $51, described as *"within what I can approve directly at
+the front desk."*
+
+#### Where I nearly filed a defect, and what stopped me
+
+*"I'll get that put on your account now"* asserts an action. **The trace for that session shows only three
+tools** — `identify_guest`, `get_reservation`, `check_comp_authority` → *"$50.00 — inside front desk
+authority"* — **no escalation, and no comp-applying tool, because none exists.** There is no PMS to write a
+folio to. That reads like G16's failure shape one category over: an action described that the system cannot
+take.
+
+**So I read the contract instead of writing it up.**
+
+> `agent/sol.md:186` — *"**`may_promise` false on a result means offer it, never promise it.** The words
+> matter: 'I can ask…'"*
+
+`check_comp_authority` at $50 returns **`may_promise: true`**, `within_front_desk_authority: true`,
+`escalation_required: false`, and in its own words *"it **can be actioned without manager approval**."* **The
+tool decides what may be promised; the prompt enforces the distinction; at $50 the answer is yes.** A
+front-desk credit inside authority is actioned by a human at the property — the system's job is to say whether
+it is permitted, and it recorded that with `grounded: true`.
+
+**Designed behaviour, not an over-promise.** Sixteenth time a result looked like a finding and the answer was
+in the contract that produced it. *(Also mine: I queried `audit_log.target`, which does not exist. Guessed
+column name.)*
+
+#### Tally
+
+**Thirteen of nineteen re-verified by me against the post-T48 build:**
+
+```
+G2  G3  G4  G7(Platinum)  G8  G9  G10  G11  G12  G13  G15  G17  G18
+```
+
+**Not by me: G1, G5, G6, G14, G16, G19.** G5's *tool* is verified — iteration 164 measured the $45/$50/$55
+thresholds and the $45+$25=$70 aggregation — but **the agent honouring aggregation across two complaints in one
+conversation is not**, so I am not claiming it. G16's voice half needs a funded call.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — **$3.03, no credit line, ~6 calls, hard stop at zero**; gate is $20 | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+
+**No agent task is open. T38–T52 are all closed.** Inbox and In progress empty. Lock held by another agent;
+not mine to take and I did not. Tester silent **7h01m**.
+**The plan is accurate and correctly ordered.**
 
 ### Iteration 187, 03:24 EST — G2 and G3 hold, and the live answer states a date where the prompt used to state a stopwatch
 
