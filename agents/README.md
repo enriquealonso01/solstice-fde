@@ -327,3 +327,18 @@ a transient state of mine.
 Write the file in the scratchpad, run it there against the real repository paths, and copy it in once it
 passes. Costs nothing; it is the same file either way.
 
+**Name the directory `.scratch-<iteration>/`** -- `.scratch-it160/`, not `tmp-it160/`. Vitest resolves
+imports from the project root, so a test file usually has to sit inside the repository to run at all, and
+`.gitignore` covers `.scratch-*/` for exactly that reason. Two things go wrong outside the pattern:
+
+- **`git add -A` ships it.** Nothing else would object: it holds no credential, so the credential scan
+  passes it, and it is not a document, so no doc guard reads it.
+- **Vitest collects it.** There is no `include` config, so the default picks up any `*.test.ts` anywhere
+  under the root except `node_modules` and `dist`. A half-written file in an unignored directory turns the
+  **shared** suite red -- which is the failure this whole rule exists to prevent.
+
+`shipped-files.test.ts` fails on any shipped path that looks like a working directory, so an
+off-convention name is caught rather than committed. **Delete the directory when you are done anyway**:
+ignored is not the same as absent, and the next agent to run the suite should not be collecting your
+drafts.
+

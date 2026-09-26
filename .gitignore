@@ -13,6 +13,13 @@ tsconfig.tsbuildinfo
 inq.json
 *.scratch.json
 
+# Scratch working directories. agents/README.md tells every agent to get a new test file green in
+# one of these before it lands in the shared tree, so they are created deliberately and often. Two
+# things go wrong if one is left behind unignored: `git add -A` ships it, and -- worse -- vitest has
+# no include config, so its default collects any *.test.ts under the project root and a half-written
+# file inside one turns the SHARED suite red. That is the exact failure the rule exists to prevent.
+.scratch-*/
+
 # The interviewers' own hiring brief. It is their document, not ours, and this repository is
 # public -- publishing a company's private interview challenge puts it where future candidates
 # find it. The agents read it locally as ground truth, so it stays on disk and out of git.

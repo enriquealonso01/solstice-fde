@@ -1,8 +1,11 @@
 # Master plan: the whole picture
 
-> ## 07:55 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> **NOTHING IS OPEN FOR AN AGENT.** Every numbered task in this file is closed. **What is left is yours:
-> three things to do, three decisions that need no action.**
+> ## 08:09 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **One small agent task is open: T62** — `no-committed-credentials.test.ts` justifies its shape-based checks
+> with *“no test here can know the password's value”*, and **`DEMO_PASSWORD` is not in the strip list.**
+> Nothing exploits it and hermeticity is intact; three list entries make the sentence true. *(T61 shipped at
+> 08:06, one minute after filing.)* Everything else numbered is closed.
+> **What is left is yours: three things to do, three decisions that need no action.**
 >
 > **Run `npx vitest run` yourself before you package — this line carries neither a count nor a verdict.**
 > At **07:29** it was **red** for three minutes: four cases in a file It156 was still writing, whose parser
@@ -1116,6 +1119,124 @@ the exact shape of the cheat sheet's group beat. No document quotes the sentence
 
 **Check when done:** `show-verdict.ts INQ-2002` prints the approver phrase once; the guard covers both verdicts;
 `npx vitest run` green.
+
+### T61 — SHIPPED (It160, 08:06, one minute after filing). `.gitignore` had no rule for the scratch directories It157 tells every agent to create
+
+> **Verified at 08:07:** `.gitignore:21` now carries `.scratch-*/`, and the comment above it names a sharper
+> hazard than the one I filed — *"vitest has **no include config**, so its default collects any `*.test.ts`
+> under the project root and a half-written file inside one turns the SHARED suite red. That is the exact
+> failure the rule exists to prevent."* I filed *“`git add -A` ships it”*; **the live hazard is that an
+> unignored scratch directory defeats the whole purpose of the rule that creates it.** Confirmed the first
+> half myself: `vite.config.ts:19` is `test: { setupFiles: ['./vitest.setup.ts'] }` — no `include`, no
+> `exclude`. **Whether vitest's default glob descends into a dot-prefixed directory I did not test**, because
+> testing it means putting a `.test.ts` inside the repository, and the line is correct either way.
+
+*One line, protective rather than corrective. The rule that creates these was written at **07:41**; there are
+roughly twenty iterations left before 11:00, and each one may now make a directory nothing ignores.*
+
+#### Why this exists now and did not an hour ago
+
+`agents/README.md:316`, added by It157 after my iteration 156 left the suite red for three minutes, says:
+
+> *"Write the file in the scratchpad, run it there against the real repository paths, and copy it in once it
+> passes. Costs nothing; it is the same file either way."*
+
+**It is the right rule** — It159 followed it immediately, its new file failed twice inside `.scratch-it159/`
+instead of in the shared tree, and the directory was cleaned up afterwards. Checked at 08:03: **no `.scratch*`
+exists on disk.**
+
+#### The gap
+
+```
+.gitignore:14   *.scratch.json      <- a file pattern, from the inq.json era
+.gitignore      (no rule matching .scratch-it159/ or any directory)
+```
+
+A scratch directory left behind at the wrong moment is **untracked and unignored**, so `git add -A` ships it,
+and `shipped-files.test.ts`'s `.gitignore`-filtered walk counts it as a shipped file. Nothing else would notice:
+it is not a secret, so `no-committed-credentials` passes it; it is not a document, so no doc guard reads it.
+
+**Every agent iteration from here until submission is a chance to create one, and only one of them has to be
+interrupted mid-run.**
+
+#### What to change
+
+1. **One line in `.gitignore`:** `.scratch-*/` — or whatever pattern matches the convention the rule actually
+   produces. Read `agents/README.md:316` and match what it tells people to name, not what It159 happened to use.
+2. **Say it in the rule.** `agents/README.md` is the file telling agents to create these; the sentence that
+   tells them to should also say the pattern is ignored, so the next agent does not invent
+   `tmp-it170/` and land outside it.
+3. **Optional, only if it is free:** a case in `shipped-files.test.ts` asserting no shipped path matches the
+   scratch pattern. That is the guard that would catch a directory named off-convention, which is the failure the
+   `.gitignore` line cannot cover.
+
+#### Scope, honestly
+
+**Nothing is broken and nothing is currently at risk** — the tree is clean as of 08:03. This is a guard against
+a hazard that was introduced twenty minutes ago and expires at 11:00. **If anything corrective appears, do that
+first**; this is worth one line and no more.
+
+**Check when done:** `.gitignore` carries the directory pattern; the rule in `agents/README.md` names it;
+creating `.scratch-test/` leaves the shipped-file set unchanged; `npx vitest run` green.
+
+### T62. `no-committed-credentials.test.ts` says no test can know the password's value. `DEMO_PASSWORD` is not stripped.
+
+*A false justification inside a security guard. **Nothing is exploiting it** — the fix makes the sentence true
+rather than weakening it, and costs three lines in a list.*
+
+#### The claim and the list, side by side
+
+`src/lib/rules/__tests__/no-committed-credentials.test.ts:106`:
+
+> *"Shape-based like the rest of this file: **`vitest.setup.ts` strips credentials from the environment, so no
+> test here can know the password's value.** What it can do is refuse the file and refuse the line the
+> generator writes."*
+
+`vitest.setup.ts` strips **ten** keys. Compared against every credential-shaped name in `.env`:
+
+```
+stripped:  SUPABASE_URL · SUPABASE_ANON_KEY · SUPABASE_SERVICE_ROLE_KEY · SUPABASE_DB_URL ·
+           TELNYX_API_KEY · TELNYX_ASSISTANT_ID · TELNYX_PUBLIC_KEY · ANTHROPIC_API_KEY ·
+           TOOL_WEBHOOK_SECRET · PROPOSAL_LINK_SECRET
+
+NOT stripped, and matching KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL:
+           DEMO_PASSWORD · NETLIFY_AUTH_TOKEN · TELNYX_SIP_PASSWORD · TELNYX_TELEPHONY_CREDENTIAL_ID
+```
+
+**`DEMO_PASSWORD` is the admin password in `DEMO_LOGINS.md`** — the exact value the sentence says no test can
+know. A test in that file could read `process.env.DEMO_PASSWORD` and compare against it directly.
+
+#### What is and is not at risk
+
+**Hermeticity is intact and is not what this task is about.** Every vendor path the setup file was written for
+— Supabase, the Telnyx API, Anthropic, the tool webhook, the proposal link secret — is stripped. The reason
+given in `vitest.setup.ts` itself is *"plenty of it calls `tryGetDb()`"*, and that is covered.
+
+**What is wrong is the second claim built on top of it.** A reader deciding whether the credential guard is
+adequate is told value-comparison is impossible. It is not. That is the *"assertion holding its own copy of the
+answer"* family, one level up: **a justification holding a copy of a guarantee the code does not give.**
+
+#### What to change
+
+1. **Add `DEMO_PASSWORD`, `NETLIFY_AUTH_TOKEN` and `TELNYX_SIP_PASSWORD` to `STRIPPED`.** Measured: none of the
+   three is referenced by any file under `src/`, `netlify/` or `shared/` outside comments —
+   `DEMO_PASSWORD` appears in `setup-env.test.ts` **in its header prose only**, documenting that the variable was
+   once missing from `.env.example`. Stripping them cannot break a test that does not read them.
+2. **Treat `TELNYX_TELEPHONY_CREDENTIAL_ID` separately and probably leave it.** Unlike the other three it *is*
+   referenced by two non-test files under `src/`/`netlify/`. Read those before adding it; an id is also not a
+   secret in the way a password is, so the sentence does not depend on it.
+3. **If any of them turns out to be read at call time during a test, correct the sentence instead** — say what
+   is actually true (*"the vendor credentials are stripped; the demo password is not, and this file does not
+   read it"*). **Do not leave the current sentence standing either way.**
+
+#### Scope, honestly
+
+Nothing is broken, nothing leaks, and no test misbehaves. **This is a sentence that promises more than the
+mechanism delivers, inside the file whose job is to be trusted about credentials.** Three list entries make it
+true.
+
+**Check when done:** the three names are in `STRIPPED`; `npx vitest run` green; the sentence at `:106` is either
+true as written or replaced with what is.
 
 # ▶ IF THEY ASK — prepared answers to questions the package invites
 
@@ -2537,6 +2658,176 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 238, 08:09 EST — read the file the hermetic-suite claim rests on, and found a sentence it does not support
+
+**T61 shipped one minute after I filed it**, and its `.gitignore` comment names a sharper hazard than mine: not
+*"`git add -A` ships it"* but *"vitest has no include config, so its default collects any `*.test.ts` under the
+project root and a half-written file inside one turns the SHARED suite red."* **An unignored scratch directory
+defeats the purpose of the rule that creates it.** I confirmed the first half — `vite.config.ts:19` is
+`test: { setupFiles: ['./vitest.setup.ts'] }`, no `include`, no `exclude`. *Whether the default glob descends
+into a dot-prefixed directory I did not test, because testing it means putting a `.test.ts` inside the
+repository.*
+
+#### Then I read `vitest.setup.ts`, which several claims rest on and I never had
+
+34 lines. It deletes **ten** environment keys in a `beforeAll` so *"a test run must mean the same thing on a
+laptop, in CI, and thirty seconds before a panel call."*
+
+**Hermeticity is intact.** Every vendor path it was written for is covered — Supabase, the Telnyx API,
+Anthropic, the tool webhook, the proposal link secret. The rationale it gives for itself, *"plenty of it calls
+`tryGetDb()`"*, holds.
+
+#### The claim built on top of it does not
+
+`no-committed-credentials.test.ts:106`:
+
+> *"`vitest.setup.ts` strips credentials from the environment, **so no test here can know the password's
+> value.**"*
+
+Measured, every credential-shaped name in `.env` against that list:
+
+```
+NOT stripped:  DEMO_PASSWORD · NETLIFY_AUTH_TOKEN · TELNYX_SIP_PASSWORD · TELNYX_TELEPHONY_CREDENTIAL_ID
+```
+
+**`DEMO_PASSWORD` is the admin password in `DEMO_LOGINS.md` — the exact value the sentence says no test can
+know.** A test in that file could read it and compare directly. **T62 filed**: three list entries make the
+sentence true, and none of the three is referenced by any non-comment line under `src/`, `netlify/` or
+`shared/` — `DEMO_PASSWORD` appears in `setup-env.test.ts` **in its header prose only**.
+
+> **This is the *"assertion holding its own copy of the answer"* family one level up: a justification holding a
+> copy of a guarantee the code does not give.** Nobody is exploiting it and nothing leaks. What is wrong is that
+> a reader deciding whether the credential guard is adequate is told a value comparison is impossible, and it is
+> not. **In the file whose whole job is to be trusted about credentials.**
+
+#### Two things I checked and did not file
+
+- **The strip runs in `beforeAll`, not at module scope**, so a module reading a credential at import time would
+  see the real value before the deletion. **No instance exists**: the only module-scope `process.env` reads in
+  the whole tree are `ANTHROPIC_MODEL` and `SOL_NARRATION`, neither a credential. Theoretical, so not a task.
+- **`TELNYX_TELEPHONY_CREDENTIAL_ID` is referenced by two non-test files**, unlike the other three. T62 says to
+  read those before adding it, and that an id is not a secret in the way a password is.
+
+#### State
+
+Suite green at **923 / 65 files**. Enrique's six unchanged, `drop policy` first. Inbox and In progress empty.
+Tester silent since 20:26 (**11h43m**). No lock held; I took none.
+
+
+### Iteration 237, 08:05 EST — looked at the repository root the way a reviewer first sees it
+
+**T61 filed — one line, protective.** It159 pinned the five places `demo-cheatsheet.md` quotes the product, in
+both directions; the case worth having is *"move the front-desk comp limit and the cheat sheet's `$45 — inside
+front desk authority` becomes false on screen without anyone touching the document."* **And it followed It157's
+scratch-directory rule, which my own wasted iteration produced two iterations earlier** — its file failed twice
+inside `.scratch-it159/` instead of in the shared tree. *That is the loop closing on itself in under thirty
+minutes: my cost became their rule became their clean run.*
+
+#### The hazard that rule introduced, which nothing ignores
+
+```
+.gitignore:14   *.scratch.json      <- a file pattern, from the inq.json era
+.gitignore      no rule matching .scratch-it159/ or any directory
+on disk 08:03   no .scratch* exists  <- It159 cleaned up
+```
+
+A scratch directory left behind is **untracked and unignored**: `git add -A` ships it and
+`shipped-files.test.ts`'s walk counts it. Nothing else would notice — not a secret, not a document. **The rule
+that creates these was written at 07:41 and there are roughly twenty iterations left**, each one a chance to be
+interrupted mid-run. One line in `.gitignore`, and **if anything corrective appears, that goes first.**
+
+#### What a reviewer actually sees in the root, checked from outside
+
+I had never looked at the repository root as a listing. Two files I could not account for:
+
+```
+next.ps1    HTTP 200   241 lines   "what do I do next. Run it, do the ONE thing it tells you, run it again."
+setup.ps1   HTTP 200   279 lines   "guided credential setup… saves to .env immediately after every paste"
+.claude/settings.json       404     <- correctly absent
+tsconfig.tsbuildinfo        404     <- correctly ignored
+```
+
+**Both ship, and no deliverable mentions either.** `setup.ps1` is better than the manual path the README
+documents for standing the system up — it asks only for what is missing and writes after each paste.
+
+#### Considered and deliberately not filed
+
+Advertising `setup.ps1` in the README looked like free value until I read the block it would go in:
+
+> *"Standing the whole thing up needs **your own** Supabase project… `cp .env.example .env`… `npm run db:schema`
+> … `npm run dev`"* — **and every line of that is portable.**
+
+**Putting `powershell -ExecutionPolicy Bypass -File setup.ps1` into a cross-platform setup block trades a
+universal path for a Windows one**, and the README already opens that section with *"You do not need to"* —
+the deployed site is the primary route. The two scripts ship harmlessly as local convenience. *Recorded as a
+decision rather than left as an oversight.*
+
+> **The general form of the last three of these**: `npm ci` over `npm install`, the policy file's rename, now
+> the setup script. **Each is a real improvement whose cost is paid in a file a reviewer reads first, three
+> hours before submission.** The test I am applying is not *"is this better?"* but *"is the current text
+> wrong?"* — and three times running, it has not been.
+
+#### State
+
+Suite green at **923 / 65 files** (T61 is a `.gitignore` line, not a test change). Enrique's six unchanged,
+`drop policy` first. Inbox and In progress empty. Tester silent since 20:26 (**11h39m**). No lock held; I took
+none.
+
+
+### Iteration 236, 07:58 EST — audited every present-tense claim in the region of my file that can be wrong
+
+**Nothing is open for an agent. No new tasks.** Iteration 235 found a stale block at `:326` by following one
+pointer. That raised the obvious question: **how many more are there?** The dated verification log cannot rot —
+it is history. **Everything above `## 0. Verification log` can**, and that is 2,539 lines.
+
+#### The method, because the answer is only as good as the sweep
+
+A stale summary is always a claim in the **present tense** about state. So I scanned the open region twice with
+two disjoint vocabularies rather than reading 2,539 lines and trusting my attention:
+
+```
+pass 1   still (carries|open|says|needs|unverified|not) · remains open · is open ·
+         nothing is left · waiting on · not yet · unverified · has not been        20 hits
+pass 2   TODO · pending · left to do · to be done · currently (open|missing|broken|
+         unverified) · not been (done|run|verified) · awaiting                      8 hits
+```
+
+**Every hit resolved.** The only genuine defect was the one iteration 235 already corrected.
+
+#### The two that looked wrong and were not, which is the part worth writing down
+
+**`:2028` — *"It still needs a `--refresh`."*** Reads as a pending action on the agent config, which I verified
+byte-identical at 04:52. It is inside **T32's task description**, four lines above its own *"Check when done:"* —
+instruction text for whoever took the task, not a claim about today. Covered by the blanket line at `:326`,
+*"Everything below this line is closed, or evidence"* — the line I rewrote last iteration.
+
+**`:2164` — *"the supervisor dashboard still opens on 100 rows of conversations we had with ourselves."*** I
+measured **313 sessions, 288 active** at 07:00, so the figure is stale threefold. But its heading at `:2149`
+carries the resolution: **"T26 — CLOSED, PR #61. It is the Archive panel, not the live tile."** The body is the
+reasoning from *before* that finding, and `docs/demo-runbook.md:117` carries the operational version: *"The
+Archive panel underneath is a different thing, and it will not be empty."*
+
+> **Both are the project's prepend-and-keep convention working as designed**, and both would have been filed as
+> defects by a sweep that read the sentence without the heading. **A stale-looking sentence under a heading that
+> resolves it is a record; the same sentence under a heading that does not is a defect.** That distinction is
+> the whole difference between this iteration finding nothing and it filing two false tasks.
+
+*I did not verify the live tile is clean after `demo:tidy` — that needs a signed-in screen and a destructive
+command. The heading says it, the runbook says it, and I have not seen it.*
+
+#### What this converts
+
+*"The plan is accurate and correctly ordered"* has been the closing line of my status file for most of the
+night, resting on the fact that I keep finding nothing. **It now rests on a sweep with a stated method over a
+stated region**, which is a different kind of sentence — and it is the same upgrade I have been asking of every
+document in the package all morning.
+
+#### State
+
+Suite green at **923 / 65 files**. Every numbered task closed. Enrique's six unchanged, `drop policy` first.
+Inbox and In progress empty. Tester silent since 20:26 (**11h32m**). No lock held; I took none.
+
 
 ### Iteration 235, 07:55 EST — read the file my own instructions name every iteration, and it found a false claim in mine
 
