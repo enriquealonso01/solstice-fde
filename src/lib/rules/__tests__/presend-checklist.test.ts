@@ -96,11 +96,13 @@ describe('GET /api/chat writes nothing', () => {
   // The two files that send a reader to those lines. Both are edited often enough that a citation
   // into them rots quietly, and a wrong line number here reads as a claim nobody checked.
   const CITED: Array<[string, number, string]> = [
-    ['netlify/functions/chat.ts', 227, "req.method !== 'POST'"],
-    ['netlify/functions/chat.ts', 243, 'resolveSessionId'],
-    // Was 579 until iteration 166, when the T63 fix added a comment block above it. Re-pointed by
-    // reading the line, which is the only way that has ever worked here.
-    ['netlify/functions/chat.ts', 595, "from('sessions').insert("],
+    ['netlify/functions/chat.ts', 237, "req.method !== 'POST'"],
+    ['netlify/functions/chat.ts', 253, 'resolveSessionId'],
+    // Was 579 until iteration 166, when the T63 fix added a comment block above it, then 595, then
+    // 724 when GET /api/chat/inbox and the supervisor stand-down landed above it. Re-pointed each
+    // time by reading the line, which is the only way that has ever worked here. Three moves in three
+    // changes is the argument for this test existing rather than for the citation being fragile.
+    ['netlify/functions/chat.ts', 724, "from('sessions').insert("],
     ['docs/demo-runbook.md', 60, 'Do not warm it by sending a real chat message'],
   ]
 

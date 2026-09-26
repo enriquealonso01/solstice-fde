@@ -10,6 +10,7 @@
  *                            "summary": "...", "citations": [...] }
  *   event: done      data: { "message_id": "..." }
  *   event: error     data: { "message": "..." }
+ *   event: handoff   data: { "message": "..." }   a human took the chat; no delta this turn
  *
  * The server side is built by another agent. This file is the only place that
  * knows the wire format; everything above it consumes `ChatStreamEvent`.
@@ -49,8 +50,19 @@ export interface ErrorEvent {
   type: 'error'
   message: string
 }
+/**
+ * A supervisor has taken this conversation, so Sol did not answer this turn.
+ *
+ * Distinct from `error` on purpose. Nothing went wrong, the guest's message was recorded and read,
+ * and the widget must not offer a retry or blame the connection: rendering this as an error would
+ * tell the guest their question failed at the exact moment a human picked it up.
+ */
+export interface HandoffEvent {
+  type: 'handoff'
+  message: string
+}
 
-export type ChatWireEvent = SessionEvent | DeltaEvent | ToolEvent | DoneEvent | ErrorEvent
+export type ChatWireEvent = SessionEvent | DeltaEvent | ToolEvent | DoneEvent | ErrorEvent | HandoffEvent
 
 /* ------------------------------------------------------------------ *
  * Local lifecycle events (never sent by the server)                    *
@@ -173,7 +185,7 @@ export async function* streamChat(
       for await (const event of readEventStream(response)) {
         sawAnyEvent = true
         if (event.type === 'session') sessionId = event.session_id
-        if (event.type === 'done' || event.type === 'error') closedCleanly = true
+        if (event.type === 'done' || event.type === 'error' || event.type === 'handoff') closedCleanly = true
         yield event
       }
 
@@ -316,6 +328,12 @@ function toWireEvent(raw: RawEvent | null): ChatWireEvent | null {
       return {
         type: 'error',
         message: typeof body.message === 'string' ? body.message : 'The chat service reported an error.',
+      }
+
+    case 'handoff':
+      return {
+        type: 'handoff',
+        message: typeof body.message === 'string' ? body.message : 'A Solstice team member is with you now.',
       }
 
     default:

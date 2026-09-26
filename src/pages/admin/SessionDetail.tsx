@@ -5,9 +5,10 @@
 // system, not a live one and a stored one, which is why the archive can never disagree
 // with what the supervisor watched happen.
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import AdminShell from '@/components/admin/AdminShell'
+import ChatIntervention from '@/components/admin/ChatIntervention'
 import SupervisorLadder from '@/components/admin/SupervisorLadder'
 import {
   AccessNotice,
@@ -25,7 +26,11 @@ import {
   clockTime,
   duration,
   intentLabel,
+  isLive,
+  sessionClockEnd,
+  type MessageAttachment,
   type MessageRow,
+  type SessionStatus,
   type ToolInvocationRow,
 } from '@/components/admin/mockData'
 
@@ -42,6 +47,10 @@ export default function SessionDetail() {
   const transcript = useTranscript(id)
   const trace = useToolTrace(id)
   const now = useNow(1000)
+
+  // Realtime carries the status change back within about a second, but the supervisor pressed the
+  // button and should not watch it not happen for that second.
+  const [statusOverride, setStatusOverride] = useState<SessionStatus | null>(null)
 
   const transcriptRef = useStickToBottom<HTMLDivElement>(transcript.rows.length)
   const traceRef = useStickToBottom<HTMLDivElement>(trace.rows.length)
@@ -82,10 +91,9 @@ export default function SessionDetail() {
     )
   }
 
-  const elapsed = duration(
-    session.started_at,
-    session.status === 'ended' && session.ended_at ? new Date(session.ended_at).getTime() : now,
-  )
+  const elapsed = duration(session.started_at, sessionClockEnd(session, now))
+  const liveNow = isLive(session)
+  const status: SessionStatus = statusOverride ?? session.status
 
   return (
     <AdminShell
@@ -93,8 +101,8 @@ export default function SessionDetail() {
       subtitle={
         <span className="flex flex-wrap items-center gap-2">
           <ChannelChip channel={session.channel} />
-          <SessionStatusChip status={session.status} />
-          <span className="chip bg-solstice-sand/60 capitalize text-solstice-slate">{intentLabel(session.intent, session.status)}</span>
+          <SessionStatusChip status={status} />
+          <span className="chip bg-solstice-sand/60 capitalize text-solstice-slate">{intentLabel(session.intent, status)}</span>
           <span className="tabular-nums text-solstice-stone">{elapsed}</span>
           {session.phone_masked ? <span className="text-solstice-stone">· {session.phone_masked}</span> : null}
         </span>
@@ -114,7 +122,7 @@ export default function SessionDetail() {
           <PanelHeader
             title="Transcript"
             right={
-              session.status === 'active' ? (
+              liveNow && status !== 'taken_over' ? (
                 <span className="chip bg-emerald-50 text-emerald-800">
                   <span className="sol-dot h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   streaming
@@ -137,6 +145,7 @@ export default function SessionDetail() {
                       <span className="text-[11px] tabular-nums text-solstice-stone/70">{clockTime(m.created_at)}</span>
                     </div>
                     <p className={`mt-0.5 text-sm leading-relaxed ${style.tone}`}>{m.content}</p>
+                    {m.attachment ? <AttachmentChip attachment={m.attachment} /> : null}
                   </div>
                 )
               })
@@ -175,11 +184,18 @@ export default function SessionDetail() {
 
         {/* supervisor */}
         <div className="space-y-4 xl:col-span-3">
-          <SupervisorLadder
-            sessionId={session.id}
-            channel={session.channel}
-            status={session.status}
-          />
+          {/* Two channels, two different controls. A chat has no audio to monitor or whisper into,
+              so the voice ladder's four rungs would be one working button and three dead ones. */}
+          {session.channel === 'chat' ? (
+            <ChatIntervention
+              sessionId={session.id}
+              status={status}
+              live={liveNow}
+              onStatusChange={setStatusOverride}
+            />
+          ) : (
+            <SupervisorLadder sessionId={session.id} channel={session.channel} status={status} />
+          )}
           <Panel>
             <PanelHeader title="Session facts" />
             <dl className="space-y-2 p-4 text-sm">
@@ -194,6 +210,26 @@ export default function SessionDetail() {
         </div>
       </div>
     </AdminShell>
+  )
+}
+
+/** A file a supervisor handed the guest, shown in the transcript so the archive records what was
+ *  sent and not merely that something was. */
+function AttachmentChip({ attachment }: { attachment: MessageAttachment }) {
+  return (
+    <a
+      href={attachment.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-1 inline-flex max-w-full items-center gap-1.5 rounded border border-solstice-sand bg-white px-2 py-1 text-xs text-solstice-slate transition hover:border-solstice-stone/40"
+    >
+      <span className="truncate font-medium text-solstice-ink">{attachment.filename}</span>
+      <span className="shrink-0 text-solstice-stone">
+        {attachment.bytes < 1024 * 1024
+          ? `${Math.max(1, Math.round(attachment.bytes / 1024))} KB`
+          : `${(attachment.bytes / (1024 * 1024)).toFixed(1)} MB`}
+      </span>
+    </a>
   )
 }
 

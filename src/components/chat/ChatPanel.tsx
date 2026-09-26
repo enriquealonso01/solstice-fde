@@ -21,6 +21,8 @@ interface ChatPanelProps {
   onSuggestion: (text: string) => void
   voice: VoiceSession
   busy: boolean
+  /** A human member of staff is answering, so Sol is standing down. */
+  takenOver: boolean
   inputRef: RefObject<HTMLTextAreaElement>
 }
 
@@ -39,6 +41,7 @@ export function ChatPanel(props: ChatPanelProps) {
     onSuggestion,
     voice,
     busy,
+    takenOver,
     inputRef,
   } = props
 
@@ -101,6 +104,21 @@ export function ChatPanel(props: ChatPanelProps) {
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col bg-solstice-cream/50">
+        {takenOver ? (
+          /* Said once, above the transcript, rather than repeated on every staff message. The guest
+             is entitled to know they stopped talking to an AI; they do not need reminding each turn. */
+          <div
+            role="status"
+            className="mx-4 mt-3 flex items-start gap-2 rounded-xl border border-solstice-gold/40 bg-solstice-gold/[0.08] px-3 py-2"
+          >
+            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-solstice-gold" />
+            <p className="text-[12px] leading-relaxed text-solstice-slate">
+              <span className="font-medium text-solstice-ink">A Solstice team member has joined.</span> They can see
+              this whole conversation, and they are answering you directly now.
+            </p>
+          </div>
+        ) : null}
+
         <MessageList turns={turns} connection={connection} onRetry={onRetry} />
 
         {suggestions.length > 0 ? (

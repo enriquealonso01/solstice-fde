@@ -101,6 +101,13 @@ export const GROUP_ROLES: StaffRole[] = ['group_sales', 'admin']
 export async function authorizeStaff(
   req: Request,
   allowed: StaffRole[] = GROUP_ROLES,
+  /**
+   * What to say on a 403. Defaults to the group-sales sentence because that is this function's
+   * first caller, but the same token check now guards the concierge side too, and telling a
+   * concierge supervisor they "cannot see group sales" when they tried to answer a guest chat
+   * would be a confusing lie about which rule stopped them.
+   */
+  deniedMessage?: string,
 ): Promise<AuthResult> {
   const header = req.headers.get('authorization') ?? req.headers.get('Authorization')
   const token = header?.toLowerCase().startsWith('bearer ') ? header.slice(7).trim() : null
@@ -161,6 +168,7 @@ export async function authorizeStaff(
     return {
       ok: false,
       error:
+        deniedMessage ??
         'This role cannot see group sales. Group sales inquiries are readable by group_sales and admin only, which is what row level security enforces in the database as well.',
       status: 403,
     }

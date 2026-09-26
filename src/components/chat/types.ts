@@ -42,7 +42,32 @@ export interface AgentTurn {
   greeting?: boolean
 }
 
-export type Turn = GuestTurn | AgentTurn
+/** A file a supervisor handed the guest. Mirrors StoredAttachment in
+ *  netlify/functions/supervisor/attachments.ts, which is what writes it. */
+export interface TurnAttachment {
+  filename: string
+  content_type: string
+  bytes: number
+  url: string
+}
+
+/**
+ * A message from a human member of staff, not from Sol.
+ *
+ * Kept as its own kind rather than an AgentTurn with a flag, because the difference is the whole
+ * point: an AgentTurn carries tool chips, citations and a retry affordance, and none of those mean
+ * anything for something a person typed. Rendering a supervisor's sentence in Sol's bubble would
+ * also tell the guest the AI said it, which is the one thing this feature exists to avoid.
+ */
+export interface StaffTurn {
+  id: string
+  role: 'staff'
+  text: string
+  at: number
+  attachment?: TurnAttachment
+}
+
+export type Turn = GuestTurn | AgentTurn | StaffTurn
 
 export type TransportMode = 'live' | 'mock'
 

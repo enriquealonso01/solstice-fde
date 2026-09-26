@@ -388,7 +388,7 @@ deliberate, defensible choice, and each is visible in the code rather than burie
     the send path belongs to whatever holds identity in production, and is deliberately not
     papered over here.
 15. **A verified identity survives the whole session, with no expiry.** `identify_guest` binds the
-    guest to the session row, and every later turn restores it (`chat.ts:311`) rather than asking
+    guest to the session row, and every later turn restores it (`chat.ts:426`) rather than asking
     again. That is deliberate: the transcript records what Sol *said*, not what it *knows*, so
     without the binding it would re-verify the same guest on every message and the conversation
     would be unusable. The limit is that the binding has no TTL, and the lookup is by session id
@@ -427,7 +427,7 @@ deliberate, defensible choice, and each is visible in the code rather than burie
     the default for a group request, notifies Manager on duty or AGM); and `notify` is a stored string
     array interpolated into the tool's reason text, which nothing sends.
 
-    `netlify/functions/chat.ts:168` now says *"call `create_escalation`, and tell them a manager has
+    `netlify/functions/chat.ts:173` now says *"call `create_escalation`, and tell them a manager has
     it and will follow up"*, and forbids naming who will make contact or promising when. The true part
     is kept — a group block is priced by Sales rather than by Sol — and the false part, that Sales has
     it and is about to call, is gone. Pinned by `chat-note-sales-promise.test.ts`, which asserts on the
