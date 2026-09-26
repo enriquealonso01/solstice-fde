@@ -10873,3 +10873,85 @@ because it could not see the claims. So the first case asserts `toNumber('seven'
 
 `npx tsc -b` clean. `npx vitest run` **966 tests / 67 files** green (up 7). Written and run in
 `.scratch-it164/` first and green on the first attempt there, so the shared tree never saw a draft.
+
+---
+
+## It165 — re-measured the Download-ZIP claim, then made it stop depending on remembering
+
+Empty board. The plan asserts *"a reviewer can run the suite from a `git clone` or a Download ZIP and it
+passes — measured at 06:50"*. Since that measurement I have added **twelve new or rewritten test files**, and
+the new ones read `.env.example`, `docs/`, `exports/`, `node_modules/.bin`, `MAP_TABS` and the compiled
+dataset. It152 found a real failure the first time this was measured. The point of measuring it is that it
+decays.
+
+### It still passes
+
+Extracted with `git archive`, no `.git`, `npm ci`, then the suite:
+
+```
+273 files, .env / DEMO_LOGINS.md / the brief PDF all absent, data/generated present (tracked)
+tsc -b        clean
+vitest run    961 passed | 5 skipped | 0 failed
+```
+
+The five skips are iteration 137's deliberate `skipIf(!clone)` cases. **No defect.**
+
+### But it passed because somebody remembered
+
+Twelve iterations separated the two measurements, and the second happened because I chose to look. The
+failure It152 found was not a one-off: a test shelling out to git **fails to collect** in a tree with no
+`.git`, reporting `fatal: not a git repository` where a result belongs — and `README.md` invites a reviewer
+to run this suite. `agents/README.md` has banned it since iteration 138, and the file that broke it was
+written seven iterations after the rule.
+
+So the rule is mechanical now. `git-usage.test.ts` sweeps every `.ts`/`.tsx` under `src/` for any shape that
+reaches the git binary, allows exactly two files with the reason written beside each, and fails on anything
+else. The claim in the README no longer depends on an agent deciding to re-measure it.
+
+Two files are allowed: `shippedFiles.ts`, which *is* the fallback, and `suite-integrity.test.ts`, which asks
+`isGitClone()` first and skips its cases outside a clone. The allow-list is checked in both directions — an
+entry naming a file that no longer calls git also fails, because an exemption nobody needs is how the next
+unguarded call gets waved through.
+
+### Red-check, four scenarios
+
+```
+It152's defect reintroduced in defect-disclosure-list.test.ts   1 failed
+a new file calling execSync('git rev-parse HEAD')               1 failed
+shippedFiles stops calling git while staying on the allow-list  1 failed
+the fallback stops reporting a non-git answer                   1 failed
+restored                                                        6 passed   three files byte-identical
+```
+
+And the file that enforces ZIP-compatibility was run **in a ZIP tree**: 6 passed there, whole suite 967
+passed and 5 skipped.
+
+### Three self-references, all found by running it
+
+1. **The positive control caught a hole in my own pattern before the shared tree saw it.** The first regex
+   required `'git'` as the whole first argument, so `` execSync(`git rev-parse HEAD`) `` — the form somebody
+   would naturally write — did not match. Found in `.scratch-it165/`, which is the second time the
+   scratch-first rule has paid.
+2. **The file flagged itself.** Its positive control quotes the banned calls as *code*, not prose, so the
+   sweep matched its own source. Excluded, with the exclusion backed by a fact rather than a promise: a case
+   asserts the file imports no process runner, so it cannot reach git whatever strings it contains.
+3. **Then that assertion flagged itself too.** Searching the whole file for the module name found the name
+   inside the assertion doing the searching. Scoped to import lines, which is what it always meant.
+
+### And two instrument failures, one of them the eighth of its kind
+
+**Eighth heredoc escape casualty, against a rule I wrote myself.** `\n` inside a heredoc became real
+newlines in two string literals and `\b` became a `0x08` byte, breaking the TypeScript parse — four
+`TS1005` errors. Repaired by rebuilding the two statements **by line index** from a script written with the
+Write tool. The rule in `agents/README.md` is explicit; I reached for the heredoc anyway, under time
+pressure, for the eighth time.
+
+**A mutation that did not achieve its stated change, and then a pre-flight that measured the wrong thing.**
+Scenario 3 first reported *nothing failed* — because I replaced one of `shippedFiles.ts`'s **two** git calls
+and the file still matched. Adding a pre-flight assertion that the mutation had actually removed every call
+then failed too, because it scanned raw lines while the guard strips comments, and that file's own JSDoc
+quotes the call. With the pre-flight stripping comments the same way: 0 calls left, and the case fires.
+*A mutation is a measurement, and it needs its own check.*
+
+`npx tsc -b` clean. `npx vitest run` **972 tests / 68 files** green here, **967 passed / 5 skipped / 0
+failed** in a tree with no `.git`.

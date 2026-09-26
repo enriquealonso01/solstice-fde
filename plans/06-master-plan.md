@@ -633,6 +633,17 @@ the claim worth making, and *"nine of nine at the time of writing"* dates itself
 **Leave *"25 tools"* alone.** It is correct, it is pinned, and changing it would remove a number that is doing
 useful work.
 
+> **CORRECTED at iteration 247.** *"It is pinned"* was true of **one document of four.** `diagram-guide` held
+> the number in `docs/architecture.drawio`; **`README.md:28` and `docs/README-diagram.md:43` and `:50` were
+> pinned by nothing.** It164 measured the decisive pair: a README saying *"24 tools"* **passes** the old
+> coverage and fails the new guard. **A re-provision would have turned the diagram red and left the README
+> quietly wrong** — worse than nothing checked, because the suite would look like it had an opinion.
+>
+> *The conclusion stands and the reason was weaker than I wrote it:* I read that a guard existed and concluded
+> the property held everywhere. **Same error as reading a guard's header at 219 and vouching for a script at
+> 234.** Now genuinely pinned across six statements in five documents — and I re-measured all three sources
+> myself at 08:50: **export tools 25 · MAP_TABS 7 · generated inquiries 10**, every statement correct.
+
 **Check when done:** the node states an invariant rather than a bare count; `diagram-guide.test.ts` still reads
 the `.drawio` as plain XML and is green; `docs/README-diagram.md` still describes the pages accurately;
 *"25 tools"* is unchanged.
@@ -2741,6 +2752,130 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 247, 08:50 EST — five of my mistakes tonight are one mistake, and the repository has been making it too
+
+**Nothing is open for an agent. No new tasks.** It164 found that the argument for pinning *"25 tools"* — written
+out in `diagram-guide.test.ts`'s own words — **had been applied to one document of four.**
+
+#### My own note said it was pinned, and it was pinned in the wrong place
+
+At T49 I wrote *"**Leave "25 tools" alone.** It is correct, it is pinned."* The guard held the number in
+`docs/architecture.drawio`. **`README.md:28` and `docs/README-diagram.md:43` and `:50` were pinned by nothing** —
+and the README is where a reviewer reads it. It164's decisive pair:
+
+```
+README.md says "24 tools", judged by the new guard     1 failed
+the same drift, judged by diagram-guide alone         24 passed   <- the coverage I relied on
+```
+
+**A re-provision would have turned the diagram red and left the README quietly wrong** — worse than nothing
+checked, because the suite would look like it had an opinion. *I read that a guard existed and concluded the
+property held everywhere.* **Corrected in place at T49.**
+
+Re-measured all three sources myself rather than restating: **export tools 25 · `MAP_TABS` 7 · generated
+inquiries 10**, and all six statements across five documents agree.
+
+#### And then my instrument was wrong again, which is the actual subject of this entry
+
+Counting `MAP_TABS`, I matched `{` inside the array — assuming object literals. It is
+`export const MAP_TABS: MapTab[] = [overview, guest, voice, agent, data, delivery, deploy]`, seven identifiers.
+My count came back **0** and I read the declaration instead of trusting it.
+
+**That is the fifth time tonight, and all five are the same mistake:**
+
+```
+audit_log.target            a column I assumed            -> it is `subject`
+select=id                   a key I assumed               -> guest_id / reservation_id / property_code
+proposals.proposal_id       a column I assumed            -> the code lives in the path, not a column
+basename in file contents   a place I assumed             -> a file rarely names itself
+{ inside MAP_TABS           a shape I assumed             -> a list of identifiers
+```
+
+**Every one was a matcher written for a shape I had not looked at.** Not a reasoning error — a *shape* error,
+made before the reasoning starts.
+
+#### The repository has been making it too, which is what makes it interesting
+
+```
+It156  handlerOf() looked for `new Map(Object.entries({...}))`   the registry has no such expression
+It160  readIgnore treated ".scratch-*/" as a literal directory   git treats it as a glob
+It157  admin-prose read label= / hint= attributes                 the prose is not in attributes
+It164  a digits-only parser would have found four of six claims   two of them say "seven"
+```
+
+**Four of theirs, five of mine, one shape.** The difference is that It164 wrote the cure as a case rather than a
+rule: its first assertion is `toNumber('seven') === 7` — **prove the parser on a known input before trusting
+its output.** That is the mechanical form of every version of this I have written down tonight, and it is the
+only one that runs.
+
+> **For my own remaining iterations: before a matcher decides anything, print what it matched on one known
+> input.** Five times I skipped that and four times it cost a false conclusion; the fifth cost only this
+> paragraph because the answer came back `0` and zero is obviously wrong.
+
+#### State
+
+Suite green at **944 / 66 files** as of 08:21. Enrique's six unchanged, `drop policy` first. Inbox and In
+progress empty. Tester silent since 20:26 (**12h24m**). No lock held; I took none.
+
+
+### Iteration 246, 08:46 EST — drove the transcript SUBMISSION tells a reviewer to read first
+
+**Nothing is open for an agent. No new tasks.** `SUBMISSION.md` says *"Start with `honest-handoff.md`: asked
+point blank whether a human is joining, **Sol says no**."* **I had never driven it.**
+
+#### The headline moment holds, live
+
+```
+turn 1  "I stayed at Solstice Tampa Bayshore and the room was not what I booked.
+         This is Marcus Webb, confirmation R55006. I want a person, not a bot."
+  identify_guest -> Verified Marcus Webb (Gold) · get_reservation · create_escalation -> agm
+  transfer_to_human -> "Handing over to a colleague"
+
+turn 2  "Is a human being joining this chat right now, yes or no?"
+  transfer_to_human · create_escalation (the same escalation id)
+  Sol: "No - no one has joined this chat yet. I've put this in front of the manager on duty today
+        with the full detail, and you'll hear back from them."
+```
+
+**Asked point blank, Sol says no.** The claim `SUBMISSION.md` puts first is the claim the system makes.
+
+#### And it is the *second* question that does it
+
+Turn one escalated and read warmer: in this run Sol said the manager *"will pick things up with you here."*
+The transcript's own turn one is more careful — *"this isn't something I can promise a live transfer for right
+now, but it's in front of a person, not left with me."*
+
+That matters because of what the tool returns. The transcript's own note: `transfer_to_human` reports
+**`transfer_available: true` alongside `live_handoff_guaranteed: false`** — *"two different facts reported
+separately on purpose. A supervisor can join a chat, so the route exists; nothing guarantees one is watching, so
+the guest is never told one is on the way."* The `result_summary` in the trace is only the optimistic half,
+*"Handing over to a colleague."*
+
+> **I am not filing this.** It is model prose, which this project deliberately does not pin — It159:
+> *"a test demanding exact wording from a model would fail on a paraphrase that is just as good."* It is one
+> run, and one sample of model wording is not a finding. And the guardrail **held where it is load-bearing**:
+> asked directly, the answer was no.
+>
+> **What I did instead is stage advice, which costs nothing and is true regardless of the wording:** the beat
+> lands on the yes-or-no question. **A presenter who stops at turn one shows an escalation; one who asks the
+> second question shows the refusal that is the reason the transcript is first in the list.** Added to the
+> banner.
+
+#### What this closes
+
+Five of the six transcripts have now been driven or covered live: parking (218), service-animal subject (242),
+platinum-late-checkout via the Chen beat (213), refund-outside-window's *policy* via `show-verdict` and the
+recovery-window beat (243), and honest-handoff (here). **`voice-call.md` is the one I will not drive** — it
+costs about $0.48 against a balance under $3.01, and the runbook's own instruction is not to rehearse voice in a
+loop. *That is a choice, not an omission, and it is the same one the plan has recorded since the balance was
+first measured.*
+
+#### State
+
+Suite green at **944 / 66 files** as of 08:21. Enrique's six unchanged, `drop policy` first. Inbox and In
+progress empty. Tester silent since 20:26 (**12h20m**). No lock held; I took none.
+
 
 ### Iteration 245, 08:42 EST — swept the deliverables for phantom identifiers and found none; my instrument found three
 
