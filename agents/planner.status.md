@@ -4,53 +4,53 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 224 — 2026-09-26 07:02 EST
+## Iteration 226 — 2026-09-26 07:13 EST
 
-**The plan is accurate and correctly ordered. Nothing is open for an agent.**
+**The plan is accurate and correctly ordered. Nothing is open for an agent. No new tasks.**
 
-### I ran the pre-flight command he will type at 10:55
+### The near-miss: the audit's PARTIALs are deliberate, and its guard says so
 
-`npm run demo:preview` — the read-only half of `demo:tidy`. I confirmed it takes `--delete` to delete anything
-and did not pass it.
+Auditing Katie's asks, I found `plans/05-requirements-audit.md` reading **"D5 | Surprise and delight |
+PARTIAL"** while a superseding block 60 lines above records that *"failure injection was run on production, and
+the supervisor ladder was verified on a live call."* **D3** and **D6** are the same shape; only **D1** carries a
+**DONE** marker, added by T53. It looked exactly like T53's fix left half-done — the reasoning applied to the
+row that was noticed, not to the class.
+
+I was composing the task when I checked what guards the file. **`doc-paths.test.ts:218` does, and its header
+states the intent:**
+
+> *"A dated audit may keep its verdicts, but not silently… **The original stays: it is an honest snapshot and
+> reads as one. What this pins is that the correction stays attached to it.**"*
+
+Two green cases: the file must still contain `**PARTIAL**`, and must carry a dated `Update, YYYY-MM-DD —` block
+while those verdicts stand. **The stale-looking table is the design** — the same prepend-and-keep pattern It144
+used on the latency doc.
+
+> **Fourth time this segment something I judged thin already had a named answer**: *Escalation queue* when I
+> grepped for *notif*; the hand-authored SVG that looked like a stale export; the jobs bonus living in
+> `integration-recommendation.md`; now this.
+>
+> **The mechanical form, since the maxim has not been enough: before filing against a file, read the guard that
+> covers it.** A guard's header states intent directly — faster and more authoritative than inferring it from
+> the file's shape. `grep -rl <file> --include=*.test.ts` is the whole step.
+
+### The check worth having: no switch left on
+
+The runbook warns twice that a failure-injection switch left on *"makes the rest of the demo look broken."*
+`/api/flags` is 401 anonymously — correct — so I read the table behind it:
 
 ```
-313 sessions examined
-0 phantom(s) found
-288 session(s) still marked active; 287 idle for over 30 minutes
+pms_offline             enabled=False   2026-09-25T17:41:05
+policy_source_offline   enabled=False   2026-09-25T13:55:47
+reservations_offline    enabled=False   2026-09-25T13:55:47
+SWITCHES ON: none — all healthy
 ```
 
-**288 sessions would show as live on the supervisor grid right now**, a good share of them mine — every chat I
-drove tonight to verify a beat opened one. *Measured at 07:00 and rising; a reading, not a target.*
+**Nothing was left on**, and nothing touched since yesterday afternoon.
 
-**This is anticipated, not a gap.** `demo-runbook.md:23` says *"Stop the loop, then tidy, then warm up"* and
-`:37` puts `demo:tidy` **"minutes before they join, not the night before"**, with the reason exactly right:
-*"rehearsing is itself what fills the supervisor dashboard with stale 'live' conversations."*
-`HUMAN_INTERVENTION.md:972` carries the same sequence. My verification work is part of what fills it, and the
-sequence already accounts for that.
-
-### The flag guard, tested the way a typo would test it
-
-The runbook claims `--minutes` *"refuses anything under 1"* — and that matters, because `--minutes 0` on the
-delete run would close the live demo session with the stale ones. Run against the **preview**:
-
-```
---minutes 0   Error: --minutes needs a number of minutes, 1 or more. Got: 0
---minutes 2   288 session(s) still marked active; 288 idle for over 2 minutes
-```
-
-**The guard is real**, and `--minutes 2` reaches all 288, so the documented sequence finishes the job.
-
-### One cosmetic thing to know rather than fix
-
-After that error, Node prints its own teardown assertion — `Assertion failed: !(handle->flags &
-UV_HANDLE_CLOSING) … src\win\async.c` — libuv on Node v24.13.1/Windows, **after** the validation has already
-done its job.
-
-> **Considered and deliberately not filed.** The fix is two lines, but it touches the script he runs minutes
-> before the panel joins, and what it would tidy is a scary-looking dump *after a correct refusal*, not a wrong
-> outcome. **Hours before a demo, knowing about it beats patching the tool you are about to depend on.**
-
-It is in the log and the banner so that if he mistypes it at 10:55, he knows the refusal worked.
+*Worth saying on stage, from `_lib/flags.ts:12`:* **the injection layer fails closed to healthy** — *"If the
+flags table is unreachable we assume nothing is injected."* If Supabase hiccups mid-demo the system does not
+start reporting every upstream as down. The mechanism degrades in the same direction as everything else.
 
 ### Open
 
@@ -63,10 +63,11 @@ It is in the log and the banner so that if he mistypes it at 10:55, he knows the
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
 
-Nothing for an agent. Tester silent since 20:26 (**10h36m**); no open findings. Inbox and In progress empty. No
-lock held; I took none. Plan guards re-run: **104 green**.
+Nothing for an agent. Tester silent since 20:26 (**10h47m**); no open findings. Inbox and In progress empty. No
+lock held; I took none. Plan guards re-run: **104 green**; full suite **903**.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** The pre-flight sequence is verified as far as it can be without deleting anything;
-the SQL is still the one action nobody else can take.
+**The `drop policy` paste.** The pre-flight state is clean, the package is public and current, and every
+deliverable has been checked against the brief's own text. **The SQL is the one action left that nobody else can
+take.**

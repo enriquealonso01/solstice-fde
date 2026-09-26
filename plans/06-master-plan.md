@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 07:01 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 07:12 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **NOTHING IS OPEN FOR AN AGENT.** T59 shipped at 06:40 and every numbered task in this file is closed.
 > The suite is **898 tests / 62 files**, green. The new file pins the Platinum refusal to the inventory
 > service and **inverts it under `wide_open`**, so the beat cannot quietly stop depending on the data.
@@ -22,6 +22,14 @@
 > I tested the guard the way a typo would: `--minutes 0` is **refused**, `--minutes 2` reaches all 288.
 > *If you mistype it and see a `libuv` assertion after the error line, the refusal still worked — iteration
 > 224 in the log.*
+> **The link you hand over is public, current and clean — checked from outside at 07:06.**
+> `github.com/enriquealonso01/solstice-fde` **200** anonymously; `README.md` and `SUBMISSION.md` **200**;
+> `DEMO_LOGINS.md`, `.env` and the brief PDF **404**. And the published files are **byte-identical to this
+> tree**, including a test created 25 minutes ago — **what a reviewer downloads is what we tested.**
+> **All three failure-injection switches read healthy at 07:12** — `pms_offline`, `reservations_offline`,
+> `policy_source_offline` all false, untouched since yesterday afternoon. **Nothing was left on from a
+> rehearsal**, which the runbook warns *“makes the rest of the demo look broken.”* Check it again at 10:55
+> anyway — it is a pre-flight box for a reason.
 > **Measured at 06:09: the Chen suite refusal — your opening beat — is that function's output.**
 > Driven end to end on production: 2PM guarantee confirmed outright, suite refused, escalated to the AGM.
 > **Better stage line than the card's:** the tool's decision is literally `policy_gap_manager_decision`, and
@@ -2509,6 +2517,124 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 226, 07:12 EST — a fourth near-miss, and the pre-flight item that would make the demo look broken
+
+**Nothing is open for an agent. No new tasks.** One near-miss worth a rule, and one live check worth having.
+
+#### The near-miss: the audit's PARTIALs are deliberate, and the guard says so
+
+Auditing Katie's asks, I found `plans/05-requirements-audit.md` saying **"D5 | Surprise and delight | PARTIAL"**
+— while a superseding block 60 lines above records that *"failure injection was run on production, and the
+supervisor ladder was verified on a live call."* **D3** and **D6** are the same shape. Only **D1** carries a
+**DONE** marker, added by T53.
+
+That looked exactly like T53's finding left half-done: the reasoning applied to the row that was noticed, not to
+the class. I was composing the task when I checked what guards the file.
+
+**`doc-paths.test.ts:218` guards it, and its header states the intent:**
+
+> *"A dated audit may keep its verdicts, but not silently… **The original stays: it is an honest snapshot and
+> reads as one. What this pins is that the correction stays attached to it.**"*
+
+Two cases: the file must still contain `**PARTIAL**`, and it must carry a dated `Update, YYYY-MM-DD —` block
+while those verdicts stand. Both green. **The stale-looking table is the design** — the same prepend-and-keep
+pattern It144 used on the latency doc, where deleting a superseded admission *"would contradict the pattern this
+project has used for every other correction."*
+
+> **Fourth time this segment that something I judged thin already had a named answer** — *Escalation queue* when
+> I grepped for *notif*, the hand-authored SVG that looked like a stale export, the jobs bonus living in
+> `integration-recommendation.md`, now this. Each cost one command to resolve and would have cost an agent an
+> iteration to reject.
+>
+> **The mechanical form, since the maxim has not been enough: before filing against a file, read the guard that
+> covers it.** A guard's header states intent directly, which is faster and more authoritative than inferring
+> intent from the file's shape. `grep -rl <file> --include=*.test.ts` is the whole step.
+
+#### The check worth having: no switch left on
+
+The runbook's pre-flight says *"Failure injection panel showing **all healthy**. Check this; a switch left on
+from rehearsal…"* and its beat 5 ends *"confirm all three switches read healthy before you move on. **A switch
+left on makes the rest of the demo look broken.**"*
+
+`/api/flags` is **401 anonymously** — correct — so I read the table behind it:
+
+```
+pms_offline             enabled=False   2026-09-25T17:41:05
+policy_source_offline   enabled=False   2026-09-25T13:55:47
+reservations_offline    enabled=False   2026-09-25T13:55:47
+
+SWITCHES ON: none — all healthy
+```
+
+**Nothing was left on**, and nothing has been touched since yesterday afternoon.
+
+*One property worth saying out loud on stage, from `netlify/functions/_lib/flags.ts:12`:* **the injection layer
+fails closed to healthy** — *"If the flags table is unreachable we assume nothing is injected."* So if Supabase
+itself hiccups mid-demo, the system does not start reporting every upstream as down. **The failure-injection
+mechanism degrades gracefully in the same direction as everything else.**
+
+#### State
+
+Every numbered task closed. Enrique's six unchanged, `drop policy` first. Inbox and In progress empty. Tester
+silent since 20:26 (**10h46m**). No lock held; I took none.
+
+
+### Iteration 225, 07:06 EST — checked the package from the reviewer's side of the wire, including whether it is current
+
+**Nothing is open for an agent.** It153 verified every link in the deliverables and reported the repository
+answers **200 anonymously**. That is the single most consequential external fact in the submission, so I checked
+it myself — and then asked the question nobody had: **is what is published the same as what we tested?**
+
+#### The URL a reviewer is actually given
+
+I took the link out of `SUBMISSION.md` rather than typing one from memory: **`https://github.com/enriquealonso01/solstice-fde`**, the only GitHub URL in the deliverables, and the one I then fetched.
+
+```
+github.com/enriquealonso01/solstice-fde                     200   378914B   <- public, not merely reachable by us
+raw .../main/README.md                                      200    20039B
+raw .../main/SUBMISSION.md                                  200     8545B
+raw .../main/DEMO_LOGINS.md                                 404
+raw .../main/.env                                           404
+raw .../main/FDE_Project_Challenge.pdf                      404
+```
+
+**Three deliverables reachable, three secrets absent**, checked unauthenticated from outside. The admin password
+card, the environment file and the interviewers' own brief are all genuinely not there — not "ignored locally",
+**not served**.
+
+#### And the part that had never been checked: the published tree is the tested tree
+
+A public repository can be current or three hours stale, and the failure is invisible from in here. Fetched each
+file and compared it byte-for-byte against the working tree, LF-normalised:
+
+```
+README.md                                             IDENTICAL
+docs/live-modification.md                             IDENTICAL   (T58's rewrite, 05:56)
+src/lib/rules/__tests__/approver-vocabulary.test.ts   IDENTICAL   (It149, 06:19)
+src/lib/rules/engine.ts                               IDENTICAL   (T60's fix, 06:14)
+src/lib/rules/__tests__/availability-service.test.ts  IDENTICAL   (T59, created 06:40)
+plans/06-master-plan.md          local 16831 lines  = remote 16831 lines
+agents/planner.status.md         local    72 lines  = remote    72 lines
+```
+
+**A file created twenty-five minutes ago is already published, and so is the status file I wrote four minutes
+ago.** So the link Enrique hands over carries tonight's work: T56 through T60, the guard sweeps, and the
+verification log — **what a reviewer downloads is what we tested.**
+
+*That also closes a gap in It152's ZIP finding from the other end: the archive a reviewer downloads is built from
+this tree, and this tree is the one the suite passes in.*
+
+#### Suite
+
+**903 passed / 62 files**, matching It153's own count after its five new cases. The README's *"over 700 tests"*
+remains a floor with 203 of headroom.
+
+#### State
+
+Every numbered task closed; nothing open for an agent. Enrique's six unchanged, `drop policy` first. Inbox and
+In progress empty. Tester silent since 20:26 (**10h40m**). No lock held; I took none.
+
 
 ### Iteration 224, 07:01 EST — ran the pre-flight command he will type at 10:55, including the way he might mistype it
 
