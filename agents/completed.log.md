@@ -6043,3 +6043,70 @@ sentence and it fails there.
 
 `npx tsc -b` clean. `npx vitest run` **613 tests / 49 files** green (up 4). No prompt change, so no
 re-provision: compile === export === live still 29,655, margin 345.
+
+## It110 — demo:tidy could not finish the job it exists for, and the agent loop was not the reason
+
+`docs/demo-runbook.md` warns that *"a tidy at 10:55 is undone by agent traffic at 10:56"*, so the fix is
+to stop the loop first. That is true and it is only half the problem. Measured this morning:
+
+```
+251 sessions   228 active   23 ended   2 taken_over
+of the 228 active, 179 are idle over 30 minutes   ->  a default tidy LEAVES 49 on screen
+of the 228 active, 228 are idle over 2 minutes    ->  a 2-minute tidy leaves 0
+```
+
+**The 30-minute floor is the other half, and it bites even with the loop stopped.** The supervisor tile
+is the first number a panel sees when beat 3 opens, and forty-nine cards reading "Sol is handling this"
+is the wrong opening whatever the reason.
+
+My own work is part of why the pile is that size — iteration 109's two latency passes created twelve
+sessions by themselves, and the Tester drives chat continuously by design. That is not a problem to
+solve by measuring less; it is a problem to solve by being able to clear it.
+
+`scripts/cleanup-phantom-sessions.mjs` now takes `--minutes N`:
+
+```bash
+npm run demo:tidy                    # unchanged, 30 minutes
+npm run demo:tidy -- --minutes 2     # once the loop is stopped
+```
+
+**The default stays 30 deliberately.** Thirty minutes is the honest answer to *"is this conversation
+over"* for a guest who closed a tab. Two minutes is an operator asserting there are no real guests, which
+is true in a rehearsal and nowhere else, so it has to be typed on purpose. It refuses anything under 1,
+and `--minutes` with no value after it.
+
+Four paths exercised against production, read-only:
+
+```
+default        226 active, 181 idle over 30 minutes
+--minutes 2    226 active, 226 idle over 2 minutes
+--minutes 0    Error: --minutes needs a number of minutes, 1 or more. Got: 0
+--minutes      Error: --minutes needs a number of minutes, 1 or more. Got: undefined
+```
+
+Documented in the runbook exactly where the 30-minute problem is explained, in `SUBMISSION.md`'s
+checklist item, and as an update to the `HUMAN_INTERVENTION.md` entry that still said the tile read 85.
+
+### Two process notes, both worth keeping
+
+**A CRLF-blind edit silently made no change at all.** My `python` block did two replacements and wrote at
+the end; the second `assert` failed because the search string used `\n` against a file that is uniformly
+CRLF, so the script aborted **before the write** and *neither* edit landed. I then ran `--minutes 2` and
+it printed the 30-minute count — which was the tell. If I had trusted the "both edits written" style of
+output I would have shipped a flag that did nothing. Seventh line-ending incident this session; the
+durable fix is reading with universal newlines and writing back with the file's own ending, which is what
+the working version does.
+
+**Moving the constant broke a `file:line` citation, and the guard caught it.** The runbook cites
+`cleanup-phantom-sessions.mjs:84` for `STALE_MINUTES`; after the edit line 84 was `for (const s of doomed)
+{`. `doc-citations.test.ts` failed with *"it looks like line 107 now"*, so the citation and the test's
+EXPECTED entry moved to 109 together. That guard has now caught three of my own edits, which is the
+argument for it existing.
+
+**No new automated test.** The script has top-level `await`, reads `.env` and calls Supabase, so it cannot
+be imported into the suite as it stands, and restructuring it for testability at this hour is not a
+proportionate change to the script Enrique runs minutes before the demo. The four manual results above
+are the evidence, stated as such.
+
+`npx tsc -b` clean. `npx vitest run` **613 tests / 49 files** green. No prompt change, so no
+re-provision: compile === export === live still 29,655, margin 345.

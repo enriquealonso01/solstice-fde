@@ -58,7 +58,7 @@ const EXPECTED: Record<string, string> = {
   'netlify/functions/chat.ts:303': 'saved?.guest_id',
   'chat.ts:303': 'saved?.guest_id',
   'netlify/functions/chat.ts:160': 'create_escalation',
-  'cleanup-phantom-sessions.mjs:84': 'STALE_MINUTES',
+  'cleanup-phantom-sessions.mjs:109': 'STALE_MINUTES',
   // Added with the proposal-link disclosure in iteration 102. I then "corrected" 158 to 157 off a
   // `sed -n '156,160p'` reading and this guard refused it: 158 is the function, 157 its comment.
   // The instrument was right and I was not, which is the fourth off-by-one of this kind here.

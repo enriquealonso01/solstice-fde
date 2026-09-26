@@ -17,10 +17,23 @@ audiences in one room: a director of engineering and a non-technical product own
       makes a working system look broken.
 - [ ] **Stop the agent loop.** Do this before tidying, because the order decides whether tidying
       works. `demo:tidy` only closes sessions idle over **30 minutes**
-      (`cleanup-phantom-sessions.mjs:84`), so anything created in the last half hour survives it.
+      (`cleanup-phantom-sessions.mjs:109`), so anything created in the last half hour survives it.
       The Tester drives chat continuously by design and was adding roughly 25 sessions an hour, so a
       tidy at 10:55 is undone by agent traffic at 10:56 and the supervisor tile is back in the dozens
       before they join. Stop the loop, then tidy, then warm up.
+
+      **The 30-minute floor is the other half of this, and it bites even with the loop stopped.**
+      Measured on the morning of the 26th: 228 sessions still `active`, of which 179 were older than
+      half an hour — so a default tidy closes those and **leaves 49 cards on screen**. Once the loop
+      is actually stopped, close the rest too:
+
+      ```bash
+      npm run demo:tidy -- --minutes 2
+      ```
+
+      At two minutes that measurement went from 49 left to **0**. The flag is deliberate rather than
+      the default, because two minutes is only the right answer when you know there are no real
+      guests — which is true in a rehearsal and nowhere else. It refuses anything under 1.
 - [ ] `npm run demo:tidy` — **minutes before they join, not the night before**, and after the loop is stopped.
       Every chat you open leaves a session marked `active`, because a browser tab has no hangup
       event to close it. So rehearsing is itself what fills the supervisor dashboard with stale

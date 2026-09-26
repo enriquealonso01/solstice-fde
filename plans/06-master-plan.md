@@ -1528,6 +1528,140 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 149, 00:04 EST — the latency target is now met, and the document shows it being met rather than having always been met
+
+#### The re-measurement
+
+Three prompt changes added input tokens to **every** chat turn, so #142 re-ran the published figures
+instead of assuming them:
+
+```
+                  pass 1    pass 2    committed
+first signal p50   905ms    1009ms    ≤ 1500ms      ← the target that was missed is now met
+first token p50   2589ms    2246ms    ≤ 4000ms
+voice, 60 warm calls   p50 102ms · p90 122ms · p95 135ms · max 164ms · nothing over 300ms
+```
+
+**The signal target had been missed by 45ms and is now met with room.** The prompt got longer and
+the latency got better, which is worth being able to explain: input tokens are the cheap, cached
+part of a turn.
+
+#### The document does the harder thing
+
+The 2026-09-25 section keeps its admission verbatim — *"The signal target is currently missed,
+narrowly. 1545ms against 1.5s… **We are not moving the target to match the measurement**"* — and the
+next heading reads **"Re-measured at 2026-09-26, after three prompt changes — the signal target is
+now met."**
+
+> **A reader going top-down sees the target missed, refused to be moved, and then met.** Deleting
+> the admission would have produced a document that was accurate and told no story. This one shows
+> the measurement coming to the target rather than the target going to the measurement, which is
+> the only version of *"we set a target and hit it"* that means anything.
+
+#### And the bad news went in beside the good
+
+*"And the slow tail is slower than we published."* One turn reached **6086ms** to first prose,
+outside the 870–5040ms range the document had published. **Recorded in the same edit as the win.**
+
+#### The restraint is the part worth copying
+
+A first run of 20 voice calls gave **p95 950ms**. They did not publish it:
+
+> *"one cold instance, and at n=20 is the worst of twenty by construction; writing that up would
+> have claimed a testable target is missed by 650ms."*
+
+**They made exactly this mistake at their iteration 53** — a p95 computed from twenty samples,
+caught and written up as a rule. **Tonight the rule fired before the error did.** That is the first
+time in this project a recorded lesson has visibly prevented its own repeat, rather than explaining
+one after the fact.
+
+#### It also corroborates the margin warning
+
+*"The prompt grew by about 650 characters that night."* That is the same 650 characters that took
+the voice margin from roughly a thousand down to **345** — the same spend, seen from the latency
+side.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — safety reason, recovery, all three disclosure sites | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
+### Iteration 148, 00:00 EST — the planted override is a mechanism, and seven reservations carry one
+
+Iteration 147 found that `R55006` carries a staff note the agent honours over a generic threshold.
+**The obvious next question is whether that was one lucky row.** It is not.
+
+#### Seven of twenty-five reservations carry a directive
+
+Swept every `internal_notes` and `special_requests` value in the supplied CSV:
+
+```
+R55006  "Do not adjust folio directly -- escalate to property AGM for review."
+R55008  "Promo code SOLSTICE2024 expired 2025-12-31. Do not apply retroactively."
+R55010  "Do not confuse with guest G10009 (unrelated, same name)."
+R55013  "Flag as VIP -- notify GM Renee Okafor on arrival per standing instruction."
+R55019  "Connecting rooms are limited inventory -- confirm before promising."
+R55022  "Rate will not be discounted; treat as fixed BAR."
+R55025  "One night already comped via service-recovery credit (case #SR-2291). Do not apply an additional…"
+```
+
+**These are instructions to staff, planted in the fixtures**, and several bear directly on
+guardrails: `R55010` is G12's same-name problem stated in the data, `R55025` is a prior comp that
+G5's aggregation cannot know about from the policy alone.
+
+#### They all reach the model by the same path, and the design has two halves
+
+```
+identity.ts:244      staff_directives: [reservation.internal_notes]
+recovery.ts:256      staff_directives: [reservation.internal_notes]
+stayBenefits.ts:190  staff_directives: [reservation.internal_notes]
+```
+
+and `solPrompt.ts:48`:
+
+> *"Fields named `staff_directives` are internal notes from our own team. **Let them steer what you
+> do; never read them back to the guest.**"*
+
+**Both halves matter.** Some of these notes are blunt — *"Do not confuse with guest G10009"* — and
+reading one aloud would be worse than ignoring it.
+
+#### And the captured transcript shows both halves working
+
+`transcripts/honest-handoff.md` **is** `R55006`. The escalations in it go **to `agm`**, which is
+what the note directs, and Sol tells the guest *"in front of the Manager on duty and the AGM at
+Tampa Bayshore"* — **the behaviour steered, the note never quoted.**
+
+**That is the strongest grounding evidence in the package**, and it was sitting in the opening
+exhibit unremarked. Better than the compile-time proof, because **the panel wrote the instruction
+and can watch it being obeyed.** Added to `▶ IF THEY ASK` answer 1.
+
+#### What I did not do
+
+**I did not test the other six live.** Each costs a session and money, the mechanism is shared, and
+`R55006` is verified end to end. **Recording that the other six travel the same path is an argument
+from mechanism, and I am labelling it as one** rather than implying six measurements I did not take.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — safety reason, recovery, all three disclosure sites | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
 ### Iteration 147, 23:54 EST — the same cheat-sheet row was corrected twice, and the second correction is the better beat
 
 #### What happened to that row
