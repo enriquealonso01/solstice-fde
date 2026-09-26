@@ -6920,3 +6920,62 @@ Re-provisioned after diffing the live prompt: the change is that one row and not
 telephony spend.
 
 `npx tsc -b` clean. `npx vitest run` **677 tests / 52 files** green (up 2).
+
+## It123 — T49: the parity I had been checking by hand for eight iterations is now a test
+
+Every `--refresh` since iteration 96 ended with me printing three numbers in a terminal and confirming
+`compile === export === live`. T49's point: **nothing in 677 tests could do that**, so between an
+`agent/sol.md` edit and a re-export the committed deliverable describes an agent that no longer exists and
+the suite stays green — including the file dedicated to the voice prompt, and including
+`SUBMISSION.md`'s *"`npx vitest run` is green"*.
+
+**T49's 01:22 measurement was real, and by the time I read it, stale** — iteration 122's refresh had closed
+the gap. I verified that before writing anything, against the live assistant rather than the export:
+
+```
+agent/sol.md -> compileInstructions   29,784
+exports/telnyx-assistant.json         29,784
+LIVE Telnyx assistant                 29,784     live === export: true   live === compile: true
+greeting                              identical across all three
+```
+
+So the guard had to be written to be **red at 01:22 and green now**, which is what the red-check
+demonstrates: editing `sol.md` without re-exporting fails with both lengths, the two commands in order, and
+the warning not to make it green by re-exporting from a stale assistant — which would agree on the old text
+and silently revert the edit.
+
+**The limit is in the comment, because a guard believed to watch production is worse than one whose reach is
+written down.** A test cannot see Telnyx. This pins *compile === committed export*; it implies *source ===
+live* only because the export is produced by `export-assistant.mjs` **from the live assistant**. What it
+enforces is the workflow — edit, refresh, re-export, in one change.
+
+### The greeting case found something T49 only assumed
+
+T49 said to assert the greeting "if it is cheap". I wrote the obvious assertion and it returned **null**.
+
+The greeting is **not compiled from `agent/sol.md`**. `provision.mjs:881` resolves
+`env.TELNYX_ASSISTANT_GREETING || extractGreeting(sol.md) || DEFAULT_GREETING`; the env var is unset, and
+`extractGreeting` looks for a `## Greeting` section this file does not have — so the live greeting comes from
+**a constant in the script**. `agent/sol.md:34` states it in prose, *Greeting, both channels: "…"*, and it
+matches that constant **by authorship rather than by derivation**. Edit the prose and the phone keeps the old
+greeting, while the file that calls itself the single agent definition says otherwise — and the instructions
+case above would not notice, because the export would still agree with the compile.
+
+Pinned across the three places that can be seen from a hermetic test: the sentence the file states, the
+script's constant, and the committed export. Red-checked by changing the prose alone.
+
+### Two of my own errors, caught rather than shipped
+
+**The alarming one.** My first live-assistant probe read `data.instructions` and printed the live prompt as
+**0 characters**. Reported as found, that is "the phone agent has no instructions" three hours before
+submission. The field is top-level, not under `data`; I inspected the response shape instead of raising an
+alarm, and the real figure was 29,784. Sixth instrument error this session and the one that would have cost
+the most.
+
+**The quiet one.** I exported `extractGreeting` from `provision.mjs` to use it, then rewrote the case to read
+the script as text — and `npx tsc -b` failed on the now-unused import, which vitest had happily ignored
+because esbuild does not typecheck. Import removed and the needless export reverted, so the diff says what
+the change is.
+
+`npx tsc -b` clean. `npx vitest run` **679 tests / 52 files** green (up 2). No prompt change this iteration,
+so no re-provision: all three artifacts remain at 29,784.

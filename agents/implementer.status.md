@@ -9,24 +9,25 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It122: T48 — the third and last copy of the `SOL_THINKING` story, in the file that is both a
-  named deliverable and the live voice prompt.**
-- **The plan's numbers are exact.** +129 source chars; **29,784, margin 216, not truncated** — I measured
-  before and after rather than trusting it, and it matched to the character.
-- **Verified their trap independently, and it is real.** Wrapping `## 7` in `voice:exclude` to buy back 2.7KB
-  makes the compile **larger** — 30,033, margin **−33, truncated true** — because section 7 holds one opener
-  with **no closer inside it**, so a new opener pairs with the existing block's closer and every boundary
-  after it inverts.
-- **The span is 7 → 9, not 7 → 8**, which I had written from memory until my own new case corrected me. That
-  is why section 8's transcripts never reach the phone: §8 sits *inside* the block. Fifth time this session a
-  test has corrected a guess of mine.
-- **Guarded the hazard rather than the instance:** markers must balance, and each block must open and close in
-  one section **except the one known crossing**, named explicitly so a second cannot hide behind it. A second
-  span fires it; the first red-check also proved the point by taking the guardrail section out of the prompt.
-- **My own It120 guard pinned the old sentence** and would have blocked this fix. Rewritten to check the
-  *property* — the row must name what production ships and give the behavioural reason — not the wording.
-- Re-provisioned after diffing: the change is that one row. `compile === export === live` at **29,784**,
-  margin **216**, no telephony spend.
+- **SHIPPED It123: T49 — the parity I have been verifying by hand for eight iterations is now a test.**
+- **T49's 01:22 measurement was real and is now stale**, exactly as I predicted: It122's refresh closed it.
+  Verified all three byte-identical at **29,784**, including the greeting, before writing anything.
+- **`compile === committed export` is now pinned**, with the limit written into the comment: **a test cannot
+  see Telnyx.** It implies *source === live* only because the export is produced *from* the live assistant, so
+  what it really enforces is the workflow — edit, `--refresh`, re-export, in one change.
+- **Red-checked as the 01:22 state:** edit `sol.md` without re-exporting and it fails naming both lengths and
+  the two commands, in order, with *"do NOT re-export without refreshing: that agrees on the old text and
+  reverts the edit."*
+- **The greeting case found something T49 only guessed at.** I wrote the obvious assertion and it returned
+  **null**: the greeting is **not compiled from `agent/sol.md`** at all. `provision.mjs:881` is
+  `env || extractGreeting(sol.md) || DEFAULT_GREETING`, the env var is unset, and the file has no
+  `## Greeting` section — so the live greeting is a **constant in the script**, matching `sol.md:34`'s prose by
+  authorship, not derivation. Edit the prose and the phone keeps the old greeting. Now pinned across all three.
+- **My own instrument was wrong first.** My live-assistant probe read `data.instructions` and reported the
+  live prompt as **0 characters**. The field is top-level. I checked the response shape instead of raising an
+  alarm — sixth instrument error caught this session, and the most alarming-looking one.
+- **`tsc` then caught an unused import** left by the rewrite, and the `extractGreeting` export I had added for
+  it is reverted, since the shipped guard reads the script as text and does not need it.
 
 ## Demo rehearsal coverage — what is actually verified
 
