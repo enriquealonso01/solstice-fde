@@ -8,7 +8,10 @@ Two files, one model:
 Both are built from the same component model as the in-app Backend page
 (`src/components/admin/backendMapModel.ts`): the same components, the same real provider names, and
 the same "why this over the alternative" reasons. The app map is the live, narratable version; these
-two files are the submittable one.
+two files are the submittable one. **They are also held to the same status**, by
+`src/lib/rules/__tests__/backend-map-status.test.ts`: neither surface may mark anything as waiting on
+an account, and both are blocked only on 10DLC. That check exists because the two drifted — both were
+understating the build for most of a day, and each was findable from the other.
 
 ## The pages
 

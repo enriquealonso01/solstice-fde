@@ -1,7 +1,9 @@
 # Master plan: the whole picture
 
-> ## 03:07 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> **No agent task is open. T38–T51 are all closed.** `sol.md`, the committed export and the live phone
+> ## 03:17 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **One agent task is open: T52** — the architecture diagram's Today page says proposal PDFs are
+> *"time-limited signed URLs"*; they are **unsigned, permanent capability URLs in a public bucket**, and
+> `README.md` already says so correctly. *T38–T51 are closed.* `sol.md`, the committed export and the live phone
 > agent all sit at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **748 tests / 54 files
 > at 02:37**. It grows every hour, so read that as a vintage rather than a target.*
 >
@@ -347,6 +349,72 @@ cover `plans/`.
 
 **Check when done:** the README carries no elapsed figure that grows; the new assertion goes red if
 *"Elapsed: about 24 hours"* is restored; `npx vitest run` green; `plans/` and `agents/` still exempt.
+
+### T52. The diagram's Today page overclaims the PDF security, and contradicts the README doing it
+
+*One clause in one node of a **named brief deliverable**. It131 and It133 swept this page for wrong statuses
+and found six, **every one an understatement**. This is the same page's one **over**statement, it is a
+**security** claim, and the honest wording already exists in `README.md`.*
+
+#### The claim
+
+**`docs/architecture.drawio`, page "Today (MVP)" — the page whose whole job is *"what actually runs at the
+demo"*:**
+
+> **LIVE Storage** — Generated proposal PDFs, handed out as ***time-limited signed URLs***.
+
+#### What is actually served
+
+A real `pdf_path` out of `proposals`, fetched with **no credentials of any kind**:
+
+```
+https://…supabase.co/storage/v1/object/public/proposals/PRP-2011/j1FDVk24QVXe-re2gmN6kKyOgbVxkj7K/<file>
+  token= or /sign/ in the URL : NO
+  /object/public/ in the path : YES
+  curl, no auth              : HTTP 200 · 2,570 bytes · application/pdf
+```
+
+**It is neither signed nor time-limited.** It is a **capability URL** in a public bucket: the only thing
+protecting it is a 32-character unguessable path segment, and that protection **never expires**.
+
+#### It contradicts the README, which gets it right
+
+> **`README.md`:** *"**A stated limit: a customer's proposal link is a capability URL, not an authenticated
+> download.**"*
+
+So the package **volunteers the weakness in one deliverable and claims the stronger mechanism in another.** A
+reviewer reading both sees them disagree about a security property, and the diagram is the one that is wrong.
+**"Signed and time-limited" is materially stronger than "unguessable and permanent"** — it implies revocation
+and expiry, and neither exists.
+
+#### The diagram already knows the difference, which is why this is a slip and not a misunderstanding
+
+The **Future state** page says it correctly:
+
+> **FUTURE Object storage** — Amazon S3 with time-limited signed URLs for proposal PDFs. **Today: Supabase
+> Storage.**
+
+**Marked FUTURE, and it explicitly contrasts itself with today.** The Today node borrowed the future's
+language. **Two occurrences of the phrase in the file; only the Today one is wrong.**
+
+#### Do this — one node, wording already written
+
+Replace the Today page's Storage description with the README's own sentence:
+
+> **LIVE Storage** — Generated proposal PDFs in Supabase Storage, handed out as **capability URLs: a long
+> unguessable path, not an authenticated download and not time-limited.** Signed URLs are the future-state
+> page's answer.
+
+**Do not touch the Future state node.** It is correct and it is the contrast that makes the Today node's error
+visible.
+
+**Check when done:** the Today page names a capability URL and does not say *signed* or *time-limited*; the
+Future page is unchanged; `docs/README-diagram.md` still describes the pages accurately, and `npx vitest run`
+is green — `diagram-guide.test.ts` reads the `.drawio` as plain XML, so a re-save that compresses it would
+turn every check in that file into a silent pass.
+
+*(Worth a guard if it is cheap: no node marked **LIVE** may claim a mechanism the repo does not have. That is
+harder to express than the six status fixes, so the clause is the priority and the guard is optional.)*
 
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
@@ -1672,6 +1740,165 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 185, 03:17 EST — `AGENTS.md`'s superseding block checks out on every claim, including the email path
+
+#### Why this file
+
+`AGENTS.md` is **the first file at the top of a public repository**, and It119 prepended a dated block
+correcting three things the original working agreement got wrong. **I had never verified that block** — I had
+only verified `agents/README.md`, the protocol file it now routes readers to. A superseding block is a
+correction, and a wrong correction is worse than the thing it replaced.
+
+**Five checkable claims. All five hold.**
+
+| the block says | measured |
+|---|---|
+| *"Telnyx carries **$3.03** and the number `+13057866217` is on the account"* | ✓ both, against the Telnyx API (iterations 174 and 180) |
+| *"`POST /api/chat` on production returns **200** with a grounded answer"* | ✓ driven many times tonight |
+| *"`supabase/schema.sql` is applied, proven by a service-role read of `sessions`"* | ✓ |
+| *"the Telnyx sending domain **`enriquecodes.com`** is **`status: verified`** with DKIM, not a sandbox"* | ✓ **`domain=enriquecodes.com status=verified`**, DKIM active, selector `telnyx1`, RSA-SHA256, 2048-bit |
+| *"**four** proposals carry `status: sent` with `sent_via: email`"* | ✓ **exactly four, every one `sent_via: email`** |
+
+#### The email path, which is the half nobody had checked
+
+This is the one that matters, because the group workflow ends in a proposal reaching a customer and
+`HUMAN_INTERVENTION.md` has carried a **BLOCKED** marker on the SMS half all night. **Email is genuinely
+live:**
+
+```
+email_domains: enriquecodes.com  verified  DKIM active (telnyx1, rsa-sha256, 2048)
+               msgtelnyx.com     verified   <- Telnyx's own
+               mail.telnyx.com   verified   <- Telnyx's own
+proposals status=sent: 4, all sent_via=email
+  2026-09-24 20:08:20  b***@harlowvance.com
+  2026-09-24 20:08:25  b***@harlowvance.com
+  2026-09-25 14:17:35  s***@blueanchorevents.com
+  2026-09-25 14:55:14  b***@harlowvance.com
+```
+
+**Sends happened on both working days**, so this is not one lucky run at the start.
+
+#### And the recipient addresses are not what they look like
+
+`sent_to` holds customer addresses at `harlowvance.com` and `blueanchorevents.com` — the sample data's
+fictional companies. **I checked what actually received them** rather than assume:
+
+> `netlify/functions/_delivery/index.ts:15` — *"**DEMO_MODE redirects every real send to DEMO_EMAIL /
+> DEMO_PHONE**, while `displayed_to` still carries the customer's real (masked) contact so the admin screen
+> shows the truth."*
+
+**So nothing was ever mailed to a fictional domain.** Delivery went to Enrique; the board honestly shows who
+the proposal was *for*. **That is the right split** — the admin screen would be lying if it showed the demo
+inbox, and the mail would bounce if it went to the fiction. Both halves are handled, and the four rows are
+real deliveries rather than optimistic status writes.
+
+#### T52 is still open and unclaimed
+
+The diagram's Today page still reads *"handed out as time-limited signed URLs"* — re-checked at 03:17, two
+occurrences in the file, and **only the Future-state one is legitimate.** It is one clause and the replacement
+wording is already in `README.md`.
+
+**The Implementer is on It134**, and it is the same disease one layer in: `backendMapModel.ts` — the Backend
+map Enrique **narrates to the panel** — carries **16 `pending` and 6 `blocked`** nodes of which only two are
+true, including `Claude`, `API key` and `AI Assistant "Sol"` marked **blocked**. **That is a worse instance
+than either of the ones I found**, and it is on a screen rather than in a file.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — **$3.03, no credit line, ~6 calls, hard stop at zero**; gate is $20 | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T52 | One clause on the diagram's Today page — wording already in `README.md` | any agent |
+
+Inbox and In progress empty. No lock held. Tester silent **6h46m**.
+**The plan is accurate and correctly ordered.**
+
+### Iteration 184, 03:10 EST — the diagram page that was just audited for understatements carries one overstatement, and it is the security one
+
+#### T52
+
+It133 swept `docs/architecture.drawio`'s **Today (MVP)** page and fixed **six wrong status markings, every one
+an understatement.** I re-read the same page and checked its *descriptions* against reality rather than its
+statuses. Twenty-four nodes are marked LIVE and one BLOCKED (Telnyx SMS / 10DLC, which is correct and a
+standing `HUMAN_INTERVENTION.md` item). **One description is wrong, and it is the one that makes a security
+promise:**
+
+> **LIVE Storage** — Generated proposal PDFs, handed out as ***time-limited signed URLs***.
+
+A real `pdf_path` from `proposals`, fetched with **no credentials**:
+
+```
+…/storage/v1/object/public/proposals/PRP-2011/j1FDVk24QVXe-re2gmN6kKyOgbVxkj7K/<file>
+  token= or /sign/ : NO      /object/public/ : YES
+  curl, no auth    : HTTP 200 · 2,570 bytes · application/pdf
+```
+
+**Neither signed nor time-limited.** A **capability URL** in a public bucket, protected only by an unguessable
+32-character segment that **never expires.**
+
+#### It contradicts the README, which gets it right
+
+> `README.md`: *"**A stated limit: a customer's proposal link is a capability URL, not an authenticated
+> download.**"*
+
+**The package volunteers the weakness in one deliverable and claims the stronger mechanism in another.**
+*"Signed and time-limited"* implies revocation and expiry; neither exists. A reviewer reading both sees them
+disagree about a security property, and **the diagram is the one that is wrong.**
+
+#### And the diagram already knows the difference, which is why it is a slip
+
+The **Future state** page has it right — *"FUTURE Object storage — Amazon S3 with time-limited signed URLs for
+proposal PDFs. **Today: Supabase Storage.**"* Marked FUTURE, explicitly contrasted with today. **The Today
+node borrowed the future's language.** Two occurrences of the phrase in the file; only one is wrong. T52 says
+to fix that one and **leave the Future node alone**, because the contrast is what makes the error visible.
+
+#### An honest limit of my own earlier clearance of this deliverable
+
+At iteration 160 I checked this diagram and wrote *"checked, nothing to fix."* What I actually checked was
+**the guide against the `.drawio`** and **the SVG against the `.drawio`** — 22 of 31 Future-state labels
+present, the nine absent ones all edge annotations.
+
+> **I never checked the `.drawio` against reality.** Both of my comparisons were internal: artifact against
+> artifact. **A diagram can be perfectly self-consistent and still describe a system that does not exist** —
+> which is exactly what It133 found six times and this finding makes seven. *"Nothing to fix"* was true of the
+> question I asked and not of the deliverable.
+
+#### The rest of the Today page corroborates work I have already done
+
+Spot-checking the other LIVE nodes against tonight's measurements, they hold:
+
+| node says | I verified |
+|---|---|
+| *"+1 (305) 786-6217 … Active"* | iteration 174, against the Telnyx API |
+| *"Sol … claude-haiku-4-5 … 25 tools"* | iterations 158/170, against the live assistant |
+| *"Concierge cannot read inquiries, group sales cannot read messages"* | iteration 170, two real role tokens |
+| *"availability.ts — sameDayAvailability() … Deterministic"* | iteration 163, zero `Math.random`/`Date.now` |
+| *"ToolResult envelope: ok, grounded, citations, masked_fields, latency_ms"* | iterations 181/182, all fields present |
+
+**So the page is accurate about the architecture and wrong about one mechanism.** That is the useful shape to
+report: not *"the diagram is unreliable"*, but *"one node promises a security property the system does not
+have."*
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — **$3.03, no credit line, ~6 calls, hard stop at zero**; gate is $20 | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T52 | One clause on the diagram's Today page — the wording is already in `README.md` | any agent |
+
+Inbox and In progress empty. Lock held by another agent; not mine to take and I did not. Tester silent
+**6h41m**. **The plan is accurate and correctly ordered.**
 
 ### Iteration 183, 03:07 EST — beat 2 is verified end to end, after I reproduced "beat 2 is broken" five times with a broken probe
 

@@ -9,6 +9,33 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It134 SHIPPED: the in-app Backend map had the same disease as It133's diagram, on the screen Enrique
+  narrates to the panel.** `docs/README-diagram.md` says the two diagram files and the
+  in-app Backend page are *"built from the same component model"* — so once the `.drawio` turned out to be
+  a day stale on status, the live version was the obvious next place to look. It is worse:
+  `backendMapModel.ts` carries **16 `pending` and 6 `blocked`** nodes, and only **two** of them are true.
+  **`Claude` is `blocked`. So is `API key`, `Phone number + Call Control`, and `AI Assistant "Sol"`.** All
+  four work; I verified them against the live systems in It133, minutes ago. `/api/chat`, the chat runtime,
+  the voice runtime, `/api/telnyx/events`, `call.ai_gather.message_history_updated`, the email API, the
+  delivery adapter, the assistant-config export and Mission Control are all `pending` too.
+- **This is beat 7.** The runbook has Enrique put this map on screen and narrate it to the technical panel.
+  A reviewer who reads the dots sees a system where the model, the key, the number and the voice agent are
+  all blocked. Only `SMS (10DLC)` and `10DLC registration` are correctly marked.
+- **Twenty nodes promoted, two left blocked, evidence per node.** The map is now **65 live / 0 pending /
+  2 blocked** and the only blocked pair is 10DLC. Two new live reads on top of It133's: the WebRTC
+  credential `solstice-supervisor-webrtc` is **unexpired** and the connection *Solstice FDE - Supervisor
+  WebRTC* is **active**, which is what the browser supervisor leg needed.
+- **I did not let the ladder round up.** It is live — a session is `taken_over` — but the supervisor hears
+  the **guest, not Sol**, and the README says so precisely. A live badge with no caveat would have
+  overstated the one thing in the package deliberately described as partly working, so **the limit is now
+  in the node's own detail line**, where a panellist reading the map sees it. Guarded.
+- **`backend-map-status.test.ts`, 13 cases**, pinning the invariant rather than the audit: nothing may be
+  `pending`, because pending means *waiting on an account* and nothing is; `blocked` must be exactly the
+  10DLC pair; six named nodes must be live; and **the map and the `.drawio` must agree**, which is the
+  claim `README-diagram.md` makes and the one that would have caught either file from the other.
+  Red-checked four ways — pending fails 3, `Claude` back to blocked fails 3, dropping the ladder limit
+  fails 1, a `PENDING` back on the `.drawio` fails 1.
+
 - **It133 SHIPPED: the architecture diagram's "Today (MVP)" page said the demo does not work.** Nothing was
   open, so I audited the last two unaudited deliverables. `docs/where-this-goes.md` came back **clean** —
   including *"twenty minutes … the number in their own brief"*, which I checked against the PDF: the brief

@@ -69,7 +69,7 @@ const overview: MapTab = {
       title: 'Support phone number',
       detail: 'A real DID on the landing page. Sol answers with the same persona as chat.',
       why: 'Guests who call a hotel expect a voice, not a web form.',
-      status: 'pending',
+      status: 'live',
     }),
 
     n('chatrt', 400, 200, {
@@ -78,7 +78,7 @@ const overview: MapTab = {
       title: 'Chat runtime (Claude)',
       detail: 'Streams through /api/chat on Netlify Functions. We own turn-taking and the UI trace.',
       why: 'Streaming directly is what lets the guest watch the agent work instead of waiting on a spinner.',
-      status: 'pending',
+      status: 'live',
     }),
     n('voicert', 400, 520, {
       layer: 'runtime',
@@ -86,7 +86,7 @@ const overview: MapTab = {
       title: 'Voice runtime (AI Assistant “Sol”)',
       detail: 'Telnyx owns turn-taking, barge-in and the audio path.',
       why: 'Rebuilding interruption handling for telephony is weeks of work with a worse result.',
-      status: 'pending',
+      status: 'live',
     }),
 
     n('tools', 800, 300, {
@@ -145,7 +145,7 @@ const overview: MapTab = {
       title: 'Delivery adapter',
       detail: 'Email when there is an address, SMS when there is only a number, flagged when there is neither.',
       why: 'Swapping channels is config. When a provider fails, nothing above the adapter changes.',
-      status: 'pending',
+      status: 'live',
     }),
   ],
   edges: [
@@ -197,7 +197,7 @@ const guest: MapTab = {
       title: '/api/chat',
       detail: 'Holds the Anthropic key, runs the tool loop, writes every turn to Postgres.',
       why: 'The API key must never reach the browser, and the transcript must exist even if the tab closes.',
-      status: 'pending',
+      status: 'live',
     }),
     n('claude', 1200, 20, {
       layer: 'runtime',
@@ -205,7 +205,7 @@ const guest: MapTab = {
       title: 'Claude',
       detail: 'Persona and guardrails compiled from agent/sol.md; tools from shared/toolContracts.ts.',
       why: 'Chat has a looser latency budget than voice, so we spend it on tool use and citations.',
-      status: 'blocked',
+      status: 'live',
     }),
     n('tools', 1200, 320, {
       layer: 'tools',
@@ -265,7 +265,7 @@ const voice: MapTab = {
       provider: 'PSTN',
       title: 'Guest calls the number',
       detail: 'Caller ID becomes the identity hint; no confirmation number required to start.',
-      status: 'pending',
+      status: 'live',
     }),
     n('did', 380, 180, {
       layer: 'runtime',
@@ -273,7 +273,7 @@ const voice: MapTab = {
       title: 'Phone number + Call Control',
       detail: 'The DID attached to the assistant. Every leg is an ordinary Call Control leg.',
       why: 'Because it is ordinary Call Control, supervision primitives apply to it too.',
-      status: 'blocked',
+      status: 'live',
     }),
     n('assistant', 760, 180, {
       layer: 'runtime',
@@ -281,7 +281,7 @@ const voice: MapTab = {
       title: 'AI Assistant “Sol”',
       detail: 'Started with ai_assistant_start and send_message_history_updates: true.',
       why: 'Telnyx owns turn-taking and barge-in. Rebuilding that is the classic FDE trap.',
-      status: 'blocked',
+      status: 'live',
     }),
     n('webhooktools', 1140, 20, {
       layer: 'tools',
@@ -297,7 +297,7 @@ const voice: MapTab = {
       title: 'call.ai_gather.message_history_updated',
       detail: 'Fires once per conversation turn with cumulative history.',
       why: 'Turn-level is enough for a supervisor. Word-level interim would need a concurrent transcription we do not need.',
-      status: 'pending',
+      status: 'live',
     }),
     n('eventfn', 1540, 320, {
       layer: 'tools',
@@ -305,7 +305,7 @@ const voice: MapTab = {
       title: '/api/telnyx/events',
       detail: 'Verifies the signature, diffs the history, inserts only new turns.',
       why: 'The event carries the whole history each time; inserting it naively would duplicate the transcript.',
-      status: 'pending',
+      status: 'live',
     }),
     n('messages', 1920, 320, {
       layer: 'data',
@@ -327,15 +327,15 @@ const voice: MapTab = {
       title: 'POST /api/voice/supervisor',
       detail: '{ session_id, action: listen | whisper | barge | takeover }. Owns the Telnyx key and the leg bookkeeping.',
       why: 'The browser must never hold a Telnyx API key, and rung state belongs next to the call, not in a tab.',
-      status: 'pending',
+      status: 'live',
     }),
     n('supleg', 760, 620, {
       layer: 'runtime',
       provider: 'Telnyx',
       title: 'Supervisor leg',
-      detail: 'POST /v2/calls with supervise_call_control_id and supervisor_role; escalated via switch_supervisor_role.',
+      detail: 'POST /v2/calls with supervise_call_control_id and supervisor_role; escalated via switch_supervisor_role. Verified on a live call: the supervisor hears the GUEST, not Sol, because an assistant leg injects its own audio rather than streaming it. The transcript carries both sides regardless.',
       why: 'Monitor, whisper and barge are one parameter apart, so the ladder is a role change, not three integrations.',
-      status: 'pending',
+      status: 'live',
     }),
     n('webrtc', 380, 620, {
       layer: 'staff',
@@ -343,7 +343,7 @@ const voice: MapTab = {
       title: 'Supervisor joins from the browser',
       detail: 'Credential SIP connection, registered as supervisor@sip.telnyx.com.',
       why: 'A supervisor on a laptop should not need a desk phone to take a call.',
-      status: 'pending',
+      status: 'live',
     }),
     n('stop', 760, 900, {
       layer: 'runtime',
@@ -351,7 +351,7 @@ const voice: MapTab = {
       title: 'ai_assistant_stop',
       detail: 'Sol goes silent. Telnyx documents that the call remains active and keeps accepting commands.',
       why: 'This is the whole takeover. The guest is never dropped and never re-dialled.',
-      status: 'pending',
+      status: 'live',
     }),
   ],
   edges: [
@@ -392,14 +392,14 @@ const agent: MapTab = {
       provider: 'Telnyx',
       title: 'Assistant config (JSON)',
       detail: 'Exported natively from the platform and shipped as a deliverable.',
-      status: 'pending',
+      status: 'live',
     }),
     n('claudeprompt', 400, 420, {
       layer: 'runtime',
       provider: 'Anthropic',
       title: 'Claude system prompt',
       detail: 'Same persona, same guardrails, different latency budget.',
-      status: 'pending',
+      status: 'live',
     }),
     n('contracts', 800, 240, {
       layer: 'tools',
@@ -597,7 +597,7 @@ const delivery: MapTab = {
       title: 'Email API',
       detail: 'Branded HTML email with the PDF attached. GA since August 2026.',
       why: 'One provider, one key and one bill across voice, SMS and email. A dedicated email vendor was evaluated and dropped: it adds a vendor for a nervous IT team to approve without adding a capability.',
-      status: 'pending',
+      status: 'live',
     }),
     n('sms', 840, 320, {
       layer: 'delivery',
@@ -704,14 +704,14 @@ const deploy: MapTab = {
       title: 'Mission Control',
       detail: 'Number, AI Assistant, SIP credential connection, messaging profile, email domain.',
       why: 'Twilio plus SendGrid plus a voice-agent vendor is three bills and three failure modes.',
-      status: 'pending',
+      status: 'live',
     }),
     n('anthropic', 1280, 760, {
       layer: 'runtime',
       provider: 'Anthropic',
       title: 'API key',
       detail: 'Server-side only, used by /api/chat and the group side chat.',
-      status: 'blocked',
+      status: 'live',
     }),
   ],
   edges: [
