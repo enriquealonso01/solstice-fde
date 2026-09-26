@@ -1,5 +1,29 @@
 # Requirements audit: what the brief asked for, what exists, what is left
 
+> ## Update, 2026-09-26 — eight verdicts below have moved, all in the same direction
+>
+> **Nothing below is edited.** It is an honest snapshot of 2026-09-24 and reads as one. But an audit states
+> *verdicts*, and a stale verdict about coverage is read as a claim about completeness — so here is what
+> changed, each re-measured today rather than remembered.
+>
+> | Row | Then | Now |
+> |---|---|---|
+> | **A5** net-new tool | *"`availability_service`"* | that name no longer exists in the code; a test bans it. The service is `netlify/functions/tools/availability.ts`, consumed by `check_late_checkout` and `check_upgrade_eligibility` |
+> | **B6** latency | *"missed the first target"* | **met**, on two passes: first-signal p50 905ms and 1009ms against the committed 1500ms. `docs/latency-target.md` carries the re-measurement, and the original confession with it |
+> | **C6** transcripts | *"4 chat transcripts plus a voice one"* | **six** files in `transcripts/`, the sixth being the honest-handoff capture |
+> | **C8 / D3** live modification | **PARTIAL**, *"never been rehearsed"* | rehearsed end to end by the Tester and written up in `docs/live-modification.md`, including the mistake they made on the first attempt |
+> | **D2** ambiguity | *"7 stated assumptions"* | **9** |
+> | **D5** surprise and delight | *"missing the live failure-injection demo; supervisor takeover unverified"* | failure injection was run on production, and the supervisor ladder was verified on a live call — with its one real limit, Sol's own audio, stated in the README rather than glossed |
+> | **D6 / P1 item 7** future capabilities | *"no roadmap framed in business outcomes"* | `docs/where-this-goes.md`, written in outcomes and opening on exactly that distinction |
+> | **E** flaky tests | *"a run showed 8 failures then 0 with unchanged code"* | closed by `vitest.setup.ts`, which strips every credential before any test file loads. **681 tests in 2.0s**, and green in a fresh clone of the public repo with no `.env` at all |
+>
+> **What has not moved:** the SMS/10DLC gap is still open and still disclosed, and the follow-ups table is
+> still unexercised. Both are in `README.md`'s limits section in the package's own words.
+>
+> The list in **F** should be read the same way: P1 items 5, 6, 7 and 8 are done. What is left at submission
+> is four things only Enrique can do, and they are in `HUMAN_INTERVENTION.md`, not here.
+
+
 Written 2026-09-24 against the challenge PDF and Katie's email. The point of this file is to stop
 drift: everything below is either a stated requirement or a stated evaluation criterion. Anything
 not on this list is optional polish, however good it looks.

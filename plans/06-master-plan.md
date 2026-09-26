@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 01:40 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
+> ## 01:45 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
 > *All agent work is closed — T38–T43 and T45, each re-verified against the live files at 00:55, not
 > from the log; **T44 shipped in It118 and T46 in It120**, each correcting a premise of mine while doing it.
 > **T47 shipped in It121 and T48 in It122, refresh and re-export included** — `sol.md`, the committed
@@ -278,6 +278,87 @@ text and silently reverts T48.
 `--refresh` plus re-export, `compile === export === live` and the suite is green; the comment states that the
 test does not reach Telnyx.
 
+### T50. Michael Chen has two reservations, and they give opposite answers on the demo's showpiece beat
+
+> **RESTORED in iteration 167.** This section was filed at 01:36 and was **absent from the file at
+> 01:43**, while three other lines still pointed at it. Another agent edited this file in the same
+> minute — a one-token privacy redaction they flagged and I agree with. **I cannot determine which
+> write dropped the section and I am not going to guess**; restored verbatim from my own copy, and
+> their redaction is preserved. See iteration 167.
+
+*Not currently broken — I drove it against production twice and both runs were correct. **What is missing is
+that nothing written down makes it correct.** The cheapest fix costs one line and no prompt margin.*
+
+#### What is true
+
+**`G10004` is the only guest of 24 with two reservations**, and he is the guest the demo's best beat uses:
+
+```
+R55004  SOL-DEN  2026-07-20  Confirmed  Platinum   <- the cheat sheet's beat
+R55015  SOL-AUS  2026-09-05  Confirmed  Platinum   <- nearest to "now", 2026-09-26
+```
+
+`identify_guest` returns both and sets **`most_relevant_reservation_id: "R55015"`**. And
+`check_upgrade_eligibility` gives **opposite answers**, measured against production:
+
+| input | result |
+|---|---|
+| `{"guest_id":"G10004"}` | **`guaranteed`, `may_promise: true`** — *"Suite inventory exists for 2026-09-05, so confirm the upgrade"*, cites R55015 |
+| `{"reservation_id":"R55004"}` | **`policy_gap_manager_decision`, `may_promise: false`, `escalation_required: true`** — *"there is no Suite inventory on 2026-07-20"*, cites R55004 |
+
+**So the showpiece refusal becomes a confirmation if the wrong stay resolves** — on the beat the cheat sheet
+calls *"the better moment of the two"*, and **G8** is one of the nineteen guardrails.
+
+#### Why it is not broken today, stated precisely
+
+Two live runs of *"Hi, confirmation R55004, last name Chen. I'd like to upgrade to a suite"*:
+
+> *"Suites are showing sold out for your July 20 dates at Denver Union Station… I'm putting this in front of
+> the manager on duty."*
+> *"…Suites are showing sold out for July 20 at Denver Union Station. That's a judgment call the manager on
+> duty needs to make."*
+
+**Both correct, both Denver.** Sol uses the confirmation number the guest gave.
+
+**But `most_relevant_reservation_id` appears nowhere in `agent/sol.md`**, and neither does any instruction
+about a guest with more than one stay. The payload hands the model a field literally named *most relevant*
+pointing at the other reservation, and the right behaviour rests entirely on its judgement. **Two runs is
+evidence, not reliability** — and this is the one beat where the wrong branch is not a worse answer but the
+**opposite** answer.
+
+#### And it is already visible in two committed deliverables
+
+- `transcripts/platinum-late-checkout.md:14` — *"`identify_guest` — Verified Michael Chen (Platinum) _(cites:
+  Guest profile G10004; **Reservation R55015**)_"*
+- `transcripts/voice-call.md:107` — `get_reservation` returned **R55015**, Austin
+
+**Neither is wrong.** Late checkout is a tier guarantee, so both stays give the same answer — I checked:
+`guest_id` alone and `reservation_id: R55004` both return `guaranteed / may_promise: true`. **But nothing
+explains why the "Denver, Jul 20–23" guest is identified against an Austin reservation**, and a reviewer who
+notices has found something unexplained in a named deliverable.
+
+#### Do this — (a) is the whole value, and costs no prompt margin
+
+**(a) One line in `docs/demo-cheatsheet.md`, on the R55004 row:**
+
+> **Always give the confirmation number on this one.** Chen is the only guest in the data with two stays —
+> R55004 Denver Jul 20–23 and R55015 Austin Sep 5–7 — and **Austin has suites free**, so identifying him
+> without the number can turn the refusal into a confirmation.
+
+**(b) One clause in `transcripts/README.md`**, turning the R55015 citations from an oddity into a point: the
+only guest with two reservations is resolved to the nearer one when no confirmation number narrows it, and
+the tier answer is the same either way.
+
+**(c) A prompt clause — my recommendation is NOT to do this before the demo.** It belongs in `agent/sol.md`
+and would have to stay in the voice prompt, because a phone guest gives a confirmation number too. **The
+margin is 216 characters.** A usable clause is ~130, leaving ~86 — and this file's own banner warns that two
+edits of ~210 truncate the live prompt. **Buying a small reduction in an unmeasured risk by spending 60% of
+the remaining head-room, nine hours out, is the wrong trade.** It is the right fix for the week after.
+
+**Check when done:** the cheat sheet row names the second reservation and why the number matters; the
+transcripts README explains the R55015 citations; `agent/sol.md` is untouched and the compile is still
+29,784.
+
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
 *Each of these is a place where the system is **correct** and a reviewer will reasonably want to
@@ -404,6 +485,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 | 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr` | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at **`HUMAN_INTERVENTION.md:804`** (re-verified 00:55; `:753` is now a blank line, and the SQL to paste is at **596**, summarised for you at **63**). **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. |
 | 2 | **Top up Telnyx to at least $20** | **Under $4 and falling.** It has been quoted as $3.63, $3.15, $3.09 and $3.03 in four places on the same night, because every test call spends it. Do not trust a figure; top up to $30. **$20 is the project's own gate**, in `SUBMISSION.md`'s pre-send checklist: *"Telnyx balance above $20, or do not invite them to call the number."* One call then settles **beat 3**, the live intent check, and **G16's voice half** — the last unverified guardrail. Nobody has made a voice call all day. |
 | 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. **Verified safe three ways:** two deliverables cite `INQ-2011`/`INQ-2010`, the demo runbook names `INQ-2007`/`2009`/`2011`, and **neither row T21 deletes appears in either**. Both confirmed live: `INQ-2012` Vantage Labs `needs_review`, `INQ-2013` Vantage Labs DELETE-ME `auto_approvable`. Exact SQL in `HUMAN_INTERVENTION.md`. |
+| 6 | **Your own email address is in this file, and it is the only real address left in the repo.** | The Implementer removed the hiring contact's work address from four tracked files at It124 — right call, and I have no objection. **`enrique@provensolved.com` is still here**, in the email-delivery check, and they left it because it is yours. The guard allowlists that domain with a comment saying it is deliberate, **so removing it breaks nothing**; the same neutral phrasing works. **No recommendation from me — a public repository under your name is a thing you may want your address on.** |
 | 5 | **The interviewers' own brief was published in our public repo — already fixed; only history is left.** | `FDE_Project_Challenge.pdf` is out of the tracked tree, in `.gitignore:19`, and guarded three ways — **verified green at 01:03**, and the file is still on disk because the agents read it as ground truth. What remains is whether to rewrite history to remove it from the one commit that has it. **The recommendation is no**, for the same reason as T34: it invalidates every commit id the deliverables cite, to remove a document from a repository whose reader wrote it. Full entry and the short answer if a reviewer raises it: **`HUMAN_INTERVENTION.md:962`** — and **T47** is what puts it in front of you, because the index at `:63` does not have it. |
 | 4 | **T34 — decide about the SIP credential. The recommendation is *accept it*.** | A credential *username* is in git history at `10b63e8` and `c09f04d`; the password never was. **`HUMAN_INTERVENTION.md:715` recommends option 1 — accept it and rotate *after* the demo** — and this row said "rotate" for hours against that advice. Rotating tonight changes `TELNYX_SIP_USERNAME`, the SIP URI **and the live assistant's transfer target**, and needs a re-provision plus a re-check of the supervisor WebRTC leg: that is the beat-3 path, hours before the demo. **Rewriting history is the one to avoid** — it invalidates commit ids the deliverables cite. **Doing nothing is the recommended option**, so this is the one item where no action is a decision. |
 
@@ -1601,6 +1683,90 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 167, 01:45 EST — a task disappeared from this file while three lines still pointed at it
+
+#### What happened, with the parts I cannot establish marked as such
+
+**T50's section was filed at 01:36 and was gone by 01:43.** Lines 123, 382 and 398 still said *"what is
+left for an agent is T50, immediately below"* — **and there was no T50 below.** Restored verbatim from my own
+copy; it is at line 281 and I have re-checked it survived the next write.
+
+**Another agent edited this file in the same minute**, and said so plainly in `HUMAN_INTERVENTION.md:1016`:
+a one-token privacy redaction of a real person's work email, *"a single-token replacement with the same
+neutral wording — no other change."*
+
+> **I am not attributing the loss to them.** Their account is specific and credible, a one-token exact-match
+> replacement does not delete a section, and my own iteration-166 read-modify-write ran in the same window.
+> **I cannot determine which write dropped it without running git, which my brief forbids, so I am recording
+> the facts and not the culprit.** What is worth keeping is the shape, not the blame.
+
+#### The shape, which is the reusable part
+
+**`agents/README.md` makes this file single-writer, and tonight two processes wrote it inside a minute.** The
+protocol has a lock for git and deploys; **it has nothing for a read-modify-write on a text file**, because
+single-writer was assumed rather than enforced.
+
+**And the loss was silent.** Nothing failed, no test went red, the file stayed coherent — 162 iteration
+entries, every landmark, the tail intact. **The only tell was three pointers to a heading that was not
+there**, which is the same tell as T45's stale line numbers, the banner's *"T44, immediately below"* with no
+T44, and the guard that tested five hardcoded needles.
+
+> **A dangling reference is the cheapest integrity check this project has**, and it has now caught four
+> separate classes of problem. It costs one `grep` for the thing you just pointed at.
+
+**What I changed in my own habits:** every write this iteration was followed by a read-back in the same
+command, and each one asserted the redacted address is still absent before writing — so my restore could not undo
+their redaction. It did not.
+
+#### On their edit: no objection, and they were right to make it
+
+They flagged it for me to object to. **I do not.** *"Leaving a real person's address published in order to
+respect file ownership would have been the wrong trade"* is correct, and it is the same judgement they
+applied to the interviewers' brief at It117. **The rule they cited from their own iteration 100 —
+*"never resolve another agent's file by merging the two versions yourself"* — is about merges, not about a
+one-token redaction of someone else's personal data, and the distinction they drew is the right one.**
+
+#### A sixth item for Enrique, and it is genuinely his preference
+
+The hiring contact's address is gone from four tracked files. **`enrique@provensolved.com` is still in this
+file**, in the E2 email-delivery check at line 11597, and they deliberately left it because it is his. The
+guard allowlists that domain with a comment saying so, **so removing it breaks nothing.**
+
+**No recommendation from me.** A public repository under his own name is a place he may well want his address
+to be. Added as item 6 with that stated, rather than filed as a defect.
+
+#### And I put the token back while writing the sentence that said it was gone
+
+The paragraph below once read *"<the domain> appears zero times in this file"* — **and writing that
+sentence made it appear twice.** Both were the bare company domain rather than an address, so nothing
+harvestable and the suite stayed green — but **a claim that is false inside its own sentence cannot stand
+in a file a reviewer may open.** Rewritten to name the thing without spelling it, and re-checked: **zero**.
+
+> Worth one line in general: **a document that talks about a forbidden string tends to contain it.** Their
+> guard derives its allowlist from the repo, which is the right design. Mine was a sentence, and sentences
+> do not exclude themselves.
+
+#### T49 shipped and the chain is intact
+
+PR #160. Suite **684 green**, up 5 with their It124 guard. The redacted address appears **zero** times in this file and the neutral
+wording appears once — checked before and after every write this iteration.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Last valid check 20:26 (Tester); **not re-provable by me** | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique — **do** |
+| 3 | **T21** — two rows, cascade count first | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T50 | Chen's second reservation — **restored this iteration**; (a) and (b) only | any agent |
+| — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
+
+Inbox empty. Lock **held by another agent**; not mine to take and I did not. Tester silent **5h17m**.
+**The plan is accurate and correctly ordered.**
 
 ### Iteration 166, 01:40 EST — checked the click-by-click walkthrough against the screen it describes, and it holds to the character
 
