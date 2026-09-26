@@ -1,6 +1,7 @@
 # Master plan: the whole picture
 
-> ## 22:00 — **ENRIQUE: the SQL paste is still #1.** Five document fixes are open, all one sentence.
+> ## 22:14 — **ENRIQUE: the SQL paste is still #1.** One document fix is open: **T42**, a transcript H1.
+> *(T38, T39, T40 closed in PR #124; T41 fixed in the working tree, uncommitted.)*
 >
 > **This banner is rewritten, not appended.** It said *18:04* and *"two agent items left"* until
 > iteration 123; there were five. Everything it used to carry about **closed** work is in the
@@ -58,7 +59,7 @@
 
 ---
 
-# ▶ OPEN WORK — four items are Enrique's, and five one-sentence fixes are the agents'
+# ▶ OPEN WORK — four items are Enrique's, and one one-line fix is the agents'
 
 *Everything below this section is closed, or evidence.*
 
@@ -1342,6 +1343,138 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 126, 22:14 EST — T41 fixed in the tree, and both quotes now match the source byte for byte
+
+#### Verified against the policy document rather than against the diff
+
+`README.md:133` no longer carries the invented phrase. Both replacements checked **in both
+directions** — present in the README, and present verbatim in the provided policy reference:
+
+```
+"based on same-day room availability"    README: True    policy file: True
+"based on same-day inventory"            README: True    policy file: True
+"subject to same-day availability"       README: False   (the invented one, gone)
+```
+
+**And it took the argument, not just the correction.** The assumption now reads:
+
+> *"Policies 1 and 6 both hinge on same-day availability **and use different words for it** — Policy
+> 1 makes late check-out *"based on same-day room availability"*, Policy 6 makes the Platinum
+> upgrade *"based on same-day inventory"* — so **two policies reach for the same missing data in two
+> vocabularies, which is the clearest argument that it belongs behind one service**."*
+
+That is the point the invented paraphrase was flattening. **The justification for the net-new tool —
+a named brief deliverable — is now stronger than before it was wrong.**
+
+**Uncommitted**, in the working tree. It will land with whatever ships next.
+
+#### One remaining, and it is the one I would do first
+
+```
+T42 open: True
+```
+
+`transcripts/refund-outside-window.md:1` — *"Refund request outside the **service recovery**
+window"* — on a transcript that is entirely **Policy 2 cancellation**, cites Policies 2 and 15, and
+never mentions Policy 5. And *"outside the window"* is backwards: she cancelled **inside** the 72
+hours, which is why she was charged.
+
+**The interviewers wrote that policy document.** Of everything left in this package, a transcript
+titled for the wrong policy on its first line is the mistake most likely to be caught by the person
+best placed to catch it. **One line — the H1 only. The body is right throughout.**
+
+#### On my own checking, which was wrong twice about these two
+
+Iteration 122: a tightened `grep` reported T41 fixed when it was not. This iteration: T41 really is
+fixed, and I did not take my own whitespace-normalised check as sufficient — **I read the paragraph
+and then verified both quotes against the source file.**
+
+> The check tells you a string is absent. **It cannot tell you the replacement is right**, and on
+> these two the replacement was the whole point. A phrase disappearing is compatible with the
+> sentence being deleted, reworded wrongly, or wrapped differently.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T42** — the transcript H1 | anyone, one line |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
+### Iteration 125, 22:10 EST — T38, T39 and T40 shipped, and my iteration-112 conclusion was half wrong
+
+#### All three closed, and verified as correct rather than as absent
+
+A phrase disappearing is not a fix, so I read them:
+
+- **T38** now says *"**Edit the `SOL-PHX` entry, not the first match**"* and **enumerates all three
+  wrong lines** — the comment near 10, Austin at 54, Tampa at 93 — before naming line 106. **Better
+  than I specified**: I asked for the ordinal to be replaced with the property; they replaced it and
+  showed the reader exactly what the three false hits are. The tell survives, and so does *"the
+  testing agent made it on its first attempt at this exact edit"*, which is what makes the warning
+  credible.
+- **T39** — step 3 now describes what is on screen, and the commit records that the three costed
+  options **are real** (`tools.ts:326`, asserted in `inquiries.test.ts:317`) but live on the sales
+  screen rather than in that script. The distinction is kept, not deleted.
+- **T40** — the recovery row now splits **carrier problems from credit** and names the text bubble,
+  *"which runs on Anthropic"*.
+
+#### The part that corrects me
+
+PR #124 opens: *"**The Planner put T38, T39 and T40 before more guards, and was right**: a guard
+protects against the next regression, and these are current defects in documents Enrique reads while
+presenting."*
+
+In **iteration 112** I concluded that my ordering note had *"no protocol force"*, having found that
+`agents/README.md:35` routes nothing from my file to anyone. **The mechanism half of that diagnosis
+was right. The conclusion drawn from it was wrong.**
+
+The note was written in iteration 111 and acted on in 124 — **thirteen iterations later, citing its
+reasoning back.** I read silence as ineffectiveness after four iterations and rebuilt the whole
+presentation around that reading.
+
+> **A channel with no routing is slow, not dead.** I measured the absence of a mechanism correctly
+> and then inferred the absence of an effect, which does not follow. The paste-ready rewrite was
+> still worth doing — it is how T41 and T42 are now carried — but **it was insurance, not the
+> repair I described it as.**
+
+#### One thing I looked at and declined to file
+
+T38's paragraph now reads *"…around line 106. Editing the comment changes nothing and the script's
+output does not move…"* — *"the comment"* has drifted from its antecedent nine words earlier. It is
+understandable on one reading and the substance is exactly right. **At 22:10, with two fixes still
+open, prose flow in a corrected paragraph is noise.** Recorded so the next reader knows it was seen
+and judged, not missed.
+
+#### Two remain
+
+```
+T41 open: True     README quotes "subject to same-day availability"; neither policy contains it
+T42 open: True     a transcript titled for Policy 5 that is entirely Policy 2, and backwards
+```
+
+Both were filed after the ordering note, in iterations 117 and 119, and both are single sentences.
+**T42 is the one I would do first** — the interviewers wrote the policy document, and it is on the
+first line of a named deliverable.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T42** then **T41** | anyone, paste-ready |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 124, 22:06 EST — verified my own new banner's claims, and separated two coverage numbers that look like a regression
 
