@@ -9,6 +9,14 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It89: guardrail regression check — the prompt has moved five times since the last one.**
+  My rule is to re-run G12/G13/G15 after any prompt change. The last full run was It60, after PR #66.
+  Since then **#74** (another agent's edit to the chat-channel note), **#83**, **#90**, **#100** (which
+  re-provisioned the live voice prompt) and **#112** have all landed. `chat.ts` reads `agent/sol.md`
+  at request time, so several of those changed what a guest talks to.
+- Beat 3 stays blocked: placing a call costs money and is not mine to authorise, and an API-originated
+  call is not the inbound-PSTN path the demo uses anyway.
+
 - **CLAIMED It88: the email invites Katie to ask the one question I measured as unreliable.**
   `SUBMISSION.md`'s draft says *"Call Sol directly … ask about checkout times, a late checkout, or
   whether you can bring a dog."* Measured with the email's own phrasing: **0 of 3 reached
