@@ -9,32 +9,24 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It100: the failure-injection switch is NOT a second approval-gate hole — and the SQL
-  Enrique is about to paste is safe, for a reason nothing was asserting.**
-- **`/api/flags` holds at both layers.** Function: **401** unauthenticated, **403** as `supervisor@`,
-  GET fine for both with an honest `can_change`. Database: `demo_flags` RLS is `my_role() = 'admin'`
-  for writes and signed-in for reads — and it is **live**, not merely declared: an anon `select`
-  returns `[]` where a signed-in one returns three rows.
-- **The methodological catch: my first probe was worthless.** A PATCH filtered to a non-existent row
-  returns **200 `[]`** on *every* table here, including `audit_log` and `profiles`, which nothing may
-  write. RLS filters rows on update rather than erroring. I had the makings of "anyone with the anon
-  key can flip failure injection on production" and the control experiment killed it.
-- **What the sweep did find:** the three `drop policy` lines Enrique pastes are safe **only because
-  `schema.sql:183-185` declares `inq_read`, `prop_read` and `fup_read` separately.** Dropping a
-  `FOR ALL` policy drops the read it was granting. Those three look redundant while `FOR ALL` exists,
-  and migration 004 restates them in a `do`-block that **the pasted three lines do not carry** — so a
-  tidy-up would turn beat 4's inbox blank in the SQL editor minutes before the demo.
-- **`rls-policies.test.ts`**: no write policy may skip `my_role()`/`auth.uid()`; the three group tables
-  must each keep a select policy **declared outside migration 004**; `audit_log` stays append-only.
-- **Red-checking caught the guard passing while broken.** The first version counted 004's own
-  restatement, so deleting `prop_read` from `schema.sql` stayed green. It is now blind to that file,
-  and the comment says why.
-- **Coordination incident, resolved without losing anything.** The Planner wrote both of their files
-  between my merge and my `checkout main`, twice, so `pull` refused. Resolved to **origin/main** and
-  left their in-flight text in two stashes plus `scratchpad/planner-plan-newest.md`. **What is not on
-  origin: their iteration-136 log entry**, which replaced the 135 entry origin already holds — so
-  neither side was a superset and merging by hand was the wrong move. `agents/README.md` now carries
-  the procedure.
+- **SHIPPED It101: ran every `curl` the deliverables hand a reviewer. All three match, and the
+  Tester's last FIXED-PENDING item is now verified.**
+- **`docs/role-walkthroughs.md`'s "Proving the boundary, in ten seconds" is exact.** A concierge token
+  on `/api/group/proposals` returns **403** with the sentence the page prints **verbatim**; no header
+  returns **401** with *"Authorization: Bearer <supabase access token> is required."* verbatim. That
+  closes the Tester's iteration-60 item — the prose was fixed in PR #102 but nobody had re-run the
+  command since.
+- **The database underneath matches too:** concierge reading `inquiries` gets **0 rows of 13**,
+  `group_sales` reading `sessions` gets **0** of 180+. The page's *"not a filtered view — the rows are
+  not there to be had"* is accurate.
+- **The runbook's warm-up is accurate:** `/api/chat` 0.32s then **0.23s**, `/api/tools` 0.99s then
+  **0.22s**, against documented warm figures of ~0.21s and ~0.26s.
+- **Pinned the two refusals to `group/auth.ts`, message and status together.** The section's argument
+  is that the two refusals *differ* — "who are you" versus "you are not allowed" — so a guard that
+  checked only the text would miss a 403 quietly becoming a 401. Red-checked both ways.
+- **My own regex was broken by the heredoc** and printed `/status:s*403/`: a backslash level eaten
+  again. Replaced with a literal `toContain`. Same hazard as the `chr(92)` note, now on the sixth
+  occurrence — the tell was that both status cases failed while both text cases passed.
 
 ## Demo rehearsal coverage — what is actually verified
 

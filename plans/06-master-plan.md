@@ -27,6 +27,18 @@
 > ```
 >
 > Safe — nothing in the client writes these tables; `useAdminData.ts` only ever `.select()`s.
+>
+> **Why those three lines are safe, and the one way it could go wrong.** Dropping a `FOR ALL`
+> policy also drops the **read** it granted. These are safe because `supabase/schema.sql` declares
+> `inq_read`, `prop_read` and `fup_read` **separately** — so the reads survive the drop. **The full
+> migration file restates them in a `do $$` block; the three lines above do not carry it.**
+> *(PR #132 pinned this with `rls-policies.test.ts`: every group table must have a select policy
+> declared outside migration 004. Until tonight nothing asserted the reads existed.)*
+>
+> **If the sales inbox goes blank after you paste it**, the reads did not survive: run the `do $$`
+> block from `supabase/migrations/004_client_read_only_on_group_tables.sql`, which recreates them.
+> Recovery note at `HUMAN_INTERVENTION.md:580`.
+>
 > **Apply it and change nothing else, or apply nothing and weaken §13**, which is the package's
 > best answer on authority. **If you apply it before submitting, delete the disclosure paragraph in
 > `README.md` and the row in `SUBMISSION.md`** — instructions at `HUMAN_INTERVENTION.md:753`.
@@ -1442,6 +1454,70 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 137, 23:08 EST — the paste in my own banner was missing the reason it is safe, and the recovery if it is not
+
+#### What PR #132 found while checking something else
+
+They were testing whether `demo_flags` has the same hole as the group tables. **It does not** — 403
+to a signed-in concierge, 401 unauthenticated, migration 003's admin-only write policy live, and an
+anon select returns `[]` where a signed-in one returns three rows.
+
+**Reading the policy set to settle that surfaced something about the paste Enrique performs by
+hand:**
+
+> *"Dropping a `FOR ALL` policy **also drops the read it granted**, so those three lines are safe
+> only because `schema.sql` declares `inq_read`, `prop_read` and `fup_read` separately. Migration
+> 004 restates them in a `do`-block; **the pasted lines do not carry it. Nothing asserted the reads
+> existed.**"*
+
+`rls-policies.test.ts` now pins it: no write policy without `my_role()`/`auth.uid()`, a select policy
+on each group table **declared outside migration 004**, and `audit_log` stays append-only.
+
+#### The gap was in my file, on the most important item in the package
+
+**My banner is the paste source.** It gave the three lines and said *"Safe — nothing in the client
+writes these tables."* **True, and not the whole reason.** It did not say the safety rests on the
+reads being declared separately, and it did not carry the recovery — which has existed at
+`HUMAN_INTERVENTION.md:580` all evening:
+
+> *"If the inbox goes blank after applying it, the read policies did not survive; re-run the
+> `do $$`."*
+
+**My banner pointed at `HUMAN_INTERVENTION.md:753` for deleting the disclosure and said nothing
+about :580 for the failure that would actually hurt.** Someone pasting three lines at 10:30 and
+watching the sales board empty needs the second pointer, not the first.
+
+Now fixed. The item carries **why it is safe**, **what the three lines omit that the migration file
+has**, and **what to run if the inbox goes blank.**
+
+#### The pattern, and it is mine
+
+I have spent the evening finding places where a document was right and incomplete. **This was one of
+those, in the section I rewrote specifically to be the handoff**, on the one item I have called most
+important in every status file for six hours.
+
+> **A correct instruction is not a sufficient instruction.** *"Safe, paste this"* is correct. It is
+> not enough for someone doing it alone, before a demo, with no way to tell a slow paste from a
+> broken one.
+
+#### Also checked
+
+The README's setup block is complete — `npm install`, `cp .env.example .env`, then the four
+commands. **No missing step**, which is what I went looking for after T44.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — now with the safety reason and the recovery | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — two rows | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. Lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 135, 22:58 EST — checked the reviewer's setup path as a property, and confirmed #130 scoped it correctly
 
