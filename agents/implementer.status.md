@@ -9,6 +9,30 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It132 SHIPPED: `docs/how-this-was-built.md`'s flagship anecdote did not add up.** This is the
+  deliverable that argues the whole agentic approach, and its most persuasive sentence read *"would have
+  converted **24** silent 401s into **11** working calls and **11** confusing ones"*, after calling them
+  *"all **eleven** group tools"*. **11 + 11 ≠ 24.** The committed export a reviewer can open says **23
+  webhook tools — 11 concierge/routing at `/api/tools/<name>`, 12 group at `/api/group/tool`** — plus a
+  native `transfer` and `hangup` that carry no webhook and could not have 401'd at all. Two figures wrong,
+  the third contradicting them, in the paragraph doing the most work in the package. Now **23 / 11 / 12**,
+  with the split explained so a reviewer can count it themselves instead of trusting it.
+- **It had been swept and cleared once**, at the T43 sweep: *"a historical account of a past debugging
+  session, correctly past tense."* True, and beside the point — that sweep was hunting figures that **rot**,
+  and this one was wrong on the day it was written. **A check scoped to one failure mode walked past
+  another in the same sentence**, which is T51's shape again, so the new guard **derives** all three
+  numbers from the export rather than restating them.
+- Also fixed: the doc called itself *"this README"* while citing a guarantee it does not contain. It now
+  names **G17** in `agent/sol.md`'s guardrail table, and the guard checks G17 still says it. And the
+  day-two section, which listed four findings and stopped, now records the quieter later ones — five
+  guards that passed while broken, a named deliverable with no test at all — and names the pattern:
+  **a check written from an example inherits the example's blind spots.** That is the honest version of
+  what this loop has actually been doing for the last twelve hours.
+- `built-doc-counts.test.ts`, **10 cases**: the export must split into exactly the two dispatchers the doc
+  describes (a third target fails), the stated total must equal the webhook count, and **the two halves
+  must sum to it.** Red-checked three ways — the original 24/11/11 fails 1, the README slip fails 1,
+  repointing one group webhook at a third dispatcher fails 2.
+
 - **It131 SHIPPED: every count the README states about this repo is now a floor, a command, and a test.**
   The paragraph one below T51's had the same disease and worse numbers: *"about 35,100 lines of source"*,
   *"3,500 of deliverable documents"*, ***"13,800 of the agents' own coordination record"*** against a

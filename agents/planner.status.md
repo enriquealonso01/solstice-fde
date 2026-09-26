@@ -4,46 +4,50 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 180 — 2026-09-26 02:46 EST
+## Iteration 181 — 2026-09-26 02:53 EST
 
-**The plan is accurate and correctly ordered. No agent task is open.**
+**The plan is accurate and correctly ordered. No agent task is open and none was filed.**
 
-### There is no credit line, which changes the shape of the Telnyx risk
+### Chased `grounded: false` on a successful lookup to the edge of filing a defect
 
-```
-GET api.telnyx.com/v2/balance
-  balance 3.03 USD | credit_limit 0.00 | available_credit 3.03
-```
+`transcripts/voice-call.md:107` — the one capture the README admits was *"taken on trust rather than
+re-run"* — shows `get_reservation` returning R55015 correctly and marked ***(returned ungrounded)***. I
+reproduced it on production and isolated it:
 
-**`credit_limit` is zero** and nobody had recorded it. A measured 3-second call cost about **$0.48**, so
-$3.03 is roughly **six calls** — and at zero there is no overdraft and no grace. **The failure mode is a hard
-stop mid-demo, not a slow drain.**
+| tool | ok | grounded | citations |
+|---|---|---|---|
+| `get_property_info` · `identify_guest` · `check_late_checkout` | true | **true** | 1 · 2 · 5 |
+| **`get_reservation`** | true | **false** | **2** |
 
-**And "falling" was the wrong word.** My banner said *"under $4 and falling"* for hours; it has been **flat
-at $3.03** since ~23:00 because **nobody has called.** It only falls when someone does. Item 2's row now
-carries the provider's three numbers instead of an adjective, plus the $20 gate from `SUBMISSION.md:119` and
-`demo-runbook.md:15`.
+`grounded` is not private: `integration-recommendation.md` offers it as the answer to *"We will not know what
+it did"*, and `role-walkthroughs.md` sends a reviewer to the Tool trace panel to look at it.
 
-### The cost page is measured, and corroborates three other claims
+### It is deliberate, and well designed
 
-`/api/cost` as admin — a named delight item nobody had verified:
+`getReservation` returns `toolUngrounded` on **one condition** — `refund_class === 'not_documented'` — and
+`_deps.ts:106` says why: *"`grounded: false` **obliges the agent to say it cannot confirm and to escalate**."*
 
-```
-claude-sonnet-5  315 turns  cache_hit_ratio 0.895   $2.66
-totals  model $2.66 · telephony $1.30 · email $0.0012 · all $3.96
-traffic 9 voice · 278 chat · 287 conversations · 11.94 call minutes
-telnyx  balance 3.03
-```
+**R55015's rate plan in the CSV phData sent: `Loyalty Redemption`.** Live: `refund_class not_documented`,
+`escalation_required true`, reason *"No written policy covers cancellation or refund of a Loyalty Redemption
+booking."*
 
-- **`latency-target.md`**: *"prompt caching is already working… no win left there."* **89.5% hit ratio**,
-  3.2M cache-read vs 373K fresh input — **true, and why the model bill is $2.66.**
-- **`demo-runbook.md:236`**: *"fewer than one call in every fifteen sessions."* Measured **9 in 287 ≈ 1 in
-  32.** Holds with room — chat has grown 100+ sessions since that sentence and a ratio survived where two
-  exact counts would not.
-- **`telnyx.balance` matches the provider exactly**, so the page reads live rather than reciting a constant.
+**That is assumption 6 firing as written.** The reservation facts are grounded; the *refund terms* are not,
+and the envelope carries the weaker of the two so the agent cannot promise on the stronger. **The voice
+transcript's annotation is evidence, not a blemish** — the one capture nobody re-ran shows a guardrail firing
+on a real call.
 
-**The session count reconciles with my own testing:** 279 at iteration 170, 287 now — **the eight are mine**,
-from the guardrail turns at 179 and the upgrade beat at 165.
+### Twelfth near-miss, and the most instructive
+
+I noticed an anomaly, **reproduced it on production**, **isolated it against four siblings**, and established
+it was reader-visible in two deliverables. Every step made the case stronger. **Then the answer was a
+documented helper in the same file, with its reason in a comment three lines above its definition.**
+
+**And the tell was in my own first output:** it printed `data keys: … escalation_required, escalation_reason`.
+**A tool that returns an escalation reason is not quietly failing to be grounded — it is telling you why it is
+not.** I read past it because I had already decided what the anomaly was.
+
+**Rigour aimed at the wrong question gets you a stronger wrong answer** — that is the failure mode to watch
+now, not sloppiness. **Before filing, read the function that produced the field.**
 
 ### Open
 
@@ -56,9 +60,8 @@ from the guardrail turns at 179 and the upgrade beat at 165.
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
 
-It131 shipped. **Tester silent 6h19m.** Inbox and In progress empty. No lock held.
+**Tester silent 6h24m.** Inbox and In progress empty. No lock held.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — the only item nobody else could do. **Item 2 is the one with a cliff:** no
-credit line means the phone stops dead rather than degrading.
+**The `drop policy` paste** — the only item nobody else could do. **Item 2 is the one with a cliff.**
