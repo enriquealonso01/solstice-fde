@@ -1,12 +1,11 @@
 /**
  * check_late_checkout, check_upgrade_eligibility, book_amenity.
  *
- * Policy 6 is where "guaranteed" has to mean something. Gold benefits are
- * conditioned on availability; Platinum's 2PM checkout is granted without an
- * availability gate because the policy says "no blackout dates and no
- * exceptions". Where Policy 6 admits it has no answer (two Platinum guests, one
- * last suite) the tool returns a documented policy gap and routes to the manager
- * on duty instead of inventing a tiebreak.
+ * Only Platinum's 2 PM checkout is promised outright: Policy 6 guarantees it and no
+ * inventory is involved. Anything that hangs on same-day inventory (every upgrade,
+ * Gold's 1 PM, inventory-dependent amenities) is offered as eligible, never promised,
+ * because our only inventory source is simulated, and its figures stay out of the result.
+ * A cancelled or checked-out stay gets nothing, and no inventory is looked up for it.
  */
 import type { Citation, Guest, Property, Reservation, ToolResult } from '../../../shared/types'
 import { toolFail, toolOk } from './_deps'
@@ -22,39 +21,99 @@ import {
   policyCitation,
   propertyCitation,
   reservationCitation,
+  stayPhase,
+  todayISO,
+  type StayPhase,
   type ToolArgs,
   type ToolContext,
 } from './helpers'
 import { findGuestById, findPropertyByCode, findReservationById, pickRelevantReservation, reservationsForGuest } from './lookups'
-import { houseOccupancy, sameDayAvailability } from './availability'
+import { sameDayAvailability } from './availability'
 import { AMENITY_CATALOG, ANIMAL_RULES, POLICY_RULES, TIER_BENEFITS } from './rules'
 
 interface StayContext {
   reservation: Reservation
   guest: Guest | null
   property: Property | null
+  phase: StayPhase
+  today: string
+  staffDirectives: string[]
 }
 
 async function resolveStay(args: ToolArgs, ctx: ToolContext): Promise<StayContext | string> {
   const reservationId = optString(args, 'reservation_id') ?? optString(args, 'confirmation_number')
   const guestId = optString(args, 'guest_id') ?? ctx.guest_id
+  const now = nowFrom(ctx)
 
   let reservation: Reservation | null = null
   if (reservationId) {
     reservation = await findReservationById(reservationId)
     if (!reservation) return `No reservation found for ${reservationId}.`
   } else if (guestId) {
-    reservation = pickRelevantReservation(await reservationsForGuest(guestId), nowFrom(ctx))
+    reservation = pickRelevantReservation(await reservationsForGuest(guestId), now)
     if (!reservation) return `No reservations found for guest ${guestId}.`
   } else {
     return 'Need a reservation id or a verified guest id. Identify the guest first.'
   }
 
+  // A note on one stay can restrict another (R55004's "Suite upgrade is NOT guaranteed" covers
+  // R55015), so the guest's other stays' notes come along once the caller is verified as that guest.
+  const otherStays =
+    ctx.guest_id === reservation.guest_id
+      ? (await reservationsForGuest(reservation.guest_id)).filter((r) => r.reservation_id !== reservation.reservation_id)
+      : []
+
   return {
     reservation,
     guest: await findGuestById(reservation.guest_id),
     property: await findPropertyByCode(reservation.property_code),
+    phase: stayPhase(reservation.check_in_date, reservation.check_out_date, now),
+    today: todayISO(now),
+    staffDirectives: [reservation, ...otherStays].flatMap((r) => (r.internal_notes ? [`${r.reservation_id}: ${r.internal_notes}`] : [])),
   }
+}
+
+/** When an eligible benefit is settled: on arrival for an upcoming stay, else on the day it applies. */
+function frontDeskConfirms({ phase, today }: StayContext, day = today): string {
+  if (phase === 'upcoming') return 'the front desk confirms on arrival'
+  return day === today ? 'the front desk confirms today' : `the front desk confirms on ${day}`
+}
+
+/**
+ * Where same-day availability comes from, without the figure: it is simulated, and anything in a
+ * result reaches the model. A real PMS behind `sameDayAvailability` is where a figure could come back.
+ */
+function availabilityBasis(property: Property, date: string, roomClass: string) {
+  const { provenance, assumption } = sameDayAvailability(property, date, roomClass)
+  return { date, room_class: roomClass, provenance, assumption }
+}
+
+/** A cancelled or checked-out stay gets no benefits, and no inventory is looked up for it. */
+function closedStay({ reservation, phase }: StayContext, extra: Record<string, unknown> = {}): ToolResult | null {
+  let decision: string
+  let why: string
+  if (reservation.status === 'Cancelled') {
+    decision = 'reservation_cancelled'
+    why = 'That reservation was cancelled'
+  } else if (phase === 'ended') {
+    decision = 'stay_ended'
+    why = `That stay has ended (checked out ${reservation.check_out_date})`
+  } else {
+    return null
+  }
+  return toolOk(
+    {
+      ...extra,
+      // `decision` is what the late-checkout and upgrade chips show, `status` the amenity chip.
+      decision,
+      status: decision,
+      may_promise: false,
+      reservation_id: reservation.reservation_id,
+      check_out_date: reservation.check_out_date,
+      human_reason: `${why}, so there is no late checkout, upgrade or request to arrange on it. If the guest has another booking, ask for that confirmation number.`,
+    },
+    { citations: [reservationCitation(reservation.reservation_id)] },
+  )
 }
 
 // -------------------------------------------------------- check_late_checkout
@@ -62,7 +121,7 @@ async function resolveStay(args: ToolArgs, ctx: ToolContext): Promise<StayContex
 export async function checkLateCheckout(args: ToolArgs, ctx: ToolContext): Promise<ToolResult> {
   const stay = await resolveStay(args, ctx)
   if (typeof stay === 'string') return toolFail(stay)
-  const { reservation, guest, property } = stay
+  const { reservation, guest, property, staffDirectives } = stay
 
   const tier = guest?.loyalty_tier ?? 'None'
   const benefit = TIER_BENEFITS[tier]
@@ -70,6 +129,8 @@ export async function checkLateCheckout(args: ToolArgs, ctx: ToolContext): Promi
 
   const rawRequest = optString(args, 'requested_time') ?? optString(args, 'time')
   const requested = rawRequest ? normalizeTime(rawRequest) : (benefit.late_checkout_local ?? '13:00')
+  const closed = closedStay(stay, { requested_time: requested ?? rawRequest })
+  if (closed) return closed
   if (!requested) {
     return toolFail(`Could not read "${rawRequest}" as a time. Ask the guest for a clock time such as 1 PM.`)
   }
@@ -78,6 +139,15 @@ export async function checkLateCheckout(args: ToolArgs, ctx: ToolContext): Promi
   if (guest) citations.push(guestCitation(guest.guest_id))
   if (property) citations.push(propertyCitation(property.property_code, property.property_name))
 
+  const base = {
+    tier,
+    requested_time: requested,
+    check_out_date: reservation.check_out_date,
+    standard_checkout: standard,
+    staff_directives: staffDirectives,
+    staff_directives_are_internal: true,
+  }
+
   const requestedMin = localTimeToMinutes(requested)
   const standardMin = localTimeToMinutes(standard)
   const entitledMin = benefit.late_checkout_local ? localTimeToMinutes(benefit.late_checkout_local) : standardMin
@@ -85,56 +155,43 @@ export async function checkLateCheckout(args: ToolArgs, ctx: ToolContext): Promi
   if (requestedMin <= standardMin) {
     return toolOk(
       {
+        ...base,
         decision: 'not_needed',
         may_promise: true,
-        tier,
-        requested_time: requested,
-        standard_checkout: standard,
         human_reason: `${requested} is at or before the standard ${standard} checkout, so no late checkout is required.`,
       },
       { citations },
     )
   }
 
-  // Platinum: guaranteed to the tier time, with no availability gate.
+  // Platinum: guaranteed to the tier time. No inventory is involved, so it may be promised.
   const withinEntitlement = requestedMin <= entitledMin
   if (benefit.guaranteed && withinEntitlement) {
     return toolOk(
       {
+        ...base,
         decision: 'guaranteed',
         may_promise: true,
-        tier,
-        requested_time: requested,
         entitled_until: benefit.late_checkout_local,
-        standard_checkout: standard,
-        availability_checked: false,
-        human_reason: `Policy 6: Platinum members have a guaranteed late checkout until ${benefit.late_checkout_local}, with no blackout dates and no exceptions. ${requested} is inside that, so it is confirmed, not requested.`,
+        availability: null,
+        human_reason: `Policy 6: Platinum members have a guaranteed late checkout until ${benefit.late_checkout_local}, with no blackout dates and no exceptions. ${requested} on ${reservation.check_out_date} is inside that, so it is confirmed, not requested.`,
       },
       { citations },
     )
   }
 
-  // Everything else is availability-gated, which is exactly what Policy 1 says.
-  const occupancy = property ? houseOccupancy(property, reservation.check_out_date) : 1
-  const gate = POLICY_RULES.discretionary_late_checkout_max_occupancy
-  const looksAvailable = occupancy <= gate
+  // Everything else hangs on same-day availability (Policy 1), which we cannot know.
+  const availability = property ? availabilityBasis(property, reservation.check_out_date, reservation.room_type) : null
 
   if (withinEntitlement && benefit.late_checkout_local) {
     return toolOk(
       {
-        decision: looksAvailable ? 'available_subject_to_confirmation' : 'not_available_today',
-        // Never a promise: the benefit itself is written "subject to availability".
+        ...base,
+        availability,
+        decision: 'eligible_subject_to_availability',
         may_promise: false,
-        tier,
-        requested_time: requested,
         entitled_until: benefit.late_checkout_local,
-        standard_checkout: standard,
-        availability_checked: true,
-        same_day_occupancy_pct: Math.round(occupancy * 100),
-        availability_provenance: 'simulated_inventory_service',
-        human_reason: looksAvailable
-          ? `Policy 6: ${tier} members get late checkout to ${benefit.late_checkout_local} subject to availability. The house on ${reservation.check_out_date} is at ${Math.round(occupancy * 100)}% so it looks grantable, but it is the front desk's call on the day. Offer it as likely, not as confirmed.`
-          : `Policy 6: ${tier} members get late checkout to ${benefit.late_checkout_local} subject to availability. The house on ${reservation.check_out_date} is at ${Math.round(occupancy * 100)}%, so it is not available. Offer bag storage or a later lobby arrangement instead, and do not promise the time.`,
+        human_reason: `Policy 6: ${tier} members get late checkout to ${benefit.late_checkout_local} subject to availability. The guest is eligible for ${requested} on ${reservation.check_out_date}, subject to same-day availability; ${frontDeskConfirms(stay, reservation.check_out_date)}.`,
       },
       { citations },
     )
@@ -143,17 +200,13 @@ export async function checkLateCheckout(args: ToolArgs, ctx: ToolContext): Promi
   // Beyond any tier entitlement, including a Platinum guest asking past 2PM.
   return toolOk(
     {
+      ...base,
+      availability,
       decision: 'needs_front_desk',
       may_promise: false,
-      tier,
-      requested_time: requested,
       entitled_until: benefit.late_checkout_local,
-      standard_checkout: standard,
-      availability_checked: true,
-      same_day_occupancy_pct: Math.round(occupancy * 100),
-      availability_provenance: 'simulated_inventory_service',
       human_reason: benefit.late_checkout_local
-        ? `${requested} is past the ${benefit.late_checkout_local} that ${tier} guarantees. Anything beyond the tier benefit is front-desk discretion on the day and cannot be promised here.`
+        ? `${requested} is past the ${benefit.late_checkout_local} that ${tier} includes. Anything beyond the tier benefit is front-desk discretion on the day and cannot be promised here.`
         : `${tier} carries no late-checkout entitlement. Policy 1 makes late checkout same-day availability and front-desk discretion, so it cannot be promised here.`,
     },
     { citations },
@@ -165,7 +218,9 @@ export async function checkLateCheckout(args: ToolArgs, ctx: ToolContext): Promi
 export async function checkUpgradeEligibility(args: ToolArgs, ctx: ToolContext): Promise<ToolResult> {
   const stay = await resolveStay(args, ctx)
   if (typeof stay === 'string') return toolFail(stay)
-  const { reservation, guest, property } = stay
+  const { reservation, guest, property, phase, staffDirectives } = stay
+  const closed = closedStay(stay)
+  if (closed) return closed
 
   const tier = guest?.loyalty_tier ?? 'None'
   const benefit = TIER_BENEFITS[tier]
@@ -173,8 +228,6 @@ export async function checkUpgradeEligibility(args: ToolArgs, ctx: ToolContext):
   const citations: Citation[] = [policyCitation(6), reservationCitation(reservation.reservation_id)]
   if (guest) citations.push(guestCitation(guest.guest_id))
   if (property) citations.push(propertyCitation(property.property_code, property.property_name))
-
-  const staffDirectives = reservation.internal_notes ? [reservation.internal_notes] : []
 
   if (isAccessibleRoom(reservation.room_type)) {
     return toolOk(
@@ -232,60 +285,24 @@ export async function checkUpgradeEligibility(args: ToolArgs, ctx: ToolContext):
     return toolFail(`No property record for ${reservation.property_code}, so same-day inventory cannot be checked. Escalate rather than assume.`)
   }
 
-  const snapshot = sameDayAvailability(property, reservation.check_in_date, target)
-  const hasInventory = snapshot.rooms_available > 0
-
-  const base = {
-    tier,
-    current_room_type: reservation.room_type,
-    target_room_class: target,
-    availability: {
-      date: snapshot.date,
-      room_class: snapshot.room_class,
-      rooms_available: snapshot.rooms_available,
-      total_rooms: snapshot.total_rooms,
-      provenance: snapshot.provenance,
-      assumption: snapshot.assumption,
-    },
-    staff_directives: staffDirectives,
-    staff_directives_are_internal: true,
-  }
-
-  if (benefit.upgrade === 'next_class_guaranteed') {
-    if (hasInventory) {
-      return toolOk(
-        {
-          ...base,
-          decision: 'guaranteed',
-          may_promise: true,
-          human_reason: `Policy 6: Platinum gets a guaranteed upgrade to the next room class based on same-day inventory. ${target} inventory exists for ${snapshot.date}, so confirm the upgrade.`,
-        },
-        { citations },
-      )
-    }
-    // The gap Policy 6 openly admits it does not answer.
-    return toolOk(
-      {
-        ...base,
-        decision: 'policy_gap_manager_decision',
-        may_promise: false,
-        policy_gap: true,
-        human_reason: `Policy 6 guarantees Platinum the next room class based on same-day inventory, and there is no ${target} inventory on ${snapshot.date}. Policy 6 states plainly that competing claims on the last room are a judgment call for the manager on duty. Do not promise the upgrade and do not invent a tiebreak: say the guarantee is being honoured through the manager on duty and hand it over.`,
-        escalation_required: true,
-        escalation_category: 'authority_exceeded',
-      },
-      { citations },
-    )
-  }
+  // The room depends on same-day inventory, which we cannot know, so every tier gets eligibility.
+  const entitlement =
+    benefit.upgrade === 'next_class_guaranteed'
+      ? `Policy 6: Platinum members are entitled to an upgrade to the next room class based on same-day inventory; competing claims on the last room are the manager on duty's call.`
+      : `Policy 6: ${tier} members get a complimentary upgrade at check-in when a room is free.`
+  const when = phase === 'upcoming' ? `at check-in on ${reservation.check_in_date}` : 'today'
 
   return toolOk(
     {
-      ...base,
-      decision: hasInventory ? 'available_subject_to_confirmation' : 'not_available',
+      decision: 'eligible_subject_to_availability',
       may_promise: false,
-      human_reason: hasInventory
-        ? `Policy 6: Gold gets a complimentary upgrade at check-in when one is available. ${snapshot.rooms_available} ${target} rooms look open on ${snapshot.date}, so offer it as likely and let check-in confirm it. Do not promise it.`
-        : `Policy 6: the Gold upgrade is available only when a room is. There is no ${target} inventory on ${snapshot.date}, so say so honestly rather than raise an expectation.`,
+      tier,
+      current_room_type: reservation.room_type,
+      target_room_class: target,
+      availability: availabilityBasis(property, reservation.check_in_date, target),
+      staff_directives: staffDirectives,
+      staff_directives_are_internal: true,
+      human_reason: `${entitlement} The guest is eligible for an upgrade to ${target} ${when}, subject to same-day availability; ${frontDeskConfirms(stay)}.`,
     },
     { citations },
   )
@@ -313,7 +330,7 @@ export async function bookAmenity(args: ToolArgs, ctx: ToolContext): Promise<Too
 
   const stay = await resolveStay(args, ctx)
   if (typeof stay === 'string') return toolFail(stay)
-  const { reservation, property } = stay
+  const { reservation, property, staffDirectives } = stay
 
   const q = normalizeText(requested)
 
@@ -344,6 +361,9 @@ export async function bookAmenity(args: ToolArgs, ctx: ToolContext): Promise<Too
     )
   }
 
+  const closed = closedStay(stay)
+  if (closed) return closed
+
   const amenity = resolveAmenity(requested)
   if (!amenity) {
     return toolFail(
@@ -359,18 +379,16 @@ export async function bookAmenity(args: ToolArgs, ctx: ToolContext): Promise<Too
   const reference = `AMN-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.floor(Math.random() * 46656).toString(36).toUpperCase().padStart(3, '0')}`
   const when = optString(args, 'when') ?? optString(args, 'time') ?? null
 
-  let availability = null
-  if (amenity.inventory_dependent && property) {
-    const snapshot = sameDayAvailability(property, reservation.check_in_date, reservation.room_type)
-    availability = {
-      date: snapshot.date,
-      rooms_available: snapshot.rooms_available,
-      provenance: snapshot.provenance,
-      assumption: snapshot.assumption,
-    }
-  }
+  const availability =
+    amenity.inventory_dependent && property ? availabilityBasis(property, reservation.check_in_date, reservation.room_type) : null
 
   const confirmed = amenity.confirmable_by_agent && !amenity.inventory_dependent && !amenity.chargeable
+  let humanReason = `${amenity.label} is passed to the property as a request, not a confirmation. ${amenity.note}`
+  if (confirmed) {
+    humanReason = `${amenity.label} is a zero-cost standard service, so it is logged against the stay and the property will action it.`
+  } else if (amenity.inventory_dependent) {
+    humanReason = `${amenity.label} is passed to the property as a request, subject to same-day availability; ${frontDeskConfirms(stay)}. ${amenity.note}`
+  }
 
   return toolOk(
     {
@@ -390,9 +408,9 @@ export async function bookAmenity(args: ToolArgs, ctx: ToolContext): Promise<Too
       },
       availability,
       note: amenity.note,
-      human_reason: confirmed
-        ? `${amenity.label} is a zero-cost standard service, so it is logged against the stay and the property will action it.`
-        : `${amenity.label} is passed to the property as a request, not a confirmation. ${amenity.note}`,
+      staff_directives: staffDirectives,
+      staff_directives_are_internal: true,
+      human_reason: humanReason,
     },
     { citations },
   )

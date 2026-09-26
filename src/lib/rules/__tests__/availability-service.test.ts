@@ -1,42 +1,26 @@
 /**
- * The net-new service, run rather than described.
+ * The simulated same-day inventory service (netlify/functions/tools/availability.ts), run rather
+ * than described: deterministic, bounded by the real room counts, driven by its two env knobs, and
+ * labelled simulated on every path. The last block checks that its figure never reaches a tool result.
  *
- * `netlify/functions/tools/availability.ts` is the one capability this project ADDED rather than
- * derived from the provided exports: Policies 1 and 6 both hang on same-day availability, and the
- * exports carry room counts but no inventory-by-date. It is named in five reader-facing places --
- * `README.md` twice, `SUBMISSION.md`, `agent/sol.md`, `docs/architecture.drawio` and the in-app
- * Backend map -- and before this file **nothing ran it**. The two tests that mentioned it,
- * `tool-naming` and `diagram-guide`, are about *strings*; `tool-naming` says so itself.
- *
- * It is also the stage control for the best refusal in the demo, which is why this is worth more
- * than a coverage number. `check_upgrade_eligibility` asks it whether a Suite is free; when the
- * answer is no, a Platinum guarantee turns into `policy_gap_manager_decision` and Sol hands the
- * call to a manager instead of promising a room. **If that branch inverted, it would not fail
- * loudly -- Sol would confirm a suite in front of the panel.** So the beat itself is asserted here,
- * both ways round, not just the primitive underneath it.
- *
- * Everything here is hermetic: the property and reservation records are compiled into the bundle
- * from `data/`, there is no network and no database, and the module's only inputs besides its
- * arguments are two environment variables, saved and restored around every case.
- *
- * Written after reading the module rather than against it: at the time of writing it is correct on
- * every branch. These cases exist so it stays that way.
+ * Hermetic: records are compiled from data/, with no network and no database. The two env knobs
+ * are saved and restored around every case.
  */
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Property } from '../../../../shared/types'
 import { listProperties } from '../../../../netlify/functions/_lib/data'
+import type { ToolResult } from '../../../../shared/types'
 import {
   availabilityByClass,
-  houseOccupancy,
   roomsOfClass,
   sameDayAvailability,
   type AvailabilitySnapshot,
 } from '../../../../netlify/functions/tools/availability'
 import { ROOM_CLASS_LADDER } from '../../../../netlify/functions/tools/rules'
-import { checkUpgradeEligibility } from '../../../../netlify/functions/tools/stayBenefits'
-import type { ToolContext } from '../../../../netlify/functions/tools/helpers'
+import { bookAmenity, checkLateCheckout, checkUpgradeEligibility } from '../../../../netlify/functions/tools/stayBenefits'
+import type { ToolArgs, ToolContext } from '../../../../netlify/functions/tools/helpers'
 
 const repoRoot = resolve(__dirname, '../../../..')
 
@@ -90,20 +74,15 @@ describe('the simulated inventory service is deterministic', () => {
     expect(elsewhere.property_code).not.toBe(base.property_code)
   })
 
-  /**
-   * The source-level half of "deterministic". The module's own comment promises a figure that is
-   * "stable across runs and platforms" and that a supervisor sees the same number the guest was
-   * told; a clock or an RNG anywhere in it would break that quietly, and the cases above would
-   * still pass for a value that changes once a day.
-   */
+  /** A clock or an RNG would break determinism quietly: the cases above pass for a value that changes daily. */
   it('contains no clock and no random source', () => {
     const src = readFileSync(resolve(repoRoot, 'netlify/functions/tools/availability.ts'), 'utf8')
     for (const forbidden of ['Math.random', 'Date.now', 'new Date(']) {
       expect(
         src.includes(forbidden),
         `availability.ts uses ${forbidden}. Its contract is that the same property, date and class ` +
-          `always yield the same figure -- a demo is reproducible and a supervisor sees what the guest ` +
-          `was told. A clock or an RNG breaks that without failing anything.`,
+          `always yield the same figure, so a run is reproducible. A clock or an RNG breaks that without ` +
+          `failing anything.`,
       ).toBe(false)
     }
     // Anti-vacuity: prove the file was actually read.
@@ -284,8 +263,8 @@ describe('every snapshot says where it came from', () => {
     carriesProvenance(snap, 'override')
     expect(
       snap.assumption,
-      'the override path no longer says the figure was pinned. A number a human chose, presented as a ' +
-        'simulation output with no note, is the one dishonest thing this service could do.',
+      'the override path no longer says the figure was pinned. A number a human chose would then be ' +
+        'presented as simulation output with no note.',
     ).toMatch(/pinned by AVAILABILITY_OVERRIDES/)
   })
 
@@ -296,97 +275,43 @@ describe('every snapshot says where it came from', () => {
   })
 })
 
-describe('houseOccupancy, which gates late checkout and early check-in', () => {
-  it('is a fraction, and agrees with the by-class figures it is built from', () => {
-    const den = denver()
-    const occupancy = houseOccupancy(den, '2026-07-20')
-    expect(occupancy).toBeGreaterThan(0)
-    expect(occupancy).toBeLessThanOrEqual(1)
-
-    let total = 0
-    let available = 0
-    for (const snap of Object.values(availabilityByClass(den, '2026-07-20'))) {
-      total += snap.total_rooms
-      available += snap.rooms_available
-    }
-    expect(occupancy).toBeCloseTo((total - available) / total, 10)
-  })
-
-  it('is a full house under sold_out and a quiet one under wide_open', () => {
-    process.env.AVAILABILITY_MODE = 'sold_out'
-    expect(houseOccupancy(denver(), '2026-07-20')).toBe(1)
-    process.env.AVAILABILITY_MODE = 'wide_open'
-    expect(houseOccupancy(denver(), '2026-07-20')).toBeLessThan(0.5)
-  })
-})
-
 /**
- * The beat, driven end to end.
- *
- * R55004 is the Platinum reservation the cheat sheet's row-one walkthrough uses: SOL-DEN, a Deluxe
- * King, so the next class up the ladder is a Suite. In default simulated mode SOL-DEN has **no
- * Suite free** on that stay date, so Policy 6's guarantee meets the gap Policy 6 itself admits to,
- * and the tool refuses and escalates. The cheat sheet calls this "the better moment of the two".
- *
- * The inversion is what makes this worth asserting: flip the service to `wide_open` and the same
- * reservation returns `guaranteed` with `may_promise: true`. That is the proof the decision is
- * really driven by the inventory service and not by the tier alone -- and it is what would happen
- * on stage, silently, if the sold-out branch regressed.
+ * The figure is simulated, so no tool result may carry it or change with it. Every stay below is
+ * upcoming on the pinned clock: R55004 Platinum (SOL-DEN, Deluxe King, 2026-07-20), R55015 Platinum
+ * (SOL-AUS, Deluxe King, 2026-09-05) and R55022 Gold (SOL-AUS, Deluxe King, 2027-03-12).
  */
-describe('the Platinum upgrade refusal is this service talking', () => {
-  const ctx = { channel: 'chat', session_id: 'test-availability' } as ToolContext
-  const upgrade = (id = 'R55004') => checkUpgradeEligibility({ reservation_id: id }, ctx)
+describe('the simulated figure never becomes a promise', () => {
+  const ctx: ToolContext = { channel: 'chat', session_id: 'test-availability', now: '2026-07-01T12:00:00Z' }
+  const MODES = ['simulated', 'sold_out', 'wide_open']
 
-  it('refuses and escalates in the mode the demo actually runs in', async () => {
-    const result = await upgrade()
-    expect(result.ok, `check_upgrade_eligibility failed: ${result.error}`).toBe(true)
-    const data = result.data as Record<string, unknown>
-
-    expect(data.tier, 'R55004 is no longer a Platinum stay, so this beat needs re-pointing').toBe('Platinum')
-    expect(data.target_room_class, 'the next class up from a Deluxe King is no longer a Suite').toBe('Suite')
-    expect(
-      data.decision,
-      `the Platinum upgrade beat returned ${JSON.stringify(data.decision)} with no environment override ` +
-        `set. The rehearsed moment is the refusal: Policy 6 guarantees the next class "based on same-day ` +
-        `inventory", there is no Suite free, and Sol hands it to the manager on duty. If this now says ` +
-        `"guaranteed", the panel watches Sol promise a suite.`,
-    ).toBe('policy_gap_manager_decision')
-    expect(data.may_promise).toBe(false)
-    expect(data.escalation_required).toBe(true)
-    expect(data.policy_gap).toBe(true)
-
-    // The refusal must carry the inventory snapshot, because that is what lets Sol say suites are
-    // showing sold out without inventing it.
-    const availability = data.availability as AvailabilitySnapshot & { rooms_available: number }
-    expect(availability.rooms_available).toBe(0)
-    expect(availability.provenance).toBe('simulated_inventory_service')
-    expect(String(availability.assumption)).toMatch(/no inventory-by-date/i)
-  })
-
-  it('inverts to a guaranteed upgrade when the service says there is a room', async () => {
-    process.env.AVAILABILITY_MODE = 'wide_open'
-    const data = (await upgrade()).data as Record<string, unknown>
-    expect(
-      data.decision,
-      'with inventory available, Platinum should get the guarantee Policy 6 actually grants. If this ' +
-        'stays a refusal, the decision is not reading the inventory service at all and the case above ' +
-        'proves nothing.',
-    ).toBe('guaranteed')
-    expect(data.may_promise).toBe(true)
-  })
-
-  it('refuses under the sold_out switch as well, which is the control for the beat', async () => {
-    process.env.AVAILABILITY_MODE = 'sold_out'
-    const data = (await upgrade()).data as Record<string, unknown>
-    expect(data.decision).toBe('policy_gap_manager_decision')
+  it.each(MODES)('offers the Platinum upgrade as eligible, never promised, under AVAILABILITY_MODE=%s', async (mode) => {
+    process.env.AVAILABILITY_MODE = mode
+    const data = (await checkUpgradeEligibility({ reservation_id: 'R55004' }, ctx)).data as Record<string, unknown>
+    expect(data.tier).toBe('Platinum')
+    expect(data.target_room_class).toBe('Suite')
+    expect(data.decision).toBe('eligible_subject_to_availability')
     expect(data.may_promise).toBe(false)
   })
 
-  it('never promises the upgrade in the words of the refusal', async () => {
-    process.env.AVAILABILITY_MODE = 'sold_out'
-    const data = (await upgrade()).data as Record<string, unknown>
-    const reason = String(data.human_reason)
-    expect(reason).toMatch(/manager on duty/i)
-    expect(reason.toLowerCase()).toContain('do not promise')
+  const cases: Array<[string, (args: ToolArgs, ctx: ToolContext) => Promise<ToolResult>, ToolArgs]> = [
+    ['check_upgrade_eligibility R55004', checkUpgradeEligibility, { reservation_id: 'R55004' }],
+    ['check_upgrade_eligibility R55015', checkUpgradeEligibility, { reservation_id: 'R55015' }],
+    ['check_upgrade_eligibility R55022', checkUpgradeEligibility, { reservation_id: 'R55022' }],
+    ['check_late_checkout R55022', checkLateCheckout, { reservation_id: 'R55022', requested_time: '1pm' }],
+    ['book_amenity R55022', bookAmenity, { reservation_id: 'R55022', amenity: 'connecting rooms' }],
+  ]
+
+  it.each(cases)('%s returns the same result under every mode, labelled simulated, with no figure', async (_name, tool, args) => {
+    const seen = new Set<string>()
+    for (const mode of MODES) {
+      process.env.AVAILABILITY_MODE = mode
+      const data = { ...((await tool(args, ctx)).data as Record<string, unknown>) }
+      delete data.reference // a fresh id on every amenity request
+      seen.add(JSON.stringify(data))
+    }
+    expect(seen.size, 'the result changed with the simulated house').toBe(1)
+    const [json] = seen
+    expect(json).toContain('simulated_inventory_service')
+    expect(json).not.toMatch(/rooms_available|total_rooms|occupancy/)
   })
 })
