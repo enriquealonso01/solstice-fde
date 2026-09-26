@@ -25,33 +25,33 @@
 <text x="56" y="154" font-size="12" font-weight="400" fill="#5A534B" text-anchor="start">Where a guest starts</text>
 <rect x="60" y="166" width="300" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="62" y="168" width="7" height="92" fill="#1F5C3D"/>
-<text x="78" y="185" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="78" y="185" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="78" y="206" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Web chat widget</text>
 <text x="78" y="225" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">React SPA on the Solstice site. Streaming</text>
 <text x="78" y="241" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">replies, tool chips, inline policy</text>
 <text x="78" y="257" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">citations.</text>
 <rect x="60" y="276" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="62" y="278" width="7" height="92" fill="#2E2A26"/>
-<text x="78" y="295" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="78" y="295" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="78" y="316" font-size="16" font-weight="700" fill="#141210" text-anchor="start">SMS and WhatsApp</text>
 <text x="78" y="335" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Telnyx Messaging. Same agent, same tools,</text>
 <text x="78" y="351" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">asynchronous turns. Today: outbound only.</text>
 <rect x="60" y="386" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="62" y="388" width="7" height="92" fill="#2E2A26"/>
-<text x="78" y="405" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="78" y="405" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="78" y="426" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Group inquiry intake</text>
 <text x="78" y="445" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Website portal form and the shared sales</text>
 <text x="78" y="461" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">inbox. Today: the provided CSV export,</text>
 <text x="78" y="477" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">seeded once.</text>
 <rect x="60" y="496" width="300" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="62" y="498" width="7" height="92" fill="#1F5C3D"/>
-<text x="78" y="515" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="78" y="515" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="78" y="536" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Phone call (PSTN)</text>
 <text x="78" y="555" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Published Telnyx DID. Sol answers with the</text>
 <text x="78" y="571" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">same greeting as the chat widget.</text>
 <rect x="60" y="606" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="62" y="608" width="7" height="92" fill="#2E2A26"/>
-<text x="78" y="625" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="78" y="625" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="78" y="646" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Browser voice</text>
 <text x="78" y="665" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">@telnyx/webrtc mic inside the same widget,</text>
 <text x="78" y="681" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">same assistant as the phone line.</text>
@@ -62,28 +62,28 @@
 <text x="56" y="802" font-size="12" font-weight="400" fill="#5A534B" text-anchor="start">Cross-cutting</text>
 <rect x="60" y="814" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="62" y="816" width="7" height="92" fill="#2E2A26"/>
-<text x="78" y="833" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="78" y="833" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="78" y="854" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Secrets and keys</text>
 <text x="78" y="873" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">AWS Secrets Manager and KMS, rotated.</text>
 <text x="78" y="889" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Today: Netlify env vars; only the Supabase</text>
 <text x="78" y="905" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">anon key reaches the browser.</text>
 <rect x="60" y="924" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="62" y="926" width="7" height="92" fill="#2E2A26"/>
-<text x="78" y="943" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="78" y="943" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="78" y="964" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Per-tenant isolation</text>
 <text x="78" y="983" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">tenant_id per brand and property, enforced</text>
 <text x="78" y="999" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">by Postgres RLS. 140 properties on one</text>
 <text x="78" y="1015" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">cluster, not 140 stacks.</text>
 <rect x="60" y="1034" width="300" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="62" y="1036" width="7" height="92" fill="#1F5C3D"/>
-<text x="78" y="1053" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="78" y="1053" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="78" y="1074" font-size="16" font-weight="700" fill="#141210" text-anchor="start">PII masking and retention</text>
 <text x="78" y="1093" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Masked at the tool boundary before any</text>
 <text x="78" y="1109" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">model or log sees it. Future: retention</text>
 <text x="78" y="1125" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">sweep, zero-retention model terms.</text>
 <rect x="60" y="1144" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="62" y="1146" width="7" height="92" fill="#2E2A26"/>
-<text x="78" y="1163" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="78" y="1163" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="78" y="1184" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Kill switch and rollout</text>
 <text x="78" y="1203" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Off per property and per capability.</text>
 <text x="78" y="1219" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Shadow mode, then a three to five property</text>
@@ -95,20 +95,20 @@
 <text x="436" y="154" font-size="12" font-weight="400" fill="#5A534B" text-anchor="start">Public boundary</text>
 <rect x="440" y="166" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="442" y="168" width="7" height="92" fill="#2E2A26"/>
-<text x="458" y="185" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="458" y="185" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="458" y="206" font-size="16" font-weight="700" fill="#141210" text-anchor="start">CDN and WAF</text>
 <text x="458" y="225" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Amazon CloudFront and AWS WAF. Today: the</text>
 <text x="458" y="241" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Netlify CDN with an SPA rewrite.</text>
 <rect x="440" y="276" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="442" y="278" width="7" height="92" fill="#2E2A26"/>
-<text x="458" y="295" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="458" y="295" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="458" y="316" font-size="16" font-weight="700" fill="#141210" text-anchor="start">API gateway</text>
 <text x="458" y="335" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Authentication, rate limits and a</text>
 <text x="458" y="351" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">per-tenant quota in front of every agent</text>
 <text x="458" y="367" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">call.</text>
 <rect x="440" y="386" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="442" y="388" width="7" height="92" fill="#2E2A26"/>
-<text x="458" y="405" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="458" y="405" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="458" y="426" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Staff SSO</text>
 <text x="458" y="445" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Okta or Microsoft Entra ID with SCIM.</text>
 <text x="458" y="461" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Today: Supabase Auth and three scoped</text>
@@ -120,34 +120,34 @@
 <text x="436" y="582" font-size="12" font-weight="400" fill="#5A534B" text-anchor="start">Telnyx, managed</text>
 <rect x="440" y="594" width="300" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="442" y="596" width="7" height="92" fill="#1F5C3D"/>
-<text x="458" y="613" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="458" y="613" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="458" y="634" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Telnyx Programmable Voice</text>
 <text x="458" y="653" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Call Control legs over SIP. Every leg is</text>
 <text x="458" y="669" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">ordinary Call Control, which is why</text>
 <text x="458" y="685" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">supervision works.</text>
 <rect x="440" y="704" width="300" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="442" y="706" width="7" height="92" fill="#1F5C3D"/>
-<text x="458" y="723" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="458" y="723" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="458" y="744" font-size="16" font-weight="700" fill="#141210" text-anchor="start">AI Assistant &quot;Sol&quot;</text>
 <text x="458" y="763" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Voice runtime: turn-taking, barge-in, ASR</text>
 <text x="458" y="779" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">and TTS. Config generated from</text>
 <text x="458" y="795" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">agent/sol.md.</text>
 <rect x="440" y="814" width="300" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="442" y="816" width="7" height="92" fill="#1F5C3D"/>
-<text x="458" y="833" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="458" y="833" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="458" y="854" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Transcript events</text>
 <text x="458" y="873" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">call.ai_gather.message_history_updated,</text>
 <text x="458" y="889" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">one event per turn, diffed before insert.</text>
 <rect x="440" y="924" width="300" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="442" y="926" width="7" height="92" fill="#1F5C3D"/>
-<text x="458" y="943" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="458" y="943" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="458" y="964" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Supervisor leg</text>
 <text x="458" y="983" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">supervise_call_control_id,</text>
 <text x="458" y="999" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">switch_supervisor_role, then</text>
 <text x="458" y="1015" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">ai_assistant_stop for a full handover.</text>
 <rect x="440" y="1034" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="442" y="1036" width="7" height="92" fill="#2E2A26"/>
-<text x="458" y="1053" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="458" y="1053" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="458" y="1074" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Carrier failover</text>
 <text x="458" y="1093" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Standby DID on a second carrier. The</text>
 <text x="458" y="1109" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">number on the site is runtime config, not</text>
@@ -162,21 +162,21 @@
 <text x="816" y="167" font-size="12" font-weight="400" fill="#5A534B" text-anchor="start">runs.</text>
 <rect x="820" y="166" width="340" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="822" y="168" width="7" height="92" fill="#1F5C3D"/>
-<text x="838" y="185" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="838" y="185" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="838" y="206" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Agent definition registry</text>
 <text x="838" y="225" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">agent/sol.md compiles to the Telnyx assistant</text>
 <text x="838" y="241" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">JSON and the Claude system prompt. One</text>
 <text x="838" y="257" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">definition, two runtimes.</text>
 <rect x="820" y="276" width="340" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="822" y="278" width="7" height="92" fill="#2E2A26"/>
-<text x="838" y="295" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="838" y="295" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="838" y="316" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Chat orchestrator</text>
 <text x="838" y="335" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Stateless container on ECS Fargate, autoscaled.</text>
 <text x="838" y="351" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Today: the same code as a Netlify Function at</text>
 <text x="838" y="367" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">/api/chat.</text>
 <rect x="820" y="386" width="340" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="822" y="388" width="7" height="92" fill="#2E2A26"/>
-<text x="838" y="405" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="838" y="405" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="838" y="426" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Model gateway</text>
 <text x="838" y="445" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Anthropic API primary, Amazon Bedrock (Claude)</text>
 <text x="838" y="461" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">standby. Timeouts, retries, circuit breaker,</text>
@@ -185,20 +185,20 @@
 <text x="1141" y="410" font-size="14" font-weight="700" fill="#141210" text-anchor="middle">2</text>
 <rect x="820" y="496" width="340" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="822" y="498" width="7" height="92" fill="#1F5C3D"/>
-<text x="838" y="515" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="838" y="515" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="838" y="536" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Tool service</text>
 <text x="838" y="555" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">identify_guest, get_reservation, get_policy,</text>
 <text x="838" y="571" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">evaluate_group_rules, price_block,</text>
 <text x="838" y="587" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">check_availability.</text>
 <rect x="820" y="606" width="340" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="822" y="608" width="7" height="92" fill="#1F5C3D"/>
-<text x="838" y="625" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="838" y="625" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="838" y="646" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Rules engine</text>
 <text x="838" y="665" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Thresholds, seasonal caps and blackouts live in</text>
 <text x="838" y="681" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">src/lib/rules as data, never inside a prompt.</text>
 <rect x="820" y="716" width="340" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="822" y="718" width="7" height="92" fill="#1F5C3D"/>
-<text x="838" y="735" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="838" y="735" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="838" y="756" font-size="16" font-weight="700" fill="#141210" text-anchor="start">ToolResult envelope</text>
 <text x="838" y="775" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">ok, grounded, citations, masked_fields,</text>
 <text x="838" y="791" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">latency_ms. grounded:false is a checkable order</text>
@@ -210,21 +210,21 @@
 <text x="816" y="912" font-size="12" font-weight="400" fill="#5A534B" text-anchor="start">Amazon SQS and Fargate workers</text>
 <rect x="820" y="924" width="340" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="822" y="926" width="7" height="92" fill="#2E2A26"/>
-<text x="838" y="943" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="838" y="943" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="838" y="964" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Queue</text>
 <text x="838" y="983" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Amazon SQS with a dead-letter queue: proposal</text>
 <text x="838" y="999" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">render and send, PMS writes behind an approval</text>
 <text x="838" y="1015" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">gate, webhook ingest.</text>
 <rect x="820" y="1034" width="340" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="822" y="1036" width="7" height="92" fill="#2E2A26"/>
-<text x="838" y="1053" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="838" y="1053" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="838" y="1074" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Workers</text>
 <text x="838" y="1093" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Idempotent container workers. Retry with</text>
 <text x="838" y="1109" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">backoff; the dead-letter queue is alerted on,</text>
 <text x="838" y="1125" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">never drained silently.</text>
 <rect x="820" y="1144" width="340" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="822" y="1146" width="7" height="92" fill="#2E2A26"/>
-<text x="838" y="1163" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="838" y="1163" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="838" y="1184" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Reconciliation and jobs</text>
 <text x="838" y="1203" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Nightly PMS and CRS reconciliation, rate-cache</text>
 <text x="838" y="1219" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">warm, transcript retention sweep.</text>
@@ -235,7 +235,7 @@
 <text x="1236" y="154" font-size="12" font-weight="400" fill="#5A534B" text-anchor="start">Solstice-owned, per-tenant</text>
 <rect x="1240" y="166" width="340" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="1242" y="168" width="7" height="92" fill="#2E2A26"/>
-<text x="1258" y="185" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="1258" y="185" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="1258" y="206" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Anti-corruption layer</text>
 <text x="1258" y="225" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">The only component that knows a vendor field</text>
 <text x="1258" y="241" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">name. Read-only credentials first; writes queue</text>
@@ -244,7 +244,7 @@
 <text x="1561" y="190" font-size="14" font-weight="700" fill="#141210" text-anchor="middle">1</text>
 <rect x="1240" y="276" width="340" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="1242" y="278" width="7" height="92" fill="#2E2A26"/>
-<text x="1258" y="295" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="1258" y="295" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="1258" y="316" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Read cache</text>
 <text x="1258" y="335" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Amazon ElastiCache (Redis) for reservations,</text>
 <text x="1258" y="351" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">policies and rates. TTL plus a stale_as_of stamp</text>
@@ -253,7 +253,7 @@
 <text x="1561" y="300" font-size="14" font-weight="700" fill="#141210" text-anchor="middle">1</text>
 <rect x="1240" y="386" width="340" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="1242" y="388" width="7" height="92" fill="#2E2A26"/>
-<text x="1258" y="405" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="1258" y="405" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="1258" y="426" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Operational Postgres</text>
 <text x="1258" y="445" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Amazon RDS Multi-AZ. The same RLS policies that</text>
 <text x="1258" y="461" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">run on Supabase today move across unchanged.</text>
@@ -261,7 +261,7 @@
 <text x="1561" y="410" font-size="14" font-weight="700" fill="#141210" text-anchor="middle">5</text>
 <rect x="1240" y="496" width="340" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="1242" y="498" width="7" height="92" fill="#1F5C3D"/>
-<text x="1258" y="515" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="1258" y="515" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="1258" y="536" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Realtime fan-out</text>
 <text x="1258" y="555" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Supabase Realtime on sessions, messages,</text>
 <text x="1258" y="571" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">tool_invocations and inquiries. Future: Postgres</text>
@@ -270,13 +270,13 @@
 <text x="1561" y="520" font-size="14" font-weight="700" fill="#141210" text-anchor="middle">6</text>
 <rect x="1240" y="606" width="340" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="1242" y="608" width="7" height="92" fill="#2E2A26"/>
-<text x="1258" y="625" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="1258" y="625" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="1258" y="646" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Object storage</text>
 <text x="1258" y="665" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Amazon S3 with time-limited signed URLs for</text>
 <text x="1258" y="681" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">proposal PDFs. Today: Supabase Storage.</text>
 <rect x="1240" y="716" width="340" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="1242" y="718" width="7" height="92" fill="#1F5C3D"/>
-<text x="1258" y="735" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="1258" y="735" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="1258" y="756" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Data-quality quarantine</text>
 <text x="1258" y="775" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">SOL-PVD base_rate_suite is -395. Flagged and</text>
 <text x="1258" y="791" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">excluded, never priced from, in every</text>
@@ -288,25 +288,25 @@
 <text x="1236" y="912" font-size="12" font-weight="400" fill="#5A534B" text-anchor="start">One adapter, swappable providers</text>
 <rect x="1240" y="924" width="340" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="1242" y="926" width="7" height="92" fill="#1F5C3D"/>
-<text x="1258" y="943" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="1258" y="943" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="1258" y="964" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Channel adapter</text>
 <text x="1258" y="983" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Email if there is an address, SMS if there is</text>
 <text x="1258" y="999" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">only a number, flagged for a human if neither.</text>
 <rect x="1240" y="1034" width="340" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="1242" y="1036" width="7" height="92" fill="#1F5C3D"/>
-<text x="1258" y="1053" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="1258" y="1053" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="1258" y="1074" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Telnyx Email API</text>
 <text x="1258" y="1093" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Branded HTML with the PDF attached. One provider</text>
 <text x="1258" y="1109" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">across voice, SMS and email.</text>
 <rect x="1240" y="1144" width="340" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="1242" y="1146" width="7" height="92" fill="#1F5C3D"/>
-<text x="1258" y="1163" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="1258" y="1163" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="1258" y="1184" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Telnyx SMS (10DLC)</text>
 <text x="1258" y="1203" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Short message plus a signed link to the PDF.</text>
 <text x="1258" y="1219" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Blocked on carrier registration, not on code.</text>
 <rect x="1240" y="1254" width="340" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="1242" y="1256" width="7" height="92" fill="#2E2A26"/>
-<text x="1258" y="1273" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="1258" y="1273" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="1258" y="1294" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Backup sender</text>
 <text x="1258" y="1313" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Amazon SES behind the same adapter. If every</text>
 <text x="1258" y="1329" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">sender fails the proposal stays queued and reads</text>
@@ -320,34 +320,34 @@
 <text x="1656" y="154" font-size="12" font-weight="400" fill="#5A534B" text-anchor="start">Where guest and reservation data actually comes from</text>
 <rect x="1660" y="166" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="1662" y="168" width="7" height="92" fill="#2E2A26"/>
-<text x="1678" y="185" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="1678" y="185" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="1678" y="206" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Property management system</text>
 <text x="1678" y="225" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Oracle OPERA Cloud through the Hospitality</text>
 <text x="1678" y="241" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Integration Platform; Mews, Cloudbeds or</text>
 <text x="1678" y="257" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Agilysys elsewhere.</text>
 <rect x="1660" y="276" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="1662" y="278" width="7" height="92" fill="#2E2A26"/>
-<text x="1678" y="295" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="1678" y="295" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="1678" y="316" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Central reservation system</text>
 <text x="1678" y="335" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">SynXis, Amadeus or a brand-built CRS.</text>
 <text x="1678" y="351" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Rates, availability and channel</text>
 <text x="1678" y="367" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">distribution.</text>
 <rect x="1660" y="386" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="1662" y="388" width="7" height="92" fill="#2E2A26"/>
-<text x="1678" y="405" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="1678" y="405" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="1678" y="426" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Loyalty and CRM</text>
 <text x="1678" y="445" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Revinate, Cendyn or Salesforce Marketing</text>
 <text x="1678" y="461" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Cloud. Tier, points, stay history and</text>
 <text x="1678" y="477" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">opt-in.</text>
 <rect x="1660" y="496" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="1662" y="498" width="7" height="92" fill="#2E2A26"/>
-<text x="1678" y="515" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="1678" y="515" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="1678" y="536" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Sales and catering</text>
 <text x="1678" y="555" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Amadeus Delphi. Group blocks, function</text>
 <text x="1678" y="571" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">space and signed contracts.</text>
 <rect x="1660" y="606" width="300" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="1662" y="608" width="7" height="92" fill="#1F5C3D"/>
-<text x="1678" y="625" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="1678" y="625" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="1678" y="646" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Provided CSV exports</text>
 <text x="1678" y="665" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Guest profiles, properties, group</text>
 <text x="1678" y="681" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">inquiries and the front-desk policy</text>
@@ -359,27 +359,27 @@
 <text x="1656" y="802" font-size="12" font-weight="400" fill="#5A534B" text-anchor="start">Three scoped logins, scoped in Postgres</text>
 <rect x="1660" y="814" width="300" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="1662" y="816" width="7" height="92" fill="#1F5C3D"/>
-<text x="1678" y="833" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="1678" y="833" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="1678" y="854" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Concierge supervisor</text>
 <text x="1678" y="873" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Live sessions, streaming transcript, tool</text>
 <text x="1678" y="889" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">trace, and listen, whisper, barge, take</text>
 <text x="1678" y="905" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">over.</text>
 <rect x="1660" y="924" width="300" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="1662" y="926" width="7" height="92" fill="#1F5C3D"/>
-<text x="1678" y="943" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="1678" y="943" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="1678" y="964" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Group sales console</text>
 <text x="1678" y="983" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Inquiry inbox, rule verdicts, generated</text>
 <text x="1678" y="999" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">proposal, side chat, and Accept and send.</text>
 <rect x="1660" y="1034" width="300" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="1662" y="1036" width="7" height="92" fill="#1F5C3D"/>
-<text x="1678" y="1053" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="1678" y="1053" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="1678" y="1074" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Super admin</text>
 <text x="1678" y="1093" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Invites and roles, plus the interactive</text>
 <text x="1678" y="1109" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">system map this diagram was generated</text>
 <text x="1678" y="1125" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">from.</text>
 <rect x="1660" y="1144" width="300" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="1662" y="1146" width="7" height="92" fill="#2E2A26"/>
-<text x="1678" y="1163" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="1678" y="1163" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="1678" y="1184" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Escalation queue</text>
 <text x="1678" y="1203" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">On-call rota and an SLA timer. The human</text>
 <text x="1678" y="1219" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">opens with everything the agent already</text>
@@ -391,48 +391,48 @@
 <text x="56" y="1490" font-size="12" font-weight="400" fill="#5A534B" text-anchor="start">Cross-cutting: every service above emits here</text>
 <rect x="60" y="1502" width="320" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="62" y="1504" width="7" height="92" fill="#2E2A26"/>
-<text x="78" y="1521" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="78" y="1521" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="78" y="1542" font-size="16" font-weight="700" fill="#141210" text-anchor="start">CI/CD and release gates</text>
 <text x="78" y="1561" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">GitHub Actions to an image, rolling ECS</text>
 <text x="78" y="1577" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">deploy. Typecheck, rules tests and a</text>
 <text x="78" y="1593" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">golden-transcript run gate every release.</text>
 <rect x="400" y="1502" width="320" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="402" y="1504" width="7" height="92" fill="#2E2A26"/>
-<text x="418" y="1521" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="418" y="1521" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="418" y="1542" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Structured logs</text>
 <text x="418" y="1561" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">JSON correlated by session_id to CloudWatch</text>
 <text x="418" y="1577" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Logs. Masked at the source, so no log can</text>
 <text x="418" y="1593" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">leak PII.</text>
 <rect x="740" y="1502" width="320" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="742" y="1504" width="7" height="92" fill="#2E2A26"/>
-<text x="758" y="1521" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="758" y="1521" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="758" y="1542" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Traces and metrics</text>
 <text x="758" y="1561" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">OpenTelemetry SDK and Collector to Grafana</text>
 <text x="758" y="1577" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Cloud. One trace per turn: model, tools, PMS,</text>
 <text x="758" y="1593" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">delivery.</text>
 <rect x="1080" y="1502" width="320" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="1082" y="1504" width="7" height="92" fill="#2E2A26"/>
-<text x="1098" y="1521" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="1098" y="1521" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="1098" y="1542" font-size="16" font-weight="700" fill="#141210" text-anchor="start">LLM observability</text>
 <text x="1098" y="1561" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Langfuse: prompt version, tokens, cost, tool</text>
 <text x="1098" y="1577" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">path and groundedness rate per release.</text>
 <rect x="1420" y="1502" width="320" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="1422" y="1504" width="7" height="92" fill="#2E2A26"/>
-<text x="1438" y="1521" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="1438" y="1521" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="1438" y="1542" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Dashboards and SLOs</text>
 <text x="1438" y="1561" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">Against docs/latency-target.md: chat first</text>
 <text x="1438" y="1577" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">signal p50 1.5s, voice tool webhooks p95</text>
 <text x="1438" y="1593" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">300ms, plus containment and escalation rates.</text>
 <rect x="1760" y="1502" width="320" height="96" rx="6" fill="#F2EEE7" stroke="#2E2A26" stroke-width="2.5" stroke-dasharray="9 5"/>
 <rect x="1762" y="1504" width="7" height="92" fill="#2E2A26"/>
-<text x="1778" y="1521" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
+<text x="1778" y="1521" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">FUTURE</text>
 <text x="1778" y="1542" font-size="16" font-weight="700" fill="#141210" text-anchor="start">Alerting and on-call</text>
 <text x="1778" y="1561" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">PagerDuty on SLO burn, an open circuit, a</text>
 <text x="1778" y="1577" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">grounded:false spike, queue depth or a</text>
 <text x="1778" y="1593" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">delivery failure.</text>
 <rect x="2100" y="1502" width="320" height="96" rx="6" fill="#FFFFFF" stroke="#1F5C3D" stroke-width="2.5"/>
 <rect x="2102" y="1504" width="7" height="92" fill="#1F5C3D"/>
-<text x="2118" y="1521" font-size="11" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
+<text x="2118" y="1521" font-size="12" font-weight="700" fill="#5A534B" text-anchor="start" letter-spacing="1.4">TODAY</text>
 <text x="2118" y="1542" font-size="16" font-weight="700" fill="#141210" text-anchor="start">In-product trace</text>
 <text x="2118" y="1561" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">tool_invocations, audit_log and the</text>
 <text x="2118" y="1577" font-size="13" font-weight="400" fill="#3B3630" text-anchor="start">supervisor console. Observability a</text>

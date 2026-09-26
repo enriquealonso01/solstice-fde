@@ -9,6 +9,31 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It136 SHIPPED: `docs/architecture.svg`'s own guide promised "nothing under 12px". Its smallest text was
+  the 52 TODAY/FUTURE tags at 11.** T52 shipped in It135, the Planner's 03:24 banner
+  predates the merge. The SVG is the diagram a reviewer actually *opens* (an `.svg` renders in a browser;
+  a `.drawio` needs diagrams.net), and `docs/README-diagram.md:6` makes three falsifiable promises about
+  it: *"Nothing under 12px, black-on-white contrast, and no meaning carried by colour alone."*
+- **Measured all three.** Contrast holds — every text fill is **5.05:1 to 18.69:1** against white. Shape
+  holds — 40 dashed rects against 35 solid, and the **31 `9 5`-dashed borders match the 31 FUTURE tags
+  exactly**, so the distinction survives without colour. **The font size does not:** `viewBox="0 0 2500
+  1670"` with `width="2500"`, so units are 1:1 pixels, and **52 `<text>` elements sit at `font-size="11"`
+  — 31 FUTURE and 21 TODAY, nothing else in the file.**
+- **The irony was the substance.** The smallest text in a file *"sized for a projector"* was the text
+  doing the accessibility work: the tags are the thing that stops the TODAY/FUTURE distinction being
+  colour-only. **Fixed the SVG rather than weakening the claim** — tags sit 380–420px apart, so 11 → 12
+  costs ~5px of width and cannot overlap. **52 substitutions, 52/52 diff, XML re-parsed**, nothing under
+  12 left.
+- **Guarded all three promises, computed not asserted**, in `diagram-guide.test.ts`: a size floor over both
+  attribute spellings; **WCAG relative luminance** for every `<text>` fill, with a prior check that no
+  text uses a light fill so white really is the backdrop; and **31 dashed borders must equal 31 FUTURE
+  tags**, which is the per-node version of It134's label-versus-shape mismatch. Red-checked four ways —
+  one tag back to 11 fails 1, one FUTURE node drawn solid fails 1, one label greyed to `#C9C2B8` fails 1,
+  the guide dropping the promise fails 1.
+- **Restored every mutation with `cp` from the scratchpad**, which is It135's lesson applied the same
+  night rather than a note for later.
+- The guide now carries the measured numbers beside the promises, the way the README's floors do.
+
 - **It135 SHIPPED: T52 — the same diagram page's one *over*statement, and it was the security claim.**
   It133 and It134 swept this page and the in-app map and found 26 wrong markings, **every one an
   understatement.** T52 is the mirror image: the Today page said proposal PDFs are handed out as

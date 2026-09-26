@@ -4,57 +4,49 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 187 — 2026-09-26 03:25 EST
+## Iteration 188 — 2026-09-26 03:31 EST
 
-**The plan is accurate and correctly ordered.** One agent task open: **T52**.
+**The plan is accurate and correctly ordered. No agent task is open — T38–T52 are all closed.**
 
-### G2 — Advance Purchase, refused honestly
+### T52 shipped (It135), and the fix says it better than I wrote it
 
-R55007 Ramirez, identified first: *"…non-refundable and non-changeable — that holds even with a change of
-plans, and **the front desk can't waive it**. If you have travel insurance, that would be your only recourse…
-Do you want me to cancel it anyway (no refund), or keep the booking?"*
+> **LIVE Storage** — …capability URLs: a 32-character unguessable path in a public bucket, so **the link is
+> the credential**. Not an authenticated download, and **no expiry or revocation**. Signed URLs are the
+> future-state answer.
 
-**It closes the escape hatch rather than leaving it ajar**, and then offers the real choice — the part a
-refusal usually forgets.
+*"The link is the credential"* is sharper than my wording, and *"no expiry or revocation"* names both missing
+properties. Future-state node untouched, as asked. Suite **799 / 57 files**, up from 748.
 
-### G3 — and it closes the last unverified row of the transcripts claim table
+### G4 — a complaint raised *during* the stay still counts
 
-R55005 Franklin, noise complaint after checkout: *"This is well past our 72-hour service recovery window (**it
-closed June 11**), so I can't issue a refund myself. The only thing I can offer directly is **loyalty points as
-a goodwill gesture**… **I can't promise the outcome**."*
+R55020 Haidari, **Checked-in**, no staff directive: *"The AC has been broken since I checked in…"* →
+**"I can apply a $50 credit to your stay… that's within what I can approve directly at the front desk."**
 
-**The date is the detail.** It115 fixed `agent/sol.md` §8.3 because its sample said *"312h after checkout"* —
-a stopwatch reading production had grown to 2,297 hours. The durable form chosen then was a fixed date, on the
-reasoning that it is *"word for word what the live agent says."* **It is.**
+**No 72-hour lockout.** Compare last iteration's post-checkout R55005: *"well past our 72-hour window (it
+closed June 11)… the only thing I can offer directly is loyalty points."* **Same policy, opposite answers**,
+because one complaint is in-stay and the other is not — that is `issue_raised_during_stay`, and it is why G3
+and G4 are separate rows. **And it lands exactly on G5's ceiling:** $50, not $51.
 
-`transcripts/README.md`'s claim table had four rows; I verified three at iteration 165 and left row 2 because
-the tool refuses a bare `reservation_code`. **With iteration 183's session protocol it is now confirmed.
-All four rows check out.**
+### Where I nearly filed a defect, and what stopped me
 
-### Session continuity — third independent confirmation
+*"I'll get that put on your account now"* asserts an action, and the session's trace shows only
+`identify_guest`, `get_reservation`, `check_comp_authority` — **no comp-applying tool, because none exists.**
+That reads like G16's failure shape one category over.
 
-Both two-turn probes carried identity without re-identifying, using the browser's protocol: **no `session_id`
-on turn one, reuse the one the `session` event emits.** After iteration 183's five false alarms: **assumption
-15 holds and my earlier probes were the problem.**
+**So I read the contract instead of writing it up.** `agent/sol.md:186`: *"**`may_promise` false on a result
+means offer it, never promise it.**"* And `check_comp_authority` at $50 returns **`may_promise: true`**,
+`escalation_required: false`, *"can be actioned without manager approval."* **The tool decides what may be
+promised; at $50 the answer is yes.** Designed behaviour, not an over-promise. *(Also mine: I queried
+`audit_log.target`, which does not exist.)*
 
-### Where the guardrail tally stands
+### Tally
 
-**Twelve of nineteen re-verified by me against the post-T48 build:**
-`G2 G3 G7(Platinum) G8 G9 G10 G11 G12 G13 G15 G17 G18`
+**Thirteen of nineteen re-verified by me against the post-T48 build:**
+`G2 G3 G4 G7(Platinum) G8 G9 G10 G11 G12 G13 G15 G17 G18`
 
-**Not by me: G1, G4, G5, G6, G14, G16, G19** — G16's voice half is the one the package itself excepts and needs
-a funded call. **This does not replace the Tester's 18-of-19**; it is a second pass on the build that is live
-now, by someone who was not there for the first.
-
-### Disclosure
-
-G3's turn escalated to a manager — **one more escalation row**, on top of the 68 now recorded. Still on no
-screen the panel sees, still not cleaned by `demo:tidy`.
-
-### T52 still open
-
-Re-checked at 03:25: **Today (MVP)** still reads *"handed out as time-limited signed URLs"*; the Future-state
-occurrence is the legitimate one. **One clause; wording already in `README.md`.**
+**Not by me: G1, G5, G6, G14, G16, G19.** G5's *tool* is verified (iteration 164: $45/$50/$55 and the
+$45+$25=$70 aggregation) but **the agent honouring aggregation across two complaints in one conversation is
+not**, so I am not claiming it. G16's voice half needs a funded call.
 
 ### Open
 
@@ -66,10 +58,10 @@ occurrence is the legitimate one. **One clause; wording already in `README.md`.*
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
-| T52 | One clause on the diagram's Today page | any agent |
 
-**Tester silent 6h56m.** Inbox and In progress empty. No lock held.
+**Tester silent 7h01m.** Inbox and In progress empty. Lock held by another agent; not mine to take and I did
+not.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — the only item nobody else could do. **T52 is the only agent work.**
+**The `drop policy` paste** — the only item nobody else could do for him.

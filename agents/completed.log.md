@@ -8122,3 +8122,88 @@ the entire red-check with scratchpad backups; all three fire, restored is green,
 the intended 1/1.
 
 `npx tsc -b` clean. `npx vitest run` **799 tests / 57 files** green (up 3).
+
+---
+
+## It136 — the smallest text in the diagram was the text doing the accessibility work
+
+Nothing was open; T52 shipped last iteration and the Planner's banner has not caught up. So I went to
+`docs/architecture.svg`, which had never been audited on its own terms.
+
+It is worth more attention than its file size suggests. It is **the diagram a reviewer actually opens**:
+an `.svg` renders in any browser, a `.drawio` needs somebody to know that diagrams.net exists and to
+use File → Open From → Device. And its guide makes three promises in one sentence, all of them
+falsifiable:
+
+> **`architecture.svg`**: a hand-authored render of the *Future state* page, **sized for a projector.
+> Nothing under 12px, black-on-white contrast, and no meaning carried by colour alone.**
+
+So I measured all three rather than reading them.
+
+**Contrast holds, comfortably.** Every `<text>` fill in the file, put through the WCAG relative-luminance
+formula against white: `#141210` 18.69:1, `#3B3630` 11.96:1, `#5A534B` 7.57:1, and the worst case in the
+file 5.05:1. AA wants 4.5. Worth noting *why* white is the right comparison: the page background is
+`#FFFFFF` and **no `<text>` element uses a light fill at all** — the 57 `fill="#FFFFFF"` and the four
+cream tones are on rects and paths, never on type. So there is no reversed text whose contrast would
+have to be measured against a dark band instead.
+
+**Shape holds too, and precisely.** 40 dashed rects against 35 solid, and the interesting number is the
+match: **31 borders with `stroke-dasharray="9 5"` against 31 FUTURE node tags.** Exactly one per node. A
+reader who cannot distinguish the colours still gets the TODAY/FUTURE answer from the border.
+
+I nearly filed that as a defect. A first count gave **32** FUTURE labels against 31 dashed borders, which
+would have meant one FUTURE node drawn solid — the same label-versus-shape mismatch It134 guarded against
+in the `.drawio`. The 32nd is the legend, at 13px: *"FUTURE: production hardening, designed but not
+built."* Not a node tag. Checking which one it was took a minute and was the difference between a real
+finding and a wrong one.
+
+### The size promise was false, and falsest where it mattered
+
+```
+viewBox="0 0 2500 1670"  width="2500" height="1670"   -> units are 1:1 pixels
+font-size 11 : 52     <- all of them <text>
+font-size 12 : 32
+font-size 13 : 170
+font-size 16 : 52
+```
+
+**52 text elements at 11px**, against a guide promising nothing under 12. Not a stray label either:
+**31 FUTURE and 21 TODAY, and nothing else in the file was under 12.**
+
+That is the whole finding in one line. The smallest text in a diagram described as *"sized for a
+projector"* was the **TODAY/FUTURE tags** — which are the mechanism by which the file keeps its third
+promise. The tags exist so that meaning is not carried by colour alone, and they were the hardest thing
+on the page to read. Someone at the back of a room who cannot make out an 11px letter-spaced word falls
+back to the colour, which is the exact thing the sentence says they should not have to do.
+
+**Fixed the SVG rather than lowering the claim to 11.** The tags sit at x = 78, 458, 838, 1258, 1678 —
+380 to 420 pixels apart — so raising them one step widens each string by about 5px against hundreds of
+pixels of clear space, with no possibility of collision. 12 keeps the hierarchy intact as well: tag 12 <
+detail 13 < title 16, so the tag stays visually subordinate while clearing the stated floor. 52
+substitutions, a **52/52** diff, and the XML re-parsed afterwards, since every other check on this file
+is meaningless if it stops being valid SVG.
+
+### The guard computes all three rather than restating them
+
+Four cases in `diagram-guide.test.ts`. A non-vacuity case first: there must be font sizes and text fills
+to measure, and the guide must still make all three promises — because two of the three cases below pass
+by finding nothing, and a guide that quietly drops a promise would make them pass forever.
+
+Then: a size floor that reads **both** spellings, `font-size="11"` and `font-size: 11`, so moving to
+CSS-style attributes cannot slip under it. Contrast computed from luminance, preceded by an assertion
+that no text fill is light — so if reversed text is ever added, the case fails and says it now needs to
+pair text with its backdrop rather than silently measuring the wrong pair. And the dashed-to-FUTURE
+correspondence, which is the per-node version of the mismatch It134 found in the `.drawio`.
+
+Red-checked four ways: one tag back to 11px fails 1; deleting one `stroke-dasharray="9 5"` so a FUTURE
+node draws solid fails 1; greying one label to `#C9C2B8` (2.0:1) fails 1; and softening the guide's
+*"Nothing under 12px"* to *"Readable sizes"* fails 1.
+
+Every restore was a `cp` from the scratchpad. That is It135's lesson applied the same night instead of
+written down and forgotten — `git checkout --` would have taken the fix with the mutation again, and this
+time the fix was 52 edits rather than one.
+
+The guide now carries the measured numbers beside the promises, the way the README's floors do since
+It131: the smallest size, the lowest contrast ratio, and the 31-to-31 border correspondence.
+
+`npx tsc -b` clean. `npx vitest run` **803 tests / 57 files** green (up 4).

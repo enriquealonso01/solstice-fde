@@ -5,6 +5,8 @@ Two files, one model:
 - **`architecture.drawio`**: three pages, opens in [diagrams.net](https://app.diagrams.net) (File -> Open From -> Device). Editable; every node is a real cell, not an image.
 - **`architecture.svg`**: a hand-authored render of the *Future state* page, sized for a projector. Nothing under 12px, black-on-white contrast, and no meaning carried by colour alone. There is no drawio CLI in this environment, so the SVG is authored directly rather than exported.
 
+  Those three are measured rather than asserted, by `src/lib/rules/__tests__/diagram-guide.test.ts`: the `viewBox` is 1:1 with the declared width so the sizes are real pixels and the smallest is **12**; every text colour clears **4.5:1** against white, the lowest at **5.05:1**; and the TODAY/FUTURE distinction is carried by the border, **31 dashed nodes against 31 FUTURE tags**, so it survives without colour. The size promise was the one that needed fixing — the 52 tags were at 11px until iteration 136, which made the smallest text on the page the text doing the accessibility work.
+
 Both are built from the same component model as the in-app Backend page
 (`src/components/admin/backendMapModel.ts`): the same components, the same real provider names, and
 the same "why this over the alternative" reasons. The app map is the live, narratable version; these
