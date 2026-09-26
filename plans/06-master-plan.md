@@ -1528,6 +1528,70 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 150, 00:08 EST — a default tidy leaves exactly the sessions made in the last half hour, which is a rule rather than a number
+
+#### What #143 found and fixed
+
+The runbook already warned that a tidy at 10:55 is undone by agent traffic at 10:56, **so stop the
+loop first.** #143 measured the other half:
+
+> *"251 sessions, 228 active, and only 179 of those idle over thirty minutes — so a default tidy
+> leaves **49 cards reading live**, and the supervisor tile is the first number a panel sees when
+> beat 3 opens."*
+
+`npm run demo:tidy -- --minutes 2` took that 49 to **0**. The default stays 30, and the reasoning is
+the good part: *"thirty minutes is the honest answer for a guest who closed a tab, and two minutes
+is an operator asserting there are no real guests."* It refuses anything under 1, and `--minutes`
+with no value.
+
+#### Verified now, and the number has already moved
+
+```
+total 252 | active 227 | idle >30min 203 | idle >2min 226
+a default tidy right now would leave 24 reading live
+```
+
+**49 at their measurement, 24 at mine** — not because anything changed, but because the loop has
+been quieter in the last half hour.
+
+> **The residual is exactly "sessions created in the last thirty minutes."** That is the durable
+> statement, and it makes the whole thing conditional in a way a fixed number hides: **if the loop
+> is stopped half an hour before the tidy, the default suffices; if it is stopped at 10:55 and
+> tidied at 10:56, it does not.** The flag exists for the second case, which is the one the runbook
+> actually describes.
+
+Recorded here rather than filed — the runbook is settled and already says to stop the loop first,
+and #143's measured example is legitimate evidence. **The rule is what I would want in my head at
+10:55; the number is what was true when someone typed it.**
+
+#### Documented in all three places it needs to be
+
+```
+docs/demo-runbook.md   ✓      SUBMISSION.md   ✓      HUMAN_INTERVENTION.md   ✓
+```
+
+Which matters because this is the **fourth** thing tonight whose fix had to land in more than one
+document — after the pet question's four, the RLS disclosure's three, and the latency targets' two.
+
+#### Cross-document latency is clean
+
+Only one latency figure is quoted outside `latency-target.md` — `demo-runbook.md:57`, *"about 6× the
+published p95 of ≤300ms"* — and #142 pinned exactly that pair so they must move together. **The tool
+webhook target holds** at 270ms pooled over 80 calls, and voice came in at p95 135ms.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — safety reason, recovery, all three disclosure sites | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
 ### Iteration 149, 00:04 EST — the latency target is now met, and the document shows it being met rather than having always been met
 
 #### The re-measurement

@@ -4,48 +4,44 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 149 — 2026-09-26 ~00:04 EST
+## Iteration 150 — 2026-09-26 ~00:08 EST
 
-### The latency target is now met, and the document shows it being met
+### A default tidy leaves exactly the sessions made in the last half hour
 
-#142 re-ran the published figures because three prompt changes add input tokens to **every** turn:
+The runbook already said stop the loop before tidying. **#143 measured the other half:** 251
+sessions, 228 active, only 179 idle over thirty minutes — **a default tidy leaves 49 cards reading
+live**, on the first screen beat 3 opens. `--minutes 2` took it to **0**.
+
+The default stays 30, and the reasoning is the good part: *"thirty minutes is the honest answer for
+a guest who closed a tab, and two minutes is an operator asserting there are no real guests."*
+
+**Verified now — and the number has already moved:**
 
 ```
-                  pass 1   pass 2   committed
-first signal p50   905ms   1009ms   ≤ 1500ms    ← was missed by 45ms; now met with room
-first token p50   2589ms   2246ms   ≤ 4000ms
-voice, 60 warm calls  p50 102ms · p95 135ms · max 164ms · nothing over 300ms
+total 252 · active 227 · idle>30min 203 · idle>2min 226
+a default tidy right now leaves 24 reading live
 ```
 
-**The prompt got longer and the latency got better** — input tokens are the cheap, cached part of a
-turn.
+49 at their measurement, 24 at mine, because the loop has been quieter.
 
-### The document does the harder thing
+> **The residual is exactly "sessions created in the last thirty minutes."** That is the durable
+> statement: **stop the loop half an hour before tidying and the default suffices; stop it at 10:55
+> and tidy at 10:56 and it does not.** The flag exists for the second case — the one the runbook
+> describes.
 
-The 09-25 section keeps its admission verbatim — *"currently missed, narrowly… **We are not moving
-the target to match the measurement**"* — and the next heading reads *"Re-measured at 2026-09-26 —
-the signal target is now met."*
+**Recorded, not filed.** The runbook is settled and already says to stop the loop first. **The rule
+is what I would want in my head at 10:55; the number is what was true when someone typed it.**
 
-> **A reader going top-down sees the target missed, refused to be moved, and then met.** Deleting
-> the admission would have been accurate and told no story. **The measurement came to the target**,
-> which is the only version of "we set a target and hit it" that means anything.
+### Documented in all three places
 
-And the bad news went in beside the good: one turn reached **6086ms**, outside the published
-870–5040ms range, **recorded in the same edit as the win**.
+`demo-runbook.md` ✓ · `SUBMISSION.md` ✓ · `HUMAN_INTERVENTION.md` ✓ — the **fourth** fix tonight
+that had to land in more than one document, after the pet question's four, the RLS disclosure's
+three, and the latency targets' two.
 
-### The restraint is the part worth copying
+### Cross-document latency is clean
 
-A first run of 20 voice calls gave **p95 950ms**. They did not publish it: *"one cold instance, and
-at n=20 is the worst of twenty by construction."*
-
-**They made exactly this mistake at iteration 53** and wrote it up as a rule. **Tonight the rule
-fired before the error did** — the first time in this project a recorded lesson visibly prevented
-its own repeat instead of explaining one afterwards.
-
-### It corroborates the margin warning
-
-*"The prompt grew by about 650 characters that night"* — the same 650 that took the voice margin
-from roughly a thousand to **345**, seen from the latency side.
+One figure quoted outside `latency-target.md` (`demo-runbook.md:57`, the ≤300ms p95), and #142
+pinned that pair to move together. **Target holds** — 270ms pooled over 80 calls; voice p95 135ms.
 
 ### The single most important remaining item
 

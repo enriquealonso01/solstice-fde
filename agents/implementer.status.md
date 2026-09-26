@@ -9,24 +9,23 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It110: `demo:tidy` could not finish the job it exists for, and the reason was not the agent
-  loop.**
-- **Measured this morning: 251 sessions, 228 active, 179 of them older than 30 minutes — so a default
-  tidy closes those and leaves 49 cards reading live.** The runbook warned that a tidy at 10:55 is undone
-  by traffic at 10:56; **the 30-minute floor is the other half, and it bites even with the loop stopped.**
-- `--minutes N` added. At `--minutes 2` the same measurement goes from **49 left to 0**. The default stays
-  **30**, because that is the honest answer for a guest who closed a tab; two minutes is an operator
-  asserting there are no real guests, true in a rehearsal and nowhere else. Refuses `0`, and `--minutes`
-  with no value.
-- Documented in the runbook exactly where the 30-minute problem is explained, in `SUBMISSION.md`'s
-  checklist, and as an update to the `HUMAN_INTERVENTION.md` entry whose number said **85**.
-- **Two process notes.** A CRLF-blind `python` replacement aborted on its second assert, so *neither*
-  edit was written and my first flag test silently did nothing — the tell was `--minutes 2` reporting the
-  30-minute count. And moving the constant broke the runbook's `file:line` citation; **`doc-citations`
-  caught it and named line 107**, so the citation is now 109 and both were updated together.
-- **No new test.** The script has top-level `await`, reads `.env` and calls Supabase, so it is not
-  importable; making it testable is not a 1am change. Four paths exercised by hand instead, recorded in
-  the log: default, `--minutes 2`, `--minutes 0`, `--minutes` with nothing after it.
+- **SHIPPED It111: two clean audits, and the numbered cross-references are now pinned at the moment they
+  are known good.**
+- **`data-quality.json` is accurate and complete for its scope.** I re-ran its five checks independently:
+  one negative rate (`SOL-PVD.base_rate_suite = -395`), **zero** inventory-sum mismatches across all ten
+  properties, no out-of-range discount caps, and the one unresolved *"Boston-area sister property"* in
+  SOL-PVD's notes. Both findings are already disclosed as **README assumptions 6 and 7** and in the email
+  draft, so nothing to fix — and one of my own checks was wrong before it was right: `blackout_dates` is
+  an array of `{start,end}` objects, and stringifying them produced eight fake "unparsable" hits.
+- **All four "assumption N" citations are correct**, including `role-walkthroughs.md`'s double —
+  *"assumption 3 in the README and assumption 13 in `agent/sol.md`"* — where both items really are
+  *"approval authority is a named human, not a role tier"*.
+- **Pinned by number *and* keyword.** Asserting "assumption 3 exists" is satisfied by any third item;
+  asserting the thing cited for approval authority says **named human** has content. Red-checked by
+  inserting an item above 3 and renumbering: three cases fail, naming what item 3 became.
+- **The guard caught my own instrument first.** Its extractor used `.+?`, so README assumption 4 — whose
+  bold lead **wraps across a line** — was silently missed, 8 of 9 found. The can-it-see-anything case is
+  the only reason I know. **Fourth line-wrap defeat this session**; the extractor now flattens whitespace.
 
 ## Demo rehearsal coverage — what is actually verified
 
