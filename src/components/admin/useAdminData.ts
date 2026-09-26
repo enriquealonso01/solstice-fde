@@ -19,6 +19,7 @@ import {
   MOCK_SESSIONS,
   MOCK_TOOL_INVOCATIONS,
   type AuditRow,
+  type EscalationRow,
   type InquiryRow,
   type InviteRow,
   type MemberRow,
@@ -234,6 +235,33 @@ export function useSessions(): Loaded<SessionRow> {
     }
   }, [])
   useRealtimeMerge<SessionRow>('sessions', setState, undefined, bySessionStart)
+  return state
+}
+
+/**
+ * Every escalation row in the recent window, open and closed.
+ *
+ * The supervisor tags need CLOSED rows too: "Finished" means ended *and* nothing still open, so
+ * the derivation has to see that a session's escalation was resolved rather than guess. 200 rows
+ * covers every escalation the demo traffic has ever produced; `escalations` is written rarely.
+ * Subscribed to postgres_changes like the sessions hook, so a create_escalation re-tags the board
+ * inside about a second — same contract as the split-screen rule for guest-side events.
+ */
+export function useOpenEscalations(): Loaded<EscalationRow> {
+  const [state, setState] = useState<Loaded<EscalationRow>>(EMPTY)
+  useEffect(() => {
+    let alive = true
+    void readOrMock<EscalationRow>(
+      () => supabase.from('escalations').select('*').order('created_at', { ascending: false }).limit(200),
+      [], // no fixture: an empty escalation queue is the honest demo default, not invented drama
+    ).then((r) => {
+      if (alive) setState({ ...r, loading: false })
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
+  useRealtimeMerge<EscalationRow>('escalations', setState, undefined)
   return state
 }
 
