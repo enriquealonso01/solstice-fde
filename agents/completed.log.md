@@ -4924,3 +4924,51 @@ Writing a sentence about what a command prints, and then running the command, co
 of today's four demo-path defects were sentences nobody had run.
 
 `npx tsc -b --force` clean. `npx vitest run`: **527 passed, 44 files**, including PR #106's snippet pin.
+
+## It93 — T41: the README quoted the policy document saying something it never says
+
+`README.md:133` opened the justification for the only net-new service with: *"Policies 1 and 6 both
+hinge on `subject to same-day availability`"*. I checked it against
+`data/SOLSTICE HOTEL GROUP — FRONT DESK POLICY REFERENCE.md` — the document the brief supplied, not
+the JSON we generate from it — before touching a word:
+
+- `subject to same-day availability` — **0 occurrences**.
+- Policy 1: *"Early check-in and late check-out are both based on **same-day room availability**."*
+- Policy 6: *"Platinum members get a guaranteed upgrade to the next room class based on **same-day
+  inventory**…"*
+- The nearest real phrase, *"subject to availability"*, belongs to the **Gold** 1:00 PM clause, where
+  it marks a benefit as conditional. The README was using the quotation to argue about a *guaranteed*
+  benefit, so the invented phrase also carried the wrong sense.
+
+This is the worst place in the package for a fabricated quotation. It is the one claim a reviewer can
+check against material they already have open, it sits in the paragraph defending the only net-new
+component, and being wrong about the source document is a different kind of wrong from being wrong
+about our own code: nobody here can reword the original to make it true again.
+
+The substance was never in doubt — there really is no inventory-by-date in the exports. And the
+accurate version is the stronger argument. Two policies reach for the same missing data in **two
+different vocabularies**, one saying *room availability* and the other *inventory*, which is a better
+case for putting it behind one service than a single phrase repeated would have been. The paragraph
+now quotes both verbatim and says exactly that.
+
+**Pinned, per T41's "only if it is quick".** A third block in `walkthrough-quotes.test.ts`, alongside
+the two that pin UI quotes and demo snippets: quotations of the provided policy reference, checked
+against the policy reference, whitespace-normalised because the documents wrap and the source does
+not. Explicit list, like the rest of that file — I swept all twelve deliverables for quoted spans that
+appear in the policy document and found exactly these two, and a parser would have to distinguish
+policy text from the many things a *guest* says in quotes, which it cannot.
+
+Red-checked both halves, because a guard that cannot fail is the failure mode this session keeps
+paying for:
+
+- Widen one README quote to *"based on same-day suite inventory"* → the doc-side assertion fires
+  (*"no longer contains the quote this case pins"*), which is what a reviewer-facing reword looks like.
+- Widen the README **and** the pinned case together — the step an author would take next — → the
+  policy-side assertion fires: *"README.md presents … as a quotation from the policy reference the
+  brief supplied, and that document does not contain it. A reviewer has the original open."*
+
+`npx tsc -b` clean. `npx vitest run` 530 tests / 44 files green (up 3). `README.md` is not in the
+voice compile, so no re-provision: compile === live === export still 29,411, margin 589.
+
+Next: **T42** — `transcripts/refund-outside-window.md` is titled for the wrong policy, and the title
+is backwards about that policy too.

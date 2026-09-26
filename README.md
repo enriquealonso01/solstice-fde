@@ -130,8 +130,12 @@ be sure it is not worse than described, is in [`agents/tested.log.md`](agents/te
 
 The brief invites assumptions, so these are explicit rather than buried:
 
-1. **No inventory-by-date exists in the exports.** Policies 1 and 6 both hinge on "subject to
-   same-day availability", so `netlify/functions/tools/availability.ts` is the net-new service:
+1. **No inventory-by-date exists in the exports.** Policies 1 and 6 both hinge on same-day
+   availability and use different words for it — Policy 1 makes late check-out "based on same-day
+   room availability", Policy 6 makes the Platinum upgrade "based on same-day inventory" — so two
+   policies reach for the same missing data in two vocabularies, which is the clearest argument
+   that it belongs behind one service. `netlify/functions/tools/availability.ts` is that net-new
+   service:
    deterministic, bounded by real room counts, and labelled
    `provenance: "simulated_inventory_service"` on every result. It is a service rather than a
    tool the model calls directly — `sameDayAvailability()` is consumed by the

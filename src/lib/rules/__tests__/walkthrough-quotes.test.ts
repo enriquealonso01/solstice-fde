@@ -132,3 +132,51 @@ describe('code the demo documents tell you to type', () => {
     expect(existsSync(join(repoRoot, source))).toBe(true)
   })
 })
+
+/**
+ * When a deliverable quotes the provided policy document, the policy document must say that.
+ *
+ * `README.md` justified building `netlify/functions/tools/availability.ts` by asserting that
+ * *"Policies 1 and 6 both hinge on `subject to same-day availability`"*. That phrase is not in
+ * `data/SOLSTICE HOTEL GROUP — FRONT DESK POLICY REFERENCE.md` at all — zero occurrences. Policy 1
+ * says *"based on same-day room availability"*, Policy 6 says *"based on same-day inventory"*, and
+ * the nearest real phrase, *"subject to availability"*, belongs to the Gold 1:00 PM clause, where it
+ * marks a benefit as conditional — the opposite of the guaranteed benefit the README was arguing
+ * about. So the one quotation in the package that a reviewer can check against the material they
+ * supplied was invented, in the paragraph defending the only net-new service.
+ *
+ * Quoting the brief's own document is a different risk from quoting our UI: nobody here can reword
+ * the source to make a stale quote true again, and a reviewer holds the original. Wrong here is
+ * always our error and always visible.
+ *
+ * Pinned as an explicit list for the same reason as the block above — most quoted spans in these
+ * documents are things a *guest* says, not policy text, and a parser that guessed would fail on
+ * every one of them. A sweep of all twelve deliverables at the time of writing found exactly these
+ * two spans that appear in the policy reference; a new one must be added here deliberately.
+ */
+describe('quotations of the provided policy document', () => {
+  const policy = 'data/SOLSTICE HOTEL GROUP — FRONT DESK POLICY REFERENCE.md'
+
+  /** Whitespace-insensitive: the documents wrap these quotes across lines, the policy file does not. */
+  const flatten = (s: string) => s.replace(/\s+/g, ' ')
+
+  it.each([
+    { doc: 'README.md', quote: 'based on same-day room availability' },
+    { doc: 'README.md', quote: 'based on same-day inventory' },
+  ])('$doc quotes "$quote", which the policy reference must actually say', ({ doc, quote }) => {
+    const docText = flatten(readFileSync(join(repoRoot, doc), 'utf8'))
+    expect(docText, `${doc} no longer contains the quote this case pins; update or remove the case`).toContain(quote)
+
+    const policyText = flatten(readFileSync(join(repoRoot, policy), 'utf8'))
+    expect(
+      policyText,
+      `${doc} presents ${JSON.stringify(quote)} as a quotation from the policy reference the brief ` +
+        `supplied, and that document does not contain it. A reviewer has the original open.`,
+    ).toContain(quote)
+  })
+
+  it('reads a policy reference that is actually there, so a rename cannot make this vacuous', () => {
+    expect(existsSync(join(repoRoot, policy))).toBe(true)
+    expect(readFileSync(join(repoRoot, policy), 'utf8').length).toBeGreaterThan(1000)
+  })
+})

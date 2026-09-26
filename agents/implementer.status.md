@@ -9,54 +9,21 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **CLAIMED It92: T38, T39 and T40 — the three the Planner put ahead of any further guard work.** All
-  three are single sentences in documents Enrique reads *while presenting*, and all three are current
-  defects rather than future regressions. Their argument is right: a guard protects against the next
-  rot, these are live.
-- **Verified each independently before touching a word.** T38: `max_discount_auto_approve_pct: 15`
-  occurs **four** times and the second is **line 54, SOL-AUS (Austin)** — following the instruction
-  edits the wrong hotel and the Phoenix verdict does not move, which is the exact confusion the
-  warning was written to prevent. T39: `show-verdict.ts` prints **one** price, `$7806.15`, not three
-  costed options. T40: `useTelnyxVoice.ts` connects via `VITE_TELNYX_ASSISTANT_ID` — same assistant,
-  same account, **same balance** — so the mic cannot be the fallback for an exhausted balance.
-
-- **CLAIMED It91: G8 verified without touching production, and its stated test cannot be run by its
-  reader.** Last iteration I skipped G8 because its test says *"Set `AVAILABILITY_MODE=sold_out`"* and
-  I will not change env on a shared system hours before a demo.
-- **The simulated inventory is deterministic, so I looked for a date that is already sold out instead
-  of forcing one.** R55004's own date has `rooms_available: 0` for Suite, so the tool already returns
-  `policy_gap_manager_decision`. **G8 HELD** twice in chat: no promise, no invented tiebreak, manager
-  on duty, `create_escalation` fired.
-- **So the table tells a reader to do something they cannot.** §5 opens by inviting exactly this audit;
-  an env var on our deploy is not available to them, and it is unnecessary.
-
-- **CLAIMED It90: finish the guardrail re-check — I did 7 of 19 and left out the most important one.**
-  It89 re-ran G1, G9–G13 and G15 after five prompt changes. **G14 — safety goes straight to the GM and
-  Regional Security, any hour — was not among them**, and it is the guardrail whose failure matters
-  most. Running the rest of the prompt-sensitive set from §5's own test cases.
-
-- **CLAIMED It89: guardrail regression check — the prompt has moved five times since the last one.**
-  My rule is to re-run G12/G13/G15 after any prompt change. The last full run was It60, after PR #66.
-  Since then **#74** (another agent's edit to the chat-channel note), **#83**, **#90**, **#100** (which
-  re-provisioned the live voice prompt) and **#112** have all landed. `chat.ts` reads `agent/sol.md`
-  at request time, so several of those changed what a guest talks to.
-- Beat 3 stays blocked: placing a call costs money and is not mine to authorise, and an API-originated
-  call is not the inbound-PSTN path the demo uses anyway.
-
-- **CLAIMED It88: the email invites Katie to ask the one question I measured as unreliable.**
-  `SUBMISSION.md`'s draft says *"Call Sol directly … ask about checkout times, a late checkout, or
-  whether you can bring a dog."* Measured with the email's own phrasing: **0 of 3 reached
-  `get_policy`**, and all three answered *"Pet policies vary by hotel"* — which contradicts Policy 8
-  (*"not permitted at any Solstice property, no exceptions"*). With It85's runs that is **1 landing in
-  7 attempts**.
-- **Worse than the runbook case:** there I could reword what Enrique performs. This hands the
-  unreliable question to the evaluator, unsupervised, with nobody to recover it.
-- Fixing the email. **The underlying behaviour is Enrique's call to disclose**, so it goes to
-  `HUMAN_INTERVENTION.md` with the measurements and offered wording, not into a deliverable by me.
-
-- **It87: the demo is rehearsed end to end against the final build.** Every beat that can be run
-  without spending money has been run, in order, as the runbook words it. Nothing left open for an
-  agent: T1–T37 are closed and the four remaining plan items are Enrique's.
+- **SHIPPED It93: T41 — the README quoted a phrase the policy document does not contain.**
+  `README.md:133` attributed *"subject to same-day availability"* to Policies 1 and 6, inside the
+  justification for `availability.ts`, the only net-new service and a named brief deliverable.
+- **Checked against the document the brief supplied, not the generated JSON:** that phrase occurs
+  **0** times. Policy 1 says *"based on same-day room availability"*, Policy 6 *"based on same-day
+  inventory"*, and the nearest real phrase, *"subject to availability"*, belongs to the **Gold** 1 PM
+  clause — where it marks a benefit as *conditional*, the opposite of the guaranteed benefit the
+  quotation was being used to argue about.
+- **The accurate version is the better argument.** Two policies reach for the same missing data in
+  **two different vocabularies**, which is the clearest case that it belongs behind one service. The
+  paragraph now quotes both phrases verbatim and says so.
+- **Pinned it.** A third block in `walkthrough-quotes.test.ts` holds quotations of the policy
+  reference to the policy reference. Different risk from quoting our own UI: nobody here can reword
+  the source to make a stale quote true, and the reviewer holds the original. A sweep of all twelve
+  deliverables found exactly these two spans; both halves red-checked.
 
 ## Demo rehearsal coverage — what is actually verified
 
@@ -86,7 +53,7 @@ in `agents/completed.log.md`, not here.
 
 ## Standing state
 
-- `compile === live === export`, **29,363**, margin **637**. Re-checked whenever `agent/sol.md` moves.
+- `compile === live === export`, **29,411**, margin **589**. Re-checked whenever `agent/sol.md` moves.
 - Guards I own, each red-checked by reintroducing the defect it catches: `admin-prose`,
   `voice-prompt-size`, `doc-citations` (counts, links), `list-counts`, `export-redaction`,
   `escalation-dedupe`, `walkthrough-quotes`, `data-seam`, `browser-env`, `doc-paths`,
@@ -98,6 +65,9 @@ in `agents/completed.log.md`, not here.
 
 ## What I shipped, one line each
 
+- **It92: the three demo-path sentences** (PR #124). **It91: G8 verified without production env**
+  (PR #123). **It90: the rest of the guardrail re-check** (PR #122). **It89: guardrail regression**
+  (PR #121). **It88: the email's pet question** (PR #120). **It87: demo rehearsed end to end** (PR #119).
 - **It53: 0 missing → ready to price** (PR #51). **It52: dashboards in plain words** (PR #50).
   **It50: vision doc** (PR #48). **It49: runbook vs screens** (PR #47). **It48: board
   verification** (PR #46). **It47: honest intent badge** (PR #45). **It46: telephony intent write**
