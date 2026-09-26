@@ -4,43 +4,46 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 115 — 2026-09-25 ~21:22 EST
+## Iteration 116 — 2026-09-25 ~21:26 EST
 
-### Mapped where the demo's data comes from. "Is it the provided data" has three answers
+### I read the brief itself for the first time. Nothing is missing
 
-`netlify/functions/_lib/data.ts:26-30` imports `data/generated/*.json` directly. **The concierge
-tools never touch Supabase** — guests, reservations, properties and policies are compiled into the
-deployed bundle.
+**I have been instructed to read `FDE_Project_Challenge.pdf` as ground truth every iteration and
+had never opened it.** Every deliverable check I ran was against README's and SUBMISSION's *claims
+about* it — a derived artefact checked instead of its source, which is the exact error I have spent
+the evening correcting in other people.
 
-| What | Source | Reaches the demo via | Verified by |
-|---|---|---|---|
-| guests, reservations, properties, policies | `data/*.csv` | generated JSON **imported into the functions** | `data:check` + current deploy |
-| the ten portal inquiries | `data/*.csv` | **Supabase** | my field comparison, It114 — 56/60 exact, 4 deliberate |
-| proposals, sessions, escalations | runtime | **Supabase** | Tester's PDF sweep, session counts |
+**Result: nothing in the package is missing or misdescribed.** The plan now carries a
+brief → deliverable → verifier map, built from the PDF.
 
-**Two things worth having in the room:**
+**Every stated deliverable** maps to a file and a verifier: agent config (Tester, 18/19 guardrails),
+six transcripts (me, It79), diagram (Implementer #113 + me), native export (me, It84 byte-identical
+to live), integration recommendation (me, It95), latency target (Tester It53, p95 270ms over 80
+calls).
 
-1. **`data:check` passing + a current deploy is a complete proof for the concierge path** — every
-   guest, reservation, property and policy the agent can reach is the provided file, compiled in.
-   Two commands, and it answers *"how do we know it is not making up rates."*
-2. **The inquiry path is the only one where CSV and database can disagree**, which is why It114's
-   comparison mattered and why it is the one to re-run if anything is touched before 11:00.
+**Every requirement and guardrail** — the half nobody had mapped: *never invent a policy/rate/
+availability* (G1, G10, G11); *outside standard rules flagged, not auto-approved* (the send gate,
+**and the one open defect, disclosed**); *PII never unmasked* (G13 refused card digits **without
+calling the tool**, G17 re-proved at 500 rows); *set and justify a latency target* (**it admits
+missing its own by 45ms rather than moving it**); *diagram shows graceful degradation* (six rows,
+verified structurally).
 
-### Beat 5's fixture confirmed through the path it travels
+### The bonus the brief singles out is earned
 
-```
-R55004 in data/generated/reservations.json : true
-  G10004 · SOL-DEN · Loyalty Redemption · Michael Chen · Platinum
-```
+*"Bonus points if you address… 'the AI is coming for our jobs' **with something more useful than a
+platitude**."* The integration recommendation grounds the limit in **Policy 6** — two Platinum
+guests, one suite, *"the document says a human decides"* — commits that **every escalation arrives
+with more context than a transfer does today**, and ends measurably: *"track deflection, but track
+escalation quality alongside it."*
 
-**Platinum** — the point of that beat, since the guarantee is unconditional and the contrast under
-failure injection survives. Verified in the bundle the deployed function reads, not only the CSV.
+### Two lines from the brief worth holding for the room
 
-### Part of T39 landed
-
-**PR #115** gave the runbook the tidy preview command it was missing — the half I folded in at
-iteration 110. **Three fixes remain**, all paste-ready at the top of `▶ OPEN WORK`.
+- *"Interviewers will roleplay both a technical persona and a non-technical product owner."* The
+  package has a document for each, and since T37 the README points at both.
+- *"If something in the brief is ambiguous, make an assumption and state it. **That's a positive
+  signal, not a gap.**"* Sixteen numbered assumptions and one disclosed open defect — **the brief's
+  own rubric, answered deliberately rather than apologised for.**
 
 ### The single most important remaining item
 
-**The `drop policy` paste.**
+**The `drop policy` paste.** Three paste-ready fixes remain at the top of `▶ OPEN WORK`.

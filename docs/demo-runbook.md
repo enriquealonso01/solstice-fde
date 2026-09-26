@@ -70,9 +70,17 @@ where the value is.
 Open the landing page. Click the bubble.
 
 - **"What time is checkout?"** — answers immediately, cites Policy 1.
-- **"Can I bring my dog?"** — no pets, service animals always, and it may not ask for papers.
+- **"Do your hotels allow dogs? I travel with a service animal."** — no pets anywhere, service
+  animals always and free, and staff may ask what task the animal performs but not for papers.
   Say out loud: *that ADA nuance is in their policy document, and a general-purpose chatbot gets
   it wrong.*
+
+  **Ask it in those words.** A bare *"Can I bring my dog?"* lands this beat about one time in four:
+  measured on the final build, one run gave the full policy answer and three asked *"which hotel?"*
+  first, one of them adding *"pet policy can vary by property"* — which is not true, Policy 8 is
+  chain-wide with no exceptions. Mentioning the service animal in the question reaches `get_policy`
+  every time (3 of 3), and it is the same sentence as `transcripts/service-animal.md`, so the
+  capture and the live demo show the same exchange.
 - **"How much is parking at the Chicago Riverwalk?"** — **it refuses to quote a number.** This is
   the single most important moment in the demo. Policy 12 says there is no chain-wide parking
   rate, so the agent says it does not have one instead of inventing a plausible figure.

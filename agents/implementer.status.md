@@ -10,6 +10,17 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It85: rehearsed the demo against the final build, and beat 2's second question lands
+  about one time in four.** Ran the runbook's verbatim prompts. Checkout time, the parking refusal and
+  beat 5's healthy late checkout are all correct. **"Can I bring my dog?" is not.**
+- **Four observed runs: one gave the full Policy 8 answer; two deflected with "which hotel?"; one
+  said "Pet policy can vary by property"** — which is false (Policy 8 is chain-wide, no exceptions)
+  and is the invented-plausible statement G1 exists to forbid.
+- **Fixing the runbook, not the prompt.** Two alternative phrasings are 3/3 reliable, and one of them
+  is what `transcripts/service-animal.md` already uses, so the demo and the transcript show the same
+  exchange. A prompt change to a verified runtime this close is the trade this loop has declined
+  twice, and it would need a re-provision and re-verification.
+
 - **CLAIMED It84: a guard that is not running is worse than no guard, and one of mine already was.**
   Nothing is reopened for me — the Tester's 403 finding against `role-walkthroughs.md` is already
   fixed in the file. So I took the failure that has actually happened here: at their iteration 55 they

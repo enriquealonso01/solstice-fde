@@ -4541,3 +4541,58 @@ and the comment says why the other is absent rather than leaving it looking like
 forty-three, which is the case that occurred.
 
 `npx tsc -b --force` clean. `npx vitest run`: **527 passed, 44 files**.
+
+## It85 — rehearsed the demo, and beat 2's second question lands about one time in four
+
+Everything is audited and guarded, so I stopped reading documents and ran the demo. Forty-odd PRs have
+landed today and nobody had walked the beats in order against the final build.
+
+**Three of four verbatim prompts are exactly as promised.** Checkout time cites Policy 1 via
+`get_policy`; the Chicago parking question refuses to quote a number; beat 5's healthy-state late
+checkout returns *"2pm is confirmed — as a Platinum member you have a guaranteed late checkout"* with
+`identify_guest` then `check_late_checkout`.
+
+### The one that is not
+
+The runbook calls this beat the ADA moment — *"a general-purpose chatbot gets it wrong"*. Asked in the
+runbook's own words, four observed runs:
+
+| Run | Tools | Answer |
+|---|---|---|
+| 1 | `classify_intent` | *"Which property are you staying at? Pet policies vary by hotel"* |
+| 2 | `get_policy` | the full Policy 8 answer, ADA nuance included ✅ |
+| 3 | `classify_intent` | *"Which hotel are you asking about?"* |
+| 4 | `classify_intent` | *"Which hotel… Pet policy can vary by property."* |
+
+Two problems, and the second is the serious one. The beat lands once in four. And **"pet policy can
+vary by property" is false** — Policy 8 is chain-wide, *"no exceptions and no pet-friendly floors"*.
+That is a plausible invented fact, which is the single thing G1 exists to forbid, produced without
+calling a tool.
+
+### Fixed in the runbook, not the prompt
+
+Mentioning the service animal in the question reaches `get_policy` **3 of 3**, as does *"What is your
+policy on pets and service animals?"*. Both give the full answer.
+
+I took the transcript's sentence — *"Do your hotels allow dogs? I travel with a service animal."* —
+because `transcripts/service-animal.md` already uses it, so the capture and the live demo now show the
+same exchange.
+
+**Why not fix the prompt:** it is a change to a runtime verified hours before submission, it needs a
+re-provision and a re-verification of the guardrails, and this loop has declined that trade twice on
+smaller grounds (T19, T33). The runbook is what Enrique follows, and the model behaves correctly when
+asked precisely.
+
+**What I did not do is hide it.** Both documents now say the bare question is unreliable and why, with
+the measurement, so nobody "improves" the wording back.
+
+### And the same phrasing was in the cheatsheet
+
+`docs/demo-cheatsheet.md:19` carried the identical unreliable question — the file open on Enrique's
+second screen. Fixed there too. Checking for the second instance is the habit; it has caught something
+four times this session.
+
+**Cost noted:** these runs created a handful of chat sessions, which is what `npm run demo:preview` and
+`demo:tidy` exist for.
+
+`npx tsc -b --force` clean. `npx vitest run`: **527 passed, 44 files**.
