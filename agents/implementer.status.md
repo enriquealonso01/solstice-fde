@@ -9,23 +9,21 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It116: T45 — the two decisions that reached Enrique nowhere now open the page he is told to
-  read.**
-- **Verified the Planner's matrix before writing.** The short list is dated 15:30, and neither the RLS
-  `drop policy` paste nor the SIP rotation is in it, in `SUBMISSION.md`'s *Before sending*, or in the
-  runbook's *Before they join*. A correctly-written entry further down was the only record — on a page whose
-  own opening says *"the rest is history and evidence."*
-- **Two of T45's five line pointers were already stale** — `:512` pointed at a sentence about
-  `transcripts/honest-handoff.md`, `:753` at a blank line. Had I copied the task text, he would have followed
-  them at 08:00. The real targets are 563, 592/596, 715 and 804, each checked against its content.
-- **Then my own insertion shifted every one of them by 37 lines.** I committed the exact failure the task is
-  about while fixing it, caught it, and renumbered. That is why the guard exists rather than a note.
-- **`intervention-routing.test.ts` pins two properties:** every decision of his is reachable from the region
-  above `## Open`, and **every `line N` pointer in that region lands on the text it claims**. The second
-  red-check restores the old `678` and it now lands on a *different* "Three options" heading — a near-miss
-  that reads as correct, which is the worst kind.
-- The 15:30 block is byte-identical: the update is a separate dated block placed after it, and `git diff`
-  shows no removed lines.
+- **SHIPPED It117: the interviewers' own hiring brief was published in our public repository.**
+  `FDE_Project_Challenge.pdf` was tracked, not ignored, in a repo I confirmed is **PUBLIC** at It98.
+- **Not a credential — a question of whose document it is.** Nothing authenticates with it. But it is their
+  private interview challenge, published under our name where a future candidate could find it, and what a
+  reviewer concludes from that is about how this team handles **someone else's** confidential material.
+- **Untracked and ignored; still on disk**, because the plan reads it as ground truth. Guarded three ways:
+  it must not be tracked, `.gitignore` must name it, and **no PDF may be tracked at all** — nothing here
+  needs to ship one, since proposals are generated at runtime.
+- **History is Enrique's call, and I recommended leaving it.** One commit still contains it. A rewrite
+  invalidates every commit id the deliverables cite — the README's day-one window and counts, the plan's PR
+  references, `10b63e8` and `c09f04d`. Same shape and same answer as the SIP credential.
+- **What I could not do, stated as such.** I tried to read the PDF to check our deliverables against its own
+  list; my extractor pulled embedded font data instead of page text. The Planner has read it and mapped the
+  brief's requirements to files, so that mapping exists — I have recorded that I did **not** independently
+  re-verify it rather than implying I had.
 
 ## Demo rehearsal coverage — what is actually verified
 

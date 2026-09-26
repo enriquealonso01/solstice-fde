@@ -6552,3 +6552,50 @@ block placed immediately after it, because appending at the end of a 950-line fi
 bug: he would never have seen it.
 
 `npx tsc -b` clean. `npx vitest run` **659 tests / 52 files** green (up 7).
+
+## It117 — the interviewers' own brief was published in our public repository
+
+I went looking for the brief to check our deliverables against its own list, and found it committed:
+`FDE_Project_Challenge.pdf`, 94KB, tracked, not in `.gitignore`, one commit in history — in a repository I
+confirmed is **PUBLIC** at iteration 98.
+
+**This is not a credential and I am not going to dress it up as one.** Nothing authenticates with it. It is
+the hiring challenge the interviewers wrote, published on the internet under our name, where any future
+candidate could find it. The cost is to them, and the inference a reviewer draws is about how this team
+handles a confidential document belonging to **someone else** — which for a forward-deployed role is not a
+small thing to get wrong.
+
+**Fixed the live state.** `git rm --cached` plus a `.gitignore` line, so it is out of the tracked tree and
+still on disk — the plan reads it as ground truth, so removing the file itself would break the agents. This
+is the same arrangement as `DEMO_LOGINS.md`.
+
+**Guarded three ways**, in the file that already owns "no tracked file may carry something it should not":
+
+1. `FDE_Project_Challenge.pdf` must not appear in `git ls-files`.
+2. `.gitignore` must name it, so a `git add -A` cannot quietly republish it.
+3. **No PDF may be tracked at all.** Nothing in this package needs to ship one — the proposals are generated
+   at runtime — so a committed PDF is most likely someone else's document. That is the case that will catch
+   the next one rather than this one.
+
+Red-checked all three: `git add -f` fires cases 1 and 3, removing the ignore line fires case 2.
+
+**History is Enrique's call and I recommended leaving it.** The file remains in one commit. A rewrite
+invalidates every commit id the deliverables cite — the README's day-one window and commit counts, the
+plan's PR references, `10b63e8` and `c09f04d` in the credential entry — which is a lot of verified accuracy
+traded for removing something from a repository whose reader already has the brief. Written up with the
+alternatives and the short honest answer if a reviewer raises it.
+
+### What I could not do, recorded rather than implied
+
+The reason I opened the file was to check every named deliverable against the brief's own list. My PDF text
+extraction pulled embedded font data instead of page text, and hand-rolling a better one was not a good use
+of the hours left. The Planner has read the PDF and mapped the brief's requirements to files in
+`plans/06-master-plan.md` — that table exists and looks right — but **I did not independently re-verify it**,
+and the log says so rather than leaving the impression that the completeness check was done twice.
+
+Two smaller things noticed in that table while reading it, both the Planner's file and both flagged rather
+than edited: the latency row still cites *"p95 270ms over 80 calls"* and the requirements row still says the
+doc *"admits missing its own signal target by 45ms"* — iteration 109 re-measured that target as **met**, and
+the doc itself now carries the new figures.
+
+`npx tsc -b` clean. `npx vitest run` **662 tests / 52 files** green (up 3).
