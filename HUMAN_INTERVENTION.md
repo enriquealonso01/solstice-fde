@@ -73,22 +73,35 @@ rep can PATCH a proposal's `status` to `approved` with the public anon key; `can
 and `approved_by` stays null, so the gate credits an approver who does not exist.
 
 - The three `drop policy` statements to paste, Supabase SQL editor, project `bcrivjgqrxahgxyiqlpr`:
-  **line 596**. The instructions around them start at **line 592**, *"### What to run"*.
+  **line 609**. The instructions around them start at **line 605**, *"### What to run"*.
 - The full entry — how it was found, why dropping those policies is safe, what still works afterwards:
-  **line 563**, *"A signed-in sales rep can approve their own flagged proposal, from the browser"*.
-- **If you apply it, delete the three disclosures**: the list is at **line 804**, *"The three places that
+  **line 576**, *"A signed-in sales rep can approve their own flagged proposal, from the browser"*.
+- **If you apply it, delete the three disclosures**: the list is at **line 817**, *"The three places that
   mention it"*. All three or none — they cross-reference each other.
 - Verified since: the three `*_read` policies in `supabase/schema.sql` are declared separately, so dropping
   the write policies does **not** take the group sales inbox blank. That property is now pinned by a test.
 
 **B. A Telnyx SIP credential *username* is in git history — a decision, not a task.** Three options are at
-**line 715**, *"Three options, and my recommendation is the first"*.
+**line 728**, *"Three options, and my recommendation is the first"*.
 
 - **The recommendation is option 1: accept it and rotate after the demo.** The username alone is not usable
   and the password was never committed. Option 2 rotates now, which changes `TELNYX_SIP_USERNAME`, the SIP
   URI and the live assistant's transfer target — that is the beat 3 path, hours before the demo.
 - Option 3, rewriting history, is the one to avoid: it would invalidate the commit ids the deliverables
   cite.
+
+**C. The interviewers' own brief was published in our public repo — already fixed, and what is left is only
+a question about history.** `FDE_Project_Challenge.pdf` is the challenge document *they* wrote. It was
+tracked, and this repository is public. It is now out of the tracked tree, named in `.gitignore`, still on
+disk because the plan reads it as ground truth, and guarded three ways including "no PDF may be tracked at
+all".
+
+- **The decision: whether to rewrite history to remove it from the one commit that still has it.
+  Recommendation: no.** A rewrite invalidates every commit id the deliverables cite — the README's day-one
+  window and commit counts, the plan's PR references, `10b63e8` and `c09f04d` — to remove a document from a
+  repository whose reader wrote it.
+- Full entry, the alternatives, and the short honest answer if a reviewer raises it: **line 975**,
+  *"Your call: the interviewers' own brief was published in our public repo"*.
 
 **Two later updates you would otherwise have to find by scrolling**, both further down this file: item 3
 above, `npm run demo:tidy`, now takes `--minutes` — the default leaves everything from the last half hour on

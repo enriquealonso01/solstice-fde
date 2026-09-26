@@ -9,26 +9,24 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It120: T46 — `.env.example` shipped `SOL_THINKING=` blank, and blank is the configuration we
-  rejected.**
-- **Every link verified, including the one T46 could not check.** `chat.ts` reads anything other than
-  `'disabled'` as **adaptive**, so blank is not neutral; `docs/latency-target.md` says production runs
-  `disabled`; and I confirmed that against the **Netlify environment itself** — `SOL_THINKING = disabled` —
-  and the local `.env`. So a reviewer following our own step 2 ran the build we rejected.
-- **The stakes are a guardrail, not a knob.** Adaptive is the setting where *"Sol created a real escalation
-  and then failed to tell the guest it had done so"* — the exact behaviour
-  `transcripts/honest-handoff.md` is offered as proof of, and the first transcript we tell them to read.
-- **The comment was the worse half, and `chat.ts` carried the same error.** Both called it a *"latency
-  dial"*, which invites leaving it blank to go faster. Both now say it is behavioural and name the doc.
-- **Two guard cases, after the first attempt passed while broken.** My original check took 400 characters
-  either side of the variable; red-checking it by restoring the old one-line comment left it **green**,
-  because the shorter comment moved the offsets. Rewritten: a whole-file ban for `.env.example`, and for
-  `chat.ts` an assertion anchored on the `const THINKING` declaration — because `chat.ts` legitimately calls
-  effort and token budget *"the latency dials"* 200 lines later, and a file-wide ban failed on correct prose.
-- **My comment edit shifted two `chat.ts` citations by 8 lines and `doc-citations` caught it** — fourth time
-  that guard has corrected me. `303 → 311`, `160 → 168`, and because one sits outside `voice:exclude` the
-  live prompt differed by two digits, so I re-provisioned after diffing: the change **is** those two digits.
-  `compile === export === live` at 29,655, margin 345.
+- **SHIPPED It121: T47 — the sixth decision is in the index, and the guard now derives its list from the file
+  instead of from the five things that existed when I wrote it.**
+- **This was my own failure, one iteration after fixing the same thing.** It116 routed four decisions into the
+  block Enrique is told to read; **It117 then appended the brief's history question to the end of a 990-line
+  file** — precisely T45 — and my guard stayed green because it checked **five hardcoded needles**.
+- **Part A:** item **C** added to the update block, with the recommendation (do not rewrite history) and a
+  pointer to line 975. The 13-line insert shifted all five existing pointers, so I renumbered and re-verified
+  each against its target line. **The guard is what makes that safe rather than lucky.**
+- **Part B:** every `## Your call:` heading must now be reachable, derived by scanning the file, with a
+  `## RESOLVED:` heading closing an item so the bare pet question does not fire.
+- **The derived case passed while broken on its first try, and the fix is the interesting part.** Counting
+  single words >4 chars and calling two a match let a fake seventh decision — *"whether to rotate the Anthropic
+  key before sending"* — through, because *whether*, *rotate*, *before* and *sending* were all already in the
+  block about other things. **A three-word shingle** is specific enough that only a deliberate mention counts.
+  Now red-checked three ways: fake seventh fires, removing item C fires and names line 962, the resolved pet
+  question stays green.
+- Twelfth escape incident on the way: a dynamic `RegExp` with a newline class came back from the heredoc
+  expanded and esbuild rejected the file. Replaced with `startsWith` + `includes`, which need no escaping.
 
 ## Demo rehearsal coverage — what is actually verified
 

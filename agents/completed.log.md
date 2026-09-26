@@ -6801,3 +6801,58 @@ exactly `chat.ts:303` → `chat.ts:311`, and re-provisioned. `compile === export
 **345**, assistant id unchanged, 11 API calls, no telephony spend.
 
 `npx tsc -b` clean. `npx vitest run` **674 tests / 52 files** green (up 7).
+
+## It121 — T47: my own guard stated a property it did not test, and a sixth decision walked past it
+
+T45, one level up, and mine both times. Iteration 116 fixed the routing gap by putting four of Enrique's
+decisions into the block his page tells him to read, and shipped `intervention-routing.test.ts` whose opening
+sentence is *"Enrique has to be able to reach every decision that is his, from the page he is told to read."*
+
+**Iteration 117 then appended a sixth decision to the end of a 990-line file** — the brief's git-history
+question — and the guard stayed green. Because the case checked a hardcoded list of the five needles that
+existed when I wrote it: `drop policy`, `bcrivjgqrxahgxyiqlpr`, `SIP credential`, `Top up Telnyx`, `INQ-2012`.
+A test that says *every* and checks *these five* passes for everything that arrives after it is written.
+
+Verified T47's reading of the file before acting: three `## Your call:` headings (653 SIP, 819 pet question,
+962 the brief), one `## RESOLVED:` (879, closing the pet question), one update block (63), 990 lines.
+
+### Part A — the sixth decision, in the index
+
+Item **C** in the update block: the brief is out of the tracked tree, ignored and guarded; what is left is
+only whether to rewrite history, and the recommendation is no, because it invalidates every commit id the
+deliverables cite. Pointer to the full entry.
+
+**The 13-line insert shifted all five existing pointers**, exactly as iteration 116's did. I renumbered them
+— 596→609, 592→605, 563→576, 715→728, 804→817 — and checked each against the line it now claims. The pointer
+guard from It116 is what makes that a routine step rather than a thing I might have forgotten twice.
+
+### Part B — deriving the list, and the version that passed while broken
+
+The scan is now: every `## Your call:` heading must be reachable from the region above `## Open`, where
+reachable means the region points at its line or quotes it. A later `## RESOLVED:` heading naming the same
+subject closes an item, which is why the pet question does not fire — it is raised at 819, resolved at 879,
+and the block already says it needs no decision.
+
+**The first version of the reachability rule was too loose and I caught it with a red-check.** It counted
+single words longer than four characters and called two of them a match. I appended a fake seventh decision —
+*"## Your call: whether to rotate the Anthropic key before sending"* — and the test stayed **green**, because
+*whether*, *rotate*, *before* and *sending* all already appear in the block about other things. A guard that
+cannot see a brand-new decision is the exact defect it was written to fix, rebuilt one layer down.
+
+Replaced with a **three-word shingle**: reachable if any three consecutive words of the heading appear in the
+region, or the region names its line. Specific enough that only a deliberate mention matches. Re-red-checked
+three ways:
+
+```
+fake seventh decision appended   -> fires, "line 1005: whether to rotate the Anthropic key before sending"
+item C removed                    -> fires, "line 962: the interviewers' own brief was published in our public repo"
+resolved pet question             -> stays green, as it must
+```
+
+**Twelfth escape incident.** The RESOLVED detection first used a dynamic `RegExp` with a newline character
+class and an escaped replacement; the heredoc expanded the newline and esbuild rejected the whole file with
+*no tests*. Rewritten as `startsWith('## RESOLVED:')` and `includes(key)` — no escapes, nothing to mangle.
+The lesson is the same one as iteration 101: if the construct needs an escape, find the one that does not.
+
+`npx tsc -b` clean. `npx vitest run` **675 tests / 52 files** green (up 1 case, and the five needles kept
+because they pin wording a heading scan cannot see).

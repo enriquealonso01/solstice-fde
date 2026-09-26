@@ -1,10 +1,11 @@
 # Master plan: the whole picture
 
-> ## 01:05 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
+> ## 01:12 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
 > *All agent work is closed — T38–T43 and T45, each re-verified against the live files at 00:55, not
-> from the log; **T44 shipped in It118** and corrected my premise while doing it. **Two things are left for
-> an agent: T46**, one line in `.env.example` that ships the configuration we rejected, and **T47**, one item
-> in `HUMAN_INTERVENTION.md`'s index plus the guard that should have caught it.*
+> from the log; **T44 shipped in It118 and T46 in It120**, each correcting a premise of mine while doing it.
+> **Two things are left for an agent: T47**, one item in `HUMAN_INTERVENTION.md`'s index plus the guard that
+> should have caught it, and **T48**, one row in `agent/sol.md` — the third and last sibling of the
+> `SOL_THINKING` fix, measured at +129 chars, margin 345 → 216.*
 > **Five items are yours — three to do, and two decisions where the recommendation is to do nothing**
 > (T34 the SIP credential, and the brief PDF in history, `HUMAN_INTERVENTION.md:962`).
 > *Seven likely panel questions are answered in `▶ IF THEY ASK` below.*
@@ -115,7 +116,7 @@
 > **All five of the document fixes this banner used to list here — T38, T39, T40, T41, T42 — are
 > done**, along with T43 and T45. Checked at 00:55 against the live files with a whitespace-normalised
 > match rather than `grep`, because each of those phrases can wrap a line. **What is left for an agent
-> is T46 and T47**, both immediately below.
+> is T47 and T48**, both immediately below.
 >
 > ### Two constraints anyone editing should know
 >
@@ -158,64 +159,19 @@ replacement row verbatim) · **T41** (*"subject to same-day availability"* — 0
 Each checked with the whitespace-normalised match this file recommends, not `grep`, because every one of
 those phrases can wrap a line.
 
-### T46. `.env.example` ships the one configuration the project deliberately rejected — one line
+### T46 — SHIPPED (It120), and it fixed two siblings I had only asked about one of
 
-*Second agent item, after T44. It is in the file the README tells a reviewer to copy, and the thing
-it changes is a **guardrail**, not a performance knob — which is the part the comment gets wrong.*
+`.env.example:47` now reads `SOL_THINKING=disabled` with the behavioural reason and the sentence that
+matters most: ***"Blank is NOT neutral: chat.ts reads anything other than 'disabled' as adaptive."***
 
-**The chain, each link verified at 01:05:**
+**And they fixed `chat.ts:62` as well**, which I had quoted as evidence without noticing it carried the same
+wrong framing: it now says *"Production ships `disabled`, and NOT as a latency dial — which is how this
+comment and .env.example both described it until iteration 120."*
 
-1. **`README.md`, "Running it locally", step 2:** `cp .env.example .env  # then fill it in`.
-2. **`.env.example:43`** ships `SOL_THINKING=` — **blank** — under the comment
-   *"# Latency dial: 'disabled' turns off extended thinking on the chat brain."*
-3. **`netlify/functions/chat.ts:67`:** `process.env.SOL_THINKING === 'disabled' ? { type: 'disabled' }
-   : { type: 'adaptive' }`. **Blank is not neutral — blank is `adaptive`.**
-4. **`docs/latency-target.md:125`**, under the heading *"What we traded, deliberately"*:
-   *"`SOL_THINKING=disabled` is set in production. It is **slower on first token and the only
-   configuration that produced zero behavioural violations** across the four adversarial scenarios."*
-   And the next sentence: *"With adaptive thinking on, Sol created a real escalation and then failed
-   to tell the guest it had done so."*
-
-**So a reviewer who follows our own setup instructions runs the build we rejected** — and the failure
-they could hit is *an escalation created and not disclosed*, which is **the exact guardrail
-`transcripts/honest-handoff.md` is offered as proof of**. It is the first transcript we tell them to
-read.
-
-**The comment is the more misleading half.** *"Latency dial"* is what `SOL_THINKING` looked like when
-the flag was added, and `docs/latency-target.md` explicitly overturns it: the reason it is `disabled`
-in production is behaviour, and the cost is latency. A reviewer reading only `.env.example` would
-reasonably leave it blank to go faster, and would be trading away a guardrail to do it.
-
-**Do this — two lines in `.env.example`:**
-
-> ```
-> # Extended thinking on the chat brain. Ship 'disabled': it is slower to first token and the only
-> # setting that produced zero behavioural violations in the four adversarial scenarios -- with
-> # adaptive on, Sol created an escalation and did not tell the guest. See docs/latency-target.md.
-> SOL_THINKING=disabled
-> ```
-
-**Check when done:** `.env.example` sets it to `disabled`; the comment says the choice is about
-behaviour and names `docs/latency-target.md`; `agent/sol.md:458`'s row still agrees (it already says
-disabling *"improves tool selection"*, which is the same claim in weaker words).
-
-**One thing I could NOT verify, and it is the more important half.** `docs/latency-target.md` *claims*
-`SOL_THINKING=disabled` is set on the Netlify deploy. **I could not confirm it.** `/api/flags` is
-401 anonymous, `tool_invocations` — where `chat.ts:497` records `thinking` on every turn — returns
-**zero rows to the anon key** because RLS blocks it, and reading the deploy's environment needs the
-Netlify CLI, which is a lock-and-deploy matter and not mine.
-
-**Two checks settle it, and both belong to whoever holds the lock:**
-- `npx netlify env:get SOL_THINKING` — one command, definitive. *(Note T44: the first `npx netlify`
-  run installs the CLI.)*
-- Or read one `turn_metrics` row with the service-role key: `tool=eq.turn_metrics`,
-  `select=args_masked`, newest first. `args_masked.thinking` is literally `'disabled'` or `'adaptive'`.
-  **I drove three live turns at 00:45, so the rows exist.**
-
-**If production turns out to be `adaptive`, this stops being a one-line documentation fix** and
-becomes a contradiction between a deliverable and the running system, in the paragraph where the
-package explains a deliberate trade — which would be worse than the trade itself. **Check before you
-edit.**
+**The half I flagged as unverifiable was the half that mattered**, and they took it on: T46 said *"check
+production before you edit"* because I could not — `/api/flags` is 401 anonymous, `tool_invocations` returns
+zero rows to the anon key, and the Netlify CLI is lock work. **The third sibling is `agent/sol.md:458` and it
+is still wrong: filed as T48.**
 
 ### T47. A sixth decision reached `HUMAN_INTERVENTION.md` but not its index — and the guard cannot see it
 
@@ -269,6 +225,67 @@ the heading scan would not.
 
 **Check when done:** deleting item C from the update block turns the new test red; the suite is green with
 it; the pet-question item does not fire; `npx vitest run` passes overall.
+
+### T48. `agent/sol.md:458` is the third sibling of the `SOL_THINKING` fix, and it is the one a reviewer reads
+
+*It120 fixed `chat.ts:62` and `.env.example`. **This is the third copy** — the pattern where the last one
+gets missed, exactly as T41's phrase had three. And unlike the other two, this file is **a named brief
+deliverable and the live voice prompt**. One table row. Numbers below are measured, not estimated.*
+
+**The row now:**
+
+> `| Thinking on the chat channel | env `SOL_THINKING=adaptive` (default) or `disabled`. Measured:
+> disabling it does **not** speed up the first token, it improves tool selection |`
+
+**Two things wrong with it.**
+
+1. **It presents `adaptive` as the operative setting.** *"(default)"* is true of the library and of
+   `chat.ts:67`, but **production ships `disabled`** — which is what `chat.ts:62` and `.env.example:47` now
+   say in as many words after It120. A reviewer reading the agent config concludes the live system runs
+   adaptive.
+2. **"it improves tool selection" has an ambiguous antecedent.** On the natural reading, *disabling*
+   improves tool selection; `chat.ts` says **adaptive** *"buys better tool choice"*. Either way the row
+   omits the one thing that matters: **`disabled` ships, and the reason is behavioural, not latency.**
+
+**The replacement, measured at +129 characters:**
+
+> `| Thinking on the chat channel | env `SOL_THINKING`. **Production ships `disabled`** -- slower to first
+> token, and the only setting with zero behavioural violations across the four adversarial scenarios.
+> `adaptive` is the library default; with it on, Sol created an escalation and did not tell the guest |`
+
+```
+compiled now      29,655   margin 345
+compiled with fix 29,784   margin 216   delta +129   truncated: false
+```
+
+**This region is NOT inside a `voice:exclude` block**, so the edit changes the compiled prompt: it needs a
+`--refresh`, and the export must be re-exported so `exports/telnyx-assistant.json` still matches live.
+*(I verified all three were byte-identical at 29,655 in iteration 158; do not leave them diverged.)*
+
+#### Do NOT try to buy budget by wrapping section 7 — I measured it and it truncates
+
+The obvious move is *"`## 7. Changing a rule live` is operator documentation a guest on the phone never
+needs, so wrap the section in `voice:exclude` and get 2.6KB back."* **I tried it:**
+
+```
+fix + section 7 wrapped in voice:exclude
+  compiled 30,033   margin -33   truncated: TRUE
+```
+
+**It goes over the hard cap and the live prompt loses whatever sits at the end of the file.** The cause,
+verified: **section 7 contains an opening `<!-- voice:exclude -->` at +1863 with no closing marker inside the
+section** — its partner is further down the file. `STRIP_BLOCK` is a non-greedy regex that pairs markers in
+document order, so a new opener at the section start pairs with the *existing block's* closer and the
+boundaries stop meaning what you think.
+
+> **The general hazard, worth more than this task:** `voice:exclude` blocks in `agent/sol.md` **span section
+> boundaries**, so *"is this text in the voice prompt?"* cannot be answered by looking at the section. It can
+> only be answered by running `compileInstructions`. **Anyone wrapping a region must measure the compile
+> before and after**, which is what the banner already says and what this proves.
+
+**Check when done:** the row names `disabled` as what production ships and gives the behavioural reason;
+`compileInstructions` reports **29,784, margin 216, not truncated**; a `--refresh` has run; the committed
+export matches live again.
 
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
@@ -371,7 +388,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 ---
 
-# ▶ OPEN WORK — three things for Enrique to DO, two decisions where the recommendation is *nothing*, and T46/T47 for an agent.
+# ▶ OPEN WORK — three things for Enrique to DO, two decisions where the recommendation is *nothing*, and T47/T48 for an agent.
 
 *Everything below this section is closed, or evidence.*
 
@@ -387,7 +404,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > edits this next: **when you close a task, delete its entry from this screen in the same edit.** The
 > record lives in the verification log; it does not need a second home above the work.
 >
-> **What remains for an agent is T46 and T47.** What remains for Enrique is the items in the
+> **What remains for an agent is T47 and T48.** What remains for Enrique is the items in the
 > table below, and every one of them now also appears in `HUMAN_INTERVENTION.md` — items 1 and 4
 > reached it at 00:05 in the update block at **line 63**, which closed the routing gap iteration 156
 > filed T45 for.
@@ -1593,6 +1610,102 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 160, 01:12 EST — verified four deliverables nobody had checked, found one contradiction, and measured a "budget win" that would have truncated the live prompt
+
+#### Verified and clean — four brief deliverables, no task needed
+
+**The guardrail-evidence claim, and it used a floor.** `SUBMISSION.md:38` and `README.md:90` both point a
+reviewer at `agents/tested.log.md` for **18 of 19 guardrails verified against production**, naming **G16's
+voice half** as the exception. They say *"over 4,900 lines"* — the file is at **5,436** and still climbing, so
+the claim stays true as the log grows. **That is PR #77's floors-not-counts lesson applied correctly by
+someone who was not told to.** T35 shipped with better wording than I proposed and my count matches.
+
+**The architecture diagram.** `diagram-guide.test.ts` is green (6 tests) and it is a well-built guard: it
+checks `README-diagram.md` against `architecture.drawio` **and** asserts the `.drawio` is still plain XML
+first, so a compressed save cannot turn every later check into a silent pass.
+
+**The SVG against the drawio, which nothing guards.** The `.drawio` has **three pages**; the SVG has one.
+That is not a defect — `README-diagram.md:6` says so explicitly: *"a hand-authored render of the Future state
+page, sized for a projector… no drawio CLI in this environment."* I compared labels anyway: **22 of the 31
+Future-state labels appear in the SVG, and all 9 absent ones are edge annotations** — `address present`,
+`miss`, `phone only`, `primary failed`, `queued writes` and the like. A projector render with *"nothing under
+12px"* dropping 8px arrow labels is the stated design, not drift. **Checked, nothing to fix.**
+
+**The net-new tool is deterministic by construction, which is stronger than deterministic by test.**
+`availability.ts` has **zero** `Math.random`, `Date.now`, `new Date()`, `crypto` or `performance.now`. The
+figure comes from `hash32` over `${property_code}|${date}|${roomClass}`. So *"the figure a guest hears and the
+figure a supervisor sees are the same figure"* cannot drift. **And the identity gate is code-backed, not
+prompt-backed:** `POST /api/tools/check_late_checkout` with a bare `reservation_code` returns *"Need a
+reservation id or a verified guest id. Identify the guest first."* — refused at the tool layer.
+
+Suite green at **674 tests / 52 files**, up 15 with T46's guards.
+
+#### T48: the third sibling of the `SOL_THINKING` fix, and it is the one a reviewer reads
+
+It120 fixed `chat.ts:62` **and** `.env.example` — two places, where T46 only asked about one. `agent/sol.md:458`
+is the third and it still says:
+
+> *"env `SOL_THINKING=adaptive` **(default)** or `disabled`. Measured: disabling it does **not** speed up the
+> first token, it improves tool selection"*
+
+**It presents `adaptive` as the operative setting when production ships `disabled`**, and *"it improves tool
+selection"* has an ambiguous antecedent — `chat.ts` says **adaptive** *"buys better tool choice"*. Either
+reading omits the only thing that matters: **`disabled` ships, and the reason is behavioural.**
+
+**This is T41's shape exactly** — a phrase in three places, two fixed, the third in the file that is both a
+named deliverable and the live voice prompt.
+
+#### And the budget "win" I nearly recommended would have truncated the live prompt
+
+The obvious move is *"§7 `Changing a rule live` is operator documentation a guest on the phone never needs —
+wrap it in `voice:exclude` and get 2.6KB back."* **I measured it instead of recommending it:**
+
+```
+row fix only                       29,784   margin  216   truncated: false
+row fix + §7 wrapped in exclude    30,033   margin  -33   truncated: TRUE
+```
+
+**Cause, verified: §7 contains an opening `<!-- voice:exclude -->` at +1863 with no closing marker inside the
+section** — its partner is further down the file. `STRIP_BLOCK` is a non-greedy regex pairing markers in
+document order, so a new opener at the section boundary pairs with the *existing block's* closer and the
+boundaries stop meaning what you think.
+
+> **The general hazard is worth more than the task: `voice:exclude` blocks in `agent/sol.md` span section
+> boundaries.** So *"is this text in the voice prompt?"* cannot be answered by reading the section — only by
+> running `compileInstructions`. It also explains iteration 158's incidental note that `sol.md` grew 80
+> characters with no change to the compile.
+
+**Two things I did right here and want to keep doing:** I measured a proposed edit's exact character cost
+before handing it over (+129, margin 345 → 216), and I measured the clever alternative before recommending
+it. **The third time in four iterations that calling the real instrument overturned my reasoning about it.**
+
+#### One judgment call, stated rather than filed
+
+`AVAILABILITY_MODE` / `AVAILABILITY_OVERRIDES` are a **second live-modification lever** — runtime env, no code
+edit — and `docs/live-modification.md`, the page built for Katie's *"modify it live"* ask, is built entirely
+around the discount-threshold **code** edit. The env levers appear in **no** demo document.
+
+**But they are in `agent/sol.md`'s own "what you can change live" table**, which is a deliverable a reviewer
+reads, and §7 documents the whole surface — five env flags plus the data-level knobs. **So this is not
+undocumented, it is differently documented.** Adding a second rehearsed demo beat nine hours out is starting
+something new, which is the thing I am told not to do. **Recommendation: leave it.** If anyone has spare
+minutes, one sentence in `live-modification.md` pointing at §7 is the whole opportunity.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique — **do** |
+| 3 | **T21** — two rows, cascade count first | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| T47 | One index item in `HUMAN_INTERVENTION.md`, plus the guard that tests a snapshot | any agent |
+| T48 | One row in `agent/sol.md`. **+129 chars measured; needs a `--refresh` and a re-export** | any agent |
+
+T44 closed (It118), T46 closed (It120) — **both corrected a premise of mine while shipping.**
+Tester silent **4h46m**. Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
 
 ### Iteration 159, 01:05 EST — the Implementer handed me two stale rows in my own table, and a sixth decision got past the index built to catch it
 
