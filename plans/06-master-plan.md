@@ -73,10 +73,26 @@
 > you are about to remove.
 
 >
-> **T34** — **rotate the Telnyx SIP connection rather than rewrite history.** A credential
-> *username* is in history at `10b63e8` and `c09f04d`; rewriting invalidates commit ids the
-> deliverables cite, to remove something that authenticates nothing alone. **After any rehearsal
-> call, before the email.**
+> **T34 — the SIP credential in git history. The decision record is
+> `HUMAN_INTERVENTION.md:678`, and it recommends *accepting it*.** I spent hours recommending the
+> opposite in this banner without having read it. Their three options, with their recommendation
+> first:
+>
+> 1. **Accept it, and rotate after the demo.** *"The username alone is not usable, and this is the
+>    least risky path into tomorrow morning."* **And it comes with the line to use if a reviewer
+>    finds it:** *the password was never committed, and the repo now has two guards preventing
+>    recurrence.*
+> 2. **Rotate now.** Regenerating `solstice-supervisor-webrtc` changes `TELNYX_SIP_USERNAME`,
+>    `TELNYX_SIP_URI` **and the live assistant's transfer target** — verified: the target is
+>    `sip:…@sip.telnyx.com`, so rotation kills it — **and it needs a re-provision plus a
+>    re-verification of the supervisor WebRTC leg. That is the beat-3 path.** *"I would not do this
+>    tonight unless you are confident in the re-provision."*
+> 3. **Rewrite history. Do not.** It breaks every PR reference in the plan and the logs, and the
+>    README's own commit counts.
+>
+> **Option 1 is the recommendation and I agree with it.** What I had here was option 2 with a timing
+> rule and no mention that it takes out the supervisor leg as well as the transfer — **advice
+> contrary to the file Enrique actually works from, on a decision that touches beat 3.**
 >
 > **Then the five document fixes below** — T38, T39, T40, T41, T42. Two files plus the README and
 > one transcript, all paste-ready, no task or lock required.
@@ -1527,6 +1543,133 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 154, 00:28 EST — my banner had been contradicting the decision record for hours
+
+#### What I found by reading the file I should have read first
+
+Last iteration I worked out, from the live assistant, that rotating the SIP connection kills the
+warm transfer — and concluded *"rotating after the follow-up conversations is the better trade."*
+
+**`HUMAN_INTERVENTION.md:678` already said so, and more.** Three options, recommendation first:
+
+> **1. Accept it, and rotate after the demo.** *"The username alone is not usable, and this is the
+> least risky path into tomorrow morning."*
+>
+> **2. Rotate now.** *"…changes `TELNYX_SIP_USERNAME`, `TELNYX_SIP_URI` and the live assistant's
+> transfer target, so it needs a re-provision **and a re-verification of the supervisor WebRTC
+> leg**. That is the beat-3 path, fourteen hours before the demo. I would not do this tonight."*
+>
+> **3. Rewrite history. Do not.**
+
+**My banner had been recommending option 2** — *"after any rehearsal call, before the email"* — **for
+hours, in a file Enrique reads beside the one that says "I would not do this tonight."**
+
+#### And I missed half the blast radius
+
+I found the **transfer target**. The record also names the **supervisor WebRTC leg** — `credentials.ts:70`
+mints from `TELNYX_TELEPHONY_CREDENTIAL_ID`, and the connection is literally called
+`solstice-supervisor-webrtc`. **Rotation therefore takes out the split screen as well as the
+transfer.** Both are beat 3.
+
+So my correction last iteration was right in direction and still incomplete, because I was
+reconstructing from the live system what someone had already written down.
+
+#### The structural error, which is worse than the content one
+
+**I built a competing recommendation instead of pointing at the record.** My four-item list exists
+to make the state findable; when it *also* carries a recommendation, it can disagree with the file
+that owns the decision — and a reader has no way to tell which is current.
+
+> **A summary that gives advice is no longer a summary.** Item 4 now presents their three options,
+> credits the record, and says I agree with option 1 — **and it carries the sentence Enrique
+> actually needs if a reviewer finds the username**: *the password was never committed, and the repo
+> now has two guards preventing recurrence.*
+
+That last line is the useful artefact in the whole entry, and I would not have had it by
+reconstruction. **It only exists because someone thought about what he would have to say out loud.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — safety reason, recovery, three sites, §6 assumption 13 | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — **now the record's three options, recommendation: accept and rotate after the demo** | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
+### Iteration 153, 00:24 EST — I recommended a rotation without pricing what it breaks
+
+Last iteration ended on *"the most-reviewed thing in a document is not the most-checked thing."* So I
+read items 2, 3 and 4 the way I finally read item 1: **as instructions to someone who has not been
+here all night.**
+
+#### Item 4 was the one that mattered
+
+It said: *"rotate the Telnyx SIP connection rather than rewrite history… after any rehearsal call,
+before the email."* Correct reasoning, correct timing constraint, **and silent about the
+consequence.**
+
+Checked the live assistant:
+
+```
+transfer target name : "Solstice front desk"
+target kind          : SIP URI — sip:…@sip.telnyx.com
+=> rotating the SIP connection INVALIDATES this target
+```
+
+**Rotate and the warm transfer is dead.** *"Ask for a manager"* on a call then announces a handoff
+that cannot connect. It **degrades honestly** — PR #90's instructions demand the escalation first
+and forbid describing a handoff that did not happen — but the transfer itself stops working, and
+that is G16's path and part of beat 3.
+
+**The phone number is unaffected**: that is the DID, not the connection.
+
+#### And the timing I gave was the wrong way round
+
+*"Before the email"* optimises for a **username that authenticates nothing on its own**, at the cost
+of a working transfer in **every follow-up conversation** — and the brief says there are two.
+
+**Rotating after the follow-up conversations is the better trade.** Unless Enrique specifically
+wants it done before the repository link is public, which is a defensible preference rather than a
+requirement. **His call — but he should have had the price two hours ago, and I gave him a
+recommendation without one.**
+
+Item 4 now carries the three steps rotation actually requires — **portal → `.env` → re-provision,
+then confirm the live target changed** — and states the trade rather than a timing rule.
+
+#### The general form, which is the fourth version of the same lesson tonight
+
+I have now found, in my own four-item list: **a missing safety reason**, **two of three disclosure
+sites**, **a pointer to a section that does not exist**, and now **a recommendation whose cost I
+never computed.**
+
+> **Every one was invisible while I read the item as a summary of what I knew.** They became obvious
+> the moment I read it as a procedure someone else would execute. **Those are different acts, and
+> only the second one is proofreading.**
+
+#### Items 2 and 3 hold
+
+**Item 2** names the target ($20+), the current balance, the gate it clears and what one call buys.
+**Item 3** now carries the cascade query, which is the thing that makes it safe at the moment it is
+run rather than at the moment it was checked.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — safety reason, recovery, three sites, §6 assumption 13 | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — **now with what rotation breaks and the three steps it needs** | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. Lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 152, 00:16 EST — my banner sent a reader to a section that does not exist
 
