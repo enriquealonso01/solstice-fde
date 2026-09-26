@@ -1,14 +1,19 @@
 # Master plan: the whole picture
 
-> ## 18:04 — **ENRIQUE: the SQL paste is still #1.** Two agent items left, both tiny.
+> ## 22:00 — **ENRIQUE: the SQL paste is still #1.** Five document fixes are open, all one sentence.
 >
-> **The approval gate reads a column the browser can write.** `agent/sol.md` §13 — a numbered
-> assumption in a named deliverable — says a flagged proposal *"cannot be sent until someone
-> approves it and the override is written to the audit log"*, and that we enforce *"an approval
-> happened and **is attributable**"*. **All three clauses are false while `prop_write` exists:** a
-> rep PATCHes `status` to `approved` with the public anon key, `approveProposal` never runs so
-> there is no audit row, and `approved_by` stays **null** — the gate then credits *"an authorised
-> approver"* who does not exist.
+> **This banner is rewritten, not appended.** It said *18:04* and *"two agent items left"* until
+> iteration 123; there were five. Everything it used to carry about **closed** work is in the
+> verification log below, dated and untouched. **What follows is only what is open.**
+>
+> ### 1. The approval gate reads a column the browser can write
+>
+> `agent/sol.md` §13 — a numbered assumption in a named deliverable — says a flagged proposal
+> *"cannot be sent until someone approves it and the override is written to the audit log"*, and
+> that we enforce *"an approval happened and **is attributable**"*. **All three clauses are false
+> while `prop_write` exists:** a rep PATCHes `status` to `approved` with the public anon key,
+> `approveProposal` never runs so there is no audit row, and `approved_by` stays **null** — the
+> gate then credits *"an authorised approver"* who does not exist.
 >
 > **Supabase SQL editor, project `bcrivjgqrxahgxyiqlpr`:**
 >
@@ -18,59 +23,42 @@
 > drop policy if exists fup_write  on follow_ups;
 > ```
 >
-> Safe — nothing in the client writes these tables. **Apply it and change nothing, or apply nothing
-> and weaken §13**, which is the package's best answer on authority.
+> Safe — nothing in the client writes these tables; `useAdminData.ts` only ever `.select()`s.
+> **Apply it and change nothing else, or apply nothing and weaken §13**, which is the package's
+> best answer on authority. **If you apply it before submitting, delete the disclosure paragraph in
+> `README.md` and the row in `SUBMISSION.md`** — instructions at `HUMAN_INTERVENTION.md:753`.
 >
-> **Then:** **Telnyx — top up to at least $20** (the balance is **$3.03**, and `SUBMISSION.md`'s
-> pre-send checklist says *"above $20, or do not invite them to call the number"*). One call then
-> settles **three** things: **beat 3**, the live intent check, and **G16 on voice** — the last
-> unverified guardrail. *(T36 closed in PR #90: the voice handoff now requires an escalation before
-> it announces, verified live.)* · **T21** delete
-> `INQ-2012`/`INQ-2013`, keep `INQ-2011` — *"DELETE-ME"* is **row one** of the sales inbox.
+> ### 2–4, then the five fixes
 >
-> **T33 — disclosure only, no code change.** Sol tells the guest a manager has it **today**, in
-> three places, one of them **G16's own definition of success** (`sol.md:283`). That phrasing is
-> **Policy 15's same-day routing**, correctly reported. What is missing is the **notification
-> layer** — `notify` is inert, `_delivery` carries proposals only, no screen lists escalations —
-> and the diagram already marks that **FUTURE**. Add a `voice:exclude` paragraph saying what
-> "today" rests on, plus one runbook line for the panel question. **Change no guest wording.**
+> **Telnyx — top up to at least $20.** The balance is **$3.03**, and `SUBMISSION.md`'s own pre-send
+> checklist says *"above $20, or do not invite them to call the number."* One call then settles
+> **beat 3**, the live intent check, and **G16 on voice**, the last unverified guardrail. It also
+> removes T40's failure mode rather than documenting a way round it.
 >
-> **T34 REDACTION CLOSED** (PR #81) — gone from HEAD, and the fix is a **rule in the export
-> script** that refuses to write a file with a live SIP local part, so the next export cannot undo
-> it. *What follows is the history question, which remains Enrique's.* The credential was at
-> **HEAD in two tracked files** — the export *and*
-> `netlify/functions/telnyx/_lib/legs.test.ts` — and in history at **`10b63e8` and `c09f04d`**,
-> while `SUBMISSION.md:13` says *"Nothing secret is in it."* Low severity, not zero: a credential
-> *username*, not a password. **Redaction is in progress and in the right place** (the exporter, so
-> it stays fixed). **Enrique: rotate the SIP connection rather than rewrite history** — rotation
-> makes the published value inert without invalidating commit ids the deliverables cite. Do it
-> **after any rehearsal call, before the email.**
+> **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`**. *"DELETE-ME"* is **row one** of
+> the sales inbox. Verified safe three ways; SQL and both ids in `HUMAN_INTERVENTION.md`.
 >
-> **Agents:** **T34** · **T33** the disclosure paragraph, **T32** folds into it · re-export **done**
-> in the tree, uncommitted. **T31 CLOSED** (#75, #77) — and my instruction to keep the file counts
-> was falsified inside the hour. See iteration 82.
+> **T34** — **rotate the Telnyx SIP connection rather than rewrite history.** A credential
+> *username* is in history at `10b63e8` and `c09f04d`; rewriting invalidates commit ids the
+> deliverables cite, to remove something that authenticates nothing alone. **After any rehearsal
+> call, before the email.**
 >
-> **T30 CLOSED** (PR #73) — the transcript now says the double escalation was a bug, and states
-> exactly what was and was not re-measured.
+> **Then the five document fixes below** — T38, T39, T40, T41, T42. Two files plus the README and
+> one transcript, all paste-ready, no task or lock required.
 >
-> **Editing `agent/sol.md`? The voice prompt has 681 characters of margin** (29,315 of 30,000).
-> Wrap human-facing additions in `voice:exclude`: a 276-char clause costs **+1**, not +276.
+> ### Two constraints anyone editing should know
 >
-> **T19 CLOSED** (PR #66) and **live on both runtimes** — voice re-provisioned, verified 29,315
-> byte-identical, "reaches Sales" gone. The escalation reaches the concierge supervisor's queue and a human
-> routes it on — verified three ways, all negative: `esc_read` admits concierge and admin only,
-> Sales is in no `ESCALATION_MATRIX` notify list, and `notify` sends nothing. One thread stays
-> **Assumption 16 is RESOLVED** (PR #74, live). I twice advised leaving `chat.ts:146` alone; it was
-> telling guests *"our Sales team … will reach out today with a quote"* in **4 production runs of
-> 4**. The channel note is appended **last** and outranked the `sol.md` correction. See iteration 81.
+> **The voice prompt has 681 characters of margin** (29,319 of 30,000). Wrap human-facing additions
+> to `agent/sol.md` in `voice:exclude`: a 276-character clause costs **+1**, not +276 — and **any**
+> edit outside such a block needs a `--refresh`.
 >
-> **T20 CLOSED** (PR #64). The warm-up is two `curl`s and **creates no session** — verified, 121
-> before and after. `/api/chat` returning **405** is the point, not a failure; making it a POST
-> would re-create the session problem.
+> **`data:check` plus a current deploy is a complete proof for the concierge path.** Guests,
+> reservations, properties and policies are compiled into the bundle from `data/`; only inquiries
+> live in Supabase, and those were compared field by field in iteration 114.
 
 ---
 
-# ▶ OPEN WORK — four items are Enrique's, and three one-sentence fixes are the agents'
+# ▶ OPEN WORK — four items are Enrique's, and five one-sentence fixes are the agents'
 
 *Everything below this section is closed, or evidence.*
 
@@ -1354,6 +1342,140 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 124, 22:06 EST — verified my own new banner's claims, and separated two coverage numbers that look like a regression
+
+#### The front door's claims hold
+
+I put two factual claims into the rewritten banner last iteration. Both checked:
+
+```
+npm run data:check   OK — 9 generated files match their sources
+deploy               ready 01:59:36Z — current with HEAD
+```
+
+So *"`data:check` plus a current deploy is a complete proof for the concierge path"* is true as
+written, right now. **Claims I add to the front door get verified in the iteration after I add
+them** — that is the one rule that would have prevented the 18:04 banner rotting for four hours.
+
+#### Two guardrail numbers are in circulation and they are not comparable
+
+The Tester's PR #123 reports **"14 of 19 re-verified against the current build."** The README and
+`SUBMISSION.md` say **18 of 19**. **Neither is wrong and one could easily be read as a regression.**
+
+| Number | What it means |
+|---|---|
+| **18 of 19** | cumulative, across the whole build — every guardrail with production evidence in `tested.log.md`, G16's voice half the only exception |
+| **14 of 19** | **re-verified since the five prompt changes** — #74, #83, #90, #100, #112, after which `chat.ts` reads a different `agent/sol.md` at request time |
+
+The second is the more demanding claim and it is **in progress, not a result**. Recording the
+distinction here because the deliverables carry the first and the log carries the second, and
+someone comparing them without this paragraph would conclude four guardrails had broken.
+
+#### The guardrail table's promise, checked as a property
+
+§5 says *"a non-engineer should be able to read this table, open the named file, and check that the
+rule says what we claim it says."* I read all nineteen test cells:
+
+**Seventeen are plain prompts a reviewer can type** — *"How much is parking at the Denver hotel?"*,
+*"I'm Michael Smith"*, *"Someone is threatening me in the lobby"*. **G17** needs a staff login,
+which the email supplies. **G16** needs a phone call, gated on the $20 top-up.
+
+**The one remaining outlier is G19** — *"Kill the stream mid-answer and let the client retry"*. That
+is a developer action, not something the table's stated reader can perform.
+
+**I am not filing it.** PR #123 fixed exactly this class for **G8**, whose test used to say *"set
+`AVAILABILITY_MODE=sold_out`"* — an env change on a shared system hours before a demo, which the
+Tester refused to make and rewrote instead, finding a date that **already** has zero suites
+(`R55004`, `rooms_available 0 of 20` for Suite). They are mid-sweep on this exact thread and will
+reach G19 without me duplicating it. **Recorded so it is not lost, the same call as the staged G16
+row in iteration 98, which was picked up within two iterations.**
+
+**And G19 is the mild case:** it describes a harder action honestly, where G8 invited the reader to
+change production.
+
+#### The five fixes remain open
+
+```
+T38 True · T39 True · T40 True · T41 True · T42 True
+```
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T38, T39, T40, T41, T42** | anyone, paste-ready |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
+### Iteration 123, 22:02 EST — the front door of my own file was four hours stale and understated the work by three
+
+#### What the first thing anyone reads was saying
+
+`plans/06-master-plan.md` opened with a banner headed **18:04** — *"Two agent items left, both
+tiny."* It was **22:00** and there were **five**.
+
+Below that headline sat **seventy lines of accreted history**: T19, T20, T30, T31, T33, the T34
+redaction, assumption 16, the voice margin — **nearly all of it closed work**, and it directly
+contradicted the accurate `▶ OPEN WORK` section twelve lines further down.
+
+**This is iteration 108's finding recurring in the worst possible place.** I wrote then that *"the
+dated log stays true and the summary does not, and the summary is what everyone reads."* I then
+left the summary alone for fifteen iterations while appending to it.
+
+#### Rewritten rather than appended, which is the point
+
+The banner is now **only what is open**, in the order it should be done:
+
+1. **The SQL paste**, with the three `drop policy` lines, why §13 depends on them, and the
+   instruction to delete the disclosure from `README.md` and `SUBMISSION.md` if it is applied first.
+2. **Telnyx to $20+** — with the balance, the project's own gate, and the note that it removes
+   T40's failure mode rather than documenting a way round it.
+3. **T21**, two rows, verified safe three ways.
+4. **T34**, rotate rather than rewrite, with the timing constraint.
+5. **The five document fixes**, pointing down at the paste-ready block.
+
+Plus the two constraints anyone editing needs and would otherwise have to find: **the 681-character
+voice margin** with the `voice:exclude` rule, and **`data:check` + a current deploy being a complete
+proof for the concierge path**, with the note that only inquiries live in Supabase.
+
+Everything removed was **closed work already recorded in the verification log, dated and untouched**
+— which is exactly why that log has stayed accurate while the banner rotted.
+
+The `▶ OPEN WORK` heading said *"three one-sentence fixes"*. It is **five**. Also corrected.
+
+#### Why now rather than at 10:00
+
+With thirteen hours left, the plan's first screen is the handoff. Whoever opens it next — Enrique
+before the demo, or an agent between now and then — should get the complete set of open items
+without scrolling past four hours of things that are done. **A summary that was true at 18:04 is
+worse than no summary at 22:00**, because it reads as current.
+
+#### The five are all still open, checked the way that cannot lie
+
+```
+T38 open: True   T39 open: True   T40 open: True   T41 open: True   T42 open: True
+```
+
+Whitespace-normalised, after yesterday's line-break false positive.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T38, T39, T40, T41, T42** | anyone, paste-ready |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 122, 21:58 EST — the status check I have run every iteration reported a fix that had not happened
 

@@ -9,6 +9,17 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It92: T38, T39 and T40 — the three the Planner put ahead of any further guard work.** All
+  three are single sentences in documents Enrique reads *while presenting*, and all three are current
+  defects rather than future regressions. Their argument is right: a guard protects against the next
+  rot, these are live.
+- **Verified each independently before touching a word.** T38: `max_discount_auto_approve_pct: 15`
+  occurs **four** times and the second is **line 54, SOL-AUS (Austin)** — following the instruction
+  edits the wrong hotel and the Phoenix verdict does not move, which is the exact confusion the
+  warning was written to prevent. T39: `show-verdict.ts` prints **one** price, `$7806.15`, not three
+  costed options. T40: `useTelnyxVoice.ts` connects via `VITE_TELNYX_ASSISTANT_ID` — same assistant,
+  same account, **same balance** — so the mic cannot be the fallback for an exhausted balance.
+
 - **CLAIMED It91: G8 verified without touching production, and its stated test cannot be run by its
   reader.** Last iteration I skipped G8 because its test says *"Set `AVAILABILITY_MODE=sold_out`"* and
   I will not change env on a shared system hours before a demo.
