@@ -2,7 +2,8 @@
 
 > ## 00:55 — **ENRIQUE: the SQL paste is #1, and the list is now yours alone plus one clause.**
 > *All agent work is closed — T38–T43 and T45, each re-verified against the live files at 00:55, not
-> from the log. **T44** is the only thing left for an agent: one clause in `SUBMISSION.md`.*
+> from the log. **Two small things are left for an agent: T44**, one clause in `SUBMISSION.md`, and
+> **T46**, one line in `.env.example` that currently ships the configuration we rejected.*
 > **Four items are yours.** *Seven likely panel questions are answered in `▶ IF THEY ASK` below.*
 >
 > **This banner is rewritten, not appended.** It said *18:04* and *"two agent items left"* until
@@ -56,7 +57,7 @@
 > at 00:55. It read `:753` here until now, and `:753` is a blank line. *(This banner also named only
 > the first two of the three until iteration 146.)*
 >
-> ### 2–4, and then the one clause that is left
+> ### 2–4, and then the two one-line items that are left
 >
 > **Telnyx — top up to at least $20** → **portal.telnyx.com, Billing; about $30** (their number,
 > from `HUMAN_INTERVENTION.md`, and the *where* my version was missing). The balance is **under $4
@@ -111,7 +112,7 @@
 > **All five of the document fixes this banner used to list here — T38, T39, T40, T41, T42 — are
 > done**, along with T43 and T45. Checked at 00:55 against the live files with a whitespace-normalised
 > match rather than `grep`, because each of those phrases can wrap a line. **What is left for an agent
-> is one clause: T44**, immediately below.
+> is T44 and T46**, both immediately below, one line each.
 >
 > ### Two constraints anyone editing should know
 >
@@ -173,6 +174,65 @@ sessions"*, not two exact counts) · **T45** (`HUMAN_INTERVENTION.md:63`).
 
 Each checked with the whitespace-normalised match this file recommends, not `grep`, because every one
 of these phrases can wrap a line.
+### T46. `.env.example` ships the one configuration the project deliberately rejected — one line
+
+*Second agent item, after T44. It is in the file the README tells a reviewer to copy, and the thing
+it changes is a **guardrail**, not a performance knob — which is the part the comment gets wrong.*
+
+**The chain, each link verified at 01:05:**
+
+1. **`README.md`, "Running it locally", step 2:** `cp .env.example .env  # then fill it in`.
+2. **`.env.example:43`** ships `SOL_THINKING=` — **blank** — under the comment
+   *"# Latency dial: 'disabled' turns off extended thinking on the chat brain."*
+3. **`netlify/functions/chat.ts:67`:** `process.env.SOL_THINKING === 'disabled' ? { type: 'disabled' }
+   : { type: 'adaptive' }`. **Blank is not neutral — blank is `adaptive`.**
+4. **`docs/latency-target.md:125`**, under the heading *"What we traded, deliberately"*:
+   *"`SOL_THINKING=disabled` is set in production. It is **slower on first token and the only
+   configuration that produced zero behavioural violations** across the four adversarial scenarios."*
+   And the next sentence: *"With adaptive thinking on, Sol created a real escalation and then failed
+   to tell the guest it had done so."*
+
+**So a reviewer who follows our own setup instructions runs the build we rejected** — and the failure
+they could hit is *an escalation created and not disclosed*, which is **the exact guardrail
+`transcripts/honest-handoff.md` is offered as proof of**. It is the first transcript we tell them to
+read.
+
+**The comment is the more misleading half.** *"Latency dial"* is what `SOL_THINKING` looked like when
+the flag was added, and `docs/latency-target.md` explicitly overturns it: the reason it is `disabled`
+in production is behaviour, and the cost is latency. A reviewer reading only `.env.example` would
+reasonably leave it blank to go faster, and would be trading away a guardrail to do it.
+
+**Do this — two lines in `.env.example`:**
+
+> ```
+> # Extended thinking on the chat brain. Ship 'disabled': it is slower to first token and the only
+> # setting that produced zero behavioural violations in the four adversarial scenarios -- with
+> # adaptive on, Sol created an escalation and did not tell the guest. See docs/latency-target.md.
+> SOL_THINKING=disabled
+> ```
+
+**Check when done:** `.env.example` sets it to `disabled`; the comment says the choice is about
+behaviour and names `docs/latency-target.md`; `agent/sol.md:458`'s row still agrees (it already says
+disabling *"improves tool selection"*, which is the same claim in weaker words).
+
+**One thing I could NOT verify, and it is the more important half.** `docs/latency-target.md` *claims*
+`SOL_THINKING=disabled` is set on the Netlify deploy. **I could not confirm it.** `/api/flags` is
+401 anonymous, `tool_invocations` — where `chat.ts:497` records `thinking` on every turn — returns
+**zero rows to the anon key** because RLS blocks it, and reading the deploy's environment needs the
+Netlify CLI, which is a lock-and-deploy matter and not mine.
+
+**Two checks settle it, and both belong to whoever holds the lock:**
+- `npx netlify env:get SOL_THINKING` — one command, definitive. *(Note T44: the first `npx netlify`
+  run installs the CLI.)*
+- Or read one `turn_metrics` row with the service-role key: `tool=eq.turn_metrics`,
+  `select=args_masked`, newest first. `args_masked.thinking` is literally `'disabled'` or `'adaptive'`.
+  **I drove three live turns at 00:45, so the rows exist.**
+
+**If production turns out to be `adaptive`, this stops being a one-line documentation fix** and
+becomes a contradiction between a deliverable and the running system, in the paragraph where the
+package explains a deliberate trade — which would be worse than the trade itself. **Check before you
+edit.**
+
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
 *Each of these is a place where the system is **correct** and a reviewer will reasonably want to
@@ -274,7 +334,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 ---
 
-# ▶ OPEN WORK — all four items are Enrique's. One clause, T44, is the only agent work left.
+# ▶ OPEN WORK — all four items are Enrique's. Two one-line agent items: T44 and T46.
 
 *Everything below this section is closed, or evidence.*
 
@@ -290,7 +350,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > edits this next: **when you close a task, delete its entry from this screen in the same edit.** The
 > record lives in the verification log; it does not need a second home above the work.
 >
-> **What remains for an agent is one clause, T44.** What remains for Enrique is the four items in the
+> **What remains for an agent is T44 and T46, one line each.** What remains for Enrique is the four items in the
 > table below, and every one of them now also appears in `HUMAN_INTERVENTION.md` — items 1 and 4
 > reached it at 00:05 in the update block at **line 63**, which closed the routing gap iteration 156
 > filed T45 for.
@@ -1495,6 +1555,120 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 158, 01:10 EST — the agent-config chain is verified all the way to the live assistant, and `.env.example` ships the setting we rejected
+
+#### The strongest thing in the package, and now it is actually proved
+
+The brief asks for an **agent config** and a **native platform export**. The claim across the
+deliverables is that there is one source of truth compiled into two runtimes. **Nobody had rechecked
+it since the Tester's iteration 36, ten hours and several re-provisions ago.** Checked at 00:58:
+
+```
+agent/sol.md  --compileInstructions-->  29,655 chars
+exports/telnyx-assistant.json           29,655 chars   identical: true
+GET /v2/ai/assistants/assistant-fee8...  HTTP 200
+  live instructions   29,655 chars      INSTRUCTIONS MATCH: true
+  live tools          25  / export 25   TOOL NAMES MATCH:   true
+  live greeting                         GREETING MATCH:     true
+  live model  anthropic/claude-haiku-4-5  == export model
+```
+
+**Three artifacts, byte-identical, one of them fetched live from Telnyx.** The 25 tools include the
+native `transfer` and `hangup` that only exist on the voice runtime, which is the point the
+architecture makes. **This is the claim to make in the room**, and it is now measured rather than
+asserted.
+
+#### The export is clean, and the thing it redacts is the thing T34 is about
+
+`SUBMISSION.md:15` promises the export has its shared secret redacted. Checked every `.env` value of
+8+ characters against the committed file:
+
+| | |
+|---|---|
+| `TELNYX_SIP_USERNAME` · `TELNYX_SIP_PASSWORD` · `TOOL_WEBHOOK_SECRET` | **absent** |
+| `ANTHROPIC_API_KEY` · `TELNYX_API_KEY` · `SUPABASE_SERVICE_ROLE_KEY` · `SUPABASE_ANON_KEY` · `DEMO_PHONE` | **absent** |
+| markers present | `REDACTED_INJECTED_FROM_TOOL_WEBHOOK_SECRET`, `REDACTED_TRANSFER_TARGET` |
+| `llm_api_key_ref` | `null` |
+
+**And it confirmed T34's cost directly rather than by inference.** The live transfer target is
+`sip:<TELNYX_SIP_USERNAME>@sip.telnyx.com` — **the exposed username *is* the front-desk transfer
+target**, verified by comparing the live tool against `.env` without printing either. So *"rotating
+kills the transfer target"* is now a measurement. **Option 1 — accept, rotate after the demo — is
+the right call and the record was right.**
+
+*My first sweep reported "5 LEAKS". All five were false: the assistant id, the public site URL, the
+model name, the voice name and `SOL_THINKING=disabled` — non-secret configuration that belongs in an
+export of a configuration. **A leak test whose definition of a secret is "any env value" finds the
+env file, not a leak.** Same shape as the compiler approximation last iteration.*
+
+#### T46: `.env.example` ships `SOL_THINKING=` blank, and blank is not neutral
+
+`README.md`'s setup step 2 is `cp .env.example .env`. **`.env.example:43` leaves `SOL_THINKING`
+blank**, and `chat.ts:67` reads blank as **`adaptive`**:
+
+```ts
+process.env.SOL_THINKING === 'disabled' ? { type: 'disabled' } : { type: 'adaptive' }
+```
+
+`docs/latency-target.md:125`, under *"What we traded, deliberately"*, says `disabled` **is set in
+production** and was chosen because it is *"the only configuration that produced zero behavioural
+violations"* — *"With adaptive thinking on, Sol created a real escalation and then failed to tell the
+guest it had done so."*
+
+> **So a reviewer following our own instructions runs the build we rejected, and the failure they
+> could hit is an escalation created and not disclosed — which is the exact guardrail
+> `transcripts/honest-handoff.md` is offered as proof of, and the first transcript we tell them to
+> read.**
+
+**The comment is the worse half:** *"# Latency dial"*. The latency doc explicitly overturns that
+framing — the reason it is `disabled` is behaviour and the price is latency. A reviewer reading only
+`.env.example` would reasonably blank it to go faster, and would be trading a guardrail for speed
+without being told.
+
+**Filed as T46, two lines**, with the replacement text and the check.
+
+#### And the half of T46 I could not verify, stated as such
+
+`docs/latency-target.md` **claims** production has `SOL_THINKING=disabled`. **I could not confirm it.**
+`/api/flags` is 401 anonymous; `tool_invocations` — where `chat.ts:497` writes `thinking` on every
+turn — returns **zero rows to the anon key** because RLS blocks it; and reading the deploy's
+environment needs the Netlify CLI, which is lock-and-deploy work and not mine.
+
+**Two checks settle it and both belong to whoever holds the lock:** `npx netlify env:get SOL_THINKING`
+(see T44 — the first run installs the CLI), or one `turn_metrics` row read with the service-role key,
+where `args_masked.thinking` is literally `'disabled'` or `'adaptive'`. **I drove three live turns at
+00:45, so the rows exist.** If production is `adaptive`, T46 stops being a documentation fix and
+becomes a deliverable contradicting the running system in the paragraph where we explain a deliberate
+trade. **T46 says: check before you edit.**
+
+#### Deliverable sweep — everything the brief names exists, and every cited path resolves
+
+`docs/architecture.svg` 66KB · `architecture.drawio` 123KB · `README-diagram.md` · 
+`integration-recommendation.md` · `latency-target.md` · `exports/telnyx-assistant.json` 79KB ·
+`agent/sol.md` 40KB · **six transcripts plus their README** (five chat, one real phone call). Every
+`.md`/`.json`/`.svg`/`.ts`/`.sql` path cited in `SUBMISSION.md` resolves. *(`honest-handoff.md` flagged
+by my sweep is a false positive — it is cited relative to `transcripts/` and linked correctly there.)*
+
+**One judgment call, stated rather than filed.** `transcripts/refund-outside-window.md` is still named
+for the framing T42 corrected in its H1. `transcripts/README.md:13` describes it accurately — *"Honest
+refusal with no false promise"* — so **nothing a reader clicks carries the wrong framing; only the
+filename does.** Renaming it means touching three referencing documents nine hours before submission.
+**Leave it.** T42 was right to say *"change the H1 only."*
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** | Enrique |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique |
+| 3 | **T21** — two rows, cascade count first | Enrique |
+| 4 | **T34** — accept; and now measured: the exposed username **is** the live transfer target | Enrique |
+| T44 | One clause: the first `npx netlify` run installs the CLI | **CLAIMED, It118** |
+| T46 | One line: `.env.example` ships the rejected setting. **Verify production first** | any agent |
+
+Tester silent **4h44m** (last write 2026-09-25 20:26:34 EDT). Inbox empty. No lock held.
+**The plan is accurate and correctly ordered.**
 
 ### Iteration 157, 00:50 EST — CORRECTION: T45 was already done 31 minutes before I filed it
 

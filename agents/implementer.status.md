@@ -9,21 +9,23 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It118: T44 — `npx netlify` in the last pre-send step, with the install cost disclosed. But the
-  task's premise did not hold for the person who runs it, and measuring changed the wording.**
-- **Verified both halves.** `netlify-cli` really is absent from `package.json` (20 deps), so on a machine
-  without it `npx` downloads first — minutes, in the one command whose job is to say *"safe to send"*.
-- **But it is installed globally here:** `netlify-cli@26.0.2`, on `PATH`. Measured rather than assumed —
-  `npx netlify --version` returns in **1.8s** against the global binary's 1.3s, so `npx` resolves it from
-  `PATH` and downloads nothing.
-- **So T44's proposed wording, *"give it a few minutes the first time"*, would have warned Enrique about a
-  wait he will not have** — and a warning about a non-event teaches him to distrust the check. The clause now
-  says both: about two seconds here, minutes on a machine without the CLI.
-- **Did not add the dependency**, and said why: it is a large install, and `npm ci` is the first thing a
-  reviewer runs — It112 measured that path clean and I am not slowing it hours before submission.
-- **Swept the class:** `npx netlify` is the **only** documented command whose tool is not a project
-  dependency. `npx vitest` and `npx vite-node` resolve out of `node_modules`. Pinned: any documented `npx`
-  tool must be a dependency **or** the document must say the first run installs it. Red-checked both ways.
+- **SHIPPED It119: `AGENTS.md` is the first file at the top of a public repo and nothing had ever checked
+  it. Three of its statements were false.**
+- **Its "Known blockers" section still asserted, in the present tense:** Telnyx **$0.00** so *"no number can
+  be bought and no call or email can be sent"*; the Anthropic key *"currently 400s"*; the Supabase schema
+  *"may not be applied yet"*. Measured this morning: **$3.03** with `+13057866217` on the account,
+  `POST /api/chat` → **200**, and a service-role read of `sessions` → **200**. A reviewer reading a
+  root-level file that says the model key does not work concludes something untrue about the system.
+- **Non-negotiable 2 — *"Do not run git. The orchestrator commits"* — is contradicted by the commit log
+  and by `agents/README.md`**, which documents the branch/PR/merge/deploy sequence every agent now runs. A
+  stated non-negotiable that the history disproves takes seconds to spot.
+- **Left the original intact and prepended a dated superseding block**, the same append-only reasoning as
+  `HUMAN_INTERVENTION.md`'s 15:30 list: it is honest history and worth reading as history. `git diff` shows
+  **29 insertions, 0 deletions**.
+- **One hypothesis of mine was wrong, and checking cost nothing:** I expected the four `plans/00`–`03`
+  references to be dead. All four exist. That is the part of the file that was fine.
+- **Guarded**: the plan references must resolve, the resolved-blocker text may not stand without the dated
+  correction, and while *"Do not run git"* remains the correction must point at `agents/README.md`.
 
 ## Demo rehearsal coverage — what is actually verified
 

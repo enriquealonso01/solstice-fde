@@ -142,3 +142,62 @@ describe('paths named in the deliverables', () => {
     ).toEqual([])
   })
 })
+
+/**
+ * `AGENTS.md` sits at the top of a public repository and had never been checked by anything.
+ *
+ * It is the working agreement the build started under, and at iteration 119 three of its statements were no
+ * longer true: the "Known blockers" section still asserted a **$0.00** Telnyx balance, an Anthropic key that
+ * **400s**, and a Supabase schema that **may not be applied** — measured that morning as $3.03 with a number
+ * on the account, `/api/chat` returning 200, and a service-role read of `sessions` returning 200. And
+ * non-negotiable 2, *"Do not run git. The orchestrator commits"*, is contradicted by a git history of
+ * agent-opened PRs and by `agents/README.md`, which documents the ship sequence each agent now runs.
+ *
+ * A reviewer reading a root-level file that says the Anthropic key does not work concludes something about
+ * the system that is not true, and a stated non-negotiable contradicted by the commit log is the kind of
+ * internal inconsistency that takes seconds to spot.
+ *
+ * The original text was left intact — it is honest history, and the same append-only reasoning applies as to
+ * `HUMAN_INTERVENTION.md`'s 15:30 list. What this pins is that the correction stays attached to it, and that
+ * the four plan files its first line sends a reader to keep existing. Those four were checked and all four
+ * are there, which is the part of the file that was fine.
+ */
+describe('AGENTS.md, the root working agreement', () => {
+  const FILE = 'AGENTS.md'
+
+  it('still names plan files that exist, since its first line sends a reader to them', () => {
+    const text = readFileSync(join(repoRoot, FILE), 'utf8')
+    const referenced = [...text.matchAll(/`(plans\/[A-Za-z0-9_.-]+\.md)`/g)].map((m) => m[1])
+    expect(referenced.length, 'AGENTS.md no longer references any plan file; update or remove this case').toBeGreaterThanOrEqual(4)
+    const missing = referenced.filter((p) => !existsSync(join(repoRoot, p)))
+    expect(missing, `${FILE} sends a reader to plans that are not there: ${missing.join(', ')}`).toEqual([])
+  })
+
+  it('does not assert its resolved blockers without the correction attached', () => {
+    const flat = readFileSync(join(repoRoot, FILE), 'utf8').replace(/\s+/g, ' ')
+    const stale = [
+      'Telnyx balance is $0.00',
+      'currently 400s',
+      'schema may not be applied yet',
+    ].filter((claim) => flat.includes(claim))
+
+    if (stale.length === 0) return // the section was rewritten rather than annotated; also fine
+
+    expect(
+      flat,
+      `${FILE} still states ${stale.length} blocker(s) that are resolved — ${stale.join('; ')} — and this ` +
+        `file is at the top of a public repository. Keeping the original text is fine, but the dated ` +
+        `correction has to stay with it, or a reviewer reads a live claim that the system does not work.`,
+    ).toMatch(/Update, \d{4}-\d{2}-\d{2} — what below is superseded/)
+  })
+
+  it('points at the protocol that is actually in force', () => {
+    const flat = readFileSync(join(repoRoot, FILE), 'utf8').replace(/\s+/g, ' ')
+    if (!flat.includes('Do not run git')) return
+    expect(
+      flat,
+      `${FILE} still carries "Do not run git" as a non-negotiable. Every agent branches, commits and ` +
+        `deploys now, so the correction must point at agents/README.md, which documents that sequence.`,
+    ).toContain('agents/README.md')
+  })
+})
