@@ -22,6 +22,7 @@ const NAV: NavItem[] = [
   { to: '/admin/inquiries', label: 'Group requests', roles: ['group_sales', 'gm', 'admin'], icon: Icons.inbox },
   { to: '/admin/backend', label: 'How it works', roles: ['admin'], icon: Icons.map },
   { to: '/admin/cost', label: 'Running costs', roles: ['admin'], icon: Icons.coins },
+  { to: '/admin/settings', label: 'Settings', roles: ['admin'], icon: Icons.sliders },
 ]
 
 const ROLE_LABEL: Record<StaffRole, string> = {

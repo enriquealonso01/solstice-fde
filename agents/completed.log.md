@@ -11095,3 +11095,18 @@ audit log. Editorial tokens only (bg-card, border-line, bg-warn-soft, bg-hero), 
 colours; works at 390px (bubbles wrap under max-w-[85%]).
 
 Typecheck clean; suite green: 56 files, 691 tests passed, 0 failed.
+
+## 2026-09-26 (shipping agent) — PR: super-admin Settings page
+Enrique's ask: "set the phone number that Sol forwards the call to... set the users and their
+permissions... and also show options to stop the systems like we already have somewhere in the
+backend page."
+- supabase/migrations/008_app_settings.sql — `app_settings` (key/value/updated_by/at), RLS:
+  staff read, admin write. NOT yet run against prod — flagged for Enrique.
+- netlify/functions/settings.ts — GET/POST; forward-number with E.164 validation, user roles,
+  last-admin guard, audit_log entries.
+- netlify/functions/tools/escalation.ts + helpers.ts + chat.ts — voice transfer target now reads
+  app_settings FIRST, env vars stay as fallback; ctx carries the optional db read.
+- src/pages/admin/Settings.tsx — three plain-English sections; kill switches LINKED to the
+  existing "How it works" controls, not duplicated.
+- src/App.tsx + AdminShell.tsx + ui.tsx — /admin/settings route, nav entry, sliders icon.
+- Tests: 57 files / 695 passing (4 new in transfer-target-precedence.test.ts).

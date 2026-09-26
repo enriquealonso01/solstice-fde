@@ -224,11 +224,23 @@ export async function transferToHuman(args: ToolArgs, ctx: ToolContext): Promise
   const escalationExists = Boolean(escalationId)
 
   if (ctx.channel === 'voice') {
-    // Two variables decide this, not one. `TELNYX_TRANSFER_TARGET` is absent from the deployed
-    // environment, but `DEMO_PHONE` is set and is the `??` fallback, so `configured` is TRUE in
-    // production — the announce-the-handoff path is the live one, not the refusal below. Checked with
-    // `netlify env:list` against the deploy, because the local `.env` has neither.
-    const target = process.env.TELNYX_TRANSFER_TARGET ?? process.env.DEMO_PHONE ?? null
+    // THREE places decide this, in order. `app_settings.supervisor_forward_phone` is the
+    // super-admin-editable row (Settings page, migration 008) — it wins so a hotel can change
+    // the number without a redeploy. The env vars below it are the original configuration and
+    // remain the fallback, so an un-migrated deploy or a cleared row behaves exactly as before.
+    // `configured` also being TRUE in production via `DEMO_PHONE` was measured with
+    // `netlify env:list` against the deploy; the announce-the-handoff path is the live one.
+    let target: string | null = null
+    if (ctx.db) {
+      // PostgrestBuilder is a thenable: awaiting it resolves the same { data, error } a real
+      // client returns, and a test stub returning a Promise resolves identically.
+      const setting = (await ctx.db.from('app_settings').select('value').eq('key', 'supervisor_forward_phone')) as unknown
+      const row = setting as { data?: unknown } | undefined
+      if (row?.data && typeof (row.data as { value?: unknown }).value === 'string') {
+        target = (row.data as { value: string }).value || null
+      }
+    }
+    target ??= process.env.TELNYX_TRANSFER_TARGET ?? process.env.DEMO_PHONE ?? null
     const configured = Boolean(target) && Boolean(process.env.TELNYX_API_KEY)
     return toolOk(
       {
