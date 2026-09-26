@@ -8,6 +8,7 @@
  */
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Context } from '@netlify/functions'
+import { createEscalation } from '../../../../netlify/functions/tools/escalation'
 import { classifyIntent } from '../../../../netlify/functions/tools/routing'
 import type { ToolContext } from '../../../../netlify/functions/tools/helpers'
 
@@ -261,6 +262,19 @@ describe('a turn that must reach a human', () => {
     expect(escalations()[0]).toMatchObject({ category: 'medical' })
   })
 
+  it("chest pains the model files as 'safety' join the runtime's medical escalation to the GM", async () => {
+    model.rounds = [
+      [{ type: 'tool_use', id: 'tu-esc', name: 'create_escalation', input: { summary: "Guest: I'm having chest pains", category: 'safety' } }],
+      [{ type: 'text', text: 'Please call 911 now.' }],
+    ]
+
+    const events = await send("I'm having chest pains")
+
+    expect(escalationChips(events).map((c) => c.data.authority_required)).toEqual(['gm', 'gm'])
+    expect(escalations()).toHaveLength(1)
+    expect(escalations()[0]).toMatchObject({ category: 'medical' })
+  })
+
   it('keeps a card number out of the escalation and the tool trace', async () => {
     model.rounds = [[{ type: 'text', text: 'A manager will review the charge.' }]]
 
@@ -322,5 +336,48 @@ describe('classify_intent: what counts as urgent', () => {
     'What time is breakfast?',
   ])('%s -> nothing', async (utterance) => {
     expect(await categoryOf(utterance)).toBeNull()
+  })
+})
+
+describe('create_escalation: a medical event goes to the GM', () => {
+  const ctx = { channel: 'chat', session_id: 'sess-medical' } as ToolContext
+  const routed = async (summary: string, category: string) =>
+    (await createEscalation({ summary, category }, ctx)).data as { category: string; authority_required: string }
+
+  it("routes chest pains filed as 'safety' to the GM", async () => {
+    expect(await routed("I'm having chest pains", 'safety')).toMatchObject({ category: 'medical', authority_required: 'gm' })
+  })
+
+  it('routes a medical phrase only routing.ts knows to the GM', async () => {
+    expect(await routed('My husband collapsed in the lobby', 'safety')).toMatchObject({ category: 'medical', authority_required: 'gm' })
+  })
+
+  it('keeps a threat that also hurt someone with Regional Security', async () => {
+    expect(await routed('Guest was assaulted in the lobby and is injured', 'safety')).toMatchObject({
+      category: 'safety',
+      authority_required: 'regional_security',
+    })
+  })
+
+  it('keeps a fire with Regional Security', async () => {
+    expect(await routed('There is a fire and a guest fainted', 'safety')).toMatchObject({ authority_required: 'regional_security' })
+  })
+})
+
+describe('the tool done event', () => {
+  it('carries grounded and may_promise, and authority_required on create_escalation', async () => {
+    const message = "I'm having chest pains"
+    model.rounds = [
+      [classify(message), { type: 'tool_use', id: 'tu-res', name: 'get_reservation', input: { reservation_id: 'R55022' } }],
+      [{ type: 'text', text: 'Please call 911 now.' }],
+    ]
+
+    const events = await send(message)
+    const done = (name: string) => events.find((e) => e.event === 'tool' && e.data.status === 'done' && e.data.name === name)?.data
+
+    expect(done('create_escalation')).toMatchObject({ enforced: true, grounded: true, may_promise: false, authority_required: 'gm' })
+    expect(done('classify_intent')).toMatchObject({ grounded: true, may_promise: null })
+    expect(done('classify_intent')).not.toHaveProperty('authority_required')
+    expect(done('get_reservation')).toMatchObject({ grounded: false, may_promise: null })
   })
 })

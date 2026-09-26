@@ -261,18 +261,18 @@ const TOOL_SPECS = {
     params: { utterance: S('What the caller just said, verbatim.', true) },
   },
   identify_guest: {
-    description: 'Look up the caller in the guest directory by name, confirmation number, or the caller ID already on the call. Call this before discussing any reservation detail.',
+    description: 'Verify the caller before discussing any reservation detail: the confirmation number plus the last name on the booking, or plus the phone or email on file. One factor alone never verifies.',
     params: {
-      name: S('Full name as the caller gave it.'),
       confirmation_number: S('Reservation or confirmation number, e.g. R55001.'),
-      phone: S('Caller phone number in E.164 if the caller offers a different one than they are calling from.'),
+      last_name: S('Last name on the booking.'),
+      phone: S('The phone number on the booking as the caller states it, or the number they are calling from once the caller confirms it is the one on the booking.'),
+      email: S('The email on the booking, as the caller spells it.'),
     },
   },
   get_reservation: {
     description: 'Fetch a reservation: dates, property, room type, rate plan, status. Never state a reservation detail without calling this.',
     params: {
       reservation_id: S('Reservation id, e.g. R55001.'),
-      guest_id: S('Guest id, e.g. G10001, when the reservation id is unknown.'),
     },
   },
   get_policy: {
@@ -286,7 +286,7 @@ const TOOL_SPECS = {
     description: 'Determine whether a late checkout can be granted for a reservation, and any fee, from the policy and the guest loyalty tier.',
     params: {
       reservation_id: S('Reservation id.', true),
-      requested_time: S('Requested checkout time, e.g. "2pm".', true),
+      requested_time: S('The clock time the caller asked for, as "h:mm pm" or "HH:MM".', true),
     },
   },
   check_upgrade_eligibility: {

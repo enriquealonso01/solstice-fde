@@ -6,6 +6,8 @@
 //   session  { session_id }
 //   delta    { text }
 //   tool     { name, status: "running" | "done", summary, citations, enforced? }
+//            a done event also carries grounded, may_promise (null when the result has none) and,
+//            for create_escalation, authority_required
 //   done     { message_id, latency_ms, first_token_ms, first_event_ms }
 //   error    { message }
 //   handoff  { message }        a human took this conversation; no delta follows on this turn
@@ -47,7 +49,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import type { Context } from '@netlify/functions'
-import type { Citation } from '../../shared/types'
+import type { Citation, ToolResult } from '../../shared/types'
 import { redactText } from './_lib/mask'
 import { getDatabase } from './tools/_deps'
 import { mergeTargetFor } from './tools/escalation'
@@ -544,12 +546,7 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
         }
       }
 
-      emit('tool', {
-        name: use.name,
-        status: 'done',
-        summary: summarize(use.name, result),
-        citations: result.citations ?? [],
-      })
+      emit('tool', doneEvent(use.name, result))
 
       results.push({
         type: 'tool_result',
@@ -617,9 +614,10 @@ function systemBlocks(guestId: string | undefined, label: string | null): Anthro
     blocks.push({
       type: 'text',
       text:
-        `Identity already verified on this conversation: ${label ?? 'the guest'} (guest id ${guestId}). ` +
-        'Do not ask them to verify again. Pass this guest id to any tool that takes one, and if they ' +
-        'start asking about a different booking, verify that one before answering about it.',
+        `Identity already verified on this conversation: ${label ?? 'the guest'}. ` +
+        'Do not ask them to verify again. The verified guest is applied to every tool automatically; ' +
+        'do not pass a guest id. If they start asking about a different booking, verify that one before ' +
+        'answering about it.',
     })
   }
   return blocks
@@ -661,22 +659,31 @@ async function escalateInCode(
   await sessionReady // escalations.session_id references the sessions row
   if (await hasOpenEscalation(ctx.session_id, category)) return
 
-  const guest = maskFreeText(guestText)
+  const guest = redactText(guestText)
   const args: ToolArgs = {
     category,
     summary: `Raised by the chat runtime (${category}): "${guest.slice(0, 300)}"`,
-    transcript_excerpt: `Guest: ${guest}${reply ? `\nSol: ${maskFreeText(reply)}` : ''}`.slice(0, 1200),
+    transcript_excerpt: `Guest: ${guest}${reply ? `\nSol: ${redactText(reply)}` : ''}`.slice(0, 1200),
     attempted_resolutions: ['Raised automatically by the chat runtime from the guest message; Sol may add detail.'],
   }
   emit('tool', { name: 'create_escalation', status: 'running', summary: runningLabel('create_escalation'), citations: [] as Citation[], enforced: true })
   const result = await runTool('create_escalation', args, ctx)
   await recordToolInvocation(ctx, 'create_escalation', args, result)
-  emit('tool', { name: 'create_escalation', status: 'done', summary: summarize('create_escalation', result), citations: result.citations ?? [], enforced: true })
+  emit('tool', { ...doneEvent('create_escalation', result), enforced: true })
 }
 
-/** redactText masks emails and phones. A card number is masked first, so no part of it survives as a "phone". */
-function maskFreeText(text: string): string {
-  return redactText(text.replace(/\d(?:[ -]?\d){12,18}/g, '[card number removed]'))
+/** The `tool` done event: the chip, plus the envelope fields a reader of the stream checks it against. */
+function doneEvent(name: string, result: ToolResult): Record<string, unknown> {
+  const data = result.data as { may_promise?: boolean; authority_required?: string } | undefined
+  return {
+    name,
+    status: 'done',
+    summary: summarize(name, result),
+    citations: result.citations ?? [],
+    grounded: result.grounded,
+    may_promise: data?.may_promise ?? null,
+    ...(name === 'create_escalation' ? { authority_required: data?.authority_required ?? null } : {}),
+  }
 }
 
 function intentOf(result: { data?: unknown }): unknown {

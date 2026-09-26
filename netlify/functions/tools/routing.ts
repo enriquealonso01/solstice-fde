@@ -64,6 +64,17 @@ const URGENT: Array<{ intent: Intent; category: EscalationCategory; signals: str
 /** Ordinary phrases that contain an urgent word, removed before URGENT is matched. */
 const NOT_URGENT = ['fire pit', 'fire pits', 'fire place', 'fire exit', 'fire exits', 'fire escape', 'fire door', 'fire safety']
 
+/** `words(text)` with the NOT_URGENT phrases taken out, ready for whole-word URGENT matching. */
+function urgentWords(said: string): string {
+  return NOT_URGENT.reduce((text, phrase) => text.split(words(phrase)).join(' '), said)
+}
+
+/** The first URGENT category the text names, in priority order, or null. */
+export function urgentCategory(text: string): EscalationCategory | null {
+  const said = urgentWords(words(text))
+  return URGENT.find((u) => u.signals.some((s) => said.includes(words(s))))?.category ?? null
+}
+
 /** The escalation category an intent obliges this turn, or null for an ordinary one. */
 export function mustEscalate(intent: unknown): EscalationCategory | null {
   return URGENT.find((u) => u.intent === intent)?.category ?? null
@@ -143,7 +154,7 @@ export async function classifyIntent(args: ToolArgs, _ctx: ToolContext): Promise
   const said = words(utterance)
   // Urgent signals match whole words only. Group and concierge signals match at the start of a word,
   // so "pet" matches "pets" but not "carpet".
-  const urgentText = NOT_URGENT.reduce((text, phrase) => text.split(words(phrase)).join(' '), said)
+  const urgentText = urgentWords(said)
   const urgentSaid = (signal: string) => urgentText.includes(words(signal))
   const startsAWord = (signal: string) => said.includes(words(signal).trimEnd())
   const signals: string[] = []

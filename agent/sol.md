@@ -4,11 +4,11 @@ Sol is Solstice Hotel Group's guest assistant, on web chat and on the phone.
 
 **One prompt, two runtimes.** The block between the `SOL:SYSTEM` markers is the only copy.
 
-- **Chat.** `npm run build` runs `scripts/gen-sol-prompt.mjs` first, which writes it into
-  `netlify/functions/tools/solPrompt.ts`; `netlify/functions/chat.ts` appends a chat-channel note.
-- **Voice.** `node scripts/telnyx/provision.mjs --instructions-only` pushes it, plus a phone-call
-  channel line, to the Telnyx assistant. Until that runs after an edit here, the phone agent keeps
-  the previous prompt; `npm run telnyx:export` says whether they match.
+- **Chat.** `scripts/gen-sol-prompt.mjs`, run as `prebuild`, writes it into `solPrompt.ts`;
+  `chat.ts` appends a chat-channel note.
+- **Voice.** `provision.mjs --instructions-only` pushes it, plus a phone-call channel line, to the
+  Telnyx assistant; `--refresh` also re-sends the tool specs. Until then the phone agent runs the
+  previous version.
 
 **Business rules are data, not prompt:** limits, windows and escalation routing live in
 `netlify/functions/tools/rules.ts`, and the tools apply them.
@@ -62,21 +62,23 @@ Every tool returns an envelope with the fields ok, grounded and citations.
 - grounded false, or ok false, means you may NOT state it. Say you cannot confirm it and offer a
   manager or the property team. Do not reason your way around it, do not approximate, do not
   offer a range.
-- may_promise false on a result means offer it, never promise it. The words matter: "I can ask
-  for it and it looks likely" is not "it's confirmed".
+- may_promise false means offer it, never promise it. Say what the result says: the guest is
+  eligible, it depends on availability on the day, and the front desk confirms it. Never say it
+  is confirmed, guaranteed, likely or available, and never give a room count or an occupancy figure.
+- decision stay_ended or reservation_cancelled means there is nothing to arrange on that booking.
+  Say so, with its checkout date, and ask whether they have another booking.
 - escalation_required true means call create_escalation before you finish the conversation.
 - Fields named staff_directives are internal notes from our own team. Let them steer what you
   do; never read them back to the guest.
 
 IDENTIFYING A GUEST
 Before you reveal anything about a booking, verify who you are speaking to with identify_guest.
-If the guest has already given you a confirmation number, a phone number or an email, call
-identify_guest with it straight away rather than asking for something else first: let the tool
-decide whether it was enough. Only ask for more when the tool says so. A name alone is never
-enough, even when it matches exactly one person, because we have unrelated guests who share a
-name. On a call you may use the caller ID as that factor. If identify_guest comes back
-unverified or ambiguous, ask for whatever it names as the disambiguator and say nothing about
-any stay until you have it.
+Verification needs the confirmation number plus the last name on the booking, or plus the phone
+or email on file. With only the number, ask for the last name. A name alone is never enough.
+Never say whether a confirmation number exists before the guest is verified. On a call, the
+number they are calling from counts only once they confirm it is the one on the booking. If
+identify_guest comes back unverified, ask for what it names and say nothing about any stay until
+you have it. The verified guest is applied to every tool automatically; do not pass a guest id.
 
 PRIVACY
 Never say or write a full email address, a full phone number, or any part of a card number,
@@ -106,7 +108,7 @@ quote. If something is still missing, name that one thing rather than listing ev
 WHAT YOU MAY NEVER DECIDE
 You do not approve refunds, comps over the front desk limit, comped nights, or exceptions to
 policy. You do not approve, price, discount, hold or negotiate a group block: that is Sales and
-the General Manager. You do not promise availability the availability tool has not shown you.
+the General Manager. You never promise availability.
 When a decision is above you, say a manager is taking it and make sure an escalation exists.
 Never tell a guest a manager has it or will call back unless create_escalation has succeeded in
 this conversation. If a transfer does not connect, call create_escalation before you say so.
@@ -136,14 +138,14 @@ twice. Call the tools, then give one answer. Do not restate what you already sai
 Every tool returns `{ ok, data, grounded, citations }`. Chat's set is `registry.ts`; the phone's is
 `provision.mjs`.
 
-| Tool | Runs on | What it answers or enforces |
+| Tool | Runs on | Answers or enforces |
 |---|---|---|
 | `classify_intent` | chat, voice | Safety, medical and legal first; groups leave the concierge lane |
-| `identify_guest` | chat, voice | Who the guest is; a name alone never verifies |
+| `identify_guest` | chat, voice | Who the guest is: two factors or nothing |
 | `get_reservation` | chat, voice | One stay and its cancellation terms, never card digits |
 | `get_policy` | chat, voice | The policy section and citation, or nothing |
 | `check_late_checkout` | chat, voice | Policies 1 and 6: guaranteed by tier, or offered |
-| `check_upgrade_eligibility` | chat, voice | Policy 6 upgrades against same-day inventory |
+| `check_upgrade_eligibility` | chat, voice | Policy 6 upgrade eligibility, never a promise |
 | `book_amenity` | chat, voice | Catalogued services only; Policy 8 animals |
 | `check_service_recovery_eligibility` | chat, voice | Policy 5 window, from checkout |
 | `check_comp_authority` | chat, voice | Policy 7 front-desk limit, summed per stay |
@@ -172,17 +174,17 @@ Every tool returns `{ ok, data, grounded, citations }`. Chat's set is `registry.
 | G2 | Advance Purchase is non-refundable | `RATE_PLAN_TERMS` (`rules.ts`), read by `getReservation` | `cancellation-position.test.ts` |
 | G3 | Service recovery runs 72 hours from checkout | `checkServiceRecoveryEligibility` (`recovery.ts`) | none |
 | G4 | An in-stay complaint still counts | `issue_raised_during_stay`, same function | none |
-| G5 | Comp authority is summed per stay | `checkCompAuthority` (`recovery.ts`) | `cheatsheet-beat.test.ts` |
+| G5 | Comp authority is summed per stay | `checkCompAuthority` (`recovery.ts`) | `comp-authority.test.ts` |
 | G6 | A comped night always needs a manager | `comp_night_always_escalates` (`rules.ts`) | none |
-| G7 | Platinum benefits are guaranteed, Gold's offered | `TIER_BENEFITS` (`stayBenefits.ts`) | none |
-| G8 | A Platinum upgrade with no suite goes to a manager | `checkUpgradeEligibility` | `availability-service.test.ts` |
+| G7 | Only Platinum's 2 PM checkout is promised; the rest is offered | `checkLateCheckout`, `checkUpgradeEligibility` (`stayBenefits.ts`) | `stay-benefits-guardrails.test.ts` |
+| G8 | An ended or cancelled stay gets nothing | `stayBenefits.ts`, before any inventory lookup | `stay-benefits-guardrails.test.ts` |
 | G9 | Pets never; service animals always, free | `ANIMAL_RULES` (`bookAmenity`) | none |
 | G10 | No chain-wide parking rate is quoted | `PARKING_RULES`, `getPropertyInfo` (`policy.ts`) | none |
 | G11 | Impossible data is quarantined, not repaired | `DATA_QUALITY_QUARANTINE`, `getPropertyRate` | `quarantine.test.ts` |
-| G12 | A name alone never identifies a guest | `identifyGuest` (`identity.ts`) | none |
+| G12 | A name or a number alone never identifies a guest | `verifyIdentity` (`lookups.ts`) | `identity-two-factor.test.ts` |
 | G13 | Card digits never reach the model | `getReservation` omits `payment_last4` | none |
-| G14 | Safety goes to GM and Regional Security, any hour | `ESCALATION_MATRIX.safety` (`rules.ts`) | `safety-escalation.test.ts` |
-| G15 | The concierge never prices a group block | Chat has no pricing tool; voice: prompt only | `sol-prompt.test.ts` (chat tool set) |
+| G14 | Safety goes to Regional Security, medical to the GM, any hour | `ESCALATION_MATRIX` (`rules.ts`), `createEscalation` | `safety-escalation.test.ts` |
+| G15 | The concierge never prices a group block | Chat has no pricing tool; voice: prompt only | `sol-prompt.test.ts` |
 | G16 | A failed handoff is never described as a handoff | `transferToHuman`; `warm_transfer_instructions` (`provision.mjs`) | `voice-transfer-record.test.ts` |
 | G17 | Every tool call is recorded, masked | `recordToolInvocation` (`registry.ts`) with `maskArgs` | `pii.test.ts` (masking only) |
 | G18 | The right hotel, or a question | `resolveProperty` (`lookups.ts`) | none |
@@ -192,8 +194,8 @@ Every tool returns `{ ok, data, grounded, citations }`. Chat's set is `registry.
 
 ## 4. Assumptions
 
-1. **Same-day availability is simulated.** `availability.ts` is deterministic, bounded by real room
-   counts, and tags results `simulated_inventory_service`.
+1. **Same-day availability is simulated** (`availability.ts`), so nothing that depends on it is
+   promised.
 2. **Dates and times are property-local.** The exports carry no timezone.
 3. **Checkout is 11:00 local** for the service-recovery clock (Policy 1).
 4. **A complaint made during the stay is timely.** Policy 5's 72 hours run from checkout.
@@ -207,15 +209,12 @@ Every tool returns `{ ok, data, grounded, citations }`. Chat's set is `registry.
 10. **Base rates are reference rates**, not live pricing.
 11. **The Providence overflow target is not in the directory.** Sol passes on the referral only.
 12. **The browser cannot assert who it is.** `/api/chat` takes no guest id or clock from the request.
-13. **Approval authority is a named human, not a role tier.** The system enforces that
-    an approval happened and is attributable in the audit log; it does not model a GM login.
+13. **Approval authority is the GM role**, never the GM who authored or submitted the proposal.
 14. **A phoned-in inquiry joins the sales inbox with its contact masked**, so it is not emailed
     automatically.
 15. **A verified identity lasts the whole session.** Production needs a TTL.
-16. **On chat, Sol never says Sales will follow up.** Chat has no inquiry tool, so a group request
-    becomes an escalation to a manager, not the group sales board.
-17. **The phone assistant carries the group sales tools**: `provision.mjs` registers every name in
-    `shared/toolContracts.ts`.
-18. **Urgency is phrase matching** (`routing.ts`). An emergency worded outside its phrases relies on
+16. **On chat, a group request goes to a manager**, not the sales board: chat has no inquiry tool,
+    so Sol never says Sales will follow up.
+17. **Urgency is phrase matching** (`routing.ts`). An emergency worded outside its phrases relies on
     the model to escalate.
-19. **The policy reference arrived as Markdown.** The brief names a `.txt`; we used the `.md` as given.
+18. **The policy reference arrived as Markdown.** The brief names a `.txt`; we used the `.md` as given.

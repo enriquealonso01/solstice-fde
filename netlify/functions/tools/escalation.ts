@@ -19,6 +19,7 @@ import {
   type ToolContext,
 } from './helpers'
 import { attachableReservation, findGuestById, foreignGuestId } from './lookups'
+import { urgentCategory } from './routing'
 import { ESCALATION_MATRIX, ESCALATION_TRIGGERS, type EscalationCategory } from './rules'
 
 const CATEGORIES: EscalationCategory[] = ['refund', 'dispute', 'medical', 'legal', 'safety', 'authority_exceeded', 'other']
@@ -34,6 +35,14 @@ export function inferCategory(text: string): EscalationCategory {
   if (hits.includes('medical')) return 'medical'
   if (hits.includes('legal')) return 'legal'
   return hits[0] ?? 'other'
+}
+
+/** A medical event with no safety threat in it, which ESCALATION_MATRIX.medical routes to the GM. */
+function isMedicalOnly(text: string): boolean {
+  const inferred = inferCategory(text)
+  const urgent = urgentCategory(text)
+  if (inferred === 'safety' || urgent === 'safety') return false
+  return inferred === 'medical' || urgent === 'medical'
 }
 
 function newId(prefix: string): string {
@@ -77,8 +86,10 @@ export async function createEscalation(args: ToolArgs, ctx: ToolContext): Promis
   if (!summary) return toolFail('An escalation needs a one-line summary of what happened.')
 
   const requested = optString(args, 'category')
-  const category: EscalationCategory =
+  const named: EscalationCategory =
     requested && (CATEGORIES as string[]).includes(requested) ? (requested as EscalationCategory) : inferCategory(`${requested ?? ''} ${summary}`)
+  // A medical emergency filed as safety still goes to the GM.
+  const category: EscalationCategory = named === 'safety' && isMedicalOnly(summary) ? 'medical' : named
 
   const route = ESCALATION_MATRIX[category]
 
