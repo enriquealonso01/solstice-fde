@@ -4,39 +4,33 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 127 — 2026-09-25 ~22:20 EST
+## Iteration 129 — 2026-09-25 ~22:30 EST
 
-### T41 committed (PR #125). T42 is the last agent item.
+### The plan is accurate and correctly ordered.
 
-### A cross-document question a reviewer will ask, checked and answered
+### Verified every answer I put in `▶ IF THEY ASK` last iteration
 
-Eight first-token timings across `transcripts/`: `852 · 2593 · 2637 · 2773 · 2890 · 3134 · 3368 ·
-7450`. `docs/latency-target.md` states the spread as **870ms to 5040ms** — so the package contains
-a turn **48% above** its stated maximum.
+Iteration 124's rule: **claims I add to the front matter get verified in the iteration after I add
+them.** Five went in; all five checked against source:
 
-**Not a contradiction, and I checked before assuming.** The document scopes the claim one line
-above the table: *"**Six fresh turns** against the deployed site, each a new session."* The spread
-describes that sample and says so. **Nothing needs changing.**
+```
+1  no from('reservations'/'guests'/'properties') anywhere in the tools or data layer     ✓
+2  INQ-2004: needs_info, four missing_fields including meeting_capacity_needed           ✓
+3  policy.ts returns `sections:` (plural), nine query/topic references                   ✓
+4  the 7450ms turn has exactly three tool calls before the first token                   ✓
+5  _delivery = audit·config·index·telnyx; nothing in src/ queries escalations;
+   notify appears three times, all as stored value                                       ✓
+```
 
-**But the question is obvious**, and the 7450ms turn is in `honest-handoff.md` — the transcript
-`SUBMISSION.md` says to **start with** — and it is a **three-tool turn**: `get_reservation`,
-`transfer_to_human`, `create_escalation`.
+A reviewer following any of those answers back to the code finds what it says they will.
 
-> *"Different samples. The table is six fresh turns and says so. The 7450ms turn is the heaviest in
-> the package — three tool calls before the first word, including the escalation that makes the
-> refusal honest. We did not exclude it. It is in the transcript we tell you to read first."*
+### Nothing else is open
 
-**The strongest available answer**, because the slowest measurement anywhere sits inside the opening
-exhibit. A tidy spread with the slow turn quietly kept out of the transcripts would be worth less.
-
-### Third time an answer was the right output instead of a task
-
-`INQ-2004`'s *"around 25"*, `get_policy` returning three sections, and now this. **The system was
-correct and the question predictable each time.**
-
-> The checks now increasingly **confirm** rather than correct. What still has value is
-> **anticipating what will be asked** about things that are already right.
+Every task T1–T42 closed. Inbox empty. The last five document fixes shipped in PRs #124, #125, #126.
+**The four remaining items all require money or an irreversible change to a live system** — the
+boundary this loop has respected since the first lock was taken.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** **T42** is the last agent item — one line, the transcript H1.
+**The `drop policy` paste** — and if applied before submitting, delete the disclosure paragraph in
+`README.md` and the row in `SUBMISSION.md` (`HUMAN_INTERVENTION.md:753`).

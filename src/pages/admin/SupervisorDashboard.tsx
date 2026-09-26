@@ -17,7 +17,7 @@ import {
   SessionStatusChip,
   SourceChip,
 } from '@/components/admin/ui'
-import { useNow, useSessions } from '@/components/admin/useAdminData'
+import { SESSION_FETCH_LIMIT, sessionViewIsTruncated, useNow, useSessions } from '@/components/admin/useAdminData'
 import { duration, intentLabel, shortDate, clockTime, type SessionRow } from '@/components/admin/mockData'
 
 type ChannelFilter = 'all' | 'voice' | 'chat'
@@ -31,6 +31,7 @@ export default function SupervisorDashboard() {
     () => (channelFilter === 'all' ? rows : rows.filter((s) => s.channel === channelFilter)),
     [rows, channelFilter],
   )
+  const truncated = sessionViewIsTruncated(rows.length)
   const live = filtered.filter((s) => s.status !== 'ended')
   const archived = filtered.filter((s) => s.status === 'ended')
 
@@ -57,7 +58,15 @@ export default function SupervisorDashboard() {
       </div>
 
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Metric label="Active now" value={live.length} hint={`${voiceCount} voice · ${chatCount} chat`} />
+        <Metric
+          label="Active now"
+          value={live.length}
+          hint={
+            truncated
+              ? `${voiceCount} voice · ${chatCount} chat · newest ${SESSION_FETCH_LIMIT} only`
+              : `${voiceCount} voice · ${chatCount} chat`
+          }
+        />
         <Metric label="Human in control" value={takenOver} hint="Supervisor took the call" />
         <Metric label="Archived" value={rows.filter((s) => s.status === 'ended').length} hint="Full transcript retained" />
         {/* The hint used to print the three Postgres table names. It is the right evidence — this
@@ -113,7 +122,11 @@ export default function SupervisorDashboard() {
       <Panel className="mt-6">
         <PanelHeader title="Archive" right={<span className="text-xs font-normal text-solstice-stone">{archived.length} ended</span>} />
         {archived.length === 0 ? (
-          <EmptyState title="No ended sessions yet" />
+          // An empty Archive used to be ambiguous: it looked the same whether nothing had ended or
+          // the fetch window had simply not reached back far enough. Say which one it is.
+          <EmptyState
+            title={truncated ? 'No ended sessions in the most recent conversations' : 'No ended sessions yet'}
+          />
         ) : (
           <table className="w-full text-sm">
             <thead>

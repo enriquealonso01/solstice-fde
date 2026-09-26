@@ -9,28 +9,26 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It94: T42 — a sample transcript was titled for the wrong policy.**
-  `transcripts/refund-outside-window.md:1` said *"Refund request outside the service recovery
-  window"*. The transcript under it is a **Policy 2** cancellation charge, and Policy 5 never
-  appears in it.
-- **Verified both halves before touching the H1.** Policy 2 is *"free of charge up to 72 hours before
-  the scheduled check-in date… cancel inside that 72-hour window and the guest forfeits one night"*.
-  Policy 5 is *"72 hours **after checkout** to report it"*. The guest cancelled **36 hours past the
-  deadline — inside** Policy 2's window, which is why she was charged; she never had a stay, so
-  Policy 5's clock never started. The title named the wrong policy **and** pointed the wrong way.
-- **Found where the phrase came from.** Policy 15 lists *"refund requests outside the service
-  recovery window"* as an escalation trigger, and `agent/sol.md` §8 uses that exact summary string
-  **correctly**, for R55012 — a real refund request 312h after checkout. Right sentence, wrong
-  transcript. Left `sol.md` alone: it is right, and touching it means a re-provision.
-- **The title lived in two places.** `scripts/capture-transcripts.mjs:51` writes the H1 and the
-  "What this shows" line for all four generated transcripts. Fixing only the markdown would have
-  left the wrong title loaded in the generator — and all four agreed before this change, so nothing
-  would have complained. Both fixed in one commit.
-- **New guard `transcript-titles.test.ts`**: every generated transcript's H1 and "What this shows"
-  must match the generator, and no transcript may claim *service recovery* unless it cites Policy 5.
-  It parses the generator as text rather than importing it — that script calls production at module
-  scope, and a guard must never be the thing that makes a network request. Red-checked on the repo's
-  **original** state: it fails on exactly the defect T42 describes.
+- **SHIPPED It95: no agent task was open, so I ran `SUBMISSION.md`'s pre-send gate — and it found a
+  live defect on a demo screen.**
+- **T32 needs no work.** PR #79 already added the *"Where that queue is today"* paragraph to
+  `agent/sol.md`, wrapped in `voice:exclude` — exactly what T32 asks for. The plan never marked it.
+  Flagged for the Planner rather than edited into their file.
+- **The gate, item by item:** repo **PUBLIC** · failure injection **all three healthy**
+  (`demo_flags` read directly) · production **serving the latest commit** (last ready deploy
+  02:23:05Z, last commit 02:22:44Z) · `npx vitest run` **green** · site and `/api/chat` **200** ·
+  Telnyx **$3.03**, which **fails** its own ">= $20" item and is already Enrique's · `demo:tidy`
+  not run, correctly — it is the last step and the loop is still running.
+- **The defect: the supervisor Archive was rendering "No ended sessions yet" with 23 ended
+  conversations in the database.** `sessions` held **180** rows — 155 active, 23 ended, 2 taken
+  over — and `useSessions` fetched the **100 newest** by `started_at`. Nothing closes a chat session
+  on the web, so active rows pile up and the ended ones age out of the window: all 100 were active,
+  so "Archived" read **0**. The runbook narrates that panel and says *"it will not be empty"*.
+- **Fixed the window, not just the symptom.** `SESSION_FETCH_LIMIT = 500`, named and reasoned; the
+  grid now says *"newest 500 only"* when it really is a window, and the empty state distinguishes
+  *nothing has ended* from *nothing ended is in view*. `demo:tidy` is still the cure for a crowded
+  live tile — the Archive just no longer depends on it. Red-checked by putting 100 back: the test
+  fails with the screen that was live.
 
 ## Demo rehearsal coverage — what is actually verified
 
@@ -64,7 +62,8 @@ in `agents/completed.log.md`, not here.
 - Guards I own, each red-checked by reintroducing the defect it catches: `admin-prose`,
   `voice-prompt-size`, `doc-citations` (counts, links), `list-counts`, `export-redaction`,
   `escalation-dedupe`, `walkthrough-quotes`, `data-seam`, `browser-env`, `doc-paths`,
-  `diagram-guide`, `documented-commands`, `suite-integrity`, `transcript-titles`.
+  `diagram-guide`, `documented-commands`, `suite-integrity`, `transcript-titles`,
+  `supervisor-archive`.
 - **Open for Enrique** (`HUMAN_INTERVENTION.md`): the `drop policy` SQL — the only item with a live
   security consequence, and disclosed in three places that must be deleted together if he applies it ·
   the Telnyx top-up, which unblocks beat 3 and G16 · `INQ-2012`/`INQ-2013` · rotating the SIP
