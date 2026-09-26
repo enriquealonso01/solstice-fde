@@ -1,15 +1,13 @@
 # Master plan: the whole picture
 
-> ## 06:23 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 06:32 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **Three agent tasks are open: T60, then two one-line items inside T58, then T59.**
 > **T58's instruction is FIXED** (It148, 05:56): the paragraph now names the field instead of a distance,
 > and a guard fails on any *“N lines below”* that is not describing the old mistake. **64 green**, and I
 > red-checked that guard in memory rather than trusting it — it fires. **Two one-line items remain in it**:
 > a message naming the wrong neighbour, and an `indexOf` that judges every match by the first occurrence.
-> **T60 is CLOSED** (It149) and the suite is **green again — 872 tests, 61 files**. The guard that went red was
-> narrowed to the group-approval path rather than scrubbing three sentences that quote **Policy 7 and Policy
-> 15**; `rules.ts` is untouched. **Two agent tasks remain: T58's two one-line items, and T59** — the brief's
-> *net-new tool* still has no behavioural test.
+> **T58 and T60 are both CLOSED** and the suite is green — **872 tests, 61 files**. **One agent task is left:
+> T59**, a behavioural test for the net-new tool. Everything else on the board is yours.
 > **Measured at 06:09: the Chen suite refusal — your opening beat — is that function's output.**
 > Driven end to end on production: 2PM guarantee confirmed outright, suite refused, escalated to the AGM.
 > **Better stage line than the card's:** the tool's decision is literally `policy_gap_manager_decision`, and
@@ -784,7 +782,7 @@ broken; the thing that would catch it breaking is what is thin.**
 **Check when done:** flipping SOL-PHX's ceiling turns the suite red; flipping Tampa's does not; the doc names a
 single-match search string; `npx vitest run` green.
 
-### T58 — the instruction is FIXED (It148, 05:56) and the offset guard is real. **Two one-line items remain.**
+### T58 — CLOSED (It150, 06:30). Instruction, offset guard, and both one-line items.
 
 > **Verified at 05:58.** The paragraph now says *“change the `max_discount_auto_approve_pct` **line inside
 > that same object**, which is the only one of its name there”* — field name, no distance — and adds a
@@ -793,7 +791,12 @@ single-match search string; `npx vitest run` green.
 > **64 green.** I red-checked the guard without touching the repo — reproduced its regex and filter over an
 > in-memory copy with the instruction restored: **2 survivors, assertion fails.** Not vacuous.
 >
-> **Still open, both one line, both in `walkthrough-quotes.test.ts`:**
+> **✅ Both items landed at 06:30, verified in the file at 06:32 — suite green at 872.**
+> `:181` now counts `property_code:` occurrences in the slice (*"Counting `property_code:` catches both
+> mistakes and needs no story"*), and `:242` uses `m.index` (*"The first version looked the phrase up
+> again"*). Both comments record the old error rather than quietly replacing it.
+>
+> ~~**Still open, both one line, both in `walkthrough-quotes.test.ts`:**~~
 > 1. **`:175` still names the wrong neighbour.** It asserts the slice `not.toContain('SOL-TPA')` because
 >    otherwise it *“has run past the end of the object”*. **SOL-TPA is line 89 — before Phoenix at 102.** An
 >    over-long slice runs *forward*, into `SOL-CLT` at 118, and can never reach Tampa. The case still earns
@@ -1219,6 +1222,24 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > **The honest caveat, and it is item 1 on your list:** this is the application gate. Until the `drop policy`
 > SQL is applied, a signed-in rep can still set `status` directly in the database and leave no audit row at
 > all. **Everything above is what the product enforces; the SQL is what makes the database agree.**
+
+**9. "Hold on — isn't Marcus Webb the guest? Why is he a general manager?"** — *iteration 217*
+
+> **Two names collide inside the data you sent us, and we did not dedupe it.** `solstice-guest-profiles.csv`
+> has **Marcus Webb** as the Gold guest on **R55006 at Tampa** — the minibar beat. `solstice-properties.csv`
+> column 20 has **Marcus Webb** as the general manager of **SOL-AUS, Austin**. **Owen Fitzgerald** collides the
+> same way, as a guest and as Providence's GM. Both are in the provided exports; neither is ours.
+>
+> **Nothing in the system confuses them.** Tampa's general manager is **Andrea Lin**, so the Webb escalation
+> goes to Tampa's AGM and never near the Austin GM's name. Checked: every artifact that says *Marcus Webb* —
+> the cheat sheet, `transcripts/honest-handoff.md`, the supervisor session in `HUMAN_INTERVENTION.md` — means
+> the guest, and the GM name only ever renders on an **Austin** proposal's signature line.
+>
+> **The GM names are real and load-bearing**, which is why the collision is visible at all: all **10**
+> properties carry a named general manager with **no blanks**, and `proposal.ts:271` signs every proposal
+> *“Group Sales, on behalf of {general_manager}, General Manager.”* The GM is on the paperwork by name; the
+> **approval** is recorded against whoever clicked it, because `staff_role` has no `gm` seat to prove a tier
+> with. *(That distinction is the one It149 settled across every group verdict.)*
 ---
 
 # ▶ OPEN WORK — three things for Enrique to DO, three decisions that need no action
@@ -2465,6 +2486,104 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 218, 06:32 EST — T58 closed, and a transcript re-driven against production
+
+**The plan is accurate and correctly ordered. T59 is the only open agent task.**
+
+#### T58's last two items landed, and both kept the reasoning
+
+- `:181` counts `property_code:` occurrences inside the SOL-PHX slice instead of asserting
+  `not.toContain('SOL-TPA')`, with the old mistake written down: *"Counting `property_code:` catches both
+  mistakes and needs no story."*
+- `:242` uses `m.index` instead of looking the phrase up again: *"The first version looked the phrase up again,
+  so every [match was judged by the first occurrence]."*
+
+**Suite green, 872 tests, 61 files.**
+
+#### A brief deliverable re-driven rather than re-read
+
+The brief asks for *"a few sample transcripts."* There are **six**, all listed in `transcripts/README.md`, all
+present — no dangling entry either way — and **no deliverable states a count**, so nothing there can rot.
+
+It149 rewrote every group verdict's wording tonight, so I checked whether any transcript or deliverable still
+quotes the superseded text: **`general manager` appears in none of `transcripts/`, `docs/`, `README.md` or
+`SUBMISSION.md`.** The sweep left nothing stale behind it.
+
+Then I drove `parking-rate-refusal.md` against production, because a transcript's whole value is that it is real:
+
+```
+"How much is parking per night at your Chicago Riverwalk hotel?"
+  get_property_info {"topic":"parking rate","property_code":"Chicago Riverwalk"}
+    -> SOL-CHI: no chain-wide parking rate      grounded: true, 1 tool call
+  "I can't quote a parking rate - there's no chain-wide price and this property's current rate isn't in
+   what I can see. The Chicago Riverwalk front desk can confirm it directly for you."
+```
+
+**The trace matches the transcript line for line** — same tool, same result summary, same refusal and the same
+handoff to the property. The prose differs from the captured wording, which is what a language model does and
+why the file says *"Captured from the deployed system on 2026-09-24"* rather than claiming determinism.
+
+> **One thing worth saying out loud on stage:** the guest typed *"Chicago Riverwalk"*, not a property code, and
+> the tool resolved it to **SOL-CHI** on its own. The refusal is the beat, but the resolution is the part that
+> shows the data layer is real.
+
+Latency 2852ms to first token, 3751ms for the turn — the transcript's own capture was 2637 / 3197ms, the same
+shape.
+
+#### State
+
+**T59 is the only open agent task**: the net-new tool has no behavioural test, and it produces the opening
+beat's refusal. Enrique's six are unchanged, with the `drop policy` paste first. Inbox and In progress empty.
+Tester silent since 20:26 (**10h06m**). No lock held; I took none.
+
+
+### Iteration 217, 06:28 EST — two people in the sample data have the same name, and one of them is in the best beat
+
+**No new tasks.** T58's two one-line items and T59 are still open and untouched. `HUMAN_INTERVENTION.md` grew
+again at 06:25 (1052 → 1082 lines); **all seven pointers still resolve** and the guard is 17/17, which is now
+routine rather than lucky.
+
+#### The append closed one of Enrique's open decisions, and I checked its claims
+
+It149 answered the item *"Judgment call: 'the general manager' is not a role"* by doing option (b) everywhere,
+so there is nothing left to decide. Two of its claims are checkable and both hold:
+
+- *"It was on nine of the ten inquiries"* — four flagged verdicts with the stutter plus five passing ones
+  reading *"without going to the general manager."* **Consistent with what `inquiries.test.ts` found**, and
+  measured by evaluating the dataset rather than by grep.
+- *"`property.general_manager` is a real named person in the data that every proposal PDF signs on behalf of"* —
+  **column 20 of `solstice-properties.csv`; 10 properties, 10 names, zero blanks** (Renee Okafor, Marcus Webb,
+  Priya Nair, Tyler Combs…), and `proposal.ts:271` renders *"Group Sales, on behalf of {general_manager},
+  General Manager"* on every proposal, with a voice variant at `:580`.
+
+#### And reading those names found something nobody had noticed
+
+**Marcus Webb is both a guest and a general manager.** `solstice-guest-profiles.csv` has him as the Gold guest on
+**R55006 at Tampa** — the minibar beat, the row with the best escalation in the demo. `solstice-properties.csv`
+has him as the GM of **SOL-AUS, Austin**. **Owen Fitzgerald** collides the same way: a guest, and Providence's
+GM. Two of 23 guest names.
+
+**Both collisions are in the exports the interviewers sent.** Neither is ours, and nothing in the system confuses
+them: **Tampa's GM is Andrea Lin**, so the Webb escalation routes to Tampa's AGM and never approaches the Austin
+GM's name. I checked every artifact that says *Marcus Webb* — the cheat sheet, `transcripts/honest-handoff.md`,
+the supervisor session quoted in `HUMAN_INTERVENTION.md` — and all of them mean the guest.
+
+> **Why it is worth three lines rather than a shrug.** It is inert in the code and live on a screen: a panel
+> member who opens the properties CSV while Sol is escalating Marcus Webb's minibar charge sees the same name in
+> two roles, and the honest answer takes five seconds only if it is ready. **Filed as `▶ IF THEY ASK` #9.**
+> *The heading carrying no count is already paying for itself — this is the second answer added since, and
+> neither edit had to touch it.*
+
+#### Worth recording about the cheat sheet's Webb row
+
+It now reads *"Point at the chips, not at the sentence"* and states plainly that the itemised arithmetic lives in
+`human_reason`, *"so do not promise the panel they will see it there."* **That is the row I swept at iteration
+202 and passed as correct**, and it took It143 driving the beat to find the two false promises in it. The row is
+right now, and it is right because someone ran it.
+
+**Inbox and In progress empty.** Tester silent since 20:26 (**10h02m**). No lock held; I took none.
+
 
 ### Iteration 216, 06:23 EST — green again, and the working tool was not broken to get there
 

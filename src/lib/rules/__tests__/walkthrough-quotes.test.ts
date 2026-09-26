@@ -170,11 +170,22 @@ describe('code the demo documents tell you to type', () => {
   it('slices the Phoenix object and nothing else', () => {
     const obj = phoenixObject()
     expect(obj.length, `could not slice the SOL-PHX object out of ${source}`).toBeGreaterThan(120)
+    // Exactly one property, whichever direction the slice went wrong in.
+    //
+    // This used to assert `not.toContain('SOL-TPA')` and explain that otherwise the slice "has run past
+    // the end of the object". **Tampa is at line 89 and Phoenix at 102**, so a slice that runs long runs
+    // FORWARD, into SOL-CLT -- it can never reach Tampa. The case still earned its place, because a slice
+    // anchored on the header comment would start above Phoenix and swallow Austin and Tampa. But the
+    // message named a direction that cannot happen, and a guard that explains itself wrongly is a guard
+    // the next reader distrusts. Counting `property_code:` catches both mistakes and needs no story.
+    const propertyCodes = obj.split('property_code:').length - 1
     expect(
-      obj,
-      `the SOL-PHX slice contains SOL-TPA, so it has run past the end of the object and the value ` +
-        `assertions below could be satisfied by Tampa's identical pair again.`,
-    ).not.toContain('SOL-TPA')
+      propertyCodes,
+      `the SOL-PHX slice contains ${propertyCodes} property_code: lines. One means it holds exactly one ` +
+        `object. More means it started too early (the header comment, which sits above Austin and Tampa) ` +
+        `or ran past the close (into SOL-CLT), and the value assertions below could then be satisfied by ` +
+        `another property's identical 35 and 15.`,
+    ).toBe(1)
     expect(obj, 'the slice does not start at the SOL-PHX object').toContain("'SOL-PHX': {")
   })
 
@@ -220,12 +231,18 @@ describe('code the demo documents tell you to type', () => {
     const flatDoc = readFileSync(join(repoRoot, doc), 'utf8').replace(/\s+/g, ' ')
 
     const offsets = [...flatDoc.matchAll(/(\w+) lines? (?:below|down|under|after)/gi)]
-      .map((m) => m[0])
       // The paragraph is allowed to describe the old mistake; it may not issue it as an instruction.
-      .filter((phrase) => {
-        const at = flatDoc.indexOf(phrase)
+      //
+      // `m.index`, not `flatDoc.indexOf(m[0])`. The first version looked the phrase up again, so every
+      // match was judged against the FIRST occurrence's surroundings. Latent only because the retrospective
+      // ("said two lines below, which was wrong") currently sits AFTER the instruction; reverse those two
+      // paragraphs and the exemption covers a real instruction. Third time an indexOf has found the wrong
+      // occurrence in this suite -- T55's heading, T57's anchor, and now the guard written to fix T57.
+      .filter((m) => {
+        const at = m.index ?? 0
         return !/said|earlier revision|was wrong|which was wrong/i.test(flatDoc.slice(Math.max(0, at - 90), at + 40))
       })
+      .map((m) => m[0])
 
     expect(
       offsets,
@@ -396,6 +413,11 @@ describe('refusals the walkthrough quotes', () => {
     // The two refusals are only evidence because they differ. Matching the message and the code
     // together is what stops one of them quietly becoming the other.
     const text = flat(readFileSync(join(repoRoot, source), 'utf8'))
+    // Same rule as the anchor above: a window taken from indexOf is only evidence if the string it is
+    // anchored on occurs once. Assert that rather than assume it.
+    const occurrences = text.split(flat(message)).length - 1
+    expect(occurrences, `${message} occurs ${occurrences} times in ${source}; the window below would only ` +
+      `describe the first. Re-point this case at something unique.`).toBe(1)
     const at = text.indexOf(flat(message))
     expect(at, `${message} is not in ${source}`).toBeGreaterThan(-1)
     const window = text.slice(at, at + flat(message).length + 60)

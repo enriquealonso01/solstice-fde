@@ -9523,3 +9523,111 @@ decision is moot. Appended at the end of the file (highest plan pointer is :1016
 nothing shifted; 17 pointer tests still green), including the answer to give if the panel asks who approves.
 
 `npx tsc -b` clean. `npx vitest run` **872 tests / 61 files** green (up 12).
+
+---
+
+## It150 — T58's last two items, and the same defect in two more guards
+
+Both filed items were mine, and both are the same underlying mistake in different clothes: **an
+assertion locating something by looking it up again instead of using where it actually was.**
+
+### Item 1 — the over-slice message named a direction that cannot happen
+
+The SOL-PHX slice case asserted `not.toContain('SOL-TPA')` and explained that otherwise the slice *"has
+run past the end of the object"*. Counted: **SOL-TPA is at line 89, SOL-PHX at 102, SOL-CLT at 115.** A
+slice that runs long runs **forward**, into Charlotte. It can never reach Tampa.
+
+The case still earned its place — a slice anchored on the header comment starts *above* Phoenix and
+swallows Austin and Tampa — but it was checking one of the two ways to be wrong and explaining itself
+with the other. It now counts `property_code:` lines in the slice and requires exactly one, which is
+direction-agnostic and needs no story.
+
+Red-checked on the real suite by re-indenting Phoenix's closing brace so the slice runs into SOL-CLT:
+
+```
+with the count assertion       1 failed
+with not.toContain('SOL-TPA')  64 passed   <- the old assertion never sees a forward overshoot
+```
+
+### Item 2 — `indexOf` judged every match by the first occurrence's context
+
+The offset ban collects `matchAll` results and exempts any that sit inside a retrospective clause
+(*"said two lines below, which was wrong"*). It found each phrase's context with
+`flatDoc.indexOf(phrase)` — **the first occurrence**, not the match's own. Two copies of the same
+phrase, and whichever came first decided the verdict for both.
+
+Latent only because the retrospective currently sits *after* the instruction. Proven by planting a real
+instruction that reuses the retrospective's wording, below it:
+
+```
+> Shortcut for the rehearsal: the ceiling is two lines below the anchor, so just count down.
+
+with m.index   1 failed
+with indexOf   64 passed   <- the same document, the guard fooled
+```
+
+That is the whole argument for the fix: **the identical document passes or fails depending on a line of
+the test nobody would look at.**
+
+### The same shape in two more guards, found by sweeping instead of stopping
+
+Eight test files combine `matchAll` with `indexOf`. Reading each: two more had this exact defect, and
+one more had its weaker cousin.
+
+**`diagram-guide.test.ts:382`, the bare-count ban on the Today page.** Same `indexOf(phrase)` filter —
+and this is the guard where it bites hardest, because *the fix for the original defect was to write a
+dated version of the same count*. A dated "nine calls" and a bare "nine calls" on one page, and the
+dated one exempts the bare one. Differential probe, two identical phrases 377 characters apart:
+
+```
+old (indexOf): []               <- bare count exempted by the dated one
+new (m.index): ["nine calls"]   <- reported
+```
+
+**`doc-paths.test.ts:79`, the gitignore exemption.** It took the **first** mention's word for whether a
+document explains that a path is deliberately absent. Measured: `SUBMISSION.md` names `DEMO_LOGINS.md`
+three times and only the first two say it is gitignored. Being deliberately absent is a property of the
+document, so it now asks every mention. Old predicate against a reordered document: `false`. New: `true`.
+
+**`walkthrough-quotes.test.ts:399`** takes a 60-character window from `indexOf(message)` to check a
+status code. It now asserts that message occurs exactly once first — which is the rule this very file
+states two hundred lines above: *anchor on a string that exists once, and assert the count.*
+
+### A hypothesis I checked and dropped
+
+I thought `doc-paths` might pass only because untracked files exist here: README.md names `` `.env` ``
+with no "gitignored" disclaimer, `.env` is on my disk, and a reviewer's clone has neither. That would
+have meant **a red suite for anyone who cloned the repo** an hour before submission.
+
+It is not a defect. `PATHISH` requires a source-file extension and `.env` does not match it, so it was
+never a candidate. **I had reconstructed `PATHISH` from memory in my probe rather than reading it** —
+the same "verifying my own copy of the answer" mistake as It148's decoy constants, caught this time
+before it produced a conclusion rather than after. `DEMO_LOGINS.md` is the real instance of that class,
+and iteration 112 already fixed it by running the suite in a fresh LF clone.
+
+### Two instrument failures, one of them twice
+
+**The Bash heredoc collapses `\\` to `\`.** A Python pattern containing `\\b` arrived as `\b`, which
+Python reads as a backspace character, so the pattern could not match and `assert count == 1` said so.
+That is the second escape-eaten-by-the-heredoc bug in two iterations (It149: `\1` became chr(1)), and
+the reason both were caught rather than silently applied is the same: **assert the match count instead
+of trusting `.replace()`.** Fix for next time: raw strings, or write the script to a file.
+
+**Then the same thing in JavaScript, and it nearly stole a conclusion.** My differential probe for the
+diagram-guide fix printed `[]` for both the old and new filter — three times, while I adjusted the
+synthetic page and reasoned about window overlap. The regex had `\b` collapsed to a backspace and
+matched **nothing at all**. `[]` and `[]` reads exactly like "this fix changes nothing", and I was one
+step from writing that down. Printing the match list first showed `matches: []`.
+
+*One iteration after writing "an empty result is not a pass" in the log, I spent three probes reading
+empty results as a finding.* The rule needs a mechanical form, not a maxim: **print the population
+before printing the verdict.**
+
+### Written down where it will be read
+
+`agents/README.md` gains the rule with both forms — use `m.index` inside a `matchAll` filter, and if you
+take a window from `indexOf`, assert the anchor occurs once. Four appearances in this suite now, each
+one latent when written, each one waiting for someone to reorder a document.
+
+`npx tsc -b` clean. `npx vitest run` **872 tests / 61 files** green (unchanged; these fixes make
+existing cases correct rather than adding new ones). Three subject files restored and `cmp`-identical.

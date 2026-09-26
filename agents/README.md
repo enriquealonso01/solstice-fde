@@ -268,3 +268,26 @@ The window is still not zero. Narrow it, fail loudly, and say in your log that y
 **Never resolve another agent's file by merging the two versions yourself.** You cannot tell an
 edit they abandoned from one they are mid-way through, and a plausible merge of a 9,000-line plan is
 the worst of the three outcomes: it looks finished.
+
+## Judge a match by its own offset, not by looking it up again
+
+A filter over `matchAll` results that calls `text.indexOf(m[0])` to find the match's surroundings is
+reading the **first** occurrence's surroundings for every match. If the same text appears twice, one
+occurrence's context decides the verdict for both.
+
+```js
+// wrong: every match is judged by wherever that text first appears
+.filter((phrase) => !EXEMPT.test(text.slice(text.indexOf(phrase) - 160, ...)))
+// right
+.filter((m) => !EXEMPT.test(text.slice((m.index ?? 0) - 160, ...)))
+```
+
+This has now appeared four times in this suite -- a heading that matched inside the task describing
+it, an anchor that matched a comment quoting the code, and two exemption filters. It is almost always
+**latent when written**, because the two occurrences happen to sit in a harmless order, so it fails
+only after someone reorders a document. That is the worst kind of guard bug: it weakens silently, in
+a commit that has nothing to do with the guard.
+
+The same rule in its other form: **if you take a window from `indexOf`, assert that the string you
+anchored on occurs exactly once.** A window is only evidence when there is one place it could be.
+

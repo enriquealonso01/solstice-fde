@@ -4,51 +4,48 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 216 — 2026-09-26 06:24 EST
+## Iteration 218 — 2026-09-26 06:33 EST
 
-**The suite is green again: 872 passed, 61 files, 0 failed.** **T60 is closed.** Two agent tasks remain: T58's
-two one-line items, and T59.
+**The plan is accurate and correctly ordered.** **T59 is the only open agent task.**
 
-### The working tool was not broken to get green
+### T58 closed
 
-`netlify/functions/tools/rules.ts` is **still stamped 13:11 yesterday** — the three sentences quoting Policy 7
-(*"needs AGM or GM sign-off"*) and Policy 15 (*"straight to the General Manager and Regional Security"*) were not
-touched. The guard was narrowed instead:
+Both remaining one-line items landed at 06:30 and I verified them in the file rather than from a log entry:
+
+- `:181` counts `property_code:` occurrences inside the SOL-PHX slice instead of `not.toContain('SOL-TPA')` —
+  *"Counting `property_code:` catches both mistakes and needs no story."*
+- `:242` uses `m.index` instead of looking the phrase up again.
+
+Both comments record the old error rather than quietly replacing it. **Suite green: 872 tests, 61 files.**
+
+### A brief deliverable re-driven rather than re-read
+
+Six transcripts, all listed in `transcripts/README.md`, all present, **no count stated anywhere** — nothing there
+can rot. It149 rewrote every group verdict's wording tonight, so I checked for leftovers: **`general manager`
+appears in none of `transcripts/`, `docs/`, `README.md` or `SUBMISSION.md`.**
+
+Then I drove `parking-rate-refusal.md` against production, because a transcript's value is that it is real:
 
 ```
-REASON_ROOTS = ['src/lib/rules', 'src/components/admin', 'netlify/functions/group']
+"How much is parking per night at your Chicago Riverwalk hotel?"
+  get_property_info {"topic":"parking rate","property_code":"Chicago Riverwalk"}
+    -> SOL-CHI: no chain-wide parking rate     grounded: true, 1 tool call
+  "I can't quote a parking rate - there's no chain-wide price and this property's current rate isn't in
+   what I can see. The Chicago Riverwalk front desk can confirm it directly for you."
 ```
 
-with the distinction written into its own comment: *"The defect is not the words 'general manager' appearing
-anywhere; it is a GROUP APPROVAL verdict naming a tier the app will not enforce. A guard that could not tell
-those apart would have pushed me to break a working tool to keep itself green."*
+**The trace matches the transcript line for line** — same tool, same result summary, same refusal, same handoff.
+The prose differs from the capture, which is what a language model does and why the file says *"Captured from
+the deployed system on 2026-09-24"* instead of claiming determinism. 2852ms to first token, 3751ms for the turn;
+the original capture was 2637 / 3197ms.
 
-**I am not claiming that call.** The Implementer's file changed at **06:19** and my note went in at **06:20** —
-it got there first. Recording the timestamps because letting the sequence imply otherwise is the kind of small
-false credit that makes a log untrustworthy.
-
-### The guard is stronger than the one it replaced
-
-1. **The matcher is proved both ways** — two historical sentences must fire, and *"a judgment call on one segment
-   of the stay"* must not, because `judgment` and `segment` contain `gm`.
-2. **A runtime sweep of the real dataset** — every verdict of every inquiry, with two vacuity floors.
-3. **A source sweep** — I counted the literals independently: **60 against a floor of 40**. Narrowing dropped it
-   from 66 to 60 and **the floor was not lowered to match**, which is the move that would have made it cosmetic.
-
-### T60 item 3 landed, and caught something I missed
-
-`inquiries.test.ts` now loops **every** verdict of INQ-2002, **pass and flag alike**. And it found that the
-rooms-cap **pass** branch carried the phrase too, *"on five other inquiries."*
-
-> **My instrument shaped my finding.** `show-verdict.ts` prints flags, so I audited flags — and I had even
-> written *"`show-verdict.ts` prints flags only"* into T60 without following that sentence to its conclusion.
-> **Noting a tool's blind spot is not the same as covering it.**
+> **Worth saying on stage:** the guest typed *"Chicago Riverwalk"*, not a property code, and the tool resolved it
+> to **SOL-CHI** by itself. The refusal is the beat; the resolution is what shows the data layer is real.
 
 ### Open
 
 | # | Item | Owner |
 |---|---|---|
-| **T58** | Two one-line items: `:177` names SOL-TPA, which lies *before* the slice; `:226` judges every match by the first occurrence's context | any agent — **first** |
 | **T59** | The net-new tool has no behavioural test — and it produces the opening beat's refusal | any agent |
 | 1 | **`drop policy` ×3** — **only Enrique can.** SQL at **609**, ***"### What to run"***. **Breaks nothing; verified three ways** | Enrique — **do** |
 | 2 | **Top up Telnyx** — $3.03, no credit line, ~6 calls, hard stop at zero | Enrique — **do** |
@@ -57,11 +54,11 @@ rooms-cap **pass** branch carried the phrase too, *"on five other inquiries."*
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
 
-Tester silent since 20:26 (**9h58m**); no open findings. Inbox and In progress empty. No lock held; I took none.
+Tester silent since 20:26 (**10h07m**); no open findings. Inbox and In progress empty. No lock held; I took none.
 Plan guards re-run after my edits: **104 green**.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** The suite is green, T60 is closed, the demo path is verified end to end, and the two
-remaining agent tasks are one-line guard corrections and a test for code that already works. **What is left that
-only Enrique can do is the SQL.**
+**The `drop policy` paste.** T58 and T60 are closed, the suite is green, the demo path and the group gate are
+verified against production, and the last agent task is a test for code that already works. **The SQL is the
+only thing left that nobody else can do for him.**

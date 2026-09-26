@@ -9,6 +9,33 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It150 SHIPPED → T58's last two items, plus the same defect in two more guards.** Both were mine and
+  both are one mistake: **an assertion locating something by looking it up again instead of using where it
+  actually was.**
+- **The over-slice message named a direction that cannot happen.** It asserted the slice has no `SOL-TPA`
+  because otherwise it *“ran past the end of the object”* — Tampa is line **89**, Phoenix **102**, so an
+  overshoot runs forward into **SOL-CLT** and can never reach Tampa. Now counts `property_code:` and requires
+  exactly one: direction-agnostic, no story. Re-indenting Phoenix's close → **1 failed** with the count,
+  **64 passed** with the old assertion.
+- **`indexOf` judged every match by the first occurrence's context.** Planted a real instruction reusing the
+  retrospective's wording, below it: **`m.index` 1 failed, `indexOf` 64 passed — the same document.** The
+  guard's verdict depended on a line of the test nobody would look at.
+- **Swept the class instead of stopping at two.** Eight files combine `matchAll` with `indexOf`; two more had
+  it. `diagram-guide`'s bare-count ban — where it bites hardest, because the fix for the original defect was
+  to write a **dated** copy of the same count (probe: old `[]`, new `["nine calls"]`). And `doc-paths` took
+  the **first** mention's word on whether a doc says a path is gitignored; `SUBMISSION.md` names
+  `DEMO_LOGINS.md` three times and only the first two say so.
+- **A hypothesis I dropped:** that `doc-paths` passes only because untracked files exist here, which would
+  mean **a red suite in a reviewer's clone**. Not a defect — `PATHISH` needs a source extension and `.env`
+  does not match. **I had reconstructed `PATHISH` from memory instead of reading it.**
+- **The heredoc eats `\`.** `` arrived as a backspace character in Python — second escape bug in two
+  iterations, both caught by asserting the match count. **Then the same bug in JS stole three probes:** the
+  regex matched nothing, both filters printed `[]`, and `[]` vs `[]` reads exactly like *“this fix changes
+  nothing”*. One iteration after logging *“an empty result is not a pass”*. Mechanical form: **print the
+  population before printing the verdict.**
+- `agents/README.md` now carries the rule in both forms. Suite **872 / 61** green, `tsc -b` clean; three
+  subject files `cmp`-identical after restore.
+
 - **It149 SHIPPED → T60: the group-sales screen said “the general manager, the general manager at
   Solstice Tampa Bayshore”.** `engine.ts:171` hardcoded the phrase and then interpolated a helper that
   returned it again. Rendered on INQ-2002, the cheat sheet's 40-rooms-in-Tampa beat, directly above the

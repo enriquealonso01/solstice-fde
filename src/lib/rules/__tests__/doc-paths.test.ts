@@ -76,9 +76,21 @@ const GITIGNORED = new Set(
 function deliberatelyAbsent(candidate: string, docText: string): boolean {
   if (!GITIGNORED.has(candidate)) return false
   const flat = docText.replace(/\s+/g, ' ')
-  const at = flat.indexOf(candidate)
-  if (at === -1) return false
-  return /gitignored|not committed|not in this repository|never in this repository/i.test(flat.slice(at, at + 160))
+
+  // ANY mention may carry the disclaimer, not whichever one happens to come first.
+  //
+  // This read `flat.indexOf(candidate)` and tested the 160 characters after it, so the verdict for a whole
+  // document rested on its first mention. Measured: SUBMISSION.md names `DEMO_LOGINS.md` three times and
+  // only the first two say it is gitignored. The answer is the same either way today, which is exactly why
+  // it would have gone unnoticed -- reorder those paragraphs and the exemption evaporates. Being
+  // deliberately absent is a property of the document, so ask the document rather than its first sentence.
+  const said = /gitignored|not committed|not in this repository|never in this repository/i
+  let at = flat.indexOf(candidate)
+  while (at !== -1) {
+    if (said.test(flat.slice(at, at + 160))) return true
+    at = flat.indexOf(candidate, at + 1)
+  }
+  return false
 }
 
 /**
