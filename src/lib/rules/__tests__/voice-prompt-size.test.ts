@@ -222,3 +222,98 @@ describe('voice:exclude block structure', () => {
     ).toEqual(KNOWN)
   })
 })
+
+/**
+ * The committed export must be the compile of the file it claims to export.
+ *
+ * `exports/telnyx-assistant.json` is a named brief deliverable — `SUBMISSION.md`'s *"Native platform
+ * export"* — and its entire value is being the live agent's own configuration. `README.md` and the plan both
+ * claim `agent/sol.md`, that export and the phone agent agree.
+ *
+ * **Nothing checked it.** At 01:22 on 2026-09-26 the measurement was:
+ *
+ *     agent/sol.md -> compileInstructions   29,784
+ *     exports/telnyx-assistant.json         29,655
+ *     LIVE Telnyx assistant                 29,655
+ *     npx vitest run                        677 passed, ALL GREEN
+ *
+ * The source had moved ahead of the phone — iteration 122's row had landed and the `--refresh` had not run
+ * yet. That is ordinary in-flight state; the defect was that **677 tests, including this file, could not see
+ * it**, and `SUBMISSION.md`'s checklist says *"`npx vitest run` is green"*, which was true and did not
+ * protect it.
+ *
+ * This project has already been bitten by the same outcome by a different route: the header at the top of
+ * this file exists because the phone once carried none of four hours of edits. That case catches
+ * **truncation**. Forgetting the refresh was uncovered, and it is the likelier route now that the margin is
+ * healthy.
+ *
+ * **What this guard does not do, stated because a guard believed to watch production is worse than one whose
+ * reach is written down: it cannot see Telnyx.** It pins *compile === committed export*. It implies
+ * *source === live* only because the export is produced by `scripts/telnyx/export-assistant.mjs` **from the
+ * live assistant** — so what it really enforces is the workflow: edit `agent/sol.md`, run
+ * `provision.mjs --refresh`, re-export, **in one change**. Verified by hand at iteration 123 that all three
+ * were byte-identical at 29,784, including the greeting.
+ *
+ * **It will be red between the edit and the re-export, and that is the point.** Do not make it green by
+ * regenerating the export from a stale live assistant: that makes all three agree on the old text and
+ * silently reverts the edit.
+ */
+describe('the committed export against the file it exports', () => {
+  const exported = JSON.parse(readFileSync(resolve(repoRoot, 'exports/telnyx-assistant.json'), 'utf8'))
+
+  it('exports the instructions this file compiles to', () => {
+    expect(
+      exported.instructions?.length,
+      'exports/telnyx-assistant.json has no instructions at all, which is a broken export rather than a ' +
+        'stale one — re-run scripts/telnyx/export-assistant.mjs.',
+    ).toBeGreaterThan(1000)
+
+    expect(
+      exported.instructions,
+      `agent/sol.md compiles to ${compiled.instructions.length} characters and the committed export holds ` +
+        `${exported.instructions?.length}. The source has moved ahead of the export, so the deliverable ` +
+        `whose whole value is being the live agent's config describes an agent that no longer exists. Run ` +
+        `"node scripts/telnyx/provision.mjs --refresh" then "node scripts/telnyx/export-assistant.mjs", in ` +
+        `this same change. Do NOT re-export without refreshing: that agrees on the old text and reverts the ` +
+        `edit.`,
+    ).toBe(compiled.instructions)
+  })
+
+  /**
+   * The greeting is NOT compiled from `agent/sol.md`, which is worth knowing.
+   *
+   * `provision.mjs:881` resolves it as `env.TELNYX_ASSISTANT_GREETING || extractGreeting(sol.md) ||
+   * DEFAULT_GREETING`. `TELNYX_ASSISTANT_GREETING` is unset, and `extractGreeting` looks for a
+   * `## Greeting` section that this file does not have — so the live greeting comes from
+   * `DEFAULT_GREETING`, a constant in the script. Found at iteration 123 by writing the obvious assertion
+   * and watching it return null.
+   *
+   * `agent/sol.md:34` states the greeting in prose — *Greeting, both channels: "…"* — and it happens to
+   * match that constant, by authorship rather than by derivation. Edit the prose and the phone keeps the
+   * old greeting while the file claims otherwise: the same class of divergence as the instructions, one
+   * field over, and not covered by the case above because the export would still agree with the compile.
+   *
+   * So this pins the three that must agree and can be seen from here: the sentence the file states, the
+   * script's default, and the committed export.
+   */
+  it('greets with the sentence the file states, the script defaults to, and the export carries', () => {
+    const stated = markdown.match(/Greeting, both channels: \*"([^"]+)"\*/)
+    expect(stated, 'agent/sol.md no longer states a greeting in prose; update or remove this case').toBeTruthy()
+
+    const script = readFileSync(resolve(repoRoot, 'scripts/telnyx/provision.mjs'), 'utf8')
+    const fallback = script.match(/const DEFAULT_GREETING = "([^"]+)"/)
+    expect(fallback, 'provision.mjs no longer defines DEFAULT_GREETING').toBeTruthy()
+
+    expect(
+      fallback![1],
+      `agent/sol.md says the greeting is "${stated![1]}" and provision.mjs would send "${fallback![1]}". ` +
+        `The greeting is not compiled from the file -- it comes from that constant -- so the prose and the ` +
+        `constant have to be changed together or the phone contradicts the deliverable.`,
+    ).toBe(stated![1])
+
+    expect(
+      exported.greeting,
+      `the committed export's greeting disagrees with agent/sol.md's prose. Re-export after provisioning.`,
+    ).toBe(stated![1])
+  })
+})

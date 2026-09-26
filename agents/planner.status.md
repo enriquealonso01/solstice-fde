@@ -4,57 +4,52 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 162 — 2026-09-26 01:25 EST
+## Iteration 164 — 2026-09-26 01:35 EST
 
-**The plan is accurate and correctly ordered.**
+**The plan is accurate and correctly ordered.** Verification only; no task filed, nothing started.
 
-### Filed T49: 677 tests green while the source and the phone agent disagree
+### Checked `docs/demo-cheatsheet.md` line by line — the one document read live in front of the panel
 
-Measured at 01:22:
+41 lines, and the only deliverable read **under pressure, mid-beat**. It has been wrong twice before —
+It107's log is *"the cheat sheet's $45 row says the opposite of what happens, for the second time."*
+
+**Five guest rows against `data/solstice-guest-profiles.csv` — all exact, including every date:**
+
+| row says | data says |
+|---|---|
+| R55004 Chen, Platinum, Denver, Jul 20–23 | Chen, Platinum, SOL-DEN, 2026-07-20 → 07-23 |
+| R55005 Franklin, Silver, Nashville, Cancelled | Franklin, Silver, SOL-NSH, Cancelled |
+| R55006 Webb, Gold, Tampa, Checked-in, Suite | Webb, Gold, SOL-TPA, Checked-in, Suite |
+| R55001 Bennett, Silver, Chicago, Jul 14–17 | Bennett, Silver, SOL-CHI, 2026-07-14 → 07-17 |
+| R55003 Subramaniam, Gold, Austin, Jul 18–21 | Subramaniam, Gold, SOL-AUS, 2026-07-18 → 07-21 |
+
+**The $45 row, driven against production — four separable claims, all hold:**
 
 ```
-agent/sol.md -> compileInstructions   29,784
-exports/telnyx-assistant.json         29,655
-LIVE Telnyx assistant (GET)           29,655    live === export: TRUE
-                                                live === compile: FALSE
-npx vitest run                        677 passed / 52 files, ALL GREEN
+POST /api/tools/check_comp_authority  R55006
+  $45   front_desk   escalation_required false   may_promise true
+  $50   front_desk   escalation_required false   remaining $0.00   <- boundary inclusive
+  $55   agm          escalation_required true    authority_exceeded
+  [minibar $45 + late housekeeping $25]  total $70.00  agm  escalation_required true
 ```
 
-**`agent/sol.md` no longer describes the agent that answers the phone.** T48's row landed, the `--refresh`
-has not run — ordinary in-flight state. **The defect is not the divergence, it is that nothing can see it.**
-A whole test file is dedicated to the voice prompt and none of it compares the compile to the committed
-export; `SUBMISSION.md`'s checklist says *"`npx vitest run` is green"*, which is true and does not protect
-this.
+**And the quoted sentence is verbatim.** The tool returned *"Policy 7 requires the items to be added up
+before authority is tested: **minibar charge $45.00 + late housekeeping $25.00 = $70.00. That exceeds the
+$50.00 per-stay front-desk authority**, so it needs AGM or GM sign-off the same day…"* — the cheat sheet
+quotes it word for word and **under-quotes** the rest, which is the right direction to be wrong in.
 
-**The project has been bitten by this exact outcome before** — `voice-prompt-size.test.ts`'s header is about
-the phone agent missing four hours of edits. That test covers the **truncation** route; the
-**edit-without-re-provision** route is uncovered, and with a healthy margin it is now the likelier one. T49
-carries the honest limit: a test cannot see Telnyx, so it pins compile-against-export and enforces the
-workflow rather than observing production.
+**The directive is real:** R55006's `internal_notes` say *"Do not adjust folio directly -- escalate to
+property AGM for review."* So the row's point stands and it is the interesting one — at $45 the tool says
+`escalation_required: false` and Sol escalates anyway, **from the customer's own per-reservation directive,
+not from the money.**
 
-### My iteration-160 hazard is now a guard, and I watched it fire
+**And I checked the inference the R55004 row does not spell out:**
+`ROOM_CLASS_LADDER = ['Standard Double','Standard King','Deluxe King','Suite']` and R55004 is booked **Deluxe
+King** — so *"then ask for a suite"* is exactly the next class up. The row is right for a reason it does not
+state.
 
-`voice-prompt-size.test.ts` gained **`voice:exclude block structure > opens and closes each block in the same
-section, except the one known crossing`** — iteration 160's paragraph turned into an assertion by someone
-else. At **01:20:06** it was the single red test in the suite, during It122's edit to the section it guards.
-At **01:21:05** the suite was green again.
-
-**I did not report the red.** A guard going red during the edit it exists for is the guard working.
-**Rule for my own future iterations: a red suite is only a finding if it survives the next look.** Two runs a
-minute apart settles it more cheaply than reasoning about whether an agent is mid-flight.
-
-### T47 shipped, and their framing beat mine
-
-Both parts — `HUMAN_INTERVENTION.md:63` carries **item C**, and the guard derives its list from the file. I
-filed it as a routing gap with a test attached; **they filed it as a guard whose opening sentence claimed a
-property it did not test**, and named it as their own mistake one iteration after fixing the same class.
-That generalises and mine did not.
-
-### T48's numbers held exactly
-
-The replacement row is in `agent/sol.md:458` **verbatim as filed**; compile **29,784, margin 216, not
-truncated** — reproduced by them independently before editing. They also caught a dependency I missed: **my
-task breaks their It120 guard**, which pins the phrase the replacement removes. Spotted before running it.
+**Seventeen separable claims across data, production and source. All seventeen hold. No task filed** — worth
+recording precisely because the last two times anyone looked at this file, it was wrong.
 
 ### Open
 
@@ -65,16 +60,13 @@ task breaks their It120 guard**, which pins the phrase the replacement removes. 
 | 3 | **T21** — delete `INQ-2012`/`INQ-2013`, cascade count first | Enrique — **do** |
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
 | 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
-| T48 | Row shipped; **`--refresh` + re-export outstanding** | **CLAIMED It122** |
-| T49 | Pin compile === committed export. **Nothing watches it today** | any agent |
+| T49 | Pin compile === committed export | **CLAIMED It123** |
 | — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
 
-**Tester silent 4h55m** — last write 2026-09-25 20:26:34 EDT. Inbox empty. No lock held.
+**Tester silent 5h03m** — `agents/tested.log.md` unchanged since 2026-09-25 20:26:34 EDT. Inbox empty.
+No lock held.
 
 ### The single most important remaining item
 
 **The `drop policy` paste** — unchanged, and its live evidence is still the Tester's twelfth check at 20:26,
 the oldest evidence behind anything on Enrique's list.
-
-**The most urgent agent item is T48's other half:** the `--refresh` and re-export. Until it runs, the native
-export — a named deliverable — describes an agent the source no longer defines, and T49 is what would say so.

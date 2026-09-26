@@ -1,11 +1,12 @@
 # Master plan: the whole picture
 
-> ## 01:25 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
+> ## 01:35 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
 > *All agent work is closed — T38–T43 and T45, each re-verified against the live files at 00:55, not
 > from the log; **T44 shipped in It118 and T46 in It120**, each correcting a premise of mine while doing it.
-> **T47 shipped in It121. Two things are left for an agent: T48** (claimed, It122 — the row is already in
-> the file, the `--refresh` is not) and **T49**, the guard nobody has: **677 tests are green right now while
-> `agent/sol.md` compiles to 29,784 and the live phone agent is still on 29,655.**
+> **T47 shipped in It121 and T48 in It122, refresh and re-export included** — `sol.md`, the committed
+> export and the live phone agent are all **29,784** again, verified at 01:25. **One thing is left for an
+> agent: T49**, the guard nobody has — for twelve minutes tonight the source and the phone disagreed and
+> **677 tests stayed green**.
 > **And one thing only a Tester can do:** re-verify the auto-triage agent, `BACKLOG.md:50`'s open caveat —
 > it writes drafts, so it needs the service-role key or a signed-in rep. **The largest unverified surface in
 > the package**, and I explain in iteration 161 why I could not close it.*
@@ -119,7 +120,7 @@
 > **All five of the document fixes this banner used to list here — T38, T39, T40, T41, T42 — are
 > done**, along with T43 and T45. Checked at 00:55 against the live files with a whitespace-normalised
 > match rather than `grep`, because each of those phrases can wrap a line. **What is left for an agent
-> is T48 and T49**, both immediately below.
+> is T49**, immediately below.
 >
 > ### Two constraints anyone editing should know
 >
@@ -189,66 +190,28 @@ passed because it tested the snapshot its author could see.
 **Their framing is better than mine.** I filed it as a routing gap with a test attached; they filed it as
 **a guard whose opening sentence claimed a property it did not test**, which is the part that generalises.
 
-### T48. `agent/sol.md:458` is the third sibling of the `SOL_THINKING` fix, and it is the one a reviewer reads
-
-*It120 fixed `chat.ts:62` and `.env.example`. **This is the third copy** — the pattern where the last one
-gets missed, exactly as T41's phrase had three. And unlike the other two, this file is **a named brief
-deliverable and the live voice prompt**. One table row. Numbers below are measured, not estimated.*
-
-**The row now:**
-
-> `| Thinking on the chat channel | env `SOL_THINKING=adaptive` (default) or `disabled`. Measured:
-> disabling it does **not** speed up the first token, it improves tool selection |`
-
-**Two things wrong with it.**
-
-1. **It presents `adaptive` as the operative setting.** *"(default)"* is true of the library and of
-   `chat.ts:67`, but **production ships `disabled`** — which is what `chat.ts:62` and `.env.example:47` now
-   say in as many words after It120. A reviewer reading the agent config concludes the live system runs
-   adaptive.
-2. **"it improves tool selection" has an ambiguous antecedent.** On the natural reading, *disabling*
-   improves tool selection; `chat.ts` says **adaptive** *"buys better tool choice"*. Either way the row
-   omits the one thing that matters: **`disabled` ships, and the reason is behavioural, not latency.**
-
-**The replacement, measured at +129 characters:**
-
-> `| Thinking on the chat channel | env `SOL_THINKING`. **Production ships `disabled`** -- slower to first
-> token, and the only setting with zero behavioural violations across the four adversarial scenarios.
-> `adaptive` is the library default; with it on, Sol created an escalation and did not tell the guest |`
+### T48 — SHIPPED (It122), and the whole chain is back in sync. Verified independently at 01:25.
 
 ```
-compiled now      29,655   margin 345
-compiled with fix 29,784   margin 216   delta +129   truncated: false
+agent/sol.md -> compileInstructions   29,784   margin 216   truncated: false
+exports/telnyx-assistant.json         29,784
+LIVE Telnyx assistant (GET)           29,784
+   compile === export === live : true
+   25 tools match · greeting matches
+   "Production ships `disabled`" is IN the live voice prompt
 ```
 
-**This region is NOT inside a `voice:exclude` block**, so the edit changes the compiled prompt: it needs a
-`--refresh`, and the export must be re-exported so `exports/telnyx-assistant.json` still matches live.
-*(I verified all three were byte-identical at 29,655 in iteration 158; do not leave them diverged.)*
+**They did the whole thing, not just the row:** the edit, the `--refresh`, and the re-export. My +129 /
+29,784 / margin 216 numbers matched to the character, and they measured before and after rather than
+trusting them.
 
-#### Do NOT try to buy budget by wrapping section 7 — I measured it and it truncates
+**They also re-ran my trap independently and confirmed it:** wrapping `## 7` in `voice:exclude` to buy back
+2.7KB makes the compile **larger** — 30,033, margin **−33, truncated true**.
 
-The obvious move is *"`## 7. Changing a rule live` is operator documentation a guest on the phone never
-needs, so wrap the section in `voice:exclude` and get 2.6KB back."* **I tried it:**
+**And the re-exported file is still clean**, checked after the re-export rather than assuming the redaction
+survived it: **no `.env` value appears in it**, both `REDACTED_*` markers are intact, and there are **zero
+`sip:` URIs with a real local part**. Suite **677 green**.
 
-```
-fix + section 7 wrapped in voice:exclude
-  compiled 30,033   margin -33   truncated: TRUE
-```
-
-**It goes over the hard cap and the live prompt loses whatever sits at the end of the file.** The cause,
-verified: **section 7 contains an opening `<!-- voice:exclude -->` at +1863 with no closing marker inside the
-section** — its partner is further down the file. `STRIP_BLOCK` is a non-greedy regex that pairs markers in
-document order, so a new opener at the section start pairs with the *existing block's* closer and the
-boundaries stop meaning what you think.
-
-> **The general hazard, worth more than this task:** `voice:exclude` blocks in `agent/sol.md` **span section
-> boundaries**, so *"is this text in the voice prompt?"* cannot be answered by looking at the section. It can
-> only be answered by running `compileInstructions`. **Anyone wrapping a region must measure the compile
-> before and after**, which is what the banner already says and what this proves.
-
-**Check when done:** the row names `disabled` as what production ships and gives the behavioural reason;
-`compileInstructions` reports **29,784, margin 216, not truncated**; a `--refresh` has run; the committed
-export matches live again.
 
 ### T49. 677 tests are green while `agent/sol.md` no longer describes the agent that answers the phone
 
@@ -416,7 +379,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 ---
 
-# ▶ OPEN WORK — three things for Enrique to DO, two decisions that need no action, and T48/T49 for an agent.
+# ▶ OPEN WORK — three things for Enrique to DO, two decisions that need no action, and T49 for an agent.
 
 *Everything below this section is closed, or evidence.*
 
@@ -432,7 +395,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > edits this next: **when you close a task, delete its entry from this screen in the same edit.** The
 > record lives in the verification log; it does not need a second home above the work.
 >
-> **What remains for an agent is T48 and T49.** What remains for Enrique is the items in the
+> **What remains for an agent is T49.** What remains for Enrique is the items in the
 > table below, and every one of them now also appears in `HUMAN_INTERVENTION.md` — items 1 and 4
 > reached it at 00:05 in the update block at **line 63**, which closed the routing gap iteration 156
 > filed T45 for.
@@ -1638,6 +1601,171 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 164, 01:35 EST — verified the one document Enrique reads *while presenting*, line by line, and it is correct
+
+#### Why the cheat sheet and not something else
+
+`docs/demo-cheatsheet.md` is 41 lines and it is the only deliverable read **live, in front of the panel,
+under pressure**. An error anywhere else costs a reviewer's confidence later; an error here costs Enrique
+thirty seconds of visible confusion mid-beat. **It has also been wrong twice** — It107's log is titled *"the
+cheat sheet's $45 row says the opposite of what happens, for the second time."* So it earns the check.
+
+#### The five guest rows, against the provided CSV
+
+| row says | `data/solstice-guest-profiles.csv` says |
+|---|---|
+| R55004 Chen, **Platinum**, Denver, **Jul 20–23** | Chen, Platinum, SOL-DEN, **2026-07-20 → 07-23**, Confirmed |
+| R55005 Franklin, Silver, Nashville, **Cancelled** | Franklin, Silver, SOL-NSH, **Cancelled** |
+| R55006 Webb, **Gold**, Tampa, **Checked-in**, Suite | Webb, Gold, SOL-TPA, Checked-in, **Suite** |
+| R55001 Bennett, Silver, Chicago, **Jul 14–17** | Bennett, Silver, SOL-CHI, **2026-07-14 → 07-17** |
+| R55003 Subramaniam, **Gold**, Austin, **Jul 18–21** | Subramaniam, Gold, SOL-AUS, **2026-07-18 → 07-21** |
+
+**All five exact**, including every date.
+
+#### The $45 row, driven against production
+
+The row makes four separable claims. All four hold:
+
+```
+POST /api/tools/check_comp_authority   R55006
+  $45  authority_required front_desk   escalation_required false   may_promise true
+  $50  authority_required front_desk   escalation_required false   remaining $0.00
+  $55  authority_required agm          escalation_required true    authority_exceeded
+  [minibar $45 + late housekeeping $25]
+       total_display $70.00            authority_required agm      escalation_required true
+```
+
+**$50 is inclusive** — the boundary behaves the way the sentence implies rather than the way an off-by-one
+would.
+
+**And the quoted sentence is verbatim.** The cheat sheet promises the tool prints *"minibar charge $45.00 +
+late housekeeping $25.00 = $70.00. That exceeds the $50.00 per-stay front-desk authority"*. The tool returned:
+
+> *"**Policy 7 requires the items to be added up before authority is tested: minibar charge $45.00 + late
+> housekeeping $25.00 = $70.00. That exceeds the $50.00 per-stay front-desk authority**, so it needs AGM or GM
+> sign-off the same day. Present it as being put to the manager, never as approved."*
+
+Word for word, plus a Policy 7 preamble and a closing instruction the cheat sheet did not promise. **A
+deliverable that under-quotes what the system says is the right direction to be wrong in.**
+
+#### The directive, and the ladder behind the other beat
+
+`R55006`'s `internal_notes` in the file Enrique was sent: *"Guest disputes a $45 minibar charge on 2026-07-11
+folio, says minibar was untouched. **Do not adjust folio directly -- escalate to property AGM for review.**"*
+Exactly as quoted. **So the cheat sheet's point stands and is the interesting one:** at $45 the tool says
+`escalation_required: false`, and Sol escalates anyway — **the escalation comes from the customer's own
+per-reservation directive overriding a generic threshold**, not from the money.
+
+And the R55004 beat rests on an inference the row does not spell out, so I checked it:
+`ROOM_CLASS_LADDER = ['Standard Double', 'Standard King', 'Deluxe King', 'Suite']` and R55004 is booked
+**Deluxe King** — so *"then ask for a suite"* is exactly the next class up, which is what makes *subject to
+availability* the honest answer rather than a dodge. **The row is right for a reason it does not state.**
+
+#### Nothing to fix, and that is the finding
+
+**No task filed.** Seventeen separable claims checked across data, production and source; all seventeen hold.
+The document that would cost the most to get wrong is the one I found nothing in — which is worth recording
+precisely because the last two times anyone looked, it was wrong.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Last valid check 20:26 (Tester); **not re-provable by me** | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique — **do** |
+| 3 | **T21** — two rows, cascade count first | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| T49 | Pin compile === committed export | **CLAIMED It123** |
+| — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
+
+Inbox empty. No lock held. Tester silent **5h03m**. **The plan is accurate and correctly ordered.**
+
+### Iteration 163, 01:30 EST — the chain is back in sync, the integration recommendation still holds, and a coarse grep nearly invented a defect in it
+
+#### T48 closed, and I verified the part that mattered rather than the part I filed
+
+```
+agent/sol.md -> compileInstructions   29,784   margin 216   truncated: false
+exports/telnyx-assistant.json         29,784
+LIVE Telnyx assistant (GET /v2/…)     29,784
+   compile === export === live : TRUE
+   25 tools match · greeting matches
+   "Production ships `disabled`" is IN the live voice prompt
+```
+
+**They did the whole thing** — the row, the `--refresh`, and the re-export — and my measurements matched to
+the character. They also re-ran the §7 trap independently and confirmed it (**30,033, margin −33, truncated
+true**).
+
+**And I checked the re-export for credentials rather than assuming the redaction survived it**, because the
+file changed by −1,295 bytes while the instructions grew by +129: **no `.env` value appears in it**, both
+`REDACTED_*` markers intact, **zero `sip:` URIs with a real local part**. Suite **677 green**.
+
+> **T49 is now the only open agent item, and tonight is its argument.** For roughly twelve minutes the source
+> and the phone agent disagreed and **the full suite stayed green the entire time.** It resolved because an
+> agent was awake and careful, not because anything would have said so.
+
+#### Re-verified the integration recommendation, a named deliverable last checked ten hours ago
+
+Its sharpest self-referential claim is the kind this project keeps getting burned by — **an exact count plus
+an exclusivity**:
+
+> *"every read of the provided data on the request path goes through one file — `netlify/functions/_lib/data.ts`
+> holds all **seven** imports of `data/generated/*.json`, and nothing that serves a request touches them
+> directly"*, with one stated exception: *"**One file outside the seam reads the JSON, deliberately** —
+> `scripts/show-verdict.ts`."*
+
+**Both halves hold.** `_lib/data.ts` has exactly **seven** `import … from '…/data/generated/*.json'`
+statements, lines 26–32. And `scripts/show-verdict.ts:14` is the only other real read.
+
+#### The part worth recording is how close I came to filing a defect against it
+
+My first sweep counted `data/generated` **string occurrences** per file and produced this:
+
+```
+8  netlify/functions/_lib/data.ts      <- "seven" looked wrong
+5  scripts/data/build.mjs
+2  netlify/functions/group/_deps.ts    <- on the request path!
+1  src/lib/rules/index.ts
+1  netlify/functions/_lib/roomTypes.ts <- a function lib!
+1  scripts/show-verdict.ts
+1  scripts/data/seed.mjs
+```
+
+That reads as *"the doc says seven and there are eight; it says one file outside the seam and there are
+three on or near the request path."* **A confident, wrong, reader-facing finding against a brief
+deliverable.**
+
+**Every one of those extra hits is a comment or a label string.** `data.ts`'s eighth is its own header
+comment on line 1. `group/_deps.ts:9` is a doc comment and `:115` is a display name. `roomTypes.ts:22` is a
+comment. And `src/lib/rules/index.ts:18` is a comment that says ***"No data lives here"*** — a line that
+states the opposite of what my count implied about it.
+
+> **Fifth time this session a coarse instrument nearly became a false claim** — the hand-rolled compiler, the
+> "any env value is a secret" leak scan, the line-oriented grep over a wrapped phrase, the zero-row RLS probe,
+> now a string count read as an import count. **The difference this time is only that I looked at the four
+> hits before writing the entry.** The rule that keeps working: **open the lines, do not count them.**
+
+#### Nothing else changed
+
+Inbox empty. Lock **held by another agent** — not mine to take, and I did not. Tester silent **4h58m**;
+`agents/tested.log.md` unchanged since 2026-09-25 20:26:34 EDT.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Last valid check 20:26 (Tester); **not re-provable by me** — iteration 161 | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique — **do** |
+| 3 | **T21** — two rows, cascade count first | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| T49 | Pin compile === committed export. **The only open agent item** | any agent |
+| — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
+
+**The plan is accurate and correctly ordered.**
 
 ### Iteration 162, 01:25 EST — 677 tests green while the source and the phone agent disagree, and a guard born from my last finding fired during the edit it was written for
 
