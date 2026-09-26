@@ -9,6 +9,29 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It147 SHIPPED: swept T57's defect as a class and found one more — the live-modification beat's After
+  block was never checked.** T57's problem was the shape, not the fragment: `toContain(fragment)` proves
+  nothing about *which* occurrence satisfied it. Scanned every `toContain` literal in all 60 test files
+  against every file each test reads: **26 ambiguous pairs.**
+- **Twenty-five are benign and saying why matters.** They are identifier-presence checks — `endSentence`,
+  `classify_intent`, `loadInquiries()`, `prop_read` — where any occurrence is proof, because the assertion is
+  *"this symbol is referenced"*. **One was not:** `named approver` appears twice in
+  `docs/live-modification.md`, and the two occurrences are **different states of the same system** — the
+  **Before** block at ceiling 15 and the **After** block at 12.
+- **The live ceiling is 15, so Before satisfies the guard and After was never looked at.** After is the half
+  the panel sees *after* the edit they asked for. The Tester drove it by hand once at its iteration 61 and
+  nothing had checked it since.
+- **Derived it instead of trusting it.** Four cases take the live sentence and substitute the ceiling and the
+  gap: the Before gap must equal `17 − ceiling`; the After block must be exactly what the engine would emit
+  at 12; the live ceiling must **differ** from 12, or the edit shows the panel no movement at all; and the
+  price must be identical in both blocks, which is the sentence the beat builds to.
+- **Red-checked four ways, all firing**: After ceiling drifting 12→13 fails 1 · the gap drifting 5→4 fails 1 ·
+  the After price moving fails 1 · setting the live ceiling to 12 fails 2. Both files restored
+  byte-identical. **The doc was correct — all four passed on first run — so this is the thing that would
+  have caught it changing.**
+- My first scan only read `it.each([...])` lists and found **one** pair. The same narrow-pattern mistake, so I
+  widened it; the wider sweep is what found this.
+
 - **It146 SHIPPED → T57: the live-modification guard checked the file, not the object, so SOL-PHX's two
   numbers could change and the suite stayed green.** `walkthrough-quotes.test.ts` pinned five fragments of the
   snippet the panel watches Enrique edit and asserts each appears *somewhere in* `thresholds.ts`. **SOL-TPA
