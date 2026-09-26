@@ -9906,3 +9906,109 @@ Caught it by re-measuring without the prefix rather than by reasoning about the 
 rule — **print the population before printing the verdict** — applied one iteration after writing it down.
 
 `npx tsc -b` clean. `npx vitest run` **903 tests / 62 files** green (up 5).
+
+---
+
+## It154 — the commands the documents hand people, and a sentence on the stage beat that was one third wrong
+
+Third iteration with an empty board. `documented-commands.test.ts` pins every `npm run X` in the followed
+documents to a real script and says so in its own scope note. **It does not look at `npx`** — and `npx` is
+the riskier form: a missing `npm run` fails in a second with a clear error, while a missing `npx <tool>`
+**succeeds after downloading the package**, which needs the network and takes minutes.
+
+Measured across the twelve reader-facing documents:
+
+```
+npx vitest      declared in package.json, binary linked
+npx vite-node   binary linked -- but ONLY as a transitive dependency of vitest@2.1.9
+npx netlify     not installed, and SUBMISSION.md says so, with the cost
+```
+
+### The middle line is the one that matters
+
+`npx vite-node scripts/show-verdict.ts -- INQ-2009` **is** the live-modification beat — the one edit the
+brief says the panel will ask to watch — and the sentence under it promised *"No network, no model, under a
+second."*
+
+The no-network half is true today only because vitest happens to ship `vite-node` in its dependency tree:
+
+```
+solstice-fde@1.0.0
+`-- vitest@2.1.9
+  `-- vite-node@2.1.9
+```
+
+`package.json` does not mention it. If a vitest upgrade ever restructured that, `npx vite-node` would
+change from running a linked binary to **fetching a package from the registry** — on the machine in front
+of the panel, mid-demo, with nothing in the repository to notice. Nothing is broken today; the thing that
+would catch it breaking did not exist.
+
+`npx netlify` is the same shape handled correctly, which is what gave the guard its exemption: SUBMISSION.md
+already states *"`netlify-cli` is deliberately not a project dependency, so on a machine without it the
+first run installs it first, which is minutes rather than seconds."* So the rule is **installed, or say you
+are not** — satisfied by honesty as well as by installing.
+
+### And the third of those three claims was false
+
+I timed the command rather than trusting the sentence:
+
+```
+run 1: 1334 ms
+run 2: 2213 ms
+run 3: 1252 ms
+```
+
+**Never under a second, and once over two.** A presenter reads that line and may repeat it to the panel,
+who are watching the screen — contradicted on the highest-attention beat, over a detail that buys nothing.
+Nobody minds a second and a half.
+
+The page now says: *"No network and no model — both checked, and the second one is the point. It takes a
+second or two: measured at **1.3s, 2.2s and 1.3s** across three runs here, so do not promise the panel it is
+instant."* The one true-and-important claim keeps its emphasis, the false one is replaced by the
+measurement, and the reader is told what not to say.
+
+Swept for the same overclaim elsewhere: *"under a second" / "sub-second" / "instantly"* across all twelve
+documents returned **exactly one occurrence**, the one I fixed.
+
+### Guarded, seven cases
+
+The npx rule (installed-or-disclosed, with vitest as a live positive case proving the resolver works and
+netlify as a live example keeping the **exemption path itself** tested), and the three claims on that
+sentence: no-network and no-model must stay, no sub-second claim may return, and a measured figure must
+remain — because a correction that deletes the number is weaker than the wrong number, leaving the
+presenter nothing to say.
+
+```
+"under a second" restored                    2 failed
+softened to "instantly"                      2 failed
+the measured figure deleted                  1 failed
+the no-network promise dropped               1 failed
+the netlify disclosure removed               2 failed   <- including the exemption-path case
+restored                                     7 passed
+docs/live-modification.md, SUBMISSION.md     byte-identical
+```
+
+### Caught myself writing the defect I removed four iterations ago
+
+The first draft of the sub-second case collected `m[0]` from `matchAll` and then **re-ran `matchAll` inside
+the filter to look the offset up by index** — correlating two passes positionally. That is the shape
+`agents/README.md` bans and It150 removed from three other guards, reintroduced by me in a new file, in a
+slightly cleverer disguise. It worked, and it was one edit away from not working. Rewritten as a single
+pass judging each match by `m.index`, with the near-miss in the comment.
+
+### Two instrument notes, the second one serious
+
+**A skipped mutation is not a passing mutation.** My first red-check reported `SKIPPED (anchor did not
+match)` for the netlify disclosure, because I had guessed its line wrapping instead of reading it. Four of
+five mutations firing looks like a clean sweep if you do not read the fifth line — and the skipped one was
+the *exemption path*, the only case that proves the guard is a check rather than a hole. Re-anchored on text
+taken out of the file, and it fires 2.
+
+**A red-check left a deliverable mutated.** The Python retry died on a `cp1252` decode error while capturing
+vitest's output, after writing the mutation and before restoring it — so `SUBMISSION.md` sat modified.
+Caught it in the same breath, restored from the snapshot, and confirmed byte-identical to both the snapshot
+and HEAD. **Then moved the mutation loop out of Python**: the mutation is applied by a script, but the run
+and the restore are separate bash steps, so no interpreter failure can leave a deliverable edited. Doing
+destructive edits inside a process that can die between write and restore was the actual mistake.
+
+`npx tsc -b` clean. `npx vitest run` **910 tests / 63 files** green (up 7).

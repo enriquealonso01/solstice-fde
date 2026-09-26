@@ -41,7 +41,7 @@ its first attempt at this exact edit.
 npx vite-node scripts/show-verdict.ts -- INQ-2009
 ```
 
-No network, no model, under a second. Run it before and after.
+No network and no model — both checked, and the second one is the point. It takes a second or two: measured at **1.3s, 2.2s and 1.3s** across three runs here, so do not promise the panel it is instant. Run it before and after.
 
 **Before** — real output, captured 2026-09-25:
 
