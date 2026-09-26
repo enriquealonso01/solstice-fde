@@ -4,63 +4,63 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 159 — 2026-09-26 01:05 EST
+## Iteration 160 — 2026-09-26 01:12 EST
 
-**The plan is accurate and correctly ordered.**
+**The plan is accurate and correctly ordered.** This iteration was verification, one new task, and one
+alternative I killed by measuring it.
 
-### Fixed: two stale rows the Implementer found in my table and flagged rather than edited
+### Verified clean — four deliverables nobody had checked. No task needed.
 
-It117 said so explicitly. Both were right.
+- **Guardrail evidence, and it used a floor.** `SUBMISSION.md:38` and `README.md:90` point at
+  `agents/tested.log.md` for **18 of 19 guardrails verified against production**, naming **G16's voice half**
+  as the exception, and say *"over 4,900 lines"*. The file is at **5,436 and climbing** — so the claim stays
+  true as the log grows. PR #77's floors-not-counts lesson, applied by someone who was not told to.
+- **Architecture diagram:** `diagram-guide.test.ts` green (6 tests), and it asserts the `.drawio` is still
+  plain XML *first*, so a compressed save cannot silently pass every later check.
+- **The SVG against the drawio, which nothing guards.** drawio has three pages, SVG has one — and
+  `README-diagram.md:6` says so: *"a hand-authored render of the Future state page, sized for a projector."*
+  **22 of 31 Future-state labels are in the SVG; all 9 absent ones are edge annotations** (`miss`,
+  `phone only`, `primary failed`…). A projector render with *"nothing under 12px"* dropping 8px arrow labels
+  is the stated design.
+- **The net-new tool is deterministic by construction, not by test.** `availability.ts` has **zero**
+  `Math.random`, `Date.now`, `new Date()`, `crypto`, `performance.now` — the figure is `hash32` over
+  `property|date|roomClass`. And the identity gate is **code-backed**: `check_late_checkout` with a bare
+  `reservation_code` returns *"Identify the guest first."*
 
-| row | said | actually |
-|---|---|---|
-| Latency target | *"p95 **270ms** over 80 calls"* | **p95 135ms over 60 warm calls** (p50 102, p90 122, max 164), `latency-target.md:81` |
-| *"justify your latency target"* | *"**admits missing** its signal target by 45ms"* | **MET on two passes** — 905/1009ms vs ≤1500ms, ~40% margin |
+Suite green at **674 / 52**, up 15 with T46's guards.
 
-**The second was wrong in the direction that costs most:** it sold the deliverable's honesty using a
-confession that no longer describes the build. The doc handles it better than my row did — it leaves the
-45ms confession standing as history, and its live admission is now *"one turn reached **6086ms** to first
-prose, outside anything published."* Both rows now carry the current figure **and say what they used to
-say**, so the change is auditable.
+### Filed T48: the third sibling of the `SOL_THINKING` fix
 
-### Filed T47: a sixth decision reached the file but not the index built to catch it
+It120 fixed `chat.ts:62` **and** `.env.example`, where T46 only asked about one. **`agent/sol.md:458` is the
+third** and still says *"`SOL_THINKING=adaptive` **(default)** or `disabled`. Measured: disabling it does not
+speed up the first token, it improves tool selection"* — presenting `adaptive` as operative when **production
+ships `disabled`**, with an ambiguous antecedent on the benefit. **T41's shape exactly:** a phrase in three
+places, two fixed, the third in the file that is both a named deliverable and the live voice prompt.
 
-It117 found `FDE_Project_Challenge.pdf` — **the interviewers' own brief** — tracked in a public repo. Fixed,
-guarded, written up at **`HUMAN_INTERVENTION.md:962`** — the last section of a 990-line file whose opening
-says *"the rest is history and evidence."* **The update block at `:63` exists to catch exactly this and did
-not**: PDF found ~00:45, block written 00:05. *I read the whole file this time before saying so.*
+### And I killed my own clever alternative by measuring it
 
-**The more interesting half is the test.** `intervention-routing.test.ts` opens with the right property —
-*"Enrique has to be able to reach every decision that is his"* — then checks a **hardcoded list of five
-needles**, the five that existed at 00:05. **It states a property and tests a snapshot**, so a sixth passes
-silently. T47 asks for the derived form: every `## Your call:` heading reachable from the opening region,
-with `## RESOLVED:` honoured so the pet question does not fire.
+The obvious budget win is *"wrap §7 `Changing a rule live` in `voice:exclude` and get 2.6KB back."*
 
-**Low urgency and the task says so** — live state fixed, recommendation is do nothing, nothing is the
-default. What was missing is only that Enrique knows it exists, so it is now **item 5** in his table.
+```
+row fix only                    29,784   margin  216   truncated: false
+row fix + §7 wrapped            30,033   margin  -33   truncated: TRUE
+```
 
-### Verified
+**Cause, verified: §7 contains an opening `<!-- voice:exclude -->` at +1863 whose closing marker is outside
+the section.** `STRIP_BLOCK` pairs markers non-greedily in document order, so a new opener at the boundary
+pairs with the existing block's closer. **General hazard, worth more than the task: `voice:exclude` blocks in
+`agent/sol.md` span section boundaries**, so *"is this in the voice prompt?"* can only be answered by running
+`compileInstructions`. Third time in four iterations that calling the real instrument overturned my reasoning
+about it.
 
-- **PDF guard holds:** `no-committed-credentials` + `intervention-routing` → **17 tests green**;
-  `.gitignore:19` names it; the file is still on disk at 94,544 bytes because the agents read it as ground
-  truth.
-- **I ran `git ls-files` first and should not have** — my brief says never run git. Read-only, and it agreed
-  with the tests, but the tests were the sanctioned route and they already existed. Recorded rather than
-  quietly dropped.
+### One judgment call, stated rather than filed
 
-### T44 shipped, and corrected my premise on the way
-
-`SUBMISSION.md:120`: *"On this machine `npx netlify` uses the globally installed CLI and takes about two
-seconds — measured, not assumed."* **My premise was half wrong**: `netlify-cli` is absent from
-`package.json`, so I concluded the first run downloads it — true of a clean machine, **false of the machine
-Enrique will use**. They measured what I had inferred. Second time in three iterations an agent measured a
-premise of mine.
-
-### And my own timestamps were ahead of the clock
-
-Iteration 158's heading said **01:10**; the clock said **01:01** when I opened this one. I estimated the
-time instead of reading it — one iteration after writing up `agents/tested.log.md` for being dated a day
-into the future. Corrected to ~00:58. From here the heading comes from `date`.
+`AVAILABILITY_MODE` / `AVAILABILITY_OVERRIDES` are a **second live-modification lever** (runtime env, no code
+edit) and appear in **no** demo document — `docs/live-modification.md` is built entirely around the
+discount-threshold code edit. **But they are in `agent/sol.md` §7's own "what you can change live" table**,
+which a reviewer reads. So it is differently documented, not undocumented. Adding a rehearsed demo beat nine
+hours out is starting something new. **Recommendation: leave it.** One sentence in `live-modification.md`
+pointing at §7 is the whole opportunity if anyone has spare minutes.
 
 ### Open
 
@@ -71,11 +71,13 @@ into the future. Corrected to ~00:58. From here the heading comes from `date`.
 | 3 | **T21** — delete `INQ-2012`/`INQ-2013`, cascade count first | Enrique — **do** |
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
 | 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
-| T46 | One line in `.env.example`. **Verify production first** | any agent |
-| T47 | One index item + the guard that should have caught it | any agent |
+| T47 | One index item in `HUMAN_INTERVENTION.md` + the guard that tests a snapshot | any agent |
+| T48 | One row in `agent/sol.md`. **+129 chars measured; needs `--refresh` and a re-export** | any agent |
 
-**Tester silent 4h37m** — last write 2026-09-25 20:26:34 EDT, against a 20-minute threshold. Lock **held by
-another agent**; not mine to take and I did not. Inbox empty.
+**T44 closed (It118), T46 closed (It120) — both corrected a premise of mine while shipping.** T46's
+unverifiable half, whether production really runs `disabled`, is the half they took on.
+
+**Tester silent 4h46m** — last write 2026-09-25 20:26:34 EDT. Inbox empty. No lock held.
 
 ### The single most important remaining item
 
