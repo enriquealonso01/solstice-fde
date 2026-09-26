@@ -166,6 +166,52 @@ projection advice is unchanged; the split still supports the claim that our own 
 all chat.
 
 
+### T45. Two of Enrique's four decisions exist only in a file he is never told to read
+
+*The highest-value thing left, and it is not a defect in anything — it is a routing gap. **I own
+`plans/06-master-plan.md` and cannot fix it**, because the fix belongs in `HUMAN_INTERVENTION.md`,
+which the Implementer and Tester append to.*
+
+**The matrix.** Four items Enrique must decide before sending, against the three documents he is
+actually directed to:
+
+| | `HUMAN_INTERVENTION` short list | `SUBMISSION` "Before sending" | runbook "Before they join" | this plan |
+|---|---|---|---|---|
+| **1. `drop policy` ×3 (RLS)** | — | — | — | **only here** |
+| 2. Telnyx top-up | yes | yes | yes | yes |
+| 3. T21, delete two rows | yes | — | — | yes |
+| **4. SIP credential decision** | — | — | — | **only here** |
+
+**Item 2 is in all four. Items 1 and 4 are in none of his.**
+
+**Why it happened, and it is nobody's mistake.** The short list is dated **2026-09-25 15:30**. The
+RLS hole was found at **17:52** (PR #62) and the SIP credential at **~22:30**. Both were written up
+properly — `prop_write` at `HUMAN_INTERVENTION.md:559` and `:758`, the rotation options at `:678` —
+**but the short list was never reopened**, and it tells the reader *"Read this block; the rest is
+history and evidence."*
+
+**Do this: append a dated update to `HUMAN_INTERVENTION.md`'s short list.** Not an edit of the 15:30
+block — that file is append-only by protocol and its history is worth keeping. Something like:
+
+> **Update, 2026-09-26 — two items found after the 15:30 list above.**
+>
+> **A. The approval gate can be bypassed from the browser.** A signed-in `group_sales` rep can
+> PATCH `status` to `approved` with the public anon key; the gate then stops refusing. **Three
+> lines in the Supabase SQL editor, project `bcrivjgqrxahgxyiqlpr`** — the `drop policy`
+> statements at line 559. **Full entry, safety reasoning and recovery at line 512 onward; if you
+> apply it, delete the three disclosures listed at line 753.**
+>
+> **B. A Telnyx SIP credential *username* is in git history.** Three options at line 678; **the
+> recommendation is option 1, accept it and rotate after the demo**, because rotating tonight
+> takes out the warm transfer *and* the supervisor WebRTC leg, which are both beat 3.
+
+**Keep it to that.** The detail already exists further down and is good; **the short list's job is
+to make sure he knows the decisions exist**, not to restate them.
+
+**Check when done:** `HUMAN_INTERVENTION.md`'s short list names the RLS paste and the SIP decision,
+with line pointers into the existing entries; the 15:30 block is unchanged; nothing is duplicated.
+
+
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
 *Each of these is a place where the system is **correct** and a reviewer will reasonably want to
@@ -267,7 +313,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 ---
 
-# ▶ OPEN WORK — all four remaining items are Enrique's. Every agent item is closed.
+# ▶ OPEN WORK — four items are Enrique's; **T45** routes two of them to where he will see them.
 
 *Everything below this section is closed, or evidence.*
 
@@ -1551,6 +1597,71 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 156, 00:36 EST — two of the four decisions exist only in a file Enrique is never told to read
+
+#### The matrix, which is the whole finding
+
+| | `HUMAN_INTERVENTION` short list | `SUBMISSION` "Before sending" | runbook "Before they join" | this plan |
+|---|---|---|---|---|
+| **1. `drop policy` ×3 (RLS)** | — | — | — | **only here** |
+| 2. Telnyx top-up | yes | yes | yes | yes |
+| 3. T21, delete two rows | yes | — | — | yes |
+| **4. SIP credential decision** | — | — | — | **only here** |
+
+**Item 2 appears in all four documents. Items 1 and 4 appear in none of his.**
+
+`plans/06-master-plan.md` is mine. `agents/README.md` lists it as *Planner writes, others read* —
+**it is an agent coordination file and Enrique is never directed to it.** So if he follows the three
+documents that are addressed to him, he tops up Telnyx, deletes the two rows, runs `demo:tidy`, and
+**never learns that the RLS hole can be closed with three lines or that there is a credential
+decision to make.**
+
+#### Nobody made a mistake, which is why it survived
+
+The short list is dated **15:30**. The RLS hole was found at **17:52**, the SIP credential around
+**22:30**. **Both were written up properly** — `prop_write` at `HUMAN_INTERVENTION.md:559` and
+`:758`, the three rotation options at `:678`. The entries are thorough and correct.
+
+**The short list was simply never reopened** — and it says *"Read this block; the rest is history
+and evidence."*
+
+> **Every individual act here was right.** Two findings were investigated, documented, guarded and
+> disclosed. **The only thing nobody did was go back to the index**, and an index nobody reopens is
+> a filter that silently hides everything discovered after it was written.
+
+#### T45 filed, because the fix is not mine to make
+
+The repair belongs in `HUMAN_INTERVENTION.md`, which the Implementer and Tester append to. **T45
+asks for a dated update block, not an edit of the 15:30 list** — that file is append-only by
+protocol and its history is worth keeping — naming the two items with line pointers into the entries
+that already exist. **The detail is fine where it is; the short list's job is to say the decisions
+exist.**
+
+#### And the consequence if it is never done is survivable
+
+**The RLS hole is disclosed** in the README, `SUBMISSION.md:39` and `where-this-goes.md` — PR #95
+made sure of that. So shipping without applying it is a stated open defect, which was always a
+defensible outcome. **What would be lost is the choice**, not the honesty.
+
+The credential decision is likewise recorded, and its recommendation — **accept it, rotate after the
+demo** — is what happens by default if nobody does anything.
+
+**So this is a routing fix worth making and not an emergency**, and I have said so in the task
+rather than dressing it up.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — not in any document addressed to him | Enrique |
+| 2 | **Top up Telnyx to $20+** — portal.telnyx.com, Billing, about $30 | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — accept and rotate after the demo | Enrique |
+| — | **T45** route items 1 and 4 into the short list · **T44** one clause | Agents |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 155, 00:32 EST — the human's entry point does not contain the top item, and tells him the rest is history
 
