@@ -3865,3 +3865,47 @@ git stash pop
 Their work preserved, me on `main`. `git checkout -- <their file>` would have cleared the blockage and
 destroyed it — which is how 327 lines of the plan were nearly lost two iterations ago. The README now
 says exactly that, because "clear the blockage" is what one reaches for under time pressure.
+
+## It71 — T37: the rehearsed answer to Katie's own question had no inbound link
+
+**Verified T37's claim by grepping every deliverable, not by trusting it.** `docs/live-modification.md`
+is referenced from **nowhere at all** — and it is the rehearsed script for the moment the brief asks
+about by name: *"The panel will ask you to modify the system while they watch."* The Phoenix discount
+ceiling, 15% → 12%, with the edit, the command and the real captured output. A reviewer browsing the
+repository had no path to it.
+
+`docs/role-walkthroughs.md` — 304 lines, the longest document after the plan, and the best answer to
+"explain it to a non-technical audience" — was reachable only from a secondary list in
+`SUBMISSION.md`. Both now sit in the README's *"Where each deliverable lives"* table, which is the
+routing table for everything else, and `live-modification.md` joins the SUBMISSION list it was the
+only one of four missing from.
+
+### I added the bullet before fixing the count, on purpose
+
+T37 warns that adding a bullet means changing *"Three things"* to *"Four"*, and that
+`list-counts.test.ts` will catch it. **That guard is mine, and until now I had only ever seen it pass
+on synthetic input** — the Tester red-checked it by extracting the regex rather than mutating a shared
+file, which was the right call for them but is not the same as watching it fire on real work.
+
+So I added the bullet, left the count wrong, and ran it:
+
+```
+SUBMISSION.md:46 says "Three things" and lists 4
+```
+
+First genuine catch. A guard whose only evidence is a test of itself is a guard you are trusting on
+reputation.
+
+### One thing T37 did not ask for
+
+While checking the two new rows pointed at real files, I checked **every** relative link in both
+documents. None were broken — so this starts green, which I would normally treat as a reason not to
+add a test. I added it anyway, and the reasoning is the asymmetry: T37 exists because a document had
+**no inbound link**, and the mirror of that failure is a link pointing at a file that has since moved.
+A rename breaks it silently, in the first file a reviewer opens, and nobody re-reads a routing table.
+One pass over two documents against a dead click.
+
+Red-checked by renaming a target to `live-modifications.md`: *"README.md links to 1 path(s) that do
+not exist."*
+
+`npx tsc -b --force` clean. `npx vitest run`: **476 passed, 37 files**.

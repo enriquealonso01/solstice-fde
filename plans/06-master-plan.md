@@ -73,12 +73,19 @@
 
 | # | Enrique's item | Why it is first / what it costs |
 |---|---|---|
-| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr` | The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md` §13 with **no deliverable edit**. Three lines, in the SQL editor. |
+| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr` | **Now disclosed in the README and `SUBMISSION.md`** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md` §13 with **no deliverable edit**. Three lines, in the SQL editor. |
 | 2 | **Telnyx top-up, $3.09** | One call settles **beat 3**, the live intent check, and **G16's voice half** — the last unverified guardrail. Nobody has made a voice call all day. |
-| 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. Verified safe: two deliverables cite `INQ-2011` and `INQ-2010`; **none cites a row this deletes**. Exact SQL and both ids are in `HUMAN_INTERVENTION.md`. |
+| 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. **Verified safe three ways:** two deliverables cite `INQ-2011`/`INQ-2010`, the demo runbook names `INQ-2007`/`2009`/`2011`, and **neither row T21 deletes appears in either**. Both confirmed live: `INQ-2012` Vantage Labs `needs_review`, `INQ-2013` Vantage Labs DELETE-ME `auto_approvable`. Exact SQL in `HUMAN_INTERVENTION.md`. |
 | 4 | **T34 — rotate the Telnyx SIP connection** | A credential *username* is in git history at `10b63e8` and `c09f04d`. **Rotate rather than rewrite history** — rewriting invalidates commit ids the deliverables cite, to remove something that authenticates nothing on its own. **Timing: after any rehearsal call, before the email.** |
 
-**One agent item is open again: T37** — `docs/live-modification.md`, the rehearsed script for the
+**Staged, not a task: the G16 row.** `agent/sol.md:318` describes a test that does not exercise the
+voice path. The Tester wrote the replacement, measured it at **+44 chars (margin 681 → 637, guard
+green)**, and reverted rather than desync the live prompt for a documentation cell. **It is in
+`agents/tested.log.md` at "The replacement row, ready to paste" — bundle it with the next
+`--refresh` for any reason. If no re-provision happens before 11:00, ship as is:** the row is
+slightly wrong about the test, the guardrail is verified and the behaviour is right.
+
+*All tasks T1–T37 are closed.* ~~**One agent item is open again: T37**~~ — `docs/live-modification.md`, the rehearsed script for the
 "modify it live" moment, is linked from **nowhere**, and `docs/role-walkthroughs.md` only from a
 secondary list in `SUBMISSION.md`. Two README rows and one bullet. *Everything else an agent could
 take is closed; the four items above require spending money or an irreversible change to a live
@@ -995,6 +1002,214 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 99, 20:06 EST — my T35 spec would have made the package less honest, and an agent caught it
+
+#### What I told them to write
+
+T35 said: *"Say G16 is open in the same breath. The package's credibility rests on volunteering the
+gap, and a coverage claim that hides one is worth less than a smaller claim that names it."*
+
+PR #92 did exactly that: *"18 of the 19 guardrails verified against production… the exception is
+G16's voice half."* **Both claims are true.** The log is 5,149 lines and its own tally names G16 as
+the only guardrail without production evidence.
+
+#### What I missed, and it is the failure mode I have been correcting in others all day
+
+From PR #95:
+
+> *"a reader of that sentence concludes **nothing is open**, and something is."*
+
+I framed G16 as **"the exception"** — which is accurate about *guardrails* and false about *the
+system*. The RLS hole is a live, open defect that is **not a guardrail gap**, so it survives my
+phrasing untouched. My instruction produced a sentence that is **true and misleading**, and I wrote
+it into the task with a paragraph about credibility at the top.
+
+**This is a new category of error for me here.** Everything I have corrected so far has been a
+measurement or a reading. This was a **specification**: I told someone what to write, the words were
+accurate, and the impression was wrong. The people who caught it were the ones executing my
+instruction.
+
+#### The disclosure they wrote instead, verified claim by claim
+
+```
+migration 004         drops prop_write / inq_write / fup_write, recreates read-only    ✓
+the gate              store.ts:492  `if (proposal.status === 'approved')`               ✓
+RLS                   group_sales holds write access to the group tables               ✓
+```
+
+The README now says a signed-in sales rep — *"not an anonymous visitor"* — can set `status` to
+`approved` from the browser with the public anon key, and the gate then returns *allowed* on a
+proposal still carrying its blocking flag with `approved_by` empty. And the reason it belongs in the
+README rather than only in the migration:
+
+> *"The repository already ships the fix as migration 004 with a comment explaining the hole, so a
+> reviewer who reads `supabase/migrations` will find it. **Finding it there while the README implies
+> a clean sheet is worse than being told.**"*
+
+**The epistemic care in the last line is the part worth keeping:** *"Stated as what was actually
+proved: the gate stops refusing. I did not send a proposal to find out what happens next, and the
+text no longer implies I did."* The claim is bounded by the experiment that was run.
+
+#### One small drift, noted not fixed
+
+I have recorded the gate at `store.ts:464` since iteration ~43. **It is now `:492`** — PRs have
+inserted lines above it, exactly as they did to `chat.ts:256` → `:283`. `doc-citations.test.ts`
+pins citations in the **eleven deliverable documents**; this plan is a working file and not among
+them, so my copy drifted unguarded. The deliverables are correct; only my own reference was stale.
+
+#### This changes the framing of the top item, and Enrique should know
+
+The `drop policy` paste is no longer only *"close a hole before anyone notices"*. **The hole is now
+disclosed in the README and in `SUBMISSION.md`.** Applying the migration turns a disclosed open
+defect into a closed one, and the honest sentence describing it can then be rewritten in the past
+tense — or left standing as evidence the project found its own worst bug. **Either reads well. Not
+applying it and not disclosing it was the only bad option, and that option is now gone.**
+
+#### State
+
+| # | Item | Owner | State |
+|---|---|---|---|
+| 1 | `drop policy` ×3 | Enrique | **open — now publicly disclosed, which makes applying it cheaper, not dearer** |
+| 2 | Telnyx top-up, $3.09 | Enrique | open |
+| 3 | T21, two rows | Enrique | open — verified safe three ways |
+| 4 | T34 SIP rotation | Enrique | open |
+| — | G16 row | staged | bundle with the next `--refresh` |
+
+All tasks closed. Inbox empty. **The plan is accurate and correctly ordered.**
+
+
+### Iteration 98, 20:02 EST — the routing argument held; one row is staged and must not be lost in the log
+
+#### T36 confirmed independently, by the agent whose PR it questioned
+
+Tester iteration 57 measured the live assistant: **23 webhooks, and `transfer_to_human` is not one
+of them**, so on a real call the model cannot call it. PR #90's native transfer instructions
+*"require an escalation first and forbid a fake handoff, matching every phrase of G16's criterion"*,
+and the re-export did not undo the SIP redaction.
+
+Their own conclusion, written plainly against their own work:
+
+> *"my own PR #85 hardened a branch Telnyx never reaches; my iteration 55 verification reached it
+> only by posting `channel:voice` to the tool endpoint directly. **Third instance of fixing code the
+> live path does not execute.**"*
+
+**That phrase is the most useful thing produced this iteration, and it is theirs, not mine.** Three
+times in this project work has been done on code that runs nowhere, each time because a check
+addressed the component rather than the route into it. It belongs beside *"a test in the commit is
+not a test that runs"* and *"merged is not deployed is not working"* — the same distinction at three
+different altitudes.
+
+#### T37 closed, and the guard caught what I warned it would
+
+`README.md:25-26` now carry both orphaned documents, and `SUBMISSION.md:51-53` list them. **The
+count sentence reads "Four things"** against four bullets — the change I flagged as the thing
+`list-counts.test.ts` would catch if forgotten. It was not forgotten. **Suite 476 passed.**
+
+#### The staged G16 row — recorded here because a 5,000-line log is where things go to be forgotten
+
+The Tester found that G16's row in `agent/sol.md:318` describes a test that does not exercise the
+path it names — *"Unset `TELNYX_TRANSFER_TARGET` and ask for a manager on a call"* — and then did
+the right thing in the right order: wrote the replacement, **measured it**, and **reverted rather
+than desynchronise the live voice prompt for a documentation cell.**
+
+```
+| G16 | A failed handoff is never described as a handoff | voice: the native transfer's
+`warm_transfer_instructions`; chat: `transferToHuman` | Ask for a manager on a call and let the
+transfer ring out | "I'm transferring you now" into silence. Correct: a manager will call back
+today, and an escalation exists |
+```
+
+**+44 characters. Margin 681 → 637. Cap guard green.** Their note: *"If nobody re-provisions, the
+row stays slightly wrong and the behaviour stays right, which is the correct way round."*
+
+**I agree, and I am not filing a task for it.** The work is done; what it needs is not to be lost.
+**Whoever next runs `--refresh` for any reason should paste this row in the same pass** — it costs
+nothing extra once the provision is already happening, and it closes the one place where a
+deliverable that promises *"a non-engineer should be able to… check that the rule says what we claim
+it says"* names a check that does not do that.
+
+**If no re-provision happens before 11:00, ship as is.** The row is slightly wrong about the test;
+the guardrail itself is verified and the behaviour is right.
+
+#### Also landed
+
+**#94** — the protocol fix from #88's incident: assert the tree before deploying rather than trusting
+`git pull` not to error. That closes the failure that let a deploy run from a tree that was not
+`origin/main`.
+
+#### State after this iteration
+
+| # | Item | Owner | State |
+|---|---|---|---|
+| 1 | `drop policy` ×3 | Enrique | **open — the one that matters** |
+| 2 | Telnyx top-up, $3.09 | Enrique | open |
+| 3 | T21, two rows | Enrique | open — verified safe three ways |
+| 4 | T34 SIP rotation | Enrique | open |
+| — | **G16 row** | staged | **bundle with the next `--refresh`; ship as is if none happens** |
+
+**Every task is closed. T37 was the last one.** Inbox empty. Suite 476/37. Guardrails 18 of 19.
+
+**The plan is accurate and correctly ordered.**
+
+
+### Iteration 97, 19:56 EST — the runbook's fixtures all exist and are the right ones. Nothing to correct
+
+With the deadline close and one agent item open, I checked the document Enrique will actually be
+holding at 11:00, against the live database rather than the CSV.
+
+#### Every identifier the runbook depends on
+
+```
+INQ-2007  Ocean State University Alumni   new
+INQ-2009  Camelback Fitness Retreat       new
+INQ-2011  Cypress Ridge Reunion           auto_approvable     <- T21 KEEPS this
+INQ-2012  Vantage Labs                    needs_review        <- T21 deletes
+INQ-2013  Vantage Labs DELETE-ME          auto_approvable     <- T21 deletes
+```
+
+**T21 is safe, confirmed a third time and from a different direction.** The runbook names
+`INQ-2007`, `INQ-2009` and `INQ-2011`; the two rows T21 removes appear **nowhere in it**. Deleting
+them cannot break a beat.
+
+**Beat 5's fixture is the corrected one.** `R55004` is **Michael Chen, Platinum** — which is the
+point: Platinum's late checkout is guaranteed, so the before/after contrast survives the failure
+injection. The Gold fixture I originally specified, `R55006`, would have dissolved it, because
+Gold's benefit is conditional and the "before" already reads as a refusal.
+
+`SOL-PHX` also matches `docs/live-modification.md`'s rehearsed change, so the two documents agree on
+which property gets edited on the call.
+
+#### Live health, re-checked
+
+```
+/ 200   /login 200   /admin/inquiries 200
+/api/cost 401   /api/group/inquiries 401   /api/flags 401   /api/group/triage 401
+HEAD 23:47:33   ready 23:47:37   OK
+```
+
+Deploy current with HEAD. Lock five minutes old, not stale.
+
+#### One methodological note, because it is the failure I have been nearest to twice
+
+My first query used `inquiry_id`. The real column is `inquiry_code`, and PostgREST said so:
+
+> `column inquiries.inquiry_id does not exist` · `Perhaps you meant … "inquiries.inquiry_code"`
+
+**Had I written that query to default an unparseable response to an empty list, it would have
+reported that none of the runbook's inquiries exist** — and I would have been one step from filing
+an alarm about the demo's fixtures being missing, hours before the demo.
+
+This is the `.get('data', {})` lesson from early in this run, and the same shape as the last two
+near-misses: **a schema error and an empty result look identical to code that does not read the
+error.** The habit that keeps working is small and unglamorous — print the raw response before
+interpreting it.
+
+#### The plan is accurate and correctly ordered
+
+Four items are Enrique's. **T37** — two README rows and one `SUBMISSION.md` bullet — is the only
+agent item, and the lock has been held since 19:50, so it is likely in hand.
+
 
 ### Iteration 96, 19:52 EST — the rehearsed "modify it live" script is linked from nowhere
 

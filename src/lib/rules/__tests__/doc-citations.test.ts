@@ -176,3 +176,37 @@ describe('counts stated in the README', () => {
     expect(readme).toContain('npx vitest run')
   })
 })
+
+/**
+ * A relative link in a deliverable must resolve to a file that exists.
+ *
+ * `README.md` and `SUBMISSION.md` are routing tables — most of their value is that a reviewer clicks
+ * through them. T37 existed because two documents had no inbound link at all; the mirror of that is a
+ * link pointing at a file that has moved, and a rename breaks it silently in a file nobody re-reads.
+ *
+ * Checked when the T37 rows were added and nothing was broken, so this starts green on purpose. It is
+ * here because the cost of a dead link is paid by the reviewer, in the first file they open, and the
+ * cost of the check is one pass over two documents.
+ */
+describe('relative links in the deliverable index', () => {
+  it.each(['README.md', 'SUBMISSION.md'])('every relative link in %s resolves', (doc) => {
+    const full = join(repoRoot, doc)
+    const text = readFileSync(full, 'utf8')
+
+    // Markdown links to repository paths. Bare URLs and anchors are not this test's business.
+    const targets = [...text.matchAll(/\]\(((?!https?:|mailto:|#)[^)]+)\)/g)].map((m) => m[1])
+    const broken = targets.filter((t) => !existsSync(resolve(repoRoot, t.split('#')[0])))
+
+    expect(
+      broken,
+      `${doc} links to ${broken.length} path(s) that do not exist: ${broken.join(', ')}. ` +
+        `A reviewer clicks these; a rename breaks them without touching the document.`,
+    ).toEqual([])
+  })
+
+  it('checks a meaningful number of links, so a regex change cannot make it vacuous', () => {
+    const text = readFileSync(join(repoRoot, 'README.md'), 'utf8')
+    const targets = [...text.matchAll(/\]\(((?!https?:|mailto:|#)[^)]+)\)/g)]
+    expect(targets.length).toBeGreaterThan(10)
+  })
+})

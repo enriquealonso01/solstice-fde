@@ -4,62 +4,52 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 96 — 2026-09-25 ~19:52 EST
+## Iteration 98 — 2026-09-25 ~20:02 EST
 
-### Inbox empty. Lock held since 19:50. Suite 473/37. Guardrails 18 of 19.
+### Every task T1–T37 is closed. The plan is accurate and correctly ordered.
 
-### The rehearsed "modify it live" script is linked from nowhere — T37
+Inbox empty. Suite **476 passed, 37 files**. Guardrails 18 of 19.
 
-I checked which files in `docs/` nothing links to:
+### T36's routing argument was confirmed by the agent whose PR it questioned
 
-| Document | Size | Referenced from |
-|---|---|---|
-| `docs/live-modification.md` | 93 lines | **nowhere at all** |
-| `docs/role-walkthroughs.md` | 304 lines | `SUBMISSION.md` only, in a secondary list |
+Tester iteration 57 measured the live assistant: **23 webhooks, `transfer_to_human` not among
+them**, so on a real call the model cannot call it. PR #90's native transfer instructions match
+every phrase of G16's criterion, and the re-export did not undo the SIP redaction.
 
-`live-modification.md` opens *"The panel will ask you to modify the system while they watch. This
-is the change to reach for, rehearsed end to end, with the real output captured from an actual
-run"* — Phoenix's discount ceiling 15% → 12%, with the edit, the command and captured output.
-**Written for one of Katie's named asks and unreachable from any entry point.**
+Their own words about their own work:
 
-**T37: two rows in the README table, one bullet in `SUBMISSION.md`.** No code, no deploy. I flagged
-that the bullet changes the count PR #87 just fixed, and that `list-counts.test.ts` will catch it —
-the guard doing its job one iteration after being restored.
+> *"my PR #85 hardened a branch Telnyx never reaches… **Third instance of fixing code the live path
+> does not execute.**"*
 
-### The pattern, now twice
+**That phrase is the most useful thing produced this iteration, and it is theirs.** It belongs beside
+*"a test in the commit is not a test that runs"* and *"merged is not deployed is not working"* — the
+same distinction at three altitudes.
 
-T35 was *"nothing points at the guardrail evidence."* T37 is *"nothing points at the
-live-modification script."* **Both are discoverability failures, not accuracy failures** — and they
-are the only two kinds of problem I have found in ten iterations.
+### T37 closed, and the guard caught what I warned it would
 
-This project has been audited hard for correctness and **never once for navigation**. Every
-document is true; two of them cannot be found. The discipline that kept asking whether a claim was
-overstated never asked whether a reader would reach it.
+`README.md:25-26` carry both orphaned documents; `SUBMISSION.md:51-53` list them; and the count
+sentence reads **"Four things"** against four bullets. That was the exact change I flagged
+`list-counts.test.ts` would catch if forgotten. It was not forgotten.
 
-### What I checked and deliberately did not file
+### The staged G16 row — recorded so a 5,000-line log does not swallow it
 
-No deliverable contains the word "surprise", and "technical and non-technical" appears nowhere.
-**Not filing it.** The substance is there — the phone number that actually works is the surprise,
-`README.md:1-9` is plain English above the fold, and `role-walkthroughs.md` is the non-technical
-path once T37 links it. **A document should answer an ask, not quote it.**
+`agent/sol.md:318` describes a test that does not exercise the path it names. The Tester wrote the
+replacement, **measured it (+44 chars, margin 681 → 637, cap guard green)**, and **reverted rather
+than desynchronise the live voice prompt for a documentation cell.**
 
-### The group workflow is verified to a standard worth recording
+**I agree and filed no task.** The work is done; it needs not to be lost. **Whoever next runs
+`--refresh` for any reason should paste it in the same pass** — free once a provision is happening,
+and it closes the one place where a table promising auditability names a check that does not audit.
 
-Tester iteration 56 read **all ten proposal PDFs from their live capability URLs**: 90 defect-class
-checks clean, **red-checked on five injected defects**, and no PDF prints a dollar figure not
-derivable from its own pricing row. Capability paths gate correctly — one character changed in the
-token gives 400.
+**If no re-provision happens before 11:00, ship as is.** The row is slightly wrong about the test;
+the guardrail is verified and the behaviour is right.
 
-Their first download **silently produced ten empty files** from a trailing carriage return, caught
-by *counting files on disk rather than trusting the loop*. Sixth line-ending casualty here, and the
-first caught by the method rather than after the fact.
+### Also landed
 
-### The plan is accurate and correctly ordered
-
-**Enrique, in order:** the SQL paste · Telnyx top-up · T21 · T34 rotation.
-**Agents:** **T37**, two links.
+**#94** — assert the tree before deploying rather than trust `git pull` not to error, closing the
+failure that let a deploy run from a tree that was not `origin/main`.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — **unapplied on the seventh consecutive Tester check**, and still the
-only open item with a live security consequence.
+**The `drop policy` paste.** All four remaining items are Enrique's; this is the only one with a
+live security consequence.

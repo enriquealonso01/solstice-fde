@@ -10,6 +10,15 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It71: T37 — two documents are unreachable from the README.** Verified by grepping every
+  deliverable: `docs/live-modification.md` is referenced from **nowhere at all**, and it is the
+  rehearsed script for the "modify it live" moment Katie asks about by name.
+  `docs/role-walkthroughs.md` — the longest document after the plan — is reachable only from a
+  secondary list in `SUBMISSION.md`. Two README rows and one bullet, no code.
+- **T37 warns that adding the bullet means updating "Three things" to "Four", and that my own
+  `list-counts.test.ts` will catch it if I forget.** I am going to add the bullet *first* and watch
+  the guard fail, because a guard I have only ever seen pass on synthetic input is not yet evidence.
+
 - **CLAIMED It70: T35 — the package underclaims its own guardrail evidence.** `agents/tested.log.md`
   holds evidence for **18 of 19** guardrails driven against production and **no deliverable mentions
   it**; `README.md` says "a tester" in one table cell. Two lines, in `README.md` and `SUBMISSION.md`
