@@ -4,66 +4,69 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 205 — 2026-09-26 05:19 EST
+## Iteration 207 — 2026-09-26 05:33 EST
 
-**One agent task is open: T57.** **T56 shipped at It144 — and it caught an error in the numbers I handed it.**
+**One agent task is open: T57.** I re-drove panel answer **#5, "So how does the manager actually find out?"** —
+an answer Enrique says out loud that concedes a gap, so every clause is a claim about the code. Four clauses:
+**three held, one was wrong twice.**
 
-### I corrected a sampling error by committing a convention error, in the same direction
+### The real correction
 
-I filed T56 accusing `docs/latency-target.md` of publishing a percentile from six turns that landed on the side
-it wanted with no `n` beside it. I then handed the Implementer a census **first-signal p90 of 1488ms** and wrote,
-in the task and in the banner, that the 1.5s target *"is met."* It144 refused to copy my figures — *"I do not
-copy a figure from a task description"* — recomputed from the 351 rows, and found it wrong. Re-derived here from
-a fresh pull:
+The answer said *"`_delivery/` carries proposals only."*
 
-```
-first_event_ms  n=338  target 1500ms
-  p50  nearest-rank 1079   interpolated 1081   [mine 1079]  agree
-  p90  nearest-rank 1502   interpolated 1492   [mine 1488]  index 304 vs my 303
-  p95  nearest-rank 1792   interpolated 1782   [mine 1780]
-  over target: 34 of 338 = 10.1%
-```
+- **That path resolves to nothing from the repo root** — it is `netlify/functions/_delivery/`. A panel member who
+  types `ls _delivery` finds nothing, on the one answer whose purpose is to show we know exactly what we did not
+  build.
+- **It dropped "audit."** The shipped deliverable, `agent/sol.md:110`, says *"carries proposals **and audit**
+  only"*, and audit is the half that makes an escalation attributable. **My own verification log already had the
+  right version** — `plans/06-master-plan.md:9848`, *"carries proposals and audit ✓ audit.ts config.ts index.ts
+  telnyx.ts — no escalation path."* The correct measurement was in my file and the spoken answer never got it.
+  **Same failure as iteration 203's, except this time the note was mine.**
 
-**My helper took `a[floor(q*(n-1))]` — index 303 of 338 — where nearest-rank takes 304.** One position, and
-because **10.1% of turns exceed 1500ms the p90 sits exactly on the boundary**, that one position was the whole
-difference between *"met"* and *"2ms over."* Every tail figure I filed was low the same way: first-token p90
-**4321/4299** not 4290, p95 **5276** not 5155, total p90 **7869** not 7638.
+The answer now names `rules.ts:216` for the inert array, gives the full path with *and audit*, states that the
+`escalations` table is touched in exactly one file and **never in the UI**, and **names the diagram node to point
+at**: *"Escalation queue — on-call rota and an SLA timer; the human opens with everything the agent already
+tried."* The T33 draft at `:1560` carries the same correction inline.
 
-**Stating `n` is not stating your method.** I named the sample size and not the convention, and the error ran in
-the direction of the conclusion I already wanted — which is the direction errors run when you know what you want
-the answer to be. The p50s were right under either convention (1079ms / 2608ms), and that is the half the
-headline rests on.
+### Two near-misses, both worth more than the correction
 
-### What the deliverable says now, which is better than what I asked for
+**I searched for our word, not theirs.** Checking *"the diagram already marks that FUTURE"*, I grepped the diagram
+for `notif` and got **zero hits** — a false correction, one step from being filed. The diagram says **Escalation
+queue** and **Alerting and on-call**. Extracting every FUTURE node's text instead of searching for a remembered
+word found it immediately.
 
-*"Met at p50 (1079ms), level at p90"*, both conventions printed, **34 of 338 — 10.1%** beside them; first prose
-token *"over at p90 either way"* — 4321/4299ms, ~300ms past a 4s target, 52 of 338 beyond it. **In our favour on
-the headline, against us on the tail**, which is the shape an honest re-measurement usually has. Read in place at
-`docs/latency-target.md:83-138`; the supersession of the old six-turn conclusion is stated at line 71, so a
-top-down reader meets it before the stale number.
+**The export that looked stale is hand-authored on purpose.** `architecture.drawio` was edited at 04:31;
+`architecture.svg` last written 03:34; T52's corrected storage wording is in the source and **absent from the
+SVG**. That reads exactly like a fix that never reached the deliverable. It is not: `README-diagram.md:6` says the
+SVG is *"a hand-authored render of the **Future state** page"* and that *"there is no drawio CLI in this
+environment"* — and T52 fixed a node on the **Today (MVP)** page. Three pages in the source, the SVG renders the
+first, the README row says *"future-state production"*, the guide names all three.
 
-### It declined one instruction and was right to
+> **Before filing drift between two artifacts, read the document that explains their relationship.** Two
+> timestamps and a missing string are enough to write a confident task, and the answer was one line into a file
+> written to answer it.
 
-T56 said the *"45ms over"* sentence should be **gone**. It144 left it standing — the doc supersedes it in the next
-section, and *"deleting an honest superseded admission would contradict the pattern this project has used for
-every other correction."* **50 insertions, 0 deletions.** I accept it, and applied the same rule to myself: the
-T56 section and the iteration-203 entry keep their wrong p90 with a correction block at the head rather than a
-quiet rewrite. The **banner** is the exception, because it is rewritten every iteration and is what Enrique reads
-— it now carries the straddle and says whose error it was.
+### A count in a deliverable, verified node by node
 
-### The error is now guarded in code
+`README-diagram.md:36` claims *"24 LIVE nodes, 0 PENDING, and 1 BLOCKED — SMS."* Counting the words on the Today
+page gives **25 / 1 / 2**, which looks like three errors. Each status word also appears **once in the legend**.
+Listing all 28 occurrences instead of counting them: **24 LIVE, 0 PENDING, 1 BLOCKED (Telnyx SMS 10DLC).** **The
+claim is exactly right.** Third time tonight that counting a word was not counting the thing — **open the lines,
+don't count them.**
 
-`latency-claims.test.ts` — new, **5 tests, run green this iteration** — requires a sample size beside any
-*measured* percentile, keeps the census window and its re-derivable query, and in its last case forbids the
-document from claiming the first-signal target is met at p90: *"picking the convention that clears the target is
-the same error as picking the sample that misses it."* **A guard written against my mistake by the agent that
-caught it.** It deliberately does not pin the measurements.
+### Also checked
+
+- **The seven pointers still resolve** after `HUMAN_INTERVENTION.md`'s 05:26 in-place edit: 27, 63, 609, 632, 728,
+  817, 975.
+- **It145 is logged** and matches what I verified last iteration, with one lesson worth keeping: its new guard
+  passed a red-check because the paragraph it had just appended named all three filenames — **a guard that reads a
+  file you are also editing is a guard whose evidence you are contaminating.**
 
 ### Open
 
 | # | Item | Owner |
 |---|---|---|
-| 1 | **`drop policy` ×3** — **only Enrique can.** SQL at **609**, heading ***"### What to run"*** | Enrique — **do** |
+| 1 | **`drop policy` ×3** — **only Enrique can.** SQL at **609**, ***"### What to run"***. **Breaks nothing; verified three ways** | Enrique — **do** |
 | 2 | **Top up Telnyx** — $3.03, no credit line, ~6 calls, hard stop at zero | Enrique — **do** |
 | 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
@@ -71,11 +74,11 @@ caught it.** It deliberately does not pin the measurements.
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
 | T57 | Scope the live-modification guard to the SOL-PHX object | any agent |
 
-Tester silent since 20:26 (**8h53m**); its ledger has no open findings. Inbox and In progress empty. No lock
-held; I took none. Guards re-run after my edits — `intervention-routing`, `doc-paths`, `list-counts`,
-`latency-claims`: **109 green**.
+Tester silent since 20:26 (**9h07m**); its ledger has no open findings. Inbox and In progress empty. No lock held;
+I took none. Guards re-run after my edits — `intervention-routing`, `doc-paths`, `list-counts`, `diagram-guide`:
+**128 green**.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — still the only item nobody else could do for him. **T57** is the only open agent
-task, and it is hardening rather than repair: every pointer in that document is correct today.
+**The `drop policy` paste.** Unchanged, and now with the three reasons someone might hesitate over it checked and
+written into the row he reads.

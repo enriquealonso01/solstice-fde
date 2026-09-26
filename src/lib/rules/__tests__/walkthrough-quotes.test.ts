@@ -109,22 +109,98 @@ describe('code the demo documents tell you to type', () => {
   const doc = 'docs/live-modification.md'
   const source = 'src/lib/rules/thresholds.ts'
 
+  /**
+   * Scoped to the SOL-PHX object, not to the file.
+   *
+   * Until iteration 146 these five fragments were asserted against the whole of `thresholds.ts`, and
+   * **SOL-TPA carries the identical pair** — `group_block_auto_approve_max_rooms: 35,` and
+   * `max_discount_auto_approve_pct: 15,`. So Phoenix's ceiling could be changed to anything and the suite
+   * stayed green on Tampa's copy. Counted in that file: the rooms line twice (92 Tampa, 105 Phoenix), the
+   * ceiling **four** times (10 comment, 54 Austin, 93 Tampa, 106 Phoenix).
+   *
+   * That matters more than an ordinary stale guard. The beat's only tell that the edit took is *"'allowed
+   * 15' stays 15"*. If Phoenix drifted, the doc would show the panel a snippet reading 15 with a *"change to
+   * 12"* marker and the presenter's signal would already be wrong — on the one modification the brief says
+   * they will ask for.
+   *
+   * The anchor is `property_code: 'SOL-PHX',`, which occurs **once**. `'SOL-PHX': {` occurs twice and the
+   * first is the header comment at line 10, so anchoring on it would slice the comment instead of the
+   * object — the same mistake as T55's boundary, where `## 0. Verification log` matched the task describing
+   * it before the real heading. The rule this file now follows: **anchor on a string that exists once, and
+   * assert the count.**
+   */
+  const UNIQUE_ANCHOR = "property_code: 'SOL-PHX',"
+
+  /** The SOL-PHX object literal alone: from its opening brace to the close at the same indent. */
+  const phoenixObject = (): string => {
+    const text = readFileSync(join(repoRoot, source), 'utf8').replace(/\r\n/g, '\n')
+    const at = text.indexOf(UNIQUE_ANCHOR)
+    if (at === -1) return ''
+    const open = text.lastIndexOf("'SOL-PHX': {", at)
+    if (open === -1) return ''
+    const close = text.indexOf('\n  },', open)
+    return close === -1 ? text.slice(open) : text.slice(open, close)
+  }
+
+  it('anchors on a string that occurs exactly once, so it cannot slice the comment', () => {
+    const text = readFileSync(join(repoRoot, source), 'utf8').replace(/\r\n/g, '\n')
+    const count = (s: string) => text.split(s).length - 1
+
+    expect(
+      count(UNIQUE_ANCHOR),
+      `${UNIQUE_ANCHOR} must occur exactly once in ${source} for the slice below to be unambiguous. If a ` +
+        `second Phoenix entry appeared, this case says so instead of the slice quietly taking the wrong one.`,
+    ).toBe(1)
+
+    // Two is expected: the header comment and the real object. Three would mean a new ambiguity.
+    expect(
+      count("'SOL-PHX': {"),
+      `'SOL-PHX': {' occurs ${count("'SOL-PHX': {")} times in ${source}. Two is the known state — the header ` +
+        `comment and the object — and that is exactly why the anchor above is used instead.`,
+    ).toBe(2)
+
+    const firstIsComment = text.slice(0, text.indexOf("'SOL-PHX': {")).split('\n').pop()?.trimStart().startsWith('//')
+    expect(
+      firstIsComment,
+      `the first occurrence of 'SOL-PHX': {' in ${source} is no longer a comment line. That is the trap the ` +
+        `document warns the presenter about; if it moved, the warning needs rewriting too.`,
+    ).toBe(true)
+  })
+
+  it('slices the Phoenix object and nothing else', () => {
+    const obj = phoenixObject()
+    expect(obj.length, `could not slice the SOL-PHX object out of ${source}`).toBeGreaterThan(120)
+    expect(
+      obj,
+      `the SOL-PHX slice contains SOL-TPA, so it has run past the end of the object and the value ` +
+        `assertions below could be satisfied by Tampa's identical pair again.`,
+    ).not.toContain('SOL-TPA')
+    expect(obj, 'the slice does not start at the SOL-PHX object').toContain("'SOL-PHX': {")
+  })
+
   it.each([
-    "'SOL-PHX': {",
     "property_code: 'SOL-PHX',",
     "property_name: 'Solstice Phoenix Camelback',",
     'group_block_auto_approve_max_rooms: 35,',
     'max_discount_auto_approve_pct: 15,',
-  ])('%s appears in both the runbook snippet and thresholds.ts', (fragment) => {
+  ])('%s is in the doc and in the SOL-PHX object itself', (fragment) => {
     const docText = readFileSync(join(repoRoot, doc), 'utf8')
-    const sourceText = readFileSync(join(repoRoot, source), 'utf8')
 
     expect(docText, `${doc} no longer quotes ${JSON.stringify(fragment)}; update or remove this case`).toContain(fragment)
     expect(
-      sourceText,
-      `${doc} tells the presenter to edit ${JSON.stringify(fragment)} in ${source}, and it is not there. ` +
-        `The live-modification demo would fail with the file open in front of the panel.`,
+      phoenixObject(),
+      `${doc} shows the panel ${JSON.stringify(fragment)} and the SOL-PHX object in ${source} does not ` +
+        `carry it. Checked inside the object on purpose: SOL-TPA has the same 35 and the same 15, so a ` +
+        `file-wide search passes while the snippet on screen is wrong. The presenter's only tell that the ` +
+        `edit landed is that "allowed 15" stays 15 until he changes it.`,
     ).toContain(fragment)
+  })
+
+  it('still shows the object opening the doc tells the presenter to find', () => {
+    const docText = readFileSync(join(repoRoot, doc), 'utf8')
+    expect(docText, `${doc} no longer shows the 'SOL-PHX': { line it tells the presenter to search for`).toContain(
+      "'SOL-PHX': {",
+    )
   })
 
   it('names a file that exists, because the first step is opening it', () => {

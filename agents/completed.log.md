@@ -9128,3 +9128,95 @@ after the fix was green. **Two of my own documented rules broken in one iteratio
 one of them was not me.**
 
 `npx tsc -b` clean. `npx vitest run` **852 tests / 60 files** green (up 5).
+
+---
+
+## It146 — T57: the guard on the beat the panel asks for could not tell Phoenix from Tampa
+
+T57 was open. The brief says the panel will ask us to modify the system while they watch, and
+`docs/live-modification.md` is the rehearsed answer: open `src/lib/rules/thresholds.ts`, change SOL-PHX's
+`max_discount_auto_approve_pct` from 15 to 12, re-run `show-verdict.ts`, and three things move together
+while the price does not.
+
+The guard behind it pinned five fragments of the snippet and asserted each appeared in the doc **and
+somewhere in `thresholds.ts`**. Somewhere is the problem.
+
+### Verified the counts myself, and all five were exact
+
+```
+'SOL-PHX': {                                    2   line 10 (header comment), line 102 (the object)
+property_code: 'SOL-PHX',                       1   <- the only unambiguous anchor
+property_name: 'Solstice Phoenix Camelback',    1
+group_block_auto_approve_max_rooms: 35,         2   line 92  SOL-TPA, line 105 SOL-PHX
+max_discount_auto_approve_pct: 15,              4   line 10 comment, 54 SOL-AUS, 93 SOL-TPA, 106 SOL-PHX
+```
+
+**SOL-TPA carries the identical pair.** Tampa is 35 rooms and a 15% ceiling, exactly like Phoenix, sitting
+nine lines above it.
+
+So the two value assertions were satisfied by Tampa regardless of what Phoenix said.
+
+### And I proved that rather than repeating it
+
+T57 asserts *"change SOL-PHX's ceiling to 20 and the suite stays green."* Believing that without checking
+would be the error this whole night has been about, so I applied the edit in memory and counted:
+
+```
+after changing SOL-PHX to 20, the file still contains 'max_discount_auto_approve_pct: 15,': True
+remaining occurrences: 3   (comment, Austin, Tampa)
+-> the old file-wide toContain would have PASSED
+```
+
+**Why that is worse than an ordinary stale guard.** The document's own advice to the presenter is that the
+tell is *"'allowed 15' stays 15"* — if the number does not move, you edited the comment. Had Phoenix drifted
+to 20, the doc would have shown the panel a snippet reading 15 with a *"`// <- change to 12`"* marker, and
+the presenter's only signal that the edit landed would have been wrong **before he typed anything**, on the
+one modification the brief promises they will ask for.
+
+### Anchored on the string that exists once
+
+`'SOL-PHX': {` matches **line 10 before line 102**, so slicing from it would slice the header comment —
+the same shape as T55, where `## 0. Verification log` matched the task *describing* the boundary before the
+real heading, and the same shape as the Tester's own stage-rehearsal mistake that this document exists to
+warn about. Third time a guard's anchor has landed on a comment about the thing instead of the thing.
+
+The rule, now written into the test: **anchor on a string that exists once, and assert the count.**
+
+`property_code: 'SOL-PHX',` occurs exactly once. The guard anchors there, slices back to the enclosing
+`'SOL-PHX': {` and forward to the `\n  },` that closes it, and asserts the four value fragments inside that
+slice. Three cases protect the slice rather than trusting it:
+
+- the anchor occurs **exactly once**, and `'SOL-PHX': {` occurs **exactly twice** — a third means new
+  ambiguity and fails loudly rather than silently choosing;
+- the first `'SOL-PHX': {` is still a **comment line**, because if that ever stops being true the
+  document's warning to the presenter needs rewriting too;
+- the slice **must not contain `SOL-TPA`** — if it ever runs past the object's close, Tampa's identical pair
+  quietly satisfies everything again and we are back where we started.
+
+### Red-checked four ways, one of which must not fire
+
+```
+SOL-PHX ceiling 15 -> 20        1 failed     (passed before this change)
+SOL-TPA ceiling 15 -> 20        62 passed    Tampa is not this beat
+Phoenix renamed to Denver       1 failed
+a third 'SOL-PHX': { added      1 failed     the anchor-ambiguity case
+```
+
+The second is the one worth having. A guard that fired on any edit to any property would be a guard that
+gets loosened the first time someone legitimately changes Tampa, and then it is not there when Phoenix
+drifts. `thresholds.ts` came back byte-identical, checked with `git status` rather than by eye.
+
+### One sentence in the document, for the same reason
+
+`docs/live-modification.md` warned the presenter about the comment trap and then told him **"Search for
+`'SOL-PHX'` instead"** — a search that lands on the header comment first. The warning and the instruction
+disagreed inside one paragraph.
+
+It now says to search `property_code: 'SOL-PHX',`, notes that the string occurs exactly once, and says
+plainly that searching `'SOL-PHX'` alone still hits the comment. Step one of the rehearsed beat can no
+longer land on the line that changes nothing.
+
+**Nothing was broken today** — every pointer in that document is correct, Phoenix really is 15 at line 106.
+This is the thing that would have caught it breaking.
+
+`npx tsc -b` clean. `npx vitest run` **854 tests / 60 files** green (up 2).
