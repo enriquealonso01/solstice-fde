@@ -11,7 +11,7 @@
 >
 > ### 1. The approval gate reads a column the browser can write
 >
-> `agent/sol.md` §13 — a numbered assumption in a named deliverable — says a flagged proposal
+> `agent/sol.md` **§6, assumption 13** — a numbered assumption in a named deliverable; *note the file has no section 13, its sections run 1–9* — says a flagged proposal
 > *"cannot be sent until someone approves it and the override is written to the audit log"*, and
 > that we enforce *"an approval happened and **is attributable**"*. **All three clauses are false
 > while `prop_write` exists:** a rep PATCHes `status` to `approved` with the public anon key,
@@ -39,7 +39,7 @@
 > block from `supabase/migrations/004_client_read_only_on_group_tables.sql`, which recreates them.
 > Recovery note at `HUMAN_INTERVENTION.md:580`.
 >
-> **Apply it and change nothing else, or apply nothing and weaken §13**, which is the package's
+> **Apply it and change nothing else, or apply nothing and weaken assumption 13**, which is the package's
 > best answer on authority. **If you apply it before submitting, the defect is disclosed in THREE places, not two** —
 > `README.md`'s *"One defect is open at the time of writing"* paragraph, `SUBMISSION.md:39`'s
 > **Known open defect** row, and a parenthesis in `docs/where-this-goes.md`. The full list and
@@ -328,7 +328,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 | # | Enrique's item | Why it is first / what it costs |
 |---|---|---|
-| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr` | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at `HUMAN_INTERVENTION.md:753`. **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md` §13 with **no deliverable edit**. Three lines, in the SQL editor. |
+| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr` | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at `HUMAN_INTERVENTION.md:753`. **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. |
 | 2 | **Top up Telnyx to at least $20** | **Not "add $3.09" — the balance IS $3.03**, measured this iteration and drifting down from $3.09. **$20 is the project's own gate**, in `SUBMISSION.md`'s pre-send checklist: *"Telnyx balance above $20, or do not invite them to call the number."* One call then settles **beat 3**, the live intent check, and **G16's voice half** — the last unverified guardrail. Nobody has made a voice call all day. |
 | 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. **Verified safe three ways:** two deliverables cite `INQ-2011`/`INQ-2010`, the demo runbook names `INQ-2007`/`2009`/`2011`, and **neither row T21 deletes appears in either**. Both confirmed live: `INQ-2012` Vantage Labs `needs_review`, `INQ-2013` Vantage Labs DELETE-ME `auto_approvable`. Exact SQL in `HUMAN_INTERVENTION.md`. |
 | 4 | **T34 — rotate the Telnyx SIP connection** | A credential *username* is in git history at `10b63e8` and `c09f04d`. **Rotate rather than rewrite history** — rewriting invalidates commit ids the deliverables cite, to remove something that authenticates nothing on its own. **Timing: after any rehearsal call, before the email.** |
@@ -1527,6 +1527,69 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 152, 00:16 EST — my banner sent a reader to a section that does not exist
+
+#### What #144 warned about, one commit before I found it in my own file
+
+> *"A numbered cross-reference **shifts silently** when an item is inserted above it, so known-good
+> is the cheapest moment to pin, **by number and keyword rather than number alone**."*
+
+They audited the four `assumption N` citations across the deliverables and found all four correct.
+**Mine was not among the four, because my file is not a deliverable — and mine was wrong.**
+
+#### The error
+
+My banner has said, for hours, on the most important item in the package:
+
+> *"`agent/sol.md` **§13** — a numbered assumption in a named deliverable — says a flagged proposal
+> cannot be sent until someone approves it…"*
+
+`agent/sol.md`'s sections run **1 to 9**:
+
+```
+1 Who Sol is · 2 The routing rule · 3 Runtime system prompt · 4 Tool contracts
+5 Guardrails · 6 Stated assumptions · 7 Changing a rule live · 8 Sample transcripts · 9 Where this runs
+```
+
+**There is no §13.** The content is **assumption 13, inside §6** — *"Approval authority is a named
+human, not a role tier… A proposal over the discount ceiling cannot be sent until someone approves
+it and the override is written to the audit log with the rules it overrode."* Exactly what I
+described, and exactly what the RLS hole falsifies.
+
+**So the substance was right and the pointer sent the reader nowhere.** Someone following my banner
+to "§13" scrolls past the end of a nine-section document. Corrected to **§6, assumption 13**, with
+the section range stated so the next reader cannot repeat it.
+
+#### The pattern this completes
+
+**Item 1 of four has now been corrected three times, for three unrelated reasons**: it lacked the
+reason the SQL is safe (iteration 137), it named two of three disclosure sites (146), and it pointed
+at a non-existent section (152). Each was a separate defect in the same paragraph.
+
+> **The most-reviewed thing in a document is not the most-checked thing.** I have re-read that item
+> every iteration for six hours and read *past* all three, because I was reading it as a reminder of
+> something I already knew rather than as instructions to someone who does not.
+
+#### Also in #144, and worth keeping
+
+The data-quality report's five checks re-run independently give exactly its two findings — SOL-PVD's
+**−395** suite rate and its unresolved **"Boston-area sister property"** — both already disclosed as
+README assumptions 6 and 7 and in the email draft. **And the only thing wrong was their own check:**
+*"those entries are `{start,end}` objects, not strings."* The instrument again, not the system.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — safety reason, recovery, three disclosure sites, **§6 assumption 13** | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. Lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 151, 00:12 EST — chased the session count against the 500 window, and the pieces already cover it
 

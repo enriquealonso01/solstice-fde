@@ -3,15 +3,15 @@
   "sources": {
     "properties": {
       "file": "data/solstice-properties.csv",
-      "sha256": "4876829ad29618291057f8a468d7a991551ab35fd4440d622dc6fd6137c22608"
+      "sha256": "51d9d654639268f10fef77be8b01968e2aa7ddb01e452b045d301d6f0bc08af7"
     },
     "guests": {
       "file": "data/solstice-guest-profiles.csv",
-      "sha256": "2ce175e2e5b4d187c22322936a2c0729dad3cd88c98d49770cb2807ad5417c18"
+      "sha256": "844a6bb91d2548c821413728b4a2ae0c8e80669bf06497e51f8bad7cf7da1963"
     },
     "inquiries": {
       "file": "data/solstice-group-inquiries.csv",
-      "sha256": "568d42817b51ab95368217d5bcdbbc1a98a6abcea91e6eadeb9ea17c538c1fae"
+      "sha256": "089ad4f09c1c187fc0db3d119173e117b436234f9357a3669dd937fe675e72b2"
     },
     "policies": {
       "file": "data/SOLSTICE HOTEL GROUP — FRONT DESK POLICY REFERENCE.md",

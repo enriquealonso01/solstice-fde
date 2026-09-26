@@ -26,10 +26,17 @@ in `agents/completed.log.md`, not here.
 - **Nearly repeated It106's mistake.** My first predicate accepted only the word *"gitignored"*, and
   README says *"which is deliberately not committed"* — clearer, in fact. I was one edit from rewording a
   good sentence to satisfy my regex. **Widen the predicate, not the document.**
-- Eighth escape-eaten-by-heredoc incident on the way: `/?
-/` landed as a regex split across three
-  lines and `tsc` caught it. Replaced with a plain `split('
-')`, which needs no escape at all.
+- **Ninth escape incident, inside the bullet describing the eighth.** A carriage-return-newline pattern
+  written through a heredoc became a real line break, first in a `doc-paths` regex (`tsc` caught it:
+  *Unterminated regular expression literal*) and then in this very file while I wrote the bullet about
+  it. Both replaced with forms that need no escape: a plain newline split, and prose.
+- **Then the clone found a third failure the suite cannot see: `npm run data:check` reported STALE.**
+  `manifest.json` records a **sha256 of the raw bytes** of each source, and the CSVs are CRLF here and
+  LF there — so the provenance proof that `IF THEY ASK` answer 1 and the README both send a reviewer to
+  **failed on their machine and passed on mine.** Same class as It96, one layer over.
+- Hash now folds carriage returns out before digesting. Three of the four hashes moved; only
+  `manifest.json` changed on rebuild. **Still a real fingerprint:** changing one rate digit in the CSV
+  takes both `properties.json` and `manifest.json` to STALE, checked.
 
 ## Demo rehearsal coverage — what is actually verified
 

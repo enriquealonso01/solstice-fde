@@ -337,8 +337,25 @@ function buildDataQuality(properties, rules) {
 
 // --------------------------------------------------------------------------------- main
 
+/**
+ * Provenance hash of a source file, insensitive to the checkout's line endings.
+ *
+ * All four inputs are text -- three CSVs and the policy markdown -- and none of them is pinned in
+ * .gitattributes, so git hands a Windows clone CRLF and a Linux clone LF. Hashing the raw bytes made
+ * the manifest a fact about the machine that built it: `npm run data:check` passed here and reported
+ * STALE: manifest.json differs from the source data in a fresh LF clone of the public repository.
+ *
+ * That command is the provenance proof two deliverables tell a reviewer to run -- the answer to "how
+ * do you know it is not inventing rates" is `data:check` plus a current deploy. Failing it on their
+ * machine is worse than not offering it.
+ *
+ * So the hash is of the content with CRLF folded to LF. It is still a real fingerprint of what they
+ * sent: change a rate by a digit and it moves. It just stops moving for a reason that has nothing to
+ * do with the data. Found at iteration 112, the same class as the compile hash in iteration 96.
+ */
 function sha256(path) {
-  return createHash('sha256').update(readFileSync(path)).digest('hex')
+  const normalised = readFileSync(path, 'utf8').split('\r\n').join('\n')
+  return createHash('sha256').update(normalised, 'utf8').digest('hex')
 }
 
 // Files confirmed identical to what the sources regenerate. Counted so --check can say what it

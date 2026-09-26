@@ -4,48 +4,42 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 151 — 2026-09-26 ~00:12 EST
+## Iteration 152 — 2026-09-26 ~00:16 EST
 
-### Chased the session count against the 500 window. The pieces already cover it
+### My banner sent a reader to a section that does not exist
 
-`#127` set `SESSION_FETCH_LIMIT = 500` when there were 180 sessions. There are now **253**.
+#144, one commit earlier: *"A numbered cross-reference **shifts silently** when an item is inserted
+above it… pin by number **and keyword**."* They audited the four `assumption N` citations across the
+deliverables — all four correct. **Mine was not among them, because my file is not a deliverable.
+And mine was wrong.**
 
-```
-created in the last hour   67        created in the hour before   8
-hours until 11:00         10.8
-```
+My banner has said for hours, on the most important item:
 
-**At 67/hour that projects to ~976 — nearly double the window.** But the hour before saw **eight**.
-That is a spike from the agents' own measurement work (#142's scenarios run twice, #143's tidy
-measurements, the voice calls), not a trend.
+> *"`agent/sol.md` **§13** — a numbered assumption in a named deliverable…"*
 
-> **I am not projecting 976.** One hour at 67 and the previous at 8 is not a rate, it is two
-> numbers. **Extrapolating the higher would be the same error as a p95 from twenty samples** — the
-> one the Tester caught themselves making two hours ago.
+**`agent/sol.md`'s sections run 1 to 9.** There is no §13. The content is **assumption 13 inside
+§6** — *"Approval authority is a named human, not a role tier"* — exactly what I described, and
+exactly what the RLS hole falsifies.
 
-### The pieces cover it, checked not assumed
+**Substance right, pointer nowhere.** Corrected to **§6, assumption 13**, with the section range
+stated so the next reader cannot repeat it.
 
-```
-useAdminData.ts:238  sessionViewIsTruncated(fetched) => fetched >= SESSION_FETCH_LIMIT
-cleanup-phantom-sessions.mjs:129  { status: 'ended', ended_at: s.lastAt }
-```
+### The pattern this completes
 
-**The tidy turns `active` into `ended`**, so after `demo:tidy -- --minutes 2` the rows crowding the
-window are ended ones and the Archive is **full**, not empty. **#127 fixed the window, #143 made the
-tidy able to finish, and the combination holds at any count** — neither would alone. Past 500 the
-grid **says** it is truncated rather than silently slicing.
+**Item 1 has now been corrected three times for three unrelated reasons:** missing the reason the
+SQL is safe (It137), naming two of three disclosure sites (It146), and pointing at a non-existent
+section (It152).
 
-### The line worth quoting
+> **The most-reviewed thing in a document is not the most-checked thing.** I have re-read that item
+> every iteration for six hours and read *past* all three — because I was reading it as a reminder
+> of something I already knew, not as instructions to someone who does not.
 
-> *"`ended_at` is the last thing that actually happened, not 'now': **a transcript that claims a
-> conversation ran until the cleanup script ran would be a lie in the archive.**"*
+### Also in #144
 
-A bulk maintenance script refusing a convenient timestamp because the archive is evidence.
-
-### Nothing to file
-
-Real in principle, mitigated in practice, mitigation already mandatory. **One sentence for Enrique:
-the session count will be large and that is fine — stop the loop, then `demo:tidy -- --minutes 2`.**
+The data-quality report's five checks re-run independently give exactly its two findings — SOL-PVD's
+**−395** suite rate and the unresolved **"Boston-area sister property"** — both already disclosed.
+**The only thing wrong was their own check:** *"those entries are `{start,end}` objects, not
+strings."* The instrument again, not the system.
 
 ### The single most important remaining item
 
