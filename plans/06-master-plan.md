@@ -80,7 +80,7 @@
 >
 > ### Two constraints anyone editing should know
 >
-> **The voice prompt has 681 characters of margin** (29,319 of 30,000). Wrap human-facing additions
+> **The voice prompt has 849 characters of margin** (29,151 of 30,000, after PR #136). Wrap human-facing additions
 > to `agent/sol.md` in `voice:exclude`: a 276-character clause costs **+1**, not +276 — and **any**
 > edit outside such a block needs a `--refresh`.
 >
@@ -1479,6 +1479,147 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 142, 23:30 EST — re-ran the conclusion my broken method produced. It holds
+
+Last iteration I wrote that **finding a flawed method obliges you to re-run what it already told
+you**, after PR #136 found two copies of an invented phrase that my line-based `grep` had missed
+because it wrapped. That is an obligation I incurred, so this iteration discharges it on the most
+consequential thing I concluded with that instrument.
+
+#### The claim being re-tested
+
+Iterations 88 and 89 swept for committed credentials with `git grep -F` — **line-based, and
+therefore blind to a value split across a line break.** The conclusion was:
+
+> *"This SIP username is the only credential ever committed. Decide on one item, not on an unknown
+> number."*
+
+**Enrique's T34 rotation decision rests on that sentence.**
+
+#### Re-run with whitespace collapsed entirely
+
+Not normalised to single spaces — **removed**, so a value broken across lines with any indentation
+still matches:
+
+```
+secrets to look for : 23   (every .env value of 12+ characters)
+tracked files       : 252
+hits                : 32, across 7 distinct variables
+```
+
+And the seven are **exactly the seven from iteration 89**:
+
+```
+PUBLIC_BASE_URL · TELNYX_PHONE_NUMBER · TELNYX_ASSISTANT_MODEL · TELNYX_ASSISTANT_VOICE
+TELNYX_ASSISTANT_ID · TELNYX_CALL_CONTROL_APP_ID · TELNYX_SIP_CONNECTION_ID
+```
+
+The site URL, the number `SUBMISSION.md` publishes on purpose, a model name, a voice name, and three
+resource ids. **Not one secret appears** — not the four API keys, not `SUPABASE_SERVICE_ROLE_KEY`,
+`TELNYX_SIP_PASSWORD`, `TOOL_WEBHOOK_SECRET`, `PROPOSAL_LINK_SECRET`, `DEMO_PASSWORD`,
+`TELNYX_SIP_USERNAME`, `TELNYX_SIP_URI` or `TELNYX_TELEPHONY_CREDENTIAL_ID`.
+
+**The conclusion survives the stronger method.** T34 remains a decision about one credential.
+
+#### Why re-running a passing check was worth an iteration
+
+It would have been reasonable to assume it was fine — the method was wrong in a way that produces
+**false negatives**, and it had already returned a negative. **That is precisely why it needed
+re-running: a flawed instrument that reports "nothing found" is indistinguishable from a sound one
+until you use a better instrument.**
+
+> The re-run cost one command. **Had it found something, it would have been a live credential in a
+> public repository, discovered eleven hours before the link goes out.** That asymmetry is the whole
+> argument, and it does not depend on the outcome.
+
+#### What I have not re-run, stated so it is visible
+
+The same line-based method produced iteration 79's UUID sweep and iteration 118's policy-citation
+check. **Both are lower stakes** — a wrapped UUID in prose would break a link a reader could still
+find, and a wrapped `Policy 15` would be a citation that still reads correctly. **Neither is a
+credential.** I am recording the exposure rather than spending the remaining hours on it.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — with its safety reason and recovery | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — rotate the SIP connection; **still exactly one credential** | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
+### Iteration 141, 23:26 EST — T41 had two siblings, and the line-wrap that hid them is the failure I had already documented
+
+#### What I missed
+
+T41, which I filed in iteration 117, fixed `README.md` attributing *"subject to same-day
+availability"* to Policies 1 and 6 — **a phrase that occurs zero times in the policy document.**
+
+PR #136 found it in **two more places**:
+
+- **`agent/sol.md`**, which compiles to the voice prompt — so **the live phone agent was carrying an
+  invented quotation of the interviewers' own document.**
+- the header of **`availability.ts`**, the service the quotation exists to justify.
+
+And the reason both survived:
+
+> *"Both hid from the earlier sweep because the `sol.md` copy **wraps across a line break**, so grep
+> found nothing."*
+
+#### That is the failure I diagnosed myself, nineteen iterations earlier
+
+**Iteration 122**: my tightened `grep` reported T41 fixed when it was not, because the phrase wrapped
+at `README.md:133-134`. I found the mechanism, wrote it up, and **put a whitespace-normalised check
+into the plan** so the five open fixes could be tracked reliably.
+
+**I applied it to the five files I was tracking and never re-ran the phrase search across the
+package with it.** I fixed the instrument for the job in front of me and left the earlier search
+standing on the broken one.
+
+> **Finding a flawed method obliges you to re-run what it already told you.** I treated it as a
+> forward-looking fix — *use the better check from now on* — when its first duty was backward: every
+> conclusion that method produced was suspect, including the one that said the phrase appeared
+> nowhere else.
+
+#### Verified live after their re-provision
+
+```
+live    29,151  b4c35e9c24e9
+export  29,151  b4c35e9c24e9      live === export: true
+margin  849
+invented phrase in the LIVE voice prompt: false
+```
+
+**Gone from the phone agent**, export back in sync, and the margin improved from 637 to **849**
+because the sentence was longer than its replacement. Their guard now *"flattens whitespace, bans
+the phrase across twelve deliverables and the tool source, and checks the compiled prompt itself"* —
+which closes the class rather than the third instance.
+
+#### Why this one mattered more than its size
+
+The invented phrase was a **misquotation of the document the interviewers wrote**, being spoken by
+the agent, in the artefact they asked for as *"agent configuration."* Of all the places to put words
+into someone's mouth, that is the worst available.
+
+**It was found because someone re-checked a fix I had called complete.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — with its safety reason and recovery | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 140, 23:22 EST — verified the new capability-URL disclosure, and nearly falsified it with a URL I built myself
 
