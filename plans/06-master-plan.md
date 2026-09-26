@@ -1,8 +1,8 @@
 # Master plan: the whole picture
 
 > ## 22:26 — **ENRIQUE: the SQL paste is #1, and it is now the whole list plus three.**
-> *T38–T40 closed in PR #124, T41 in #125, T42 in #126.* **Four items are yours, plus **T43** — one
-> clause: the runbook says "148 chat sessions to 9 calls"; it is **171 to 9**.*
+> *All agent work is closed: T38–T40 in PR #124, T41 in #125, T42 in #126, T43 in #129.*
+> **Four items are yours.** *Six likely panel questions are answered in `▶ IF THEY ASK` below.*
 > *Five likely panel questions are answered in `▶ IF THEY ASK` directly below.*
 >
 > **This banner is rewritten, not appended.** It said *18:04* and *"two agent items left"* until
@@ -103,7 +103,7 @@ projection advice is unchanged; the split still supports the claim that our own 
 all chat.
 
 
-# ▶ IF THEY ASK — five answers to questions the package invites
+# ▶ IF THEY ASK — six answers to questions the package invites
 
 *Each of these is a place where the system is **correct** and a reviewer will reasonably want to
 know why it looks the way it does. Each was checked in the iteration named. **None is a defect.***
@@ -139,6 +139,15 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > escalation that makes the refusal honest. **We did not exclude it. It is in the transcript we tell
 > you to read first**, beside the sentence where Sol says no.
 
+**6. "Your own bill says the model costs more than telephony — so why does telephony matter?"**
+— *iteration 133*
+
+> Because we are at **5% voice** and telephony passes the model at **6.8%**. Per voice session is
+> **$0.144** against **$0.0098** per conversation for the model, so the crossing point is 1.8 points
+> above where our own traffic sits — and a real hotel group is far above that. **Our bill is the
+> misleading view; the projection is the honest one.** Total spend to date is **$3.07 across 181
+> conversations, 1.7 cents each**, and the Telnyx balance on that page is read live from their API.
+
 **5. "So how does the manager actually find out?"** — *iterations 84 and 33*
 
 > Today a supervisor reads the table. **Nothing pages anyone** — `notify` is an inert string array,
@@ -149,7 +158,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 ---
 
-# ▶ OPEN WORK — four items are Enrique's, and **T43** is one clause in the runbook.
+# ▶ OPEN WORK — all four remaining items are Enrique's. Every agent item is closed.
 
 *Everything below this section is closed, or evidence.*
 
@@ -1433,6 +1442,68 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 133, 22:46 EST — T43 closed as a floor, and beat 6's fallback flips at 6.8% voice share
+
+#### T43 shipped in the form asked for, and the floor is true
+
+PR #129, *"State the chat-to-call split as a floor, not two exact counts."*
+
+> *"Our own traffic is almost all chat — **fewer than one call in every fifteen sessions**"*
+
+Checked: **9 voice in 181 conversations is one in 20.1**, so the floor holds with room, and it
+**keeps** holding as chat accumulates — which is the whole point, since the count moved 171 → 172
+while iteration 131 was being written.
+
+#### Beat 6's fallback verified, and it is stronger than the runbook claims
+
+The runbook's recovery from the awkward measured split is: *"raise the voice share to what a hotel
+group actually sees and telephony takes over in front of them."* **That is the move the beat depends
+on, and nobody had checked that it works.**
+
+The projection's arithmetic first, since the whole beat rests on it:
+
+```
+140 properties × 40 conversations/day × 30   = 168,000   endpoint: 168,000   ✓
+variable $2,835.71 ÷ 140 properties          = $20.26    endpoint: $20.26    ✓
+```
+
+Then where the flip actually happens, from the live totals:
+
+```
+measured voice share            5.0%    (9 of 181)
+telephony per voice session     $0.144  (1.33 min average)
+model per conversation          $0.0098
+
+telephony overtakes the model at a voice share of   6.8%
+headroom above today                                1.8 points
+```
+
+**Telephony takes over at under seven percent.** We are sitting at five. A hotel group's real voice
+share is nowhere near that low, so **the flip is not a marginal effect the panel has to squint at —
+it happens almost immediately and then runs away.**
+
+> Ready for the room: *"We're at 5% voice. Telephony passes the model at **6.8%**. Every hotel group
+> we know of is far above that, which is why the projection is the honest view and our own bill is
+> the misleading one."*
+
+**That is a better sentence than the runbook currently has**, because it names the crossing point
+instead of asserting a direction. I am **not filing it** — the runbook is settled, rehearsed, and
+correct as written; this belongs in `▶ IF THEY ASK`, which is where I have put it.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — delete the disclosure if applied first | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — two rows | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+
+**Every agent item is closed.** Inbox empty. No lock held.
+
+**The plan is accurate and correctly ordered.**
+
 
 ### Iteration 132, 22:42 EST — beat 6's cost claim is true, and T43's number moved while I was checking it
 

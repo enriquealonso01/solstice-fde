@@ -5238,3 +5238,73 @@ Red-checked by restoring the old clause verbatim: both cases fail on the exact t
 
 `npx tsc -b` clean. `npx vitest run` **558 tests / 46 files** green (up 12). No prompt change, so no
 re-provision: compile === export === live still 29,006, margin 994.
+
+## It98 — ran the documented commands instead of checking they exist, and the documented setup failed
+
+No task open: no T44, nothing reopened past the Tester's iteration 61, Backlog inbox empty. So I took
+the gap in my own guard. `documented-commands.test.ts` asserts that every `npm run` named in a
+deliverable is in `package.json` — which a **broken** command satisfies perfectly. That gap is how
+`demo:tidy` came to be documented for a preview.
+
+**Ran the read-only set, verbatim as the documents write them:**
+
+| Command | Result |
+|---|---|
+| `npm run data:check` | `OK - 9 generated files match their sources: properties, guests, reservations, policies, policy-document, inquiries, data-quality, rules, manifest` |
+| `npm run typecheck` | exit 0 |
+| `npx vite-node scripts/show-verdict.ts -- INQ-2009` | matches `docs/live-modification.md`'s documented **Before** block verbatim — the flag, *"asked 17, allowed 15"*, the sentence, and `$7806.15` |
+| `npm run email:check` | `enriquecodes.com — status: VERIFIED` (DKIM, DMARC, SPF, ownership OK; inbound MX missing, which outbound does not need) |
+| `npm run demo:preview` | 0 phantoms; 151 stale sessions it would close |
+| `npm run db:schema` (no `SUPABASE_DB_URL`) | prints the SQL-editor instructions and exits **0** — a graceful degrade, not a failure |
+
+I did not run `db:seed` or `seed:users`: they write to Supabase, and a reviewer would run them against
+their own project.
+
+### The defect: README step 5 could not work
+
+`README.md` "Running it locally" is six lines a reviewer pastes in order — `npm install`,
+`cp .env.example .env`, `db:schema`, `db:seed`, `seed:users`, `dev`.
+
+`scripts/seed-users.mjs` requires **`DEMO_PASSWORD`** and deliberately has no default:
+
+> `Set DEMO_PASSWORD in .env before seeding users. It is deliberately not defaulted.`
+
+That is the right call — demo logins should not get a password guessable from this repo. But
+`DEMO_PASSWORD` appeared **nowhere**: not in `.env.example`, not in the README, not in `docs/`. A
+reviewer who filled in every key the example lists still hit a wall on step 5, on a variable they had
+no way to know existed. And `.env.example` lists its two siblings, `DEMO_EMAIL` and `DEMO_PHONE`,
+which is exactly what makes a gap like this invisible to a human pass — the group *looks* complete.
+
+`SUPABASE_DB_URL` was missing the same way. Milder: without it `apply-schema.mjs` prints Option A
+("paste it into the SQL editor") and exits 0, so nobody is stranded — but the script's own guidance
+says *"Add it to .env as SUPABASE_DB_URL=…"*, which the example file should therefore mention.
+
+Both added with a comment naming the step that needs them.
+
+### Two false findings I did not file
+
+The sweep of every `env.X` in the repo against `.env.example` also flagged the four `VITE_*` names and
+`PROPOSAL_LINK_SECRET`. Both are fine, and I checked before writing anything down:
+
+- `vite.config.ts` **derives** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SUPPORT_PHONE` and
+  `VITE_TELNYX_ASSISTANT_ID` from un-prefixed keys that are all present. The comment there says why:
+  rather than duplicate every key with a prefix.
+- `PROPOSAL_LINK_SECRET` falls back to `TOOL_WEBHOOK_SECRET`, then the service role key, then an
+  ephemeral key. A deliberate cascade, not an unset hole.
+
+That is the same shape as iteration 79, where a root-relative path test nearly had me file a missing
+directory that was there. The habit that saves it is checking the mechanism before writing the
+finding. Both are now pinned in the new test so nobody re-files them.
+
+### Guarded by deriving the list, not typing it
+
+`setup-env.test.ts`: every `env.X` read by the three scripts the README pastes must appear in
+`.env.example`. Derived from the scripts rather than hardcoded, so the next undocumented variable
+fails until someone says what it is for — and a count assertion (at least 4 variables found) stops the
+regex passing by matching nothing, which is the failure mode this repo has hit four times.
+
+Red-checked twice: remove `DEMO_PASSWORD` — the repo's actual state an hour ago — and the guard names
+it; add a fresh `env.SEED_REGION` read to `seed-users.mjs` and the guard names that instead.
+
+`npx tsc -b` clean. `npx vitest run` **565 tests / 47 files** green (up 7). No prompt change, so no
+re-provision: compile === export === live still 29,006, margin 994.

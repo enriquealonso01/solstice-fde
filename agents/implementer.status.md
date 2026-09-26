@@ -9,23 +9,26 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It97: T43 — the runbook staked the beat on an exact split in the sentence that dares the
-  audience to check it.** `docs/demo-runbook.md:215` said *"about 148 chat sessions to 9 calls"*.
-- **Measured before rewording:** 181 sessions, **172 chat to 9 voice** — wrong by 24, and wrong in the
-  direction that does not matter to the argument (the split is *more* lopsided than claimed, which is
-  what the beat needs). The number was the only broken part.
-- **Replaced with a floor, not a fresh pair:** *"fewer than one call in every fifteen sessions"*. A
-  chat session is created whenever anyone opens the widget — the Tester adds ~25 an hour — while a
-  call costs money, so an exact pair was stale within hours and would be stale again by 11:00. The
-  floor stays true as chat grows. Projection advice untouched.
-- **Swept for siblings and found none.** Every other number near a live quantity in the deliverables
-  is either historical (`how-this-was-built.md`'s 24 401s, `latency-target.md`'s 24-call run), a
-  rate already hedged (runbook line 21), fiction (the 140-property group) or code-pinned (the $45/$50
-  authority row). **T43 was the last hostage.**
-- **Guarded the form, since a hermetic suite cannot check a live figure:** the runbook must carry a
-  ratio, and no deliverable may state an exact chat-sessions-to-calls pair. Red-checked by putting the
-  old clause back — both cases fail on the exact text that shipped.
-- Third live-quantity claim in three iterations: the Archive (#127), the compile margin (#128), this.
+- **SHIPPED It98: no task open, so I ran every documented command instead of checking it exists — and
+  the documented setup could not have worked.** `documented-commands` pins that each `npm run` named
+  in a deliverable is in `package.json`, which a broken command satisfies perfectly.
+- **Ran the read-only set, all green:** `data:check` (*"OK - 9 generated files match their sources"*),
+  `typecheck`, `npx vite-node scripts/show-verdict.ts -- INQ-2009` (matches the documented "Before"
+  output verbatim), `email:check`, `demo:preview`. `db:schema` with no URL takes its manual-
+  instructions path and exits **0**, which is the right behaviour.
+- **The defect: `README.md` step 5 could not run.** `scripts/seed-users.mjs` requires `DEMO_PASSWORD`
+  and deliberately has no default; `DEMO_PASSWORD` appeared **nowhere** — not `.env.example`, not the
+  README, not `docs/`. A reviewer copies the example, fills in every key it lists, and hits a wall on
+  a variable they had no way to know existed. `.env.example` lists its two siblings `DEMO_EMAIL` and
+  `DEMO_PHONE`, which is what made the gap invisible to a human pass. `SUPABASE_DB_URL` was missing
+  the same way, though step 3 degrades gracefully.
+- **Nearly filed two false findings and checked first**: the four `VITE_*` names are *derived* in
+  `vite.config.ts` from un-prefixed keys that are present, and `PROPOSAL_LINK_SECRET` has a deliberate
+  fallback cascade. Neither is a defect; both are now pinned so nobody re-files them.
+- **Guarded by deriving, not listing**: every `env.X` read by the three scripts the README pastes must
+  appear in `.env.example`, so the next undocumented variable fails until someone says what it is for.
+  Red-checked by removing `DEMO_PASSWORD` (the original state) and by adding a fresh `SEED_REGION`
+  read — the guard names both.
 
 ## Demo rehearsal coverage — what is actually verified
 
@@ -61,7 +64,7 @@ in `agents/completed.log.md`, not here.
   `voice-prompt-size`, `doc-citations` (counts, links), `list-counts`, `export-redaction`,
   `escalation-dedupe`, `walkthrough-quotes`, `data-seam`, `browser-env`, `doc-paths`,
   `diagram-guide`, `documented-commands`, `suite-integrity`, `transcript-titles`,
-  `supervisor-archive`.
+  `supervisor-archive`, `setup-env`.
 - **Open for Enrique** (`HUMAN_INTERVENTION.md`): the `drop policy` SQL — the only item with a live
   security consequence, and disclosed in three places that must be deleted together if he applies it ·
   the Telnyx top-up, which unblocks beat 3 and G16 · `INQ-2012`/`INQ-2013` · rotating the SIP
