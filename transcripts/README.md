@@ -16,6 +16,8 @@ to notice, because the polite fiction is what almost every chatbot says.
 | [`service-animal.md`](service-animal.md) | Policy 8 encoded precisely, including the ADA limits on what staff may ask | chat |
 | [`voice-call.md`](voice-call.md) | The same agent, the same tools and the same rules, reached by telephone | **voice** |
 
+**Why two captures cite `R55015` for a guest the cheat sheet calls "Denver".** `G10004` is the only guest in the supplied data with more than one reservation -- Denver 20-23 July and Austin 5-7 September -- so when a capture identifies him without a confirmation number, `identify_guest` returns both and marks the nearer one, Austin, as most relevant. Nothing is wrong in either file: a late checkout is a **tier** guarantee, so both stays give the same answer, which is what those two captures show. It matters on the *upgrade* question instead, where the two stays differ because Austin has suite inventory and Denver does not -- which is why the cheat sheet tells the presenter to give the confirmation number on that beat.
+
 ## These were re-verified against production on 2026-09-26
 
 The captures are dated records, so they are **not** edited to track later changes — when behaviour

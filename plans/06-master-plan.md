@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 01:45 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
+> ## 01:49 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
 > *All agent work is closed — T38–T43 and T45, each re-verified against the live files at 00:55, not
 > from the log; **T44 shipped in It118 and T46 in It120**, each correcting a premise of mine while doing it.
 > **T47 shipped in It121 and T48 in It122, refresh and re-export included** — `sol.md`, the committed
@@ -1683,6 +1683,72 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 168, 01:49 EST — the file was never being rewritten under me; I was comparing bytes to characters
+
+#### Correction to my own reasoning last iteration
+
+While investigating T50's disappearance I compared `wc -c` against python's `len(t)` and concluded the file
+had **shrunk by ~16KB between two of my own checks**, and from that, that another agent was *actively
+rewriting my file while I worked*. Measured properly:
+
+```
+characters : 661,364     <- python len()
+bytes      : 678,115     <- wc -c
+difference :  16,751     2.53% overhead, all of it multibyte UTF-8
+```
+
+**Em-dashes, arrows, `×` and `▶`.** This file is full of them. **The two numbers were never in conflict and
+the file had not changed at all.**
+
+> **What saves this from being a published error is luck plus one habit.** The inference never reached the
+> verification log — iteration 167's entry claims only that *"another agent edited this file in the same
+> minute"*, which is true and **self-reported by them** in `HUMAN_INTERVENTION.md:1016`. I checked what I had
+> actually written before correcting it, rather than correcting from memory, and there was nothing to retract.
+> **The reasoning was wrong; the record was not.**
+
+**Seventh in the series, and the purest one yet.** Hand-rolled compiler · "any env value is a secret" ·
+line-oriented grep over a wrapped phrase · zero-row RLS probe · string count read as import count · source
+search scoped to the wrong tree · **and now two correct measurements in different units.**
+
+**T50's disappearance is unaffected and still real** — it was observed directly (`grep -c '^### T50\.'`
+returned **0**, with three live pointers to it), not inferred from any size arithmetic.
+
+#### Cross-checked It125's eight corrections against my own file
+
+They audited `plans/05-requirements-audit.md` — where `AGENTS.md` routes a reader — and found **eight verdicts
+that had moved, every one understating the package**. My file makes overlapping claims, so the question is
+whether I carry any of the same staleness.
+
+**I do not.** Searched my open region for all eight: *"7 stated assumptions"*, *"4 chat transcripts"*,
+`availability_service`, *"never rehearsed"*, the missed latency target, the missing roadmap — **zero hits**.
+My two transcript counts both say **six**, which is ground truth (`ls transcripts/*.md` minus README = 6).
+
+#### And I checked their correction rather than taking it
+
+*"7 stated assumptions → **9**"*. `README.md`'s `## Stated assumptions` is numbered **1 through 9**, ending
+at *"INQ-2010 is also inside a blackout, not only over the seasonal discount cap."* **Their 9 is exact.**
+
+**It also cleared something in my own banner that could have looked wrong.** Item 1 cites *"`agent/sol.md`
+**§6, assumption 13**"*. If the package had nine assumptions, there would be no thirteenth. Counted directly:
+**§6 carries 16 numbered assumptions**, and **13 is *"Approval authority is a named human, not a role
+tier"*** — exactly what my banner says it is. **The two counts are of different things** — nine in the README,
+sixteen in the agent config — and both are right.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Last valid check 20:26 (Tester); **not re-provable by me** | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique — **do** |
+| 3 | **T21** — two rows, cascade count first | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T50 | Chen's second reservation — restored at iteration 167; **(a) and (b) only** | any agent |
+| — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
+
+Inbox empty. No lock held. Tester silent **5h22m**. **The plan is accurate and correctly ordered.**
 
 ### Iteration 167, 01:45 EST — a task disappeared from this file while three lines still pointed at it
 

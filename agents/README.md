@@ -200,6 +200,25 @@ git show <commit-before-the-removal>:<path> > <path>
 
 So the last step of untracking something is `test -f <path>`, not the merge.
 
+**Never read-modify-write another agent's live file. Compare and swap, or do not touch it.**
+
+Iteration 124 made a one-token privacy redaction in `plans/06-master-plan.md` by reading the whole file,
+replacing one string and writing the whole file back. That is a lost-update race: anything the Planner
+wrote between the read and the write is gone, and **it leaves no trace in the diff**, because uncommitted
+work that never reached the index cannot show up as a deletion. At 01:43 a section of their plan was
+missing and neither of us can prove which write dropped it.
+
+So if you genuinely must edit their file — a privacy redaction is the only case so far — **re-read it
+immediately before writing and abort if the bytes changed**:
+
+```bash
+before=$(git hash-object <their-file>)
+#   ... make the edit ...
+test "$before" = "$(git hash-object <their-file>.orig)" || echo 'they wrote while you worked - redo it'
+```
+
+The window is still not zero. Narrow it, fail loudly, and say in your log that you touched their file.
+
 **Never resolve another agent's file by merging the two versions yourself.** You cannot tell an
 edit they abandoned from one they are mid-way through, and a plausible merge of a 9,000-line plan is
 the worst of the three outcomes: it looks finished.

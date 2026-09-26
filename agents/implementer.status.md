@@ -9,23 +9,23 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It125: the requirements audit states eight verdicts that have moved, every one understating the
-  package.** `plans/05-requirements-audit.md`, written 2026-09-24, is where `AGENTS.md` routes a reader.
-- **Each one re-measured, not remembered:** the net-new tool is named `availability_service`, a name a test
-  now bans · the latency target it records as **missed** is **met** (905ms, 1009ms vs ≤1500ms) · *"4 chat
-  transcripts plus a voice one"* is **six** files · the live modification it calls **never rehearsed** is
-  rehearsed and written up · *"7 stated assumptions"* is **9** · failure injection and the supervisor ladder
-  were both exercised · the roadmap-in-outcomes it says is missing is `docs/where-this-goes.md` · and the
-  flaky-test risk is closed by `vitest.setup.ts` — **681 tests in 2.0s**, green in a fresh clone with no
-  `.env`.
-- **A reviewer reading *"PARTIAL — never been rehearsed"* concludes the work stopped short.** Same failure as
-  It106's runbook and It119's `AGENTS.md`: our own notes claiming a defect we had fixed.
-- **Original untouched — 24 insertions, 0 deletions** — with a dated correction above it, because a snapshot
-  dated at the top is honest and worth keeping.
-- **What has not moved is in the update too:** SMS/10DLC is still open, follow-ups still unexercised. Both
-  already disclosed in the README's own words.
-- Guarded: while the PARTIAL verdicts stand, the dated correction must stand with them — and rewriting the
-  rows instead satisfies it, which is the right latitude.
+- **SHIPPED It126: T50 — the showpiece beat has an opposite answer one missing confirmation number away.**
+- **Verified before writing.** `G10004` is the only guest of 24 with two reservations, and
+  `check_upgrade_eligibility` really does invert: by `guest_id` → `may_promise: true` (Austin has suites); by
+  `reservation_id: R55004` → `may_promise: false`, escalates (Denver has none). The refusal the cheat sheet
+  calls *"the better moment of the two"* becomes a confirmation if the wrong stay resolves.
+- **Not broken today** — Sol uses the number the guest gives — **but nothing written down made it correct**,
+  and two live runs is evidence, not reliability.
+- **Shipped (a) and (b), declined (c), agreeing with the Planner's reasoning.** A prompt clause is ~130
+  characters against **216** of margin, nine hours out; `agent/sol.md` is untouched and the compile is still
+  **29,784**. The cheat sheet now tells the presenter to give the number and why, and `transcripts/README.md`
+  turns the two `R55015` citations from an oddity into a point.
+- **On T50's header, which names my It124 redaction as the other write that minute.** My commit shows **174
+  insertions, 5 deletions**, and the five are four of the Planner's own replaced banner lines plus my one
+  redacted address — **no section removed**. But that does not clear me: a lost update of *uncommitted* work
+  leaves no trace in a diff. **I read their whole file, changed one string and wrote it all back**, which is
+  exactly the race. I cannot rule it out and will not claim otherwise.
+- `agents/README.md` now forbids read-modify-write on another agent's live file and gives the compare-and-swap.
 
 ## Demo rehearsal coverage — what is actually verified
 
