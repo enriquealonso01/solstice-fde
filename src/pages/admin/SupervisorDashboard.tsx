@@ -2,7 +2,7 @@
 // Subscribed to postgres_changes on `sessions`, so a call or chat that starts on the
 // guest half of the split screen appears here inside about a second.
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AdminShell from '@/components/admin/AdminShell'
 import SupervisorAudioStatus from '@/components/admin/SupervisorAudioStatus'
@@ -17,8 +17,16 @@ import {
   SessionStatusChip,
   SourceChip,
 } from '@/components/admin/ui'
-import { SESSION_FETCH_LIMIT, sessionViewIsTruncated, useNow, useSessions } from '@/components/admin/useAdminData'
-import { duration, intentLabel, shortDate, clockTime, type SessionRow } from '@/components/admin/mockData'
+import { postJson, SESSION_FETCH_LIMIT, sessionViewIsTruncated, useNow, useSessions } from '@/components/admin/useAdminData'
+import {
+  duration,
+  intentLabel,
+  isLive,
+  sessionClockEnd,
+  shortDate,
+  clockTime,
+  type SessionRow,
+} from '@/components/admin/mockData'
 
 type ChannelFilter = 'all' | 'voice' | 'chat'
 
@@ -27,17 +35,31 @@ export default function SupervisorDashboard() {
   const now = useNow(1000)
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all')
 
+  // Close conversations that ended without an event, once, when a supervisor opens this screen.
+  //
+  // A web chat ends with a closed tab, which sends nothing, so nothing ever stamped `ended_at` on a
+  // chat session and this tile counted every conversation the system had ever held. There is a
+  // scheduled sweep (netlify/functions/reaper.ts) that keeps the database honest between visits;
+  // this call is what makes the number right the moment somebody looks at it, which is the moment
+  // that matters. Fire and forget: the rows come back through Realtime, and a failed sweep is a
+  // slightly stale tile, not something to interrupt a supervisor about.
+  useEffect(() => {
+    void postJson('/api/supervisor/reap', {})
+  }, [])
+
   const filtered = useMemo(
     () => (channelFilter === 'all' ? rows : rows.filter((s) => s.channel === channelFilter)),
     [rows, channelFilter],
   )
   const truncated = sessionViewIsTruncated(rows.length)
-  const live = filtered.filter((s) => s.status !== 'ended')
-  const archived = filtered.filter((s) => s.status === 'ended')
+  const live = filtered.filter(isLive)
+  const archived = filtered.filter((s) => !isLive(s))
 
-  const voiceCount = rows.filter((s) => s.status !== 'ended' && s.channel === 'voice').length
-  const chatCount = rows.filter((s) => s.status !== 'ended' && s.channel === 'chat').length
-  const takenOver = rows.filter((s) => s.status === 'taken_over').length
+  const voiceCount = rows.filter((s) => isLive(s) && s.channel === 'voice').length
+  const chatCount = rows.filter((s) => isLive(s) && s.channel === 'chat').length
+  // A finished call that a human took over stays `taken_over` in the archive on purpose. This
+  // tile counts who is on a conversation RIGHT NOW, so it has to ask both questions.
+  const takenOver = rows.filter((s) => s.status === 'taken_over' && isLive(s)).length
 
   if (access) {
     return (
@@ -68,7 +90,7 @@ export default function SupervisorDashboard() {
           }
         />
         <Metric label="Human in control" value={takenOver} hint="Supervisor took the call" />
-        <Metric label="Archived" value={rows.filter((s) => s.status === 'ended').length} hint="Full transcript retained" />
+        <Metric label="Archived" value={rows.filter((s) => !isLive(s)).length} hint="Full transcript retained" />
         {/* The hint used to print the three Postgres table names. It is the right evidence — this
             page is subscribed, not polling — but a concierge supervisor does not read table names.
             Same three streams, said in their words. */}
@@ -182,7 +204,7 @@ function SessionCard({ session, now }: { session: SessionRow; now: number }) {
           </div>
         </div>
         <span className="shrink-0 font-display text-2xl tabular-nums text-solstice-slate">
-          {duration(session.started_at, session.status === 'ended' && session.ended_at ? new Date(session.ended_at).getTime() : now)}
+          {duration(session.started_at, sessionClockEnd(session, now))}
         </span>
       </div>
 
@@ -192,14 +214,16 @@ function SessionCard({ session, now }: { session: SessionRow; now: number }) {
         <span className="chip bg-solstice-sand/60 capitalize text-solstice-slate">{intentLabel(session.intent, session.status)}</span>
       </div>
 
-      {session.status === 'active' ? (
+      {!isLive(session) ? null : session.status === 'taken_over' ? (
+        <div className="mt-3 text-xs text-solstice-ink">
+          A supervisor is {session.channel === 'voice' ? 'on this call' : 'answering this chat'}.
+        </div>
+      ) : (
         <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-700">
           <span className="sol-dot h-1.5 w-1.5 rounded-full bg-emerald-500" />
           Sol is handling this
         </div>
-      ) : session.status === 'taken_over' ? (
-        <div className="mt-3 text-xs text-solstice-ink">A supervisor is on this call.</div>
-      ) : null}
+      )}
     </Link>
   )
 }

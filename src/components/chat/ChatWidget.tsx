@@ -5,9 +5,10 @@ import { ChatLauncher } from './ChatLauncher'
 import { ChatPanel } from './ChatPanel'
 import { mockAgentStream } from './mockAgent'
 import { usePrefersReducedMotion, useTypewriter } from './hooks'
+import { useStaffInbox, type InboxMessage } from './useStaffInbox'
 import { applyDoneToConnection, applyDoneToTurn } from './turnState'
 import { useTelnyxVoice } from './useTelnyxVoice'
-import type { AgentTurn, Citation, ConnectionState, ToolActivity, TransportMode, Turn } from './types'
+import type { AgentTurn, Citation, ConnectionState, StaffTurn, ToolActivity, TransportMode, Turn } from './types'
 
 const PANEL_ID = 'sol-chat-panel'
 
@@ -38,6 +39,8 @@ export default function ChatWidget() {
   const [transportMode, setTransportMode] = useState<TransportMode | null>(null)
   const [unread, setUnread] = useState(false)
   const [busy, setBusy] = useState(false)
+  // Mirrors sessionIdRef as state, because the inbox poll is an effect and cannot watch a ref.
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined)
 
   const launcherRef = useRef<HTMLButtonElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -74,6 +77,24 @@ export default function ChatWidget() {
     ),
     !reducedMotion,
   )
+
+  // A supervisor has typed something. Append it, and mark the bubble unread if it is closed, the
+  // same way a finished Sol reply does: a guest who has minimised the widget must not miss a person.
+  const onStaffMessages = useCallback((messages: InboxMessage[]) => {
+    setTurns((previous) => {
+      const existing = new Set(previous.map((turn) => turn.id))
+      const additions: StaffTurn[] = []
+      for (const message of messages) {
+        const id = 'staff-' + message.id
+        if (existing.has(id)) continue
+        additions.push({ id, role: 'staff', text: message.text, at: message.at, attachment: message.attachment })
+      }
+      return additions.length > 0 ? [...previous, ...additions] : previous
+    })
+    if (!openRef.current) setUnread(true)
+  }, [])
+
+  const staff = useStaffInbox(sessionId, open, onStaffMessages)
 
   useEffect(() => {
     return () => abortRef.current?.abort()
@@ -144,6 +165,7 @@ export default function ChatWidget() {
 
             case 'session':
               sessionIdRef.current = event.session_id
+              setSessionId(event.session_id)
               break
 
             case 'reconnect':
@@ -171,6 +193,15 @@ export default function ChatWidget() {
               patchAgentTurn(agentTurnId, (turn) => applyDoneToTurn(turn, collectCitations))
               setConnection(applyDoneToConnection)
               if (!openRef.current) setUnread(true)
+              break
+
+            case 'handoff':
+              // Sol did not answer, and there is nothing to put in its bubble. Drop the placeholder
+              // turn entirely: leaving it would show typing dots that will never resolve, and
+              // filling it with the notice would attribute a system message to Sol.
+              typewriter.reset()
+              setTurns((previous) => previous.filter((turn) => turn.id !== agentTurnId))
+              setConnection({ kind: 'idle' })
               break
 
             case 'error':
@@ -281,6 +312,7 @@ export default function ChatWidget() {
             onSuggestion={send}
             voice={voice}
             busy={busy}
+            takenOver={staff.takenOver}
             inputRef={inputRef}
           />
         ) : (

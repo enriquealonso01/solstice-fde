@@ -29,12 +29,22 @@ export interface SessionRow {
   ended_at: string | null
 }
 
+export interface MessageAttachment {
+  filename: string
+  content_type: string
+  bytes: number
+  url: string
+}
+
 export interface MessageRow {
   id: string
   session_id: string
   role: MessageRole
   content: string
   created_at: string
+  /** Present on a supervisor message carrying a file. Absent everywhere else, and absent entirely
+   *  until supabase/migrations/005_message_attachments.sql is applied, which every reader tolerates. */
+  attachment?: MessageAttachment | null
 }
 
 export interface ToolInvocationRow {
@@ -789,6 +799,32 @@ export function clockTime(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
   return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' })
+}
+
+/**
+ * Is this conversation still going on?
+ *
+ * **`ended_at`, not `status`.** This distinction was a two-day-old phone call sitting in the
+ * "Active now" tile with its timer still counting up. Every screen used to read
+ * `status !== 'ended'`, and the voice webhook deliberately does NOT overwrite `taken_over` when
+ * the caller hangs up — `handleHangup` in netlify/functions/telnyx/index.ts keeps the status so
+ * the archive still records that a human, not Sol, finished that call, and stamps `ended_at`
+ * instead. Both halves are right. The UI was reading the wrong one.
+ *
+ * So: `ended_at` answers "is it over", `status` answers "who was handling it". A screen that
+ * wants liveness asks this function, and nothing else.
+ */
+export function isLive(session: Pick<SessionRow, 'status' | 'ended_at'>): boolean {
+  return session.ended_at === null && session.status !== 'ended'
+}
+
+/** The instant a session's clock should stop: when it ended, or `now` while it is still live. */
+export function sessionClockEnd(session: Pick<SessionRow, 'status' | 'ended_at'>, now: number): number {
+  if (session.ended_at) {
+    const at = new Date(session.ended_at).getTime()
+    if (!Number.isNaN(at)) return at
+  }
+  return now
 }
 
 /** mm:ss for anything under an hour, h:mm:ss above it. */

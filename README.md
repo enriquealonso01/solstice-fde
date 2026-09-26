@@ -212,7 +212,7 @@ rework the inbound flow that currently answers the phone reliably.
 
 **A stated limit, not a bug: a verified identity has no expiry.** Once `identify_guest` verifies a
 guest, the id is bound to the session row and restored on every later turn
-(`netlify/functions/chat.ts:311`). It is deliberate — without it Sol re-verifies the same person on
+(`netlify/functions/chat.ts:426`). It is deliberate — without it Sol re-verifies the same person on
 every message, because the transcript records what it *said*, not what it *knows* — but the bound
 identity has no TTL, and the lookup is by session id alone, so it is not checked against whether
 the session is still open either. Possession of the session id is therefore possession of that

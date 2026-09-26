@@ -8,6 +8,7 @@
 //   tool     { name, status: "running" | "done", summary, citations }
 //   done     { message_id, latency_ms, first_token_ms, first_event_ms }
 //   error    { message }
+//   handoff  { message }        a human took this conversation; no delta follows on this turn
 //
 // Request body: { message: string, session_id?: string, history?: [{ role, content }] }
 // `session_id` is optional on the first turn; the response's `session` event carries the id to
@@ -119,6 +120,10 @@ const HISTORY_LIMIT = 40
 const GUEST_SAFE_FAILURE =
   "I've hit a technical problem on my side, and I'd rather not guess at an answer. Let me get a colleague to pick this up with you."
 
+/** Shown to the guest when a supervisor has taken the conversation. Deliberately not phrased as
+ *  Sol speaking: Sol has stopped, and pretending otherwise would misrepresent who is answering. */
+const HANDOFF_NOTICE = 'A Solstice team member is with you now. They can see everything above.'
+
 // -------------------------------------------------------------------------- the prompt
 //
 // The agent definition is agent/sol.md. We read it at request time so the .md really is the
@@ -213,7 +218,7 @@ const SSE_HEADERS = {
   'x-accel-buffering': 'no',
 }
 
-type Emit = (event: 'session' | 'delta' | 'tool' | 'done' | 'error', data: unknown) => void
+type Emit = (event: 'session' | 'delta' | 'tool' | 'done' | 'error' | 'handoff', data: unknown) => void
 
 // ------------------------------------------------------------------------------ handler
 
@@ -221,8 +226,13 @@ export default async function handler(req: Request, _context: Context): Promise<
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
-      headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'content-type', 'access-control-allow-methods': 'POST, OPTIONS' },
+      headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'content-type', 'access-control-allow-methods': 'GET, POST, OPTIONS' },
     })
+  }
+  // GET /api/chat/inbox is the other half of supervisor intervention: the guest's browser asking
+  // whether a human has said anything since it last looked. It is the only read route here.
+  if (req.method === 'GET' && lastSegment(new URL(req.url).pathname) === 'inbox') {
+    return inbox(req)
   }
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'POST a message to /api/chat.' }), { status: 405, headers: { 'content-type': 'application/json' } })
@@ -277,6 +287,111 @@ export default async function handler(req: Request, _context: Context): Promise<
   return new Response(stream, { headers: { ...SSE_HEADERS, 'access-control-allow-origin': '*' } })
 }
 
+// ------------------------------------------------------------------------------- inbox
+//
+// GET /api/chat/inbox?session_id=<uuid>&after=<iso>
+//   -> { session_id, status, taken_over, messages: [{ id, content, created_at, attachment }] }
+//
+// The guest's widget polls this while it is open, so that a supervisor typing in the admin console
+// appears in the guest's chat. There is no websocket here on purpose: the guest side is anonymous,
+// Supabase Realtime would mean handing an unauthenticated browser a database subscription, and a
+// four-second poll on an open widget is both cheaper to reason about and impossible to leak with.
+//
+// WHY THIS IS SAFE WITHOUT A LOGIN, WHICH IS THE ONLY INTERESTING THING ABOUT IT.
+//
+//   1. The session id is a v4 uuid minted server-side and handed to exactly one browser. It is the
+//      same bearer-shaped secret POST /api/chat already trusts to continue a conversation, so this
+//      route grants nothing that route did not already grant.
+//   2. It returns ONLY `role = 'supervisor'` rows. Not the guest's own turns, not Sol's, and
+//      emphatically not `system` -- system messages carry operational text like "ANTHROPIC_API_KEY
+//      is not configured", which belongs to the supervisor console and never in front of a guest.
+//      Everything this route can return was written by a signed-in member of staff *to* this guest.
+//   3. `status` is a single enum, and the banner the widget draws from it is the one thing the
+//      guest is entitled to know: whether they are talking to a person.
+//
+// So the worst an attacker with a stolen session id learns is what a supervisor typed to that
+// guest -- which they could already read by continuing the conversation through POST /api/chat.
+
+async function inbox(req: Request): Promise<Response> {
+  const url = new URL(req.url)
+  const sessionId = (url.searchParams.get('session_id') ?? '').trim()
+  if (!UUID_RE.test(sessionId)) {
+    return jsonResponse({ error: 'session_id must be a uuid' }, 400)
+  }
+
+  const db = getDatabase()
+  // Not an error. With no database configured the widget is running against the mock agent, and
+  // "nobody has said anything" is the truthful answer rather than a failure to report.
+  if (!db) return jsonResponse({ session_id: sessionId, status: null, taken_over: false, messages: [] })
+
+  try {
+    const session = await db.from('sessions').select('status, ended_at').eq('id', sessionId).maybeSingle()
+    const status = typeof session.data?.status === 'string' ? session.data.status : null
+    const endedAt = typeof session.data?.ended_at === 'string' ? session.data.ended_at : null
+
+    let query = db
+      .from('messages')
+      .select('id, content, created_at, attachment')
+      .eq('session_id', sessionId)
+      .eq('role', 'supervisor')
+      .order('created_at', { ascending: true })
+      .limit(50)
+
+    const after = url.searchParams.get('after')
+    if (after && !Number.isNaN(new Date(after).getTime())) query = query.gt('created_at', after)
+
+    let rows = (await query).data as Array<Record<string, unknown>> | null
+    if (rows === null) {
+      // `attachment` only exists once supabase/migrations/005_message_attachments.sql is applied.
+      // Selecting a column that is not there fails the whole query, so retry without it rather
+      // than leave the guest unable to receive a plain text message on an unmigrated database.
+      let retry = db
+        .from('messages')
+        .select('id, content, created_at')
+        .eq('session_id', sessionId)
+        .eq('role', 'supervisor')
+        .order('created_at', { ascending: true })
+        .limit(50)
+      if (after && !Number.isNaN(new Date(after).getTime())) retry = retry.gt('created_at', after)
+      rows = ((await retry).data as Array<Record<string, unknown>> | null) ?? []
+    }
+
+    return jsonResponse({
+      session_id: sessionId,
+      status,
+      taken_over: status === 'taken_over' && !endedAt,
+      messages: (rows ?? []).map((r) => ({
+        id: String(r.id),
+        content: String(r.content ?? ''),
+        created_at: String(r.created_at),
+        attachment: (r.attachment as Record<string, unknown> | null) ?? null,
+      })),
+    })
+  } catch (err) {
+    console.warn('[chat] inbox failed', err instanceof Error ? err.message : String(err))
+    // A failed poll must never break an open chat. Report nothing new and let the next poll retry.
+    return jsonResponse({ session_id: sessionId, status: null, taken_over: false, messages: [] })
+  }
+}
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      'content-type': 'application/json',
+      'cache-control': 'no-store',
+      'access-control-allow-origin': '*',
+    },
+  })
+}
+
+/** `/api/chat/inbox` arrives as `/.netlify/functions/chat/inbox`, and in `netlify dev` sometimes
+ *  with a trailing slash. Take the last non-empty segment either way. */
+function lastSegment(pathname: string): string {
+  const parts = pathname.split('/').filter((p) => p.length > 0)
+  return parts[parts.length - 1] ?? ''
+}
+
 // ------------------------------------------------------------------------------- turn
 
 interface TurnInput {
@@ -310,6 +425,20 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
   // message, because the transcript records what it SAID, not what it KNOWS.
   if (!ctx.guest_id && saved?.guest_id) ctx.guest_id = saved.guest_id
   let verifiedLabel = saved?.guest_label ?? null
+
+  // A HUMAN HAS THE CONVERSATION. Sol does not get a turn.
+  //
+  // `sessions.status = 'taken_over'` is set by POST /api/supervisor/join, or implicitly by a
+  // supervisor sending their first message. This check is the entire mechanism behind that button:
+  // without it, "take over" would change a chip in the admin console while Sol carried on
+  // answering over the supervisor's shoulder, and the guest would get two replies to one question
+  // from two different authorities. The guest's message is still recorded above -- the supervisor
+  // needs to read it -- we simply do not generate against it.
+  if (saved?.status === 'taken_over') {
+    emit('handoff', { message: HANDOFF_NOTICE })
+    emit('done', { message_id: newUuid(), latency_ms: Date.now() - turnStarted, first_token_ms: null })
+    return
+  }
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
@@ -667,17 +796,22 @@ async function persistMessage(sessionId: string, role: 'user' | 'assistant' | 's
 interface SessionState {
   guest_id: string | null
   guest_label: string | null
+  /** 'taken_over' means a human is answering and Sol must not. See standDown() above. */
+  status: string | null
 }
 
 async function loadSessionState(sessionId: string): Promise<SessionState | null> {
   try {
     const db = getDatabase()
     if (!db) return null
-    const { data, error } = await db.from('sessions').select('guest_id, guest_label').eq('id', sessionId).maybeSingle()
+    // `status` rides along on a read that was already happening, so the takeover check costs no
+    // extra round trip on the guest's critical path.
+    const { data, error } = await db.from('sessions').select('guest_id, guest_label, status').eq('id', sessionId).maybeSingle()
     if (error || !data) return null
     return {
       guest_id: typeof data.guest_id === 'string' ? data.guest_id : null,
       guest_label: typeof data.guest_label === 'string' ? data.guest_label : null,
+      status: typeof data.status === 'string' ? data.status : null,
     }
   } catch {
     return null

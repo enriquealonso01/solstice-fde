@@ -55,10 +55,14 @@ const EXPECTED: Record<string, string> = {
   // Shifted from 283 and 146 at iteration 46: the chat channel note grew a comment block recording
   // why it no longer promises the guest that Sales will follow up. The substrings are unchanged, so
   // this guard still checks the citation means what the document says it means.
-  'netlify/functions/chat.ts:311': 'saved?.guest_id',
-  'chat.ts:311': 'saved?.guest_id',
-  'netlify/functions/chat.ts:168': 'create_escalation',
-  // Was :109, then :111 at iteration 138 when the script's env reader was replaced. Re-pointed at
+  // Shifted again to 426 and 173 when GET /api/chat/inbox and the supervisor stand-down check landed
+  // above both of them. The substrings are unchanged, which is the point: the line number is the
+  // fragile half of a citation and the substring is the half that carries the meaning.
+  'netlify/functions/chat.ts:426': 'saved?.guest_id',
+  'chat.ts:426': 'saved?.guest_id',
+  'netlify/functions/chat.ts:173': 'create_escalation',
+  // Was :109, then :111 at iteration 138 when the script's env reader was replaced. Re-pointed at
+
   // the declaration rather than the comment above it: a const moves only when the code does.
   'cleanup-phantom-sessions.mjs:113': 'const STALE_MINUTES',
   // Added with the proposal-link disclosure in iteration 102. I then "corrected" 158 to 157 off a
