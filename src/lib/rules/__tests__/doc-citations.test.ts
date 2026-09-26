@@ -59,6 +59,10 @@ const EXPECTED: Record<string, string> = {
   'chat.ts:303': 'saved?.guest_id',
   'netlify/functions/chat.ts:160': 'create_escalation',
   'cleanup-phantom-sessions.mjs:84': 'STALE_MINUTES',
+  // Added with the proposal-link disclosure in iteration 102. I then "corrected" 158 to 157 off a
+  // `sed -n '156,160p'` reading and this guard refused it: 158 is the function, 157 its comment.
+  // The instrument was right and I was not, which is the fourth off-by-one of this kind here.
+  'netlify/functions/group/store.ts:158': 'tokenMatches',
 }
 
 function citations(): { doc: string; citation: string; path: string; line: number }[] {
@@ -213,5 +217,64 @@ describe('relative links in the deliverable index', () => {
     const text = readFileSync(join(repoRoot, 'README.md'), 'utf8')
     const targets = [...text.matchAll(/\]\(((?!https?:|mailto:|#)[^)]+)\)/g)]
     expect(targets.length).toBeGreaterThan(10)
+  })
+})
+
+/**
+ * If the customer's proposal link is a public-bucket URL, the README has to say so.
+ *
+ * `netlify/functions/group/store.ts` builds the link a group organiser receives as
+ * `${base}/storage/v1/object/public/proposals/<code>/<32 random chars>/<file>.pdf`. The bucket really
+ * is public — `GET /storage/v1/bucket/proposals` returns `"public": true` — so the URL is the whole
+ * credential: no login, no expiry, no revocation, and forwarding the email forwards the access.
+ *
+ * That is a defensible design and the same model as any share link; a proposal emailed to an
+ * organiser cannot require an account on our system. What was wrong was that **no deliverable said
+ * it.** This package discloses the session-identity limit, the approval gate, the supervisor audio
+ * gap and the idle-session count, all in the same section, and then left out the one limit that
+ * touches an outside party's pricing.
+ *
+ * Measured in iteration 102 before writing the disclosure, so it claims only what was tested: a
+ * storage `list` on the bucket returns **zero entries** with the public anon key and with a
+ * signed-in concierge token, so it cannot be walked; the real URL returns 200 `application/pdf` with
+ * no credentials at all; and one altered path segment returns **400**, not another customer's
+ * document.
+ *
+ * This guard ties the two together. While the code ships a public-bucket link, the README must carry
+ * the disclosure — so removing the paragraph fails, and so does quietly moving to a signed URL
+ * without updating the prose that says we do not use one.
+ */
+describe('the customer proposal link disclosure', () => {
+  const source = 'netlify/functions/group/store.ts'
+  const doc = 'README.md'
+  // The code's marker is the call, not the path: Supabase builds `object/public/...` inside
+  // getPublicUrl, so store.ts never contains that string. My first draft pinned the path and
+  // failed immediately, which is the guard earning its keep on its own author.
+  const PUBLIC_CALL = 'getPublicUrl'
+
+  it('is only required because the code still builds a public-bucket URL', () => {
+    const text = readFileSync(join(repoRoot, source), 'utf8')
+    expect(
+      text,
+      `${source} no longer calls ${PUBLIC_CALL}. If it moved to a signed URL, the ` +
+        `README paragraph saying the link never expires is now wrong -- update it and this case ` +
+        `together.`,
+    ).toContain(PUBLIC_CALL)
+  })
+
+  it.each([
+    ['names the mechanism', 'capability URL'],
+    ['says the bucket is public', 'public'],
+    ['says no login is needed', 'no login'],
+    ['admits there is no expiry', 'no expiry'],
+    ['records that the bucket cannot be enumerated', 'zero'],
+  ])('%s', (_label, needle) => {
+    const limits = readFileSync(join(repoRoot, doc), 'utf8')
+    const at = limits.indexOf('capability URL, not an authenticated download')
+    expect(at, `${doc} no longer discloses the proposal-link model at all`).toBeGreaterThan(-1)
+    // Only the disclosure paragraph, so a stray "public" elsewhere in a 300-line README cannot
+    // satisfy this. The first blank-line-separated block after the heading sentence.
+    const para = limits.slice(at, at + 1600).replace(/\s+/g, ' ')
+    expect(para, `the disclosure no longer ${_label}`).toContain(needle)
   })
 })

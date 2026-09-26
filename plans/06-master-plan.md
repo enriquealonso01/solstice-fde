@@ -51,7 +51,24 @@
 > removes T40's failure mode rather than documenting a way round it.
 >
 > **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`**. *"DELETE-ME"* is **row one** of
-> the sales inbox. Verified safe three ways; SQL and both ids in `HUMAN_INTERVENTION.md`.
+> the sales inbox. SQL and both ids in `HUMAN_INTERVENTION.md`.
+>
+> **This is the one irreversible thing on the list, so check before you run it.** `proposals` and
+> `follow_ups` both declare `references inquiries(id) **on delete cascade**` (`schema.sql:88, :107`),
+> so deleting an inquiry silently takes its proposals and follow-ups with it. **Re-checked at 23:12
+> — both rows still have zero of each**, so the delete removes exactly two rows. That was also true
+> when the Tester checked it hours ago; **it is the kind of fact that can stop being true, so run the
+> count first:**
+>
+> ```sql
+> select inquiry_code, (select count(*) from proposals  p where p.inquiry_id  = i.id) as proposals,
+>                      (select count(*) from follow_ups f where f.inquiry_id  = i.id) as follow_ups
+> from inquiries i where inquiry_code in ('INQ-2012','INQ-2013');
+> ```
+>
+> **Two rows, zeros in both columns → safe.** Anything else, stop: something has attached to a row
+> you are about to remove.
+
 >
 > **T34** — **rotate the Telnyx SIP connection rather than rewrite history.** A credential
 > *username* is in history at `10b63e8` and `c09f04d`; rewriting invalidates commit ids the
@@ -154,11 +171,19 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 **6. "Your own bill says the model costs more than telephony — so why does telephony matter?"**
 — *iteration 133*
 
-> Because we are at **5% voice** and telephony passes the model at **6.8%**. Per voice session is
-> **$0.144** against **$0.0098** per conversation for the model, so the crossing point is 1.8 points
-> above where our own traffic sits — and a real hotel group is far above that. **Our bill is the
-> misleading view; the projection is the honest one.** Total spend to date is **$3.07 across 181
-> conversations, 1.7 cents each**, and the Telnyx balance on that page is read live from their API.
+> Because we are at about **5% voice** and telephony passes the model at **6.8%**. Per voice session
+> is **$0.144** against roughly **$0.0098** per conversation for the model, so the crossing point
+> sits under two points above where our own traffic is — and a real hotel group is far above that.
+> **Our bill is the misleading view; the projection is the honest one.**
+>
+> *The **6.8%** is durable: it is a ratio of two per-unit costs, so new chat traffic moves the
+> numerator and denominator together. Verified unchanged across three separate readings between
+> 22:46 and 23:16 while conversations went 181 → 186.*
+>
+> **Read the totals off the Cost page rather than from here.** Spend and conversation count move
+> every time anyone opens the widget — they were `$3.07 / 181` at 22:46 and `$3.11 / 186` at 23:16.
+> The page shows spend to date, cost per conversation (**about 1.7 cents**), and the Telnyx balance
+> read live from their API while the panel watches.
 
 **5. "So how does the manager actually find out?"** — *iterations 84 and 33*
 
@@ -1454,6 +1479,141 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 139, 23:16 EST — applied last iteration's rule to my own section, and it had the same flaw
+
+Iteration 138: *"every reassurance in a handoff document is a measurement someone took at a time you
+cannot see."* **`▶ IF THEY ASK` is a handoff document I wrote, so I checked its numbers against
+live.**
+
+#### The split was exactly the one predicted, which is the useful part
+
+```
+                      22:46          23:16
+spend                 $3.07          $3.11
+conversations          181            186
+breakeven voice share  6.8%           6.8%
+```
+
+**The totals moved in forty minutes. The ratio did not.** Iteration 134 argued that 6.8% is durable
+*because* it is a ratio of per-unit costs — new chat traffic moves numerator and denominator
+together — and that has now held across **three readings**, while the totals beside it drifted
+twice.
+
+#### So answer 6 now hands over the measurement instead of freezing it
+
+The durable half keeps its number: **6.8%**, with a line saying *why* it is durable, so the next
+reader knows it is not luck.
+
+The moving half stops being quoted:
+
+> **Read the totals off the Cost page rather than from here.** They were `$3.07 / 181` at 22:46 and
+> `$3.11 / 186` at 23:16.
+
+**Naming both readings is better than naming neither**, because it shows the reader the thing moves
+— which is the argument for looking at the page rather than the note.
+
+#### What this run of iterations has actually been about
+
+Four in a row have found the same shape in different places: **the banner's SQL paste** lacked the
+reason it was safe; **T21** carried an hours-old cascade check; **T44**'s command works because I
+warmed a cache; and now **my own panel answers** froze numbers that move.
+
+> **None of these were wrong.** Every one was a true sentence that would stop being true, or was
+> true only under conditions the reader could not see. **That is the failure mode of a handoff
+> document, and it is invisible to every guard in this project**, all of which check that text
+> matches text.
+
+The fix has been the same each time and it is not "write more carefully": **give the reader the
+query, the command, or the reason — the thing that re-derives the answer at the moment they need
+it.**
+
+#### Also landed
+
+**PR #134** pins the two refusal strings the boundary walkthrough quotes — the section I verified in
+iteration 103 with a live 403. **Now it cannot drift without a test failing**, which closes the loop
+on the one thing I checked by hand and could not guarantee would stay checked.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — with its safety reason and recovery | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
+### Iteration 138, 23:12 EST — the one irreversible item cascades, and its safety check was hours old
+
+Last iteration's lesson was *"a correct instruction is not a sufficient instruction."* I applied it
+to the other three items Enrique performs. **Item 3 is the only irreversible one**, so it got the
+attention.
+
+#### `delete from inquiries` is not a two-row delete
+
+```
+supabase/schema.sql:88    proposals.inquiry_id   references inquiries(id) on delete cascade
+supabase/schema.sql:107   follow_ups.inquiry_id  references inquiries(id) on delete cascade
+```
+
+**Deleting an inquiry silently takes its proposals and follow-ups with it.** The instruction Enrique
+reads gives the bare statement:
+
+```sql
+delete from inquiries where inquiry_code in ('INQ-2012','INQ-2013');
+```
+
+The Tester **did** check the cascade — `HUMAN_INTERVENTION.md:605`: *"neither row has a proposal or
+a follow-up pointing at it, so nothing cascades."* **That check was made hours ago**, in a system
+where a triage sweep drafts proposals against inquiries, and it lives 575 lines below the
+instruction.
+
+#### Re-checked against production
+
+```
+INQ-2012 / INQ-2013   proposals pointing at them: 0   follow_ups: 0
+```
+
+**Still true.** The delete removes exactly two rows.
+
+**And the point is that it is the kind of fact that can stop being true**, which is why the banner
+now carries the count as a query to run rather than a reassurance to trust:
+
+> Two rows, zeros in both columns → safe. Anything else, stop: something has attached to a row you
+> are about to remove.
+
+#### Why this is the right shape rather than a bigger warning
+
+Enrique will be doing this alone, before a demo, with a database he cannot undo. **A sentence saying
+"verified safe" ages; a query he runs answers for the state at the moment he runs it.** That is the
+same reason the pre-send checklist ships the deploy command instead of describing it, and the same
+reason T43 became a floor.
+
+> **Every reassurance in a handoff document is a measurement someone took at a time you cannot
+> see.** The fix is not a stronger reassurance — it is handing over the measurement.
+
+#### The other two items
+
+**Telnyx top-up** — no failure mode worth a warning; it either has credit or it does not, and the
+checklist gate catches that. **T34 rotation** — already carries its timing constraint (after any
+rehearsal call, before the email), which is the whole of its risk.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — with its safety reason and recovery | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — **now with the cascade count to run first** | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. Lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 137, 23:08 EST — the paste in my own banner was missing the reason it is safe, and the recovery if it is not
 
