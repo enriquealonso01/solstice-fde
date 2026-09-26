@@ -4,45 +4,42 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 144 — 2026-09-25 ~23:40 EST
+## Iteration 145 — 2026-09-25 ~23:44 EST
 
-### ⚠ The voice prompt has 345 characters of margin left
+### The plan is accurate and correctly ordered.
+
+### The margin is holding
 
 ```
-PR #136  margin 849      PR #137  margin 562      PR #138  margin 345
-live 29,655 of a hard 30,000
+live 29,655 · margin 345 · no change to agent/sol.md since PR #138
 ```
 
-**More than half the headroom gone in under an hour**, at about **210 characters per routing fix**.
-`provision.mjs:245` truncates at 30,000 — **two more fixes that size and the end of `agent/sol.md`
-stops reaching the phone agent.**
+Last iteration's warning stands; nothing has spent against it.
 
-**Raised in the banner** with the two preventions: wrap anything a phone guest does not need in
-`voice:exclude` (**~1 character instead of ~210**), and state the compiled length in the commit,
-which every prompt PR tonight already does.
+### My own panel answer was two hours behind the fix it describes
 
-**A trend, not a number** — which is why it belongs in the banner, not a task. Nobody did anything
-wrong: each fix was correct, measured and re-provisioned. **They are all spending from the same
-account, and no single PR is where it would go wrong.**
+I wrote answer 7 in iteration 143, when the pet-question failure had been handled by **removing the
+phrasing from the suggested email** — sound, and a work-around. **PR #138 landed twenty minutes
+later and fixed it in the prompt**: *"a pet question with no property named is Policy 8, which is
+chain-wide. Never tell a guest a policy varies by property unless a tool said so."*
 
-### Both routing fixes are live
+So my answer told a panel *"we removed the bad question from the email"* when the truthful and
+stronger answer is *"we fixed the routing and verified it."* **Understating a fix is still being
+wrong about it** — and this is the section written to be read aloud.
 
-PR #138 closed the pet question at the **prompt** level — better than the email change, which only
-stopped handing an evaluator the failing phrasing. Verified by searching the live assistant for the
-**exact sentences the commits added**: all four present.
+**Rewritten** with the measurements: **0 of 4 → 6 of 6** for lost and found, on a draft deploy with
+neighbouring controls confirmed unmoved, and #138's general rule **verified present in the live
+voice prompt.**
 
-**My first check looked for *"lost and found"* and *"pets are not permitted"* and found neither** —
-phrases that were never added. The additions describe **the trap**, not the policy text. **I
-searched for what I expected the fix to say instead of reading what it said**; caught two commands
-later by reading the diff.
+### The rule that caught it, applied to itself
 
-### #137's method is worth copying
+Iteration 124: *claims I add to the front matter get verified in the iteration after I add them.*
+**That has now caught three things in my own writing** — frozen cost totals (139), a stale margin
+(141), and this. Each was true when written and overtaken while I was writing about it.
 
-> *"Measured on a **draft deploy before production saw it**: 6 of 6 now reach `get_policy`, with the
-> checkout-time and ADA controls **unmoved**."*
-
-Fix verified, neighbours verified unaffected, **before production** — both questions answered in one
-measurement, taken where a mistake costs nothing.
+> **In a repository three agents are shipping into, the half-life of a written claim is shorter than
+> the gap between writing it and reading it back.** Not a reason to write fewer claims — the reason
+> the re-read has to be scheduled rather than intended.
 
 ### The single most important remaining item
 
