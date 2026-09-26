@@ -1234,6 +1234,70 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 116, 21:26 EST — read the brief itself for the first time, and mapped every requirement to who verified it
+
+**I have been told to read `FDE_Project_Challenge.pdf` as ground truth in every one of these
+iterations and had never opened it.** Every deliverable check I have run was against `README.md`'s
+and `SUBMISSION.md`'s *claims about* the brief — a derived artefact, checked instead of its source,
+which is the exact error this log has been correcting in other people all evening.
+
+Opened it. **Nothing in the package is missing or misdescribed.** The map below is the artefact.
+
+#### Every stated deliverable, and who checked it
+
+| The brief asks for | Where | Verified by |
+|---|---|---|
+| Source code | the repository | — |
+| Agent config `.md`: prompts, tool definitions, guardrails | `agent/sol.md` | Tester, 18 of 19 guardrails against production |
+| *"a few sample transcripts"* | `transcripts/`, six | me, iteration 79 — every quoted id resolves |
+| Architecture diagram, future state | `architecture.drawio` / `.svg` | Implementer #113, me iteration 113 — three pages, names exact |
+| Native export, *"if applicable"* | `exports/telnyx-assistant.json` | me, iteration 84 — byte-identical to live |
+| Integration recommendation | `docs/integration-recommendation.md` | me, iteration 95 — its data claim holds |
+| Latency target **and its justification** | `docs/latency-target.md` | Tester iteration 53 — p95 270ms over 80 calls |
+
+#### Every *requirement and guardrail*, which is the half nobody had mapped
+
+| Requirement, verbatim | Answered by | Checked |
+|---|---|---|
+| *"never invent a policy, rate, or availability"* | G1, G10, G11 | Tester, against production |
+| *"outside standard rules… flagged for a human, not auto-approved"* | the send gate | Tester — **and the one open defect, disclosed in the README** |
+| *"Guest PII, especially payment info, never unmasked in anything the agent can see or expose"* | G13, G17 | G13 refused card digits **without calling the tool**; G17 re-proved at 500 trace rows |
+| *"set your own target for response latency and be ready to justify it"* | `latency-target.md` | **and it admits missing its own signal target by 45ms rather than moving it** |
+| diagram shows *"how it degrades gracefully when something upstream fails"* | the **Degradation and failover** page | six rows, count verified structurally |
+
+#### The bonus the brief singles out is earned
+
+> *"Bonus points if you address the very real fear at the front desk that 'the AI is coming for our
+> jobs' **with something more useful than a platitude**."*
+
+`docs/integration-recommendation.md`'s *"The front desk question"* does four things a platitude does
+not: it separates the work absorbed from the work that is not — *"reading a guest who is upset
+before they say so"*; it **grounds the limit in the provided data**, citing **Policy 6**, where two
+Platinum guests want the same suite and *"the document says a human decides"*; it makes a concrete
+commitment, that **every escalation arrives with more context than a transfer does today**; and it
+ends with a measurable proposal rather than a sentiment:
+
+> *"Track deflection, but track **escalation quality** alongside it. A system that deflects 70% of
+> contacts and hands over the other 30% badly is worse than one that deflects 50% and hands over
+> well."*
+
+#### Two things the brief says that are worth holding on to for the room
+
+- **Both personas are named in the brief itself:** *"Interviewers will roleplay both a technical
+  persona and a non-technical product owner."* The package has a document for each side, and since
+  T37 the README points at both.
+- **The brief invites stated assumptions:** *"If something in the brief is ambiguous, make an
+  assumption and state it. **That's a positive signal, not a gap.**"* This package carries sixteen
+  numbered assumptions and one disclosed open defect. **That is the brief's own scoring rubric,
+  being answered deliberately rather than apologised for.**
+
+#### State — unchanged
+
+Four items are Enrique's; three paste-ready fixes sit at the top of `▶ OPEN WORK`.
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
 ### Iteration 115, 21:22 EST — mapped where the demo's data actually comes from, and who has verified each path
 
 Last iteration I checked one link. This iteration I traced all of them, because *"is the demo showing
