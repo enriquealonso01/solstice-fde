@@ -5,10 +5,14 @@
  * over for a day, and an urgent escalation looked identical to a chat Sol had answered perfectly.
  * A supervisor triaging thirty conversations needs to know which ones need a human first.
  *
- * Every rule is a pure function of `sessions` + `escalations` (see sessionTags.ts); this file
- * holds the board to it, including the two shapes production actually produces — severity values
- * from netlify/functions/tools/rules.ts ('critical'|'high'|'normal'|'low') and status values from
- * the schema ('active'|'ended'|'taken_over').
+ * Since the tag merge, there is ONE human tag — `supervisor` ("Supervisor needed") — covering any
+ * session that needs a person: an open escalation (any severity, any age) OR a live takeover.
+ * Urgency (URGENT_SEVERITIES / ATTENTION_AFTER_MS) is kept as data for SORTING and the chip's
+ * dot color; it no longer creates a second tag. Every rule is a pure function of `sessions` +
+ * `escalations` (see sessionTags.ts); this file holds the board to it, including the two shapes
+ * production actually produces — severity values from netlify/functions/tools/rules.ts
+ * ('critical'|'high'|'normal'|'low') and status values from the schema
+ * ('active'|'ended'|'taken_over').
  */
 import { describe, expect, it } from 'vitest'
 import {
@@ -16,6 +20,7 @@ import {
   deriveSessionTags,
   mostPressingEscalation,
   sessionMatchesTags,
+  supervisorUrgency,
   TAG_LABELS,
   URGENT_SEVERITIES,
   type EscalationTagRow,
@@ -43,9 +48,32 @@ const esc = (over: Partial<EscalationTagRow> = {}): EscalationTagRow => ({
   ...over,
 })
 
-describe('supervisor requested', () => {
-  it('an open escalation row IS the request', () => {
-    expect(deriveSessionTags(session(), [esc()], NOW)).toEqual(['requested'])
+describe('supervisor needed: any open escalation', () => {
+  it('an open escalation row IS the request — one tag, regardless of severity', () => {
+    expect(deriveSessionTags(session(), [esc()], NOW)).toEqual(['supervisor'])
+    expect(deriveSessionTags(session(), [esc({ severity: 'critical' })], NOW)).toEqual(['supervisor'])
+  })
+
+  it("even 'high' severity produces ONE tag, not two", () => {
+    const tags = deriveSessionTags(session(), [esc({ severity: 'high' })], NOW)
+    expect(tags).toEqual(['supervisor'])
+  })
+
+  it('an escalation with no severity at all still tags', () => {
+    // The schema default is 'normal', but a null-tolerant read must not crash the board.
+    expect(deriveSessionTags(session(), [esc({ severity: null })], NOW)).toEqual(['supervisor'])
+  })
+
+  it('an escalation older than 24h is the same single tag — urgency only changes the dot', () => {
+    const stale = esc({ created_at: new Date(NOW - ATTENTION_AFTER_MS - 60 * 1000).toISOString() })
+    expect(deriveSessionTags(session(), [stale], NOW)).toEqual(['supervisor'])
+    expect(supervisorUrgency(session(), [stale], NOW)).toBe('urgent')
+  })
+
+  it('a 23-hour-old normal escalation is supervisor, normal urgency', () => {
+    const fresh = esc({ created_at: new Date(NOW - ATTENTION_AFTER_MS + HOUR).toISOString() })
+    expect(deriveSessionTags(session(), [fresh], NOW)).toEqual(['supervisor'])
+    expect(supervisorUrgency(session(), [fresh], NOW)).toBe('normal')
   })
 
   it('a closed escalation is not a request — the session moves on', () => {
@@ -63,46 +91,27 @@ describe('supervisor requested', () => {
   })
 })
 
-describe('supervisor attention needed', () => {
-  it('an urgent-severity open escalation gets attention on top of the request', () => {
-    expect(deriveSessionTags(session(), [esc({ severity: 'critical' })], NOW)).toEqual(['requested', 'attention'])
+describe('supervisor needed: live takeover without an escalation', () => {
+  it('a live conversation a supervisor took over needs a human', () => {
+    expect(deriveSessionTags(session({ status: 'taken_over' }), [], NOW)).toEqual(['supervisor'])
   })
 
-  it("'high' is urgent too — that is what the routing matrix actually writes", () => {
-    expect(deriveSessionTags(session(), [esc({ severity: 'high' })], NOW)).toContain('attention')
+  it('and reads as urgent — a human is mid-control', () => {
+    expect(supervisorUrgency(session({ status: 'taken_over' }), [], NOW)).toBe('urgent')
   })
 
-  it('an escalation with no severity at all still tags, but only as requested', () => {
-    // The schema default is 'normal', but a null-tolerant read must not crash the board.
-    expect(deriveSessionTags(session(), [esc({ severity: null })], NOW)).toEqual(['requested'])
-  })
-
-  it('an open escalation older than 24h is attention even at normal severity', () => {
-    const stale = esc({ created_at: new Date(NOW - ATTENTION_AFTER_MS - 60 * 1000).toISOString() })
-    expect(deriveSessionTags(session(), [stale], NOW)).toEqual(['requested', 'attention'])
-  })
-
-  it('a 23-hour-old normal escalation is still just a request', () => {
-    const fresh = esc({ created_at: new Date(NOW - ATTENTION_AFTER_MS + HOUR).toISOString() })
-    expect(deriveSessionTags(session(), [fresh], NOW)).toEqual(['requested'])
-  })
-
-  it('a live conversation a supervisor took over awaits follow-up, with or without an escalation', () => {
-    const taken = session({ status: 'taken_over' })
-    expect(deriveSessionTags(taken, [], NOW)).toEqual(['attention'])
-    expect(deriveSessionTags(taken, [esc({ severity: 'normal' })], NOW)).toEqual(['requested', 'attention'])
-  })
-
-  it('a FINISHED call a supervisor had taken over is finished, not attention', () => {
+  it('a FINISHED call a supervisor had taken over is finished, not supervisor', () => {
     // The exact row shape that once sat live on the board for two days (see session-liveness.test).
     const over = session({ status: 'taken_over', ended_at: new Date(NOW - 2 * 24 * HOUR).toISOString() })
     expect(deriveSessionTags(over, [], NOW)).toEqual(['finished'])
+    expect(supervisorUrgency(over, [], NOW)).toBeNull()
   })
 })
 
 describe('handled by Sol / finished', () => {
   it('a live session with nothing open is Sol handling it', () => {
     expect(deriveSessionTags(session(), [], NOW)).toEqual(['handled'])
+    expect(supervisorUrgency(session(), [], NOW)).toBeNull()
   })
 
   it('an ended session with no open escalation is finished', () => {
@@ -111,14 +120,20 @@ describe('handled by Sol / finished', () => {
     ).toEqual(['finished'])
   })
 
-  it('an ended session still owing an open escalation is still requested', () => {
+  it('an ended session still owing an open escalation is still supervisor needed', () => {
     // Ending a conversation does not answer an escalation; the ask survives the hangup.
     const over = session({ status: 'ended', ended_at: new Date(NOW - HOUR).toISOString() })
-    expect(deriveSessionTags(over, [esc({ severity: 'critical' })], NOW)).toEqual(['requested', 'attention'])
+    expect(deriveSessionTags(over, [esc({ severity: 'critical' })], NOW)).toEqual(['supervisor'])
+    expect(supervisorUrgency(over, [esc({ severity: 'critical' })], NOW)).toBe('urgent')
+  })
+
+  it('at most one tag comes back, ever', () => {
+    const taken = session({ status: 'taken_over' })
+    expect(deriveSessionTags(taken, [esc({ severity: 'critical' })], NOW)).toHaveLength(1)
   })
 })
 
-describe('mostPressingEscalation', () => {
+describe('mostPressingEscalation (sorting, not tagging)', () => {
   it('urgent beats stale beats fresh', () => {
     const fresh = esc({ severity: 'normal' })
     const stale = esc({ severity: 'normal', created_at: new Date(NOW - ATTENTION_AFTER_MS - HOUR).toISOString() })
@@ -138,15 +153,16 @@ describe('filter matching', () => {
     expect(sessionMatchesTags(['handled'], new Set())).toBe(true)
   })
 
-  it('any overlap matches', () => {
-    expect(sessionMatchesTags(['requested', 'attention'], new Set<SessionTag>(['attention']))).toBe(true)
-    expect(sessionMatchesTags(['finished'], new Set<SessionTag>(['attention']))).toBe(false)
+  it('the single supervisor button selects every needs-a-human row', () => {
+    expect(sessionMatchesTags(['supervisor'], new Set<SessionTag>(['supervisor']))).toBe(true)
+    expect(sessionMatchesTags(['handled'], new Set<SessionTag>(['supervisor']))).toBe(false)
+    expect(sessionMatchesTags(['finished'], new Set<SessionTag>(['supervisor']))).toBe(false)
   })
 })
 
 describe('the tag table is complete', () => {
-  it('every tag has a label, and the urgent set is the top severities', () => {
-    for (const tag of ['attention', 'requested', 'handled', 'finished'] as const) {
+  it('three tags, each with a label; the urgent set is the top severities', () => {
+    for (const tag of ['supervisor', 'handled', 'finished'] as const) {
       expect(TAG_LABELS[tag]).toBeTruthy()
     }
     expect([...URGENT_SEVERITIES].sort()).toEqual(['critical', 'high'])

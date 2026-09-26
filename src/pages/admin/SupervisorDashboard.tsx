@@ -33,9 +33,10 @@ import {
 } from '@/components/admin/mockData'
 import {
   deriveSessionTags,
-  TAG_DOT_CLASS,
+  supervisorUrgency,
   sessionMatchesTags,
   TAG_CHIP_CLASS,
+  TAG_DOT_CLASS,
   TAG_LABELS,
   type SessionTag,
 } from '@/components/admin/sessionTags'
@@ -51,8 +52,7 @@ const HIDE_UNIDENTIFIED_KEY = 'solstice.archive.hideUnidentified'
  */
 const TAG_FILTERS: Array<{ key: 'all' | SessionTag; label: string }> = [
   { key: 'all', label: 'All' },
-  { key: 'attention', label: TAG_LABELS.attention },
-  { key: 'requested', label: TAG_LABELS.requested },
+  { key: 'supervisor', label: TAG_LABELS.supervisor },
   { key: 'handled', label: TAG_LABELS.handled },
   { key: 'finished', label: TAG_LABELS.finished },
 ]
@@ -121,16 +121,28 @@ export default function SupervisorDashboard() {
     [rows, channelFilter, tagFilter, tagsBySession],
   )
   const truncated = sessionViewIsTruncated(rows.length)
-  const live = filtered.filter(isLive)
-  const archived = filtered.filter((s) => !isLive(s))
+  // Attention-first order: supervisor-urgent rows lead the live grid, then supervisor-normal,
+  // then everything else. Urgency sorts the board; it does not add a second tag.
+  const urgencyOf = (s: SessionRow): number => {
+    const u = supervisorUrgency(s, escalations.rows as EscalationRow[], now)
+    return u === 'urgent' ? 0 : u === 'normal' ? 1 : 2
+  }
+  const rankOf = (s: SessionRow): number => {
+    const tags = tagsBySession.get(s.id) ?? []
+    if (tags.includes('supervisor')) return urgencyOf(s)
+    return tags.includes('handled') ? 3 : 4
+  }
+  const sorted = [...filtered].sort((a, b) => rankOf(a) - rankOf(b))
+  const live = sorted.filter(isLive)
+  const archived = sorted.filter((s) => !isLive(s))
   // The toggle only shapes the archive: an unidentified row that is live RIGHT NOW is a real
   // conversation in progress, and hiding it from the grid could strand a supervisor mid-handoff.
   const visibleArchived = hideUnidentified ? archived.filter((s) => !isUnidentified(s)) : archived
 
   // Counts come from ALL rows, not the filtered view, so a filter button never hides itself:
-  // selecting "Supervisor requested" must not make the other counters read zero.
+  // selecting "Supervisor needed" must not make the other counters read zero.
   const tagCounts = useMemo(() => {
-    const counts: Record<'all' | SessionTag, number> = { all: rows.length, attention: 0, requested: 0, handled: 0, finished: 0 }
+    const counts: Record<'all' | SessionTag, number> = { all: rows.length, supervisor: 0, handled: 0, finished: 0 }
     for (const s of rows) for (const t of tagsBySession.get(s.id) ?? []) counts[t] += 1
     return counts
   }, [rows, tagsBySession])
@@ -251,7 +263,12 @@ export default function SupervisorDashboard() {
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {live.map((s, i) => (
             <div key={s.id} className="sol-stagger" style={{ '--stagger': i } as CSSProperties}>
-              <SessionCard session={s} tags={tagsBySession.get(s.id) ?? []} now={now} />
+              <SessionCard
+                session={s}
+                tags={tagsBySession.get(s.id) ?? []}
+                escalations={escalations.rows as EscalationRow[]}
+                now={now}
+              />
             </div>
           ))}
         </div>
@@ -311,7 +328,12 @@ export default function SupervisorDashboard() {
                   </td>
                   <td className="px-4 py-2.5 capitalize text-muted">{intentLabel(s.intent, s.status)}</td>
                   <td className="px-4 py-2.5">
-                    <SessionTagChips tags={tagsBySession.get(s.id) ?? []} />
+                    <SessionTagChips
+                      tags={tagsBySession.get(s.id) ?? []}
+                      session={s}
+                      escalations={escalations.rows as EscalationRow[]}
+                      now={now}
+                    />
                   </td>
                   <td className="px-4 py-2.5 text-muted">
                     {shortDate(s.started_at)} · {clockTime(s.started_at)}
@@ -339,24 +361,47 @@ function isUnidentified(s: Pick<SessionRow, 'guest_id' | 'guest_label'>): boolea
   return s.guest_id === null && s.guest_label === null
 }
 
-/** The tag chips, in triage order. Usually one tag; an urgent escalation shows two. */
-function SessionTagChips({ tags }: { tags: SessionTag[] }) {
-  const order: SessionTag[] = ['attention', 'requested', 'handled', 'finished']
+/** The tag chip. At most one tag per session; the supervisor dot is red when the ask is urgent. */
+function SessionTagChips({
+  tags,
+  session,
+  escalations,
+  now,
+}: {
+  tags: SessionTag[]
+  session: SessionRow
+  escalations: EscalationRow[]
+  now: number
+}) {
   return (
     <span className="flex flex-wrap gap-1">
-      {order
-        .filter((t) => tags.includes(t))
-        .map((t) => (
+      {tags.map((t) => {
+        const urgent = t === 'supervisor' && supervisorUrgency(session, escalations, now) === 'urgent'
+        return (
           <span key={t} className={`chip ${TAG_CHIP_CLASS[t]}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${TAG_DOT_CLASS[t]}`} aria-hidden="true" />
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${urgent ? 'bg-bad' : TAG_DOT_CLASS[t]}`}
+              aria-hidden="true"
+            />
             {TAG_LABELS[t]}
           </span>
-        ))}
+        )
+      })}
     </span>
   )
 }
 
-function SessionCard({ session, tags, now }: { session: SessionRow; tags: SessionTag[]; now: number }) {
+function SessionCard({
+  session,
+  tags,
+  escalations,
+  now,
+}: {
+  session: SessionRow
+  tags: SessionTag[]
+  escalations: EscalationRow[]
+  now: number
+}) {
   return (
     <Link
       to={`/admin/sessions/${session.id}`}
@@ -381,14 +426,19 @@ function SessionCard({ session, tags, now }: { session: SessionRow; tags: Sessio
       </div>
 
       <div className="mt-2">
-        <SessionTagChips tags={tags} />
+        <SessionTagChips
+          tags={tags}
+          session={session}
+          escalations={escalations}
+          now={now}
+        />
       </div>
 
       {!isLive(session) ? null : session.status === 'taken_over' ? (
         <div className="mt-3 text-xs text-ink">
           A supervisor is {session.channel === 'voice' ? 'on this call' : 'answering this chat'}.
         </div>
-      ) : tags.includes('attention') ? null : (
+      ) : tags.includes('supervisor') ? null : (
         <div className="mt-3 flex items-center gap-1.5 text-xs text-good">
           <span className="sol-dot h-1.5 w-1.5 rounded-full bg-good" />
           Sol is handling this

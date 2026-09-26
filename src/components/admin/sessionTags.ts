@@ -2,22 +2,22 @@
 //
 // The old badges answered "what row is this" (`active` / `ended` / `Classifying…`). A supervisor
 // scanning thirty conversations wants one different question answered: *which of these needs me,
-// and in what order?* These four tags answer that, and every one of them is derived from the two
+// and in what order?* Three tags answer that, and every one of them is derived from the two
 // tables the app already has — `sessions` and `escalations` — never stored, so a change to an
 // escalation row re-tags the board on the next Realtime frame without a write to sessions.
 //
 // The rules, in one place (see deriveSessionTags below for the code):
 //
-//   Supervisor requested        the session has an OPEN row in `escalations`. That row IS the
-//                               request; there is nothing else to interpret.
-//   Supervisor attention needed an open escalation a supervisor should see FIRST: urgent severity,
-//                               or any open escalation older than ATTENTION_AFTER_MS, or a live
-//                               conversation a supervisor is on (taken_over) that has not ended.
-//   Handled by Sol              live, nobody asked for a human, no supervisor in control.
-//   Finished                    over, and nothing open: ended_at stamped and no open escalation.
+//   Supervisor needed          the session needs a human: an OPEN row in `escalations` (that row
+//                              IS the request; there is nothing else to interpret) OR a live
+//                              conversation a supervisor is on (taken_over) that has not ended.
+//   Handled by Sol             live, nobody asked for a human, no supervisor in control.
+//   Finished                   over, and nothing open: ended_at stamped and no open escalation.
 //
-// Urgency is data, not prose: URGENT_SEVERITIES and ATTENTION_AFTER_MS are exported constants so
-// the panel can retune them live the same way as src/lib/rules/thresholds.ts.
+// Urgency is still data, not prose: URGENT_SEVERITIES and ATTENTION_AFTER_MS are exported
+// constants so the panel can retune them live the same way as src/lib/rules/thresholds.ts. They
+// no longer create a second tag — they decide SORTING (attention-first order via
+// mostPressingEscalation) and the chip's dot color (red = urgent, amber = normal).
 
 import { isLive, type EscalationRow, type SessionRow } from './mockData'
 
@@ -27,27 +27,27 @@ import { isLive, type EscalationRow, type SessionRow } from './mockData'
  */
 export type EscalationTagRow = Pick<EscalationRow, 'session_id' | 'severity' | 'status' | 'created_at'>
 
-export type SessionTag = 'attention' | 'requested' | 'handled' | 'finished'
+export type SessionTag = 'supervisor' | 'handled' | 'finished'
 
 export const TAG_LABELS: Record<SessionTag, string> = {
-  attention: 'Supervisor attention needed',
-  requested: 'Supervisor requested',
+  supervisor: 'Supervisor needed',
   handled: 'Handled by Sol',
   finished: 'Finished',
 }
 
 /** Tailwind classes stay with the tag so every surface renders the same colour for the same state. */
 export const TAG_CHIP_CLASS: Record<SessionTag, string> = {
-  attention: 'bg-bad-soft text-bad',
-  requested: 'bg-warn-soft text-warn',
+  supervisor: 'bg-warn-soft text-warn',
   handled: 'bg-good-soft text-good',
   finished: 'bg-line/60 text-muted',
 }
 
-/** The matching dot color, so a chip always shows the dot AND the label. */
+/**
+ * The matching dot color, so a chip always shows the dot AND the label. The supervisor dot is
+ * filled per session: red when the ask is urgent (see supervisorUrgency), amber otherwise.
+ */
 export const TAG_DOT_CLASS: Record<SessionTag, string> = {
-  attention: 'bg-bad',
-  requested: 'bg-warn',
+  supervisor: 'bg-warn',
   handled: 'bg-good',
   finished: 'bg-faint',
 }
@@ -61,7 +61,7 @@ export const TAG_DOT_CLASS: Record<SessionTag, string> = {
 export const URGENT_SEVERITIES: ReadonlySet<string> = new Set(['critical', 'high'])
 
 /**
- * How long an open escalation may sit before it escalates ITSELF into the attention bucket.
+ * How long an open escalation may sit before it sorts to the FRONT of the supervisor queue.
  * 24h: a request no human has touched for a day is no longer a queue entry, it is a problem.
  */
 export const ATTENTION_AFTER_MS = 24 * 60 * 60 * 1000
@@ -86,14 +86,36 @@ export function mostPressingEscalation(
 }
 
 /**
- * Derive the supervisor tags for one session.
+ * Is this session's supervisor ask URGENT (red dot, front of the queue) rather than normal
+ * (amber dot)? Urgent means: an open escalation at an urgent severity, an open escalation older
+ * than ATTENTION_AFTER_MS, or a live takeover still awaiting follow-up.
+ */
+export function supervisorUrgency(
+  session: Pick<SessionRow, 'id' | 'status' | 'ended_at'>,
+  escalations: EscalationTagRow[],
+  now: number = Date.now(),
+): 'urgent' | 'normal' | null {
+  const open = openEscalationsFor(session.id, escalations)
+  if (open.length > 0) {
+    if (open.some((e) => URGENT_SEVERITIES.has(e.severity ?? ''))) return 'urgent'
+    const pressing = mostPressingEscalation(open, now)
+    if (pressing !== null && now - new Date(pressing.created_at).getTime() > ATTENTION_AFTER_MS) return 'urgent'
+    const awaitingFollowUp = session.status === 'taken_over' && isLive(session)
+    return awaitingFollowUp ? 'urgent' : 'normal'
+  }
+  if (session.status === 'taken_over' && isLive(session)) return 'urgent'
+  return null
+}
+
+/**
+ * Derive the supervisor tag for one session — at most ONE of supervisor/handled/finished.
  *
  * `now` is injectable so the >24h rule is testable and so one shared clock tick re-tags the whole
  * board at once (SupervisorDashboard passes its useNow() value down).
  *
- * Tags are a LIST on purpose: `requested` + `attention` is the normal combination for an urgent
- * escalation — the session asked for a human AND should be read first. `handled` and `finished`
- * are mutually exclusive with both by construction: each one requires that nothing is open.
+ * `supervisor` covers ANY session that needs a human: an open escalation (any severity or age) or
+ * a live conversation a supervisor has taken over. Whether that ask is urgent is a separate
+ * question — see supervisorUrgency, which feeds sorting and the chip's dot, not a second tag.
  */
 export function deriveSessionTags(
   session: Pick<SessionRow, 'id' | 'status' | 'ended_at'>,
@@ -101,35 +123,22 @@ export function deriveSessionTags(
   now: number = Date.now(),
 ): SessionTag[] {
   const open = openEscalationsFor(session.id, escalations)
-  const tags: SessionTag[] = []
 
   if (open.length > 0) {
-    tags.push('requested')
-    const pressing = mostPressingEscalation(open, now)
-    const urgent = open.some((e) => URGENT_SEVERITIES.has(e.severity ?? ''))
-    const stale = pressing !== null && now - new Date(pressing.created_at).getTime() > ATTENTION_AFTER_MS
-    // A live conversation a supervisor took over and has not finished is awaiting follow-up by
-    // definition: a human is in control and the conversation is still going. Once it has ended
-    // (ended_at stamped) the takeover is part of the record, not an open ask — see isLive's doc.
-    const awaitingFollowUp = session.status === 'taken_over' && isLive(session)
-    if (urgent || stale || awaitingFollowUp) tags.push('attention')
-    return tags
+    return ['supervisor']
   }
 
   if (session.status === 'taken_over' && isLive(session)) {
     // A supervisor is in control of a live conversation with no escalation row. That still needs
-    // attention — it just arrived through the takeover path instead of create_escalation.
-    tags.push('attention')
-    return tags
+    // a human — it just arrived through the takeover path instead of create_escalation.
+    return ['supervisor']
   }
 
   if (isLive(session)) {
-    tags.push('handled')
-    return tags
+    return ['handled']
   }
 
-  tags.push('finished')
-  return tags
+  return ['finished']
 }
 
 /** Does a session carry any of the tags a filter button selects? Empty selection = show all. */
