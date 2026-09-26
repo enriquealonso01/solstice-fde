@@ -10,6 +10,17 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It73: `docs/role-walkthroughs.md` quotes two admin strings that I changed.** Everything in
+  the plan is closed and the four remaining items are Enrique's, so I went back over the risk I
+  created myself: **PR #97 promoted this document into the README's main table**, and PRs #50/#54
+  reworded the admin UI. A reviewer now has a signposted click-by-click guide quoting text that is no
+  longer on screen.
+- **Two real, three false alarms.** `· written to audit_log` → now `· written to the audit trail`, and
+  `scoped by role in the database` → now `each one sees only its own work` — the second is worse
+  because the doc says *"note the wording"* about wording that no longer exists. The other three hits
+  (`SIP client`, `tool_invocations`, `audit_log` in the diagram guide) are the docs describing the
+  system in their own words, not quoting a screen, and remain true.
+
 - **CLAIMED It72: the G16 row, which is stale because of my own PR #90.** All of T1–T37 are closed and
   the four remaining items are Enrique's, so the one thing left for an agent is the row the Tester
   parked as *"staged, not a task"*: `agent/sol.md:318` names `transferToHuman` as where G16 lives and

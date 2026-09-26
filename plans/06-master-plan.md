@@ -78,7 +78,10 @@
 | 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. **Verified safe three ways:** two deliverables cite `INQ-2011`/`INQ-2010`, the demo runbook names `INQ-2007`/`2009`/`2011`, and **neither row T21 deletes appears in either**. Both confirmed live: `INQ-2012` Vantage Labs `needs_review`, `INQ-2013` Vantage Labs DELETE-ME `auto_approvable`. Exact SQL in `HUMAN_INTERVENTION.md`. |
 | 4 | **T34 — rotate the Telnyx SIP connection** | A credential *username* is in git history at `10b63e8` and `c09f04d`. **Rotate rather than rewrite history** — rewriting invalidates commit ids the deliverables cite, to remove something that authenticates nothing on its own. **Timing: after any rehearsal call, before the email.** |
 
-**Staged, not a task: the G16 row.** `agent/sol.md:318` describes a test that does not exercise the
+**G16 row: SHIPPED and re-provisioned** (PR #100) — compile === live at 29,363, margin 637, exactly
+the figure predicted when it was staged. *Original note below, kept because the process worked:*
+
+~~**Staged, not a task: the G16 row.**~~ `agent/sol.md:318` describes a test that does not exercise the
 voice path. The Tester wrote the replacement, measured it at **+44 chars (margin 681 → 637, guard
 green)**, and reverted rather than desync the live prompt for a documentation cell. **It is in
 `agents/tested.log.md` at "The replacement row, ready to paste" — bundle it with the next
@@ -1002,6 +1005,77 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 101, 20:16 EST — the staged G16 row shipped with its re-provision; a demo beat promised the opposite of what happens
+
+#### The staged row closed correctly, and the margin landed exactly where predicted
+
+PR #100 applied the G16 replacement **and re-provisioned**, which is the half that is easy to skip:
+
+```
+compile  29363  71938db505f8
+live     29363  71938db505f8     match: true     margin: 637
+```
+
+The Tester predicted **681 → 637** when they staged it. It is 637. The live voice prompt now carries
+a G16 row naming `warm_transfer_instructions` as where the rule is enforced on the phone.
+
+**Recording this because it validates the small process call from iteration 98:** I declined to file
+a task and instead wrote the staged row into the open-work section so it would not be lost in a
+5,000-line log. It was picked up within two iterations, by an agent who then did the re-provision
+the task-free note did not explicitly demand. **Navigation was the whole intervention.**
+
+#### A demo beat promised the opposite of what the system does
+
+Tester iteration 59 audited `docs/demo-cheatsheet.md` against the live tools. Four behavioural
+claims, three held verbatim, one did not:
+
+> **a $45 minibar returns `front_desk` with `escalation_required: false`** — so the beat promising
+> an AGM escalation showed the opposite. $50 the same. **$55 returns `agm`.**
+
+Fixed in PR #98, with the route to the escalation kept for whoever wants that moment. **That is a
+beat that would have failed in front of the panel**, on the document Enrique reads while presenting.
+
+#### And the rule they wrote from their own false start
+
+> *"My first pass called all five guest rows mismatches by reading name and tier out of
+> `get_reservation`, which carries neither. Recorded as a rule: **a near-total failure rate is a
+> confession by the instrument.**"*
+
+That belongs with *"the wrong version was more interesting than the right one"* and the `sed`
+line-number lesson. **When nearly everything fails, suspect the measuring device before the system.**
+
+#### I audited beat 5 myself, since it is the one they will remember
+
+It holds, and it is better than when I last read it:
+
+- *"Rehearsed end to end on production. Every line below is what actually came back"* — captured,
+  not imagined.
+- **It embeds the reasoning for the fixture I corrected**: *"Use Platinum: Gold is conditional on
+  availability by policy, so a Gold guest gets a hedged answer even on a healthy system and the
+  contrast disappears."* The correction outlived the correction note.
+- The scoped-outage move is the strongest thing in the runbook — the policy question still answers
+  while the PMS is down, so *"the agent loses exactly the answers that depend on the thing that
+  broke, and no others."*
+- It ends by guarding the real hazard: **confirm all three switches read healthy**, because a switch
+  left on makes the rest of the demo look broken.
+
+The degraded reply promises *"a colleague follow up with you shortly"* — **no actor and no day**,
+which is exactly the standard the Tester set in iteration 47 and which T33 left in place. Consistent.
+
+#### State — unchanged, all four Enrique's
+
+Migration 004 is unapplied on the **tenth** consecutive Tester check.
+
+| # | Item | Note |
+|---|---|---|
+| 1 | `drop policy` ×3 | if applied before submitting, delete the disclosure — `HUMAN_INTERVENTION.md:753` |
+| 2 | Telnyx top-up, $3.09 | beat 3, the live intent check, G16's voice half |
+| 3 | T21, two rows | verified safe three ways |
+| 4 | T34 SIP rotation | after any rehearsal call, before the email |
+
+All tasks closed. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 100, 20:10 EST — audited the text my own specs produced. One flaw, already fixed; the rest holds
 

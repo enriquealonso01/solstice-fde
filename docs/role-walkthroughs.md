@@ -189,7 +189,7 @@ Approve, Override and Reject **all require a typed justification**. There is no 
 The header of the panel states delivery up front: `Delivery: branded email + PDF`, or `SMS with a
 link to the PDF`.
 
-Below the buttons, a decision log builds up, each entry ending in **`· written to audit_log`**.
+Below the buttons, a decision log builds up, each entry ending in **`· written to the audit trail`**.
 
 **What this proves, and it is the strongest claim in the product:** the gate is not the button
 being greyed out. The same refusal has been attacked from four directions in testing — the send
@@ -228,7 +228,8 @@ Subtitle: *Everything both scoped roles see, plus who is allowed to see it.*
 
 Four tiles: **Live sessions** (`voice and chat, right now`), **Needs a decision**
 (`group inquiries`), **Sent this cycle** (`proposals delivered`), **Staff accounts**
-(`scoped by role in the database` — note the wording).
+(`each one sees only its own work` — note the wording: it describes what a person sees, not where the
+rule lives, and the rule is still in the database).
 
 Then two panels side by side, **Concierge · live now** and **Group sales · needs a decision**,
 each linking straight into the scoped role's own screen. Below them, **Recent decisions**.
