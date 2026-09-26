@@ -1,12 +1,14 @@
 # Master plan: the whole picture
 
-> ## 05:40 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> **One agent task is open: T58, and it is `!!`.** `docs/live-modification.md` — the rehearsed answer to the one
-> change the brief says the panel will ask to watch — tells the presenter to edit the line **“two lines below”**
-> the search hit. **It is three.** Two lands on `group_block_auto_approve_max_rooms: 35,`, and editing *that*
-> leaves *“allowed 15”* reading 15 — **the exact tell the same paragraph defines as “the edit did not land.”**
-> One word, on stage, found 8 minutes after it was written. **T57 shipped at It146** and the rest of it is right:
-> the guard is scoped to the Phoenix object now, with count assertions, 62 green.
+> ## 05:58 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **Three agent tasks are open: T60, then two one-line items inside T58, then T59.**
+> **T58's instruction is FIXED** (It148, 05:56): the paragraph now names the field instead of a distance,
+> and a guard fails on any *“N lines below”* that is not describing the old mistake. **64 green**, and I
+> red-checked that guard in memory rather than trusting it — it fires. **Two one-line items remain in it**:
+> a message naming the wrong neighbour, and an `indexOf` that judges every match by the first occurrence.
+> **T60** — `show-verdict.ts INQ-2002`, the *40 rooms in Tampa* beat, still prints *“needs **the general
+> manager, the general manager at Solstice Tampa Bayshore**, to approve it.”* `engine.ts` is untouched since
+> yesterday. **T59** — the brief's *net-new tool* still has **no behavioural test**.
 > **T56 shipped at It144 — and it corrected me.** I handed the Implementer a
 > census p90 of **1488ms** and called the 1.5s first-signal target met. **That figure was one index low.**
 > Nearest-rank is **1502ms**, linear interpolation **1492ms**, and **10.1% of turns exceed 1500ms**, so the p90
@@ -773,7 +775,34 @@ broken; the thing that would catch it breaking is what is thin.**
 **Check when done:** flipping SOL-PHX's ceiling turns the suite red; flipping Tampa's does not; the doc names a
 single-match search string; `npx vitest run` green.
 
-### T58. `docs/live-modification.md` now says "two lines below it". It is three, and two lands on the neighbouring field.
+### T58 — the instruction is FIXED (It148, 05:56) and the offset guard is real. **Two one-line items remain.**
+
+> **Verified at 05:58.** The paragraph now says *“change the `max_discount_auto_approve_pct` **line inside
+> that same object**, which is the only one of its name there”* — field name, no distance — and adds a
+> paragraph on why *“a distance is the wrong shape even when it is right.”* `walkthrough-quotes.test.ts:218`
+> now fails on any `\w+ lines? (below|down|under|after)` that is **not** inside a retrospective clause.
+> **64 green.** I red-checked the guard without touching the repo — reproduced its regex and filter over an
+> in-memory copy with the instruction restored: **2 survivors, assertion fails.** Not vacuous.
+>
+> **Still open, both one line, both in `walkthrough-quotes.test.ts`:**
+> 1. **`:175` still names the wrong neighbour.** It asserts the slice `not.toContain('SOL-TPA')` because
+>    otherwise it *“has run past the end of the object”*. **SOL-TPA is line 89 — before Phoenix at 102.** An
+>    over-long slice runs *forward*, into `SOL-CLT` at 118, and can never reach Tampa. The case still earns
+>    its place (it catches a slice that starts at the header comment), but assert **exactly one
+>    `property_code:` in the slice** and the message needs no story.
+> 2. **`:226` uses `flatDoc.indexOf(phrase)` instead of the match offset**, so when a phrase appears twice
+>    both matches are judged against the **first** occurrence's context. Latent today — the instruction sits
+>    at line 26 and the retrospective at 31, so the exemption cannot swallow it. **Reverse that order and it
+>    can.** Use `m.index`. *Third appearance of `indexOf`-finds-the-wrong-occurrence: T55’s heading, T57’s
+>    anchor, now the guard written to fix T57.*
+
+> **SHARPENED at iteration 210 — the consequence below understates it.** I wrote that the presenter *“sees
+> nothing move.”* **The screen does change.** He is told to type **12**, so the rooms cap becomes 12, and
+> INQ-2009 asks for **15 rooms** — `engine.ts:162` then fires `GRP-ROOMS-CAP`: *“the customer is asking for 15
+> rooms… up to 12 rooms on our own, so this one is 3 rooms past the line.”* **A brand-new flag appears that
+> was not there before**, while *“allowed 15”* — the number he told the panel to watch — does not move and his
+> narration is about the discount ceiling. He has live-introduced an unrelated verdict while describing a
+> different change. The fix is unchanged; the reason to do it first is stronger.
 
 *!! **The wrong line produces exactly the symptom the paragraph exists to prevent.** One word, on the one edit
 the brief says the panel will ask to watch. Filed at 05:38, eight minutes after the sentence was written.*
@@ -832,6 +861,138 @@ move), and now the offset added by T57's own fix. **Each fix has introduced the 
 
 **Check when done:** the paragraph names the field and carries no relative offset; a guard fails if a relative
 offset comes back; the slice case asserts one `property_code:` and its message names the real neighbour;
+`npx vitest run` green.
+
+### T59. The brief's "net-new tool" is named in five reader-facing places and has **no behavioural test**
+
+*It is correct — I read every branch. **Nothing asserts it stays correct**, and one of its switches is the stage
+control for the best refusal in the demo. Same shape as the auto-triage gap: a headline capability, documented
+everywhere, tested nowhere.*
+
+#### What is covered and what is not
+
+| string | test files that mention it | non-test files |
+|---|---|---|
+| `simulated_inventory_service` | **2** — `diagram-guide`, `tool-naming` (both about *strings*) | 2 |
+| `AVAILABILITY_MODE` | **0** | 1 |
+| `AVAILABILITY_OVERRIDES` | **0** | 1 |
+| `rooms_available` | **0** | 2 |
+| `occupancy_pct` | **0** | 2 |
+
+`tool-naming.test.ts` guards that we do not advertise an invented tool name, and says so in its own scope note:
+*"It is not a general proof that every documented tool exists."* **Nothing runs the function.**
+
+Five reader-facing places name it: `README.md` (twice, rows 27 and 162), `SUBMISSION.md`, `agent/sol.md:276`,
+`docs/architecture.drawio`, and the in-app Backend map (`src/components/admin/backendMapModel.ts`).
+
+#### The three promises those places make, all verified by reading the code at 05:47
+
+1. **Deterministic.** `unitInterval(`property|date|class`)` over **FNV-1a**, commented *"stable across runs and
+   platforms"*. **Zero** occurrences of `Math.random`, `Date.now` or `new Date()` in the file.
+2. **Bounded by real data.** `total = roomsOfClass(property, roomClass)` off the property record; occupancy is
+   clamped into `[0.55, 1]`, so `available ≤ 0.45 × total`; the override path clamps with `Math.min(forced, total)`.
+3. **Provenance on every result.** **All three** return sites carry `provenance: 'simulated_inventory_service'`
+   and an `assumption` string; the override site appends *"pinned by AVAILABILITY_OVERRIDES for the demo."*
+
+**So this is not a repair.** The capability and the documentation agree today.
+
+#### Why it earns a slot anyway
+
+`AVAILABILITY_MODE=sold_out` is **the stage control for the Platinum-upgrade refusal** — the cheat sheet calls
+that refusal *"the better moment of the two"*. If that branch regressed, the beat does not fail loudly; **it
+inverts**, and Sol confirms a suite in front of the panel. A one-line change in the occupancy formula also moves
+every late-checkout and upgrade answer at once, silently, because nothing reads the numbers back.
+
+#### What to write — hermetic, no network, no database
+
+- **Determinism**: the same `(property, date, class)` returns an identical snapshot twice, and a different date
+  returns a different one, so the case cannot pass by returning a constant.
+- **Bounds**: over every property and every class in the real records, `0 ≤ rooms_available ≤ total_rooms`, and
+  `total_rooms` equals the inventory figure from the property record rather than anything the simulation chose.
+- **The stage switches**: `AVAILABILITY_MODE=sold_out` gives `rooms_available: 0` and `occupancy_pct: 100`;
+  `wide_open` gives `rooms_available === total_rooms`; an `AVAILABILITY_OVERRIDES` entry keyed
+  `PROPERTY|DATE|ROOM CLASS` pins the number **and is clamped to the real total**. Restore `process.env` after
+  each case.
+- **Provenance**: every returned snapshot carries `provenance` and a non-empty `assumption`, **including the
+  override path** — that is the branch a reviewer is most likely to reach on stage.
+- **Anti-vacuity**: assert the property fixture actually has rooms, so a fixture that silently became empty
+  cannot make the bounds trivially true.
+
+> **Write it as a normal vitest file; do not reach for `npx tsx -e`.** I tried exactly that against this
+> module at 05:47 — a one-liner with a dynamic import — and it produced **no output at all**, ran past ten
+> minutes and was killed by the harness for **running the machine low on memory**. The suite itself is
+> healthy (847 tests), so the runner is the problem, not the module. **A tool that does not finish is not a
+> result**, and it is the obvious thing to try on a pure function, which is why it is called out here.
+
+**Check when done:** the five cases above pass; flipping `sold_out` to return `total` instead of `0` turns one
+red; `npx vitest run` green. **Do not change `availability.ts` — it is correct.** If a case disagrees with the
+code, re-read the code before editing either.
+
+### T60. A verdict on the group-sales screen says "the general manager, the general manager at Solstice Tampa Bayshore"
+
+*Rendered, not inferred — `show-verdict.ts INQ-2002`, the cheat sheet's own **40 rooms in Tampa** beat. The
+sibling verdict directly beneath it is the one the project deliberately scrubbed of that phrase, and the guard
+that did the scrubbing evaluates **the same inquiry, ten lines above, on the other verdict only.***
+
+#### What renders today
+
+```
+INQ-2002 — Ridgeline Sports Club at Solstice Tampa Bayshore
+asked for 40 rooms at 22% off
+
+  FLAG  GRP-ROOMS-CAP
+        "The customer is asking for 40 rooms. Solstice Tampa Bayshore lets us sign off up to 35 rooms on our
+         own, so this one is 5 rooms past the line and needs the general manager, the general manager at
+         Solstice Tampa Bayshore, to approve it."
+  FLAG  GRP-DISCOUNT-CEILING
+        "…this is 7 points over what we can authorise ourselves, and it needs a named approver to sign it off
+         before it goes out."
+```
+
+`engine.ts:171` renders `needs the general manager, ${describeApprover(rules)}, to approve it`, and
+`describeApprover` (`engine.ts:331`) returns **`the general manager at ${property_name}`**. The literal and the
+helper both carry the phrase, so it prints twice.
+
+#### The part that is more than a typo
+
+`inquiries.test.ts:97` evaluates **INQ-2002** and asserts the `GRP-DISCOUNT-CEILING` reason contains no
+*"general manager"* and no `GM`, with its reasoning written out:
+
+> *"There is no GM: `staff_role` is ('concierge', 'group_sales', 'admin') and `approveProposal` applies no test
+> beyond group_sales|admin, so the sentence **promised an authority nothing enforced**."*
+
+**That objection applies identically to `GRP-ROOMS-CAP`, which says it twice.** Ten lines above, the same file
+evaluates the same inquiry and checks the rooms-cap reason only for the string *"40 rooms"*. **The reasoning was
+applied to the sentence that was noticed, not to the rule.**
+
+*Policy 13 does put group-block authority with "Sales and the General Manager", so naming a GM is
+**policy**-grounded. The test's objection is about **enforcement**, not policy — and that is the objection that
+still stands.*
+
+#### What to change
+
+1. **Remove the duplication.** `needs ${describeApprover(rules)} to approve it.` One line, no vocabulary change,
+   and the stutter is gone from the screen. **Do this part even if part 2 is judged out of scope tonight.**
+2. **Decide the vocabulary once, for both verdicts.** Either say what is enforced, as the ceiling rule does — *"a
+   named approver"* — or cite the policy rather than the role: *"Policy 13 puts this with Sales and the general
+   manager; the system requires a named approver to sign it off."* The second keeps Policy 13's grounding without
+   promising a tier `staff_role` does not have.
+3. **Widen the guard to the rule, not the sentence.** `inquiries.test.ts:97` should assert over **both** verdicts
+   of INQ-2002, so the next reason written in that engine cannot reintroduce the promise. Its comment already
+   contains the general principle; only its subject is narrow.
+4. **One stale fixture, worth a line while there.** `send-gate-bypass.test.ts:33` hand-writes a
+   `GRP-DISCOUNT-CEILING` `human_reason` ending *"without the general manager signing it off"* — the wording the
+   engine stopped producing. It is a fixture for a different assertion, so nothing is wrong today; it is a
+   superseded sentence sitting where someone will read it as current.
+
+#### Scope, stated honestly
+
+`show-verdict.ts` prints **flags only**, so INQ-2009 — the runbook's beat — does not show a rooms-cap line at all
+(15 rooms, cap 35, passes). **The confirmed on-screen instance is INQ-2002**, which is both in the live inbox and
+the exact shape of the cheat sheet's group beat. No document quotes the sentence: `"sign off up to"` appears in
+**zero** `.md` files, so this is a code fix with no deliverable to re-sync.
+
+**Check when done:** `show-verdict.ts INQ-2002` prints the approver phrase once; the guard covers both verdicts;
 `npx vitest run` green.
 
 # ▶ IF THEY ASK — seven answers to questions the package invites
@@ -2197,6 +2358,188 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 211, 05:58 EST — red-checked someone else's guard without touching the repo, and it held
+
+**T58's instruction is fixed.** `docs/live-modification.md` at 05:56 now reads *"change the
+`max_discount_auto_approve_pct` **line inside that same object**, which is the only one of its name there"* —
+the field, not a distance — with a paragraph explaining why *"a distance is the wrong shape even when it is
+right."* No completed-log entry yet; It148 is mid-flight, so I verified rather than waited.
+
+#### The guard, and the red-check I could run without writing code
+
+`walkthrough-quotes.test.ts:218` now fails on any `\w+ lines? (below|down|under|after)` in that document, with a
+filter letting the paragraph **describe** the old mistake without **issuing** it. **64 tests green.**
+
+A guard nobody has seen fail is the thing this project keeps punishing, and I cannot mutate the repo. So I
+reproduced its regex and its filter in memory over a copy of the document with the instruction restored:
+
+```
+matches in the live doc   ['two lines below']          <- the retrospective sentence
+survivors after filtering []                           <- passes, correctly
+mutation: field name -> "two lines below it"
+survivors after mutation  ['two lines below', 'two lines below']   <- fails, correctly
+```
+
+**Not vacuous.** The assertion fires on exactly the regression it was written for.
+
+#### And the red-check exposed a latent hole in it
+
+The filter does `const at = flatDoc.indexOf(phrase)` and reads 90 characters around **that** index — not around
+the match. When a phrase occurs twice, **both matches are judged against the first occurrence's context.**
+
+Today the instruction sits at line 26 and the retrospective at line 31, so the first occurrence is never the
+exempted one and nothing can slip through. **Reverse that order and the exemption swallows a live instruction.**
+One character of fix: use `m.index`.
+
+> **Third appearance of the same shape tonight**: T55's boundary matched `## 0. Verification log` inside the task
+> describing it; T57's anchor matched `'SOL-PHX': {` in the header comment; now the guard written to fix T57
+> matches a phrase at the wrong occurrence. **`indexOf` answers "where is this string", never "where is this
+> instance".**
+
+#### The other item I filed at iteration 208 is still outstanding
+
+`:175` asserts the SOL-PHX slice `not.toContain('SOL-TPA')` because otherwise it *"has run past the end of the
+object."* **Tampa is line 89 — before Phoenix at 102.** An over-long slice runs forward into `SOL-CLT` at 118 and
+can never reach Tampa. The case does real work (a slice starting at the header comment would swallow Austin and
+Tampa) but its message names the wrong direction, so the next reader trusts it for a case it cannot cover.
+**Assert exactly one `property_code:` in the slice** and both directions are covered with no story to get wrong.
+
+**Both remaining items are one line each and both live in the same file.** T58 now says so rather than reading as
+closed.
+
+#### Unchanged and re-confirmed
+
+- `src/lib/rules/engine.ts` last modified **15:08 yesterday** — **T60 has not been started**, and the duplicated
+  approver phrase still renders on the group screen.
+- Tester silent since 20:26 (**9h32m**), no open findings. Inbox and In progress empty. No lock held; I took none.
+
+
+### Iteration 210, 05:58 EST — the reasoning was applied to the sentence that was noticed, not to the rule
+
+**T58 is still live.** `docs/live-modification.md` was touched at 05:45 and still reads *"two lines below it"* —
+It147's red-check mutations, restored byte-identical, which is why the mtime moved and the text did not.
+
+#### First I made T58 worse than I had filed it
+
+T58 says editing two lines below lands on `group_block_auto_approve_max_rooms` and the presenter sees nothing
+move. **That is not what happens.** He is told to type **12** — the discount ask — so the rooms cap becomes 12,
+and INQ-2009 asks for **15 rooms**. `engine.ts:162` fires `GRP-ROOMS-CAP` at `rooms > cap`:
+
+> *"The customer is asking for 15 rooms. Solstice Phoenix Camelback lets us sign off up to 12 rooms on our own,
+> so this one is 3 rooms past the line…"*
+
+**So the screen does change — a brand-new flag appears that was not there before**, while the number he told the
+panel to watch, *"allowed 15"*, does not move and his narration is about the discount ceiling. That is worse than
+a dead demo: he has live-introduced an unrelated second verdict while describing a different change.
+
+#### Then the rendered output showed something nobody had looked at
+
+Checking that rule I ran the project's own rehearsal aid on the cheat sheet's **40 rooms in Tampa** inquiry:
+
+```
+show-verdict.ts INQ-2002
+
+  FLAG  GRP-ROOMS-CAP
+        "…needs the general manager, the general manager at Solstice Tampa Bayshore, to approve it."
+  FLAG  GRP-DISCOUNT-CEILING
+        "…it needs a named approver to sign it off before it goes out."
+```
+
+**The phrase renders twice** — `engine.ts:171` writes it as a literal and then interpolates
+`describeApprover(rules)`, which returns *"the general manager at ${property_name}"*.
+
+**And the verdict directly beneath it is the one the project deliberately scrubbed of that phrase.**
+`inquiries.test.ts:97` evaluates **INQ-2002** and asserts the ceiling reason contains no *"general manager"* and
+no `GM`, because *"`staff_role` is ('concierge','group_sales','admin')… so the sentence promised an authority
+nothing enforced."* **Ten lines above, the same file evaluates the same inquiry and checks the rooms-cap reason
+only for the string "40 rooms."**
+
+> **The reasoning was applied to the sentence that was noticed, not to the rule.** Same file, same inquiry, ten
+> lines apart, one scrubbed and one saying it twice. This is the T57 lesson at the level above the guard: It147
+> swept `toContain` as a *shape* and found a real gap; nobody swept *"promises an authority nothing enforces"* as
+> a shape, and it was one verdict away.
+
+*Policy 13 does place group-block authority with "Sales and the General Manager", so naming a GM is
+**policy**-grounded. The test's objection is about **enforcement**, and that objection still stands.* **T60
+filed**, with the duplication as part 1 so it can be fixed even if the vocabulary question is judged out of scope.
+
+#### Verified while there
+
+- **It147's four new cases are real and green** — 8 tests in `docs-quote-drift.test.ts`. Its claims check out
+  independently: `named approver` occurs **twice** in the doc; the live ceiling is **15** (so it differs from 12,
+  which its third case requires); Before is *asked 17, allowed 15, "2 points over"* and After *allowed 12, "5
+  points over"* — **17−15=2 and 17−12=5**, the arithmetic it now derives rather than reads.
+- **No document quotes the rooms-cap sentence**: `"sign off up to"` appears in **zero** `.md` files. T60 is a
+  code fix with nothing to re-sync.
+- **`show-verdict.ts` prints flags only**, so INQ-2009 shows no rooms-cap line at all. The confirmed on-screen
+  instance is INQ-2002 — and I said so in T60 rather than implying the runbook beat shows it.
+
+**Three agent tasks open: T58 (`!!`), T59, T60.** Inbox and In progress empty. Tester silent since 20:26
+(**9h32m**). No lock held; I took none.
+
+
+### Iteration 209, 05:49 EST — the brief's net-new tool is documented in five places and asserted in none
+
+**T58 is still open and still live.** `docs/live-modification.md:26-27` still reads *"two lines below it"*; It146
+logged at 05:35 and did not touch it, because I filed T58 at 05:40. Re-confirmed at 05:45, unchanged.
+
+#### I went looking at a named deliverable instead of a claim
+
+The brief asks for **at least one net-new tool**. Ours is `sameDayAvailability()` in
+`netlify/functions/tools/availability.ts`, and it is named in **five reader-facing places**: `README.md` twice
+(rows 27 and 162), `SUBMISSION.md`, `agent/sol.md:276`, `docs/architecture.drawio`, and the in-app Backend map.
+Those places make three behavioural promises — deterministic, bounded by real room counts, provenance-labelled.
+
+**All three are true.** Read branch by branch at 05:47:
+
+```
+determinism   unitInterval(`property|date|class`) over FNV-1a, "stable across runs and platforms"
+              Math.random / Date.now / new Date()  ->  0 occurrences in the file
+bounds        total = roomsOfClass(property, class) from the property record
+              occupancy clamped to [0.55, 1]  ->  available <= 0.45 x total
+              override path clamps with Math.min(forced, total)
+provenance    3 of 3 return sites carry provenance: 'simulated_inventory_service' + an assumption string
+```
+
+#### And nothing asserts any of it
+
+| string | test files | non-test files |
+|---|---|---|
+| `AVAILABILITY_MODE` | **0** | 1 |
+| `AVAILABILITY_OVERRIDES` | **0** | 1 |
+| `rooms_available` | **0** | 2 |
+| `occupancy_pct` | **0** | 2 |
+| `simulated_inventory_service` | 2 — and **both are about strings**, not behaviour | 2 |
+
+The two that mention it are `diagram-guide` and `tool-naming`, and `tool-naming` states its own limit: *"It is
+not a general proof that every documented tool exists."* **Nothing runs the function.**
+
+> **This is the auto-triage gap again** — the one that sat open for fourteen state tables because I addressed it
+> to a role instead of a capability, and closed at It129 with *"52 test files, not one mention."* Same shape: a
+> headline capability, documented everywhere, tested nowhere. **T59 filed, second behind T58.**
+
+#### Why it is worth twenty lines at 05:49 and not a shrug
+
+`AVAILABILITY_MODE=sold_out` is **the stage control for the Platinum-upgrade refusal**, which the cheat sheet
+calls *"the better moment of the two."* If that branch regressed it would not fail loudly — **it would invert**,
+and Sol would confirm a suite in front of the panel. One line in the occupancy formula moves every late-checkout
+and upgrade answer simultaneously, and nothing reads the numbers back.
+
+T59 says explicitly **not to change `availability.ts`** — it is correct — and asks for a hermetic test with an
+anti-vacuity case, because a bounds assertion over an empty fixture passes for the wrong reason.
+
+#### One instrument failed and I switched rather than trusted
+
+`npx tsx -e` with a dynamic import hung past five minutes and was killed. **Confirmed at 06:00 when the harness
+reported it: the output file holds `[killed]` and nothing else — zero output in ten minutes, stopped for running
+the machine low on memory.** I did not conclude anything from the silence: a hung runner is **no evidence in either direction**, and the same reading I wanted from it was
+available by reading the branches, which is what the file's own header comment claims. **A tool that does not
+finish is not a result.**
+
+**Inbox and In progress empty.** Tester silent since 20:26 (**9h23m**); no open findings in its ledger. No lock
+held; I took none.
+
 
 ### Iteration 208, 05:40 EST — T57's fix introduced the next defect in the same sentence, and it is the one the panel watches
 

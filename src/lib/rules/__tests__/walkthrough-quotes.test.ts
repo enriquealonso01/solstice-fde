@@ -203,6 +203,87 @@ describe('code the demo documents tell you to type', () => {
     )
   })
 
+  /**
+   * How the presenter is told to find the line, which is a separate failure from which line it is.
+   *
+   * Iteration 146 replaced a search that landed on the header comment with an instruction to change the
+   * ceiling **"two lines below"** the anchor. From `property_code: 'SOL-PHX',` at 103, two is **105** —
+   * `group_block_auto_approve_max_rooms: 35,`. Editing the rooms cap leaves *"allowed 15"* reading 15,
+   * which is the exact signal the same paragraph defines as *"the edit did not land"*. A new route to the
+   * identical stage failure, written eight minutes after the warning about it.
+   *
+   * The fix is not to say "three". **A distance is the wrong shape even when it is correct**, because
+   * adding any field to that object moves it silently — the same lesson as the `HUMAN_INTERVENTION.md`
+   * line pointers that rotted by +13 at T55. Name the field; it is unique inside the object.
+   */
+  it('tells the presenter to find the line by name, not by counting from the anchor', () => {
+    const flatDoc = readFileSync(join(repoRoot, doc), 'utf8').replace(/\s+/g, ' ')
+
+    const offsets = [...flatDoc.matchAll(/(\w+) lines? (?:below|down|under|after)/gi)]
+      .map((m) => m[0])
+      // The paragraph is allowed to describe the old mistake; it may not issue it as an instruction.
+      .filter((phrase) => {
+        const at = flatDoc.indexOf(phrase)
+        return !/said|earlier revision|was wrong|which was wrong/i.test(flatDoc.slice(Math.max(0, at - 90), at + 40))
+      })
+
+    expect(
+      offsets,
+      `${doc} tells the presenter to count ${offsets.join(', ')} from the search hit. It said "two lines ` +
+        `below" and the answer was three — two is group_block_auto_approve_max_rooms, and editing that ` +
+        `leaves "allowed 15" reading 15, the tell this document defines as a failed edit. Name the field.`,
+    ).toEqual([])
+
+    expect(
+      flatDoc,
+      `${doc} no longer names max_discount_auto_approve_pct as the line to change inside the object. ` +
+        `Without that, the anchor gets the presenter to the right object and nothing gets him to the right ` +
+        `line.`,
+    ).toMatch(/max_discount_auto_approve_pct[^.]{0,80}inside that same object/)
+  })
+
+  it('points its three "wrong line" warnings at lines that are actually wrong', () => {
+    // The paragraph steers the presenter past the comment, Austin and Tampa by line number. Those are the
+    // decoys; if one drifted onto the Phoenix entry the warning would send him to the right line while
+    // calling it the wrong one.
+    //
+    // The numbers are read OUT OF THE DOCUMENT, not hardcoded here. The first version of this case listed
+    // [10, 54, 93] as constants, so a red-check that changed the document's "Tampa at 93" to 106 passed:
+    // the case was checking numbers I had typed rather than the claims the presenter reads. Seventh time
+    // this session an assertion has verified its own copy of the answer.
+    const lines = readFileSync(join(repoRoot, source), 'utf8').replace(/\r\n/g, '\n').split('\n')
+    const anchorIdx = lines.findIndex((l) => l.includes("property_code: 'SOL-PHX',"))
+    const phoenixCeiling = lines.findIndex((l, i) => i > anchorIdx && l.includes('max_discount_auto_approve_pct'))
+    expect(phoenixCeiling, 'could not locate the Phoenix ceiling line').toBeGreaterThan(anchorIdx)
+
+    const flatDoc = readFileSync(join(repoRoot, doc), 'utf8').replace(/\s+/g, ' ')
+    const claimed = /the comment near line (\d+), Austin at (\d+), Tampa at (\d+)/.exec(flatDoc)
+    expect(
+      claimed,
+      `${doc} no longer lists the three decoy line numbers in the shape this case reads. If the wording ` +
+        `changed, change the pattern with it rather than letting the case go quiet.`,
+    ).toBeTruthy()
+
+    const [, comment, austin, tampa] = (claimed as RegExpExecArray).map(Number)
+    for (const [n, what] of [
+      [comment, 'the header comment'],
+      [austin, "Austin's ceiling"],
+      [tampa, "Tampa's ceiling"],
+    ] as const) {
+      const text = lines[n - 1] ?? ''
+      expect(
+        text,
+        `${doc} sends the presenter past line ${n} as ${what}, and that line now reads ` +
+          `${JSON.stringify(text.trim().slice(0, 60))}.`,
+      ).toMatch(/max_discount_auto_approve_pct|SOL-PHX/)
+      expect(
+        n - 1,
+        `${doc} calls line ${n} a wrong line, and it is the Phoenix ceiling the presenter is meant to edit. ` +
+          `The warning would steer him away from the only correct line.`,
+      ).not.toBe(phoenixCeiling)
+    }
+  })
+
   it('names a file that exists, because the first step is opening it', () => {
     const docText = readFileSync(join(repoRoot, doc), 'utf8')
     expect(docText).toContain(source)

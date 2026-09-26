@@ -23,9 +23,14 @@ rehearsed end to end, with the real output captured from an actual run.
 this same snippet to explain why the threshold lives here, and two other properties share the same
 15% ceiling, so a search for `max_discount_auto_approve_pct: 15` finds **three wrong lines before the
 right one** — the comment near line 10, Austin at 54, Tampa at 93. **Search for `property_code: 'SOL-PHX',`
-instead — that string occurs exactly once in the file** — and change the `max_discount_auto_approve_pct` two
-lines below it, around line 106. Searching for `'SOL-PHX'` on its own still lands on the header comment
-first, which is the mistake this paragraph is about. Editing the comment changes nothing and the script's output does not move,
+instead — that string occurs exactly once in the file** — and then change the **`max_discount_auto_approve_pct`
+line inside that same object**, which is the only one of its name there. Searching for `'SOL-PHX'` on its own
+still lands on the header comment first, which is the mistake this paragraph is about.
+
+**Find that line by its name, not by counting down from the anchor.** An earlier revision of this paragraph
+said "two lines below", which was wrong by one: two lands on `group_block_auto_approve_max_rooms`, and editing
+the rooms cap leaves *"allowed 15"* reading 15 — the same false signal as editing the comment. A distance is
+also the wrong shape even when it is right, because adding any field to that object silently moves it. Editing the comment changes nothing and the script's output does not move,
 which is a confusing thirty seconds in front of an audience. The tell is that "allowed 15" stays
 15. This is the one mistake to rehearse away, and it is easy to make: the testing agent made it on
 its first attempt at this exact edit.

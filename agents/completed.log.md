@@ -9315,3 +9315,90 @@ and the tell each time is the same: **a sweep that returns a suspiciously small 
 re-examine, not a clean bill of health.**
 
 `npx tsc -b` clean. `npx vitest run` **858 tests / 60 files** green (up 4).
+
+---
+
+## It148 — T58: I wrote "two lines below" and it is three, on the beat the panel watches
+
+T58 was open and marked `!!`. It is mine, from eight minutes earlier.
+
+Fixing T57's comment trap at iteration 146, I replaced *"Search for `'SOL-PHX'`"* — which lands on the
+header comment — with a unique anchor and this instruction:
+
+> **Search for `property_code: 'SOL-PHX',` instead** … and change the `max_discount_auto_approve_pct` **two
+> lines below it**, around line 106.
+
+Measured:
+
+```
+103    property_code: 'SOL-PHX',              <- the anchor
+104    property_name: 'Solstice Phoenix Camelback',
+105    group_block_auto_approve_max_rooms: 35,   <- "two lines below"
+106    max_discount_auto_approve_pct: 15,        <- the ceiling. three below.
+```
+
+**Two lands on the rooms cap.** And the consequence is the exact failure the paragraph exists to prevent:
+edit line 105 and the script still prints *"allowed 15"*, which that same paragraph defines as the tell that
+the edit did not land. I closed one route to a confusing thirty seconds on stage and opened another, in the
+same sentence, having just written the warning.
+
+### The fix is not "say three"
+
+A distance is the wrong *shape* even when the number is right. Add one field to that object and the offset
+silently moves — which is precisely how the `HUMAN_INTERVENTION.md` pointers rotted by +13 at T55, and why
+the plan now leads with quoted headings instead of line numbers.
+
+`max_discount_auto_approve_pct` occurs exactly once inside the SOL-PHX object. So the document names the
+field:
+
+> …and then change the **`max_discount_auto_approve_pct` line inside that same object**, which is the only
+> one of its name there.
+
+with a second paragraph saying why, and keeping the failed revision visible rather than tidying it away:
+
+> **Find that line by its name, not by counting down from the anchor.** An earlier revision said "two lines
+> below", which was wrong by one: two lands on `group_block_auto_approve_max_rooms`, and editing the rooms
+> cap leaves *"allowed 15"* reading 15 — the same false signal as editing the comment.
+
+### Guarded the form, so a correct offset fails too
+
+Any *"N lines below / down / after"* instruction in that document now fails the suite, with the paragraph
+that *describes* the old mistake exempted by its own framing (`said`, `earlier revision`, `was wrong`). Plus
+a positive case requiring the field to be named inside the object.
+
+The red-check that matters is the second one:
+
+```
+the bad instruction restored          1 failed
+a CORRECT "three lines down"          1 failed   <- the point
+stops naming the field                1 failed
+```
+
+Banning only the wrong number would leave the shape in place for the next person to get right by luck.
+
+### And my own decoy case was checking my copy of the answer
+
+The same paragraph steers the presenter past three decoys — *"the comment near line 10, Austin at 54, Tampa
+at 93"*. I added a case to keep those honest, and hardcoded `[10, 54, 93]` in the test.
+
+So when I red-checked it by changing the document's *"Tampa at 93"* to **106**, it passed. 106 is Phoenix's
+own ceiling — the single line the presenter must not be steered away from — and the guard meant to protect
+that steering was verifying three integers I had typed rather than the sentence he reads.
+
+It now parses the numbers out of the document and checks each against `thresholds.ts`, plus asserts that none
+of them is the Phoenix ceiling. Re-run: moving a decoy onto Phoenix's line fails 1, drifting one off its line
+fails 1.
+
+**Seventh time this session an assertion has verified its own copy of the answer rather than the thing.** The
+list is getting specific enough to be a rule: It138's comment satisfying `includes('loadEnv')`, It145's
+appended prose satisfying a file-wide `toContain`, T57's Tampa satisfying Phoenix's values, and now a
+hardcoded triple satisfying a check on a document. **If the test contains the expected value as a literal,
+ask what would happen if the document changed and the literal did not.**
+
+### One instrument note
+
+My first "restored" line printed `git status` on `docs/live-modification.md` and labelled a non-empty result
+as failure. The file legitimately differs from HEAD this iteration — that is the fix. `cmp` against the
+post-fix snapshot is the right instrument, and it reports identical.
+
+`npx tsc -b` clean. `npx vitest run` **860 tests / 60 files** green (up 2).
