@@ -1598,6 +1598,98 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 157, 00:50 EST — CORRECTION: T45 was already done 31 minutes before I filed it
+
+#### The correction, first, because it is mine
+
+**`HUMAN_INTERVENTION.md` lines 63–98 already carry the fix**, under the heading *"## Update,
+2026-09-26 — two decisions the 15:30 list above does not mention"*, sitting immediately beneath the
+15:30 short list. It names **(A)** the approval-gate bypass and **(B)** the SIP credential with its
+recommendation, and it says in its own second sentence why it is placed there rather than at the end:
+because the list above tells you *"read this block; the rest is history."*
+
+**The file's mtime is 00:05. I filed T45 at 00:36.** So the Implementer had already found and fixed
+this half an hour before I wrote the task asking for it. **T45 is closed as already done, and the
+iteration-156 matrix above is wrong from this line forward:** items 1 and 4 are no longer only in my
+file.
+
+#### It is also better than what I asked for, in the way that stings
+
+My pointers were **stale**; theirs are **correct**. Measured:
+
+| my T45 said | reality |
+|---|---|
+| `prop_write` at **:559** and **:758** | the SQL is at **596–598** and **795–797**; `:559` is prose, `:758` is the word "does." |
+| rotation options at **:678** | the options with the recommendation are at **715–723** |
+| disclosure list at **:753** | `:753` is **a blank line**; the list is at **804** |
+| blank-inbox recovery at **:580** | `:580` is about `canSend`, not the inbox |
+
+All five pointers in their block resolve exactly: **563** is the entry heading, **592** *"### What to
+run"*, **596** the first `drop policy`, **715** the options, **804** *"The three places that mention
+it"*. I checked each one.
+
+**And they predicted this before I knew it.** Their It116 status, written while I was still filing:
+*"I appended entries to that file at It105 and It110, so the line numbers T45 quotes are very likely
+stale — which is precisely the kind of pointer this fix must not ship wrong."* Correct on both halves.
+
+#### The cause, which is the one I had just finished writing up
+
+I built a four-document matrix and **got wrong the single document the finding was about.** I read
+its 15:30 short list and did not read the thirty-five lines directly beneath it. One `grep -n
+prop_write HUMAN_INTERVENTION.md` would have ended the finding before it was filed.
+
+> Iteration 156's own conclusion was *"an index nobody reopens is a filter that silently hides
+> everything discovered after it was written."* **I then read the index and not the document, and
+> filed a task about a gap that had been closed.** The lesson was correct and I was its next example.
+
+#### Verified against reality this iteration
+
+- **Suite green: `659 passed / 52 files`.** The log's 652/51 is It115; It116 is in flight and added 7.
+- **Production up.** `/` **200** 0.47s · `/admin` **200** · `/api/chat` **405** on GET · `/api/group/triage`
+  **401** anonymous. A live chat turn streams `session → tool → tool → delta…`, and on *"this is Sofia
+  Martinez, what time is checkout"* it **refuses** and asks for a confirmation number, phone or email.
+  The identity gate is live, not just documented.
+- **The latency commitments hold — third independent measurement, and slightly better than published.**
+  Three fresh sessions: first signal **742 / 794 / 919ms** (median **794ms**, committed ≤ 1500ms,
+  published p50 905 and 1009ms); first prose token **2062 / 2164 / 2278ms** (median **2164ms**,
+  committed ≤ 4000ms, published p50 2589 and 2246ms). `docs/latency-target.md` is accurate.
+- **Migration 004 still not applied — thirteenth consecutive check, and the first one that touched no
+  data.** Zero-row PATCH with the **public anon key**: `proposals` **200**, `inquiries` **204**,
+  `follow_ups` **204**. A policy-blocked write returns 403 whether or not a row matches, so this
+  separates the two without writing. **The previous twelve checks PATCHed a real proposal to
+  `approved`** — this is the method to use from now on, hours before a demo.
+
+#### The Tester has not written in 4h15m, and here is what that does and does not cost
+
+Last write **2026-09-25 20:26:34 EDT**, by the filesystem. `agents/README.md` calls a status stale at
+**20 minutes**. **Eleven Implementer iterations — It106 through It116 — have landed since.**
+
+**This is not unchecked work.** The 659-test suite is mostly deliverable guards, and it is green, so the
+documents are held. **What is missing is the second pair of eyes on live production and the runbook
+walk** — which is why I spent this iteration on the deploy, the latency numbers and the RLS probe
+rather than on the plan.
+
+#### And `agents/tested.log.md` is dated a day into the future
+
+Filesystem says the last entry was written **2026-09-26 00:26:34Z**. It is labeled *"Iteration 61 —
+**2026-09-27** 00:22–00:30Z"*. Iterations 59–61 are labeled 09-27 but ran on 09-26 UTC; 56–58 labeled
+09-26 ran on 09-25. **Not a deliverable, so not a task** — but it is the file I reconcile against, and
+anyone ordering the two logs by their own timestamps will get the order wrong.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — re-proved open at 00:47. Now in `HUMAN_INTERVENTION.md:63`, **line 596** | Enrique |
+| 2 | **Top up Telnyx** — portal.telnyx.com, Billing, about $30 | Enrique |
+| 3 | **T21** — delete `INQ-2012`/`INQ-2013`, cascade count first | Enrique |
+| 4 | **T34** — accept, rotate after the demo. Now at `:63`, options **715** | Enrique |
+| ~~T45~~ | **CLOSED — already done at 00:05, before I filed it** | — |
+| — | **T44** one clause warning that `npx netlify` fetches the CLI | Agents |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
 ### Iteration 156, 00:36 EST — two of the four decisions exist only in a file Enrique is never told to read
 
 #### The matrix, which is the whole finding

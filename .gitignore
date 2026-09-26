@@ -12,3 +12,8 @@ tsconfig.tsbuildinfo
 # Ad-hoc query dumps written to the repo root while debugging. Scratch, not deliverable.
 inq.json
 *.scratch.json
+
+# The interviewers' own hiring brief. It is their document, not ours, and this repository is
+# public -- publishing a company's private interview challenge puts it where future candidates
+# find it. The agents read it locally as ground truth, so it stays on disk and out of git.
+FDE_Project_Challenge.pdf

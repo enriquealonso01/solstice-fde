@@ -149,3 +149,49 @@ describe('the demo login card', () => {
     ).toEqual([])
   })
 })
+
+/**
+ * Somebody else's document does not belong in our public repository.
+ *
+ * `FDE_Project_Challenge.pdf` is the hiring brief the interviewers wrote. It was tracked, not ignored, and
+ * this repository is **public** — so their private interview challenge was published on the internet under
+ * our name, where any future candidate could find it. Found at iteration 117 while checking the deliverables
+ * against the brief.
+ *
+ * It is not a secret in the sense the rest of this file guards: nothing authenticates with it. It is a
+ * question of whose material it is, and of what a reviewer concludes about how this team handles a
+ * confidential document belonging to someone else — which for this role is not a small thing.
+ *
+ * The agents read it locally as ground truth, so it stays on disk and out of git, exactly like
+ * `DEMO_LOGINS.md`. It remains in one commit of history; rewriting that is Enrique's call and is written up
+ * in `HUMAN_INTERVENTION.md`, because the same reasoning that protects the SIP credential from a rewrite
+ * applies here: the deliverables cite commit ids.
+ */
+describe("the interviewers' brief", () => {
+  const BRIEF = 'FDE_Project_Challenge.pdf'
+
+  it('is not tracked, because the repository is public and the document is theirs', () => {
+    expect(
+      trackedFiles(),
+      `${BRIEF} is tracked. It is the interviewers' own hiring brief and this repository is public. ` +
+        `Remove it with "git rm --cached ${BRIEF}" -- it stays on disk, which is all the agents need.`,
+    ).not.toContain(BRIEF)
+  })
+
+  it('is named in .gitignore, so it cannot drift back in with a git add -A', () => {
+    const ignore = readFileSync('.gitignore', 'utf8')
+    expect(
+      ignore.split(String.fromCharCode(10)).map((l) => l.trim()),
+      `.gitignore no longer lists ${BRIEF}. That line is what keeps a wildcard add from republishing it.`,
+    ).toContain(BRIEF)
+  })
+
+  it('no other pdf is tracked either, since the same reasoning applies to any of theirs', () => {
+    const pdfs = trackedFiles().filter((f) => f.toLowerCase().endsWith('.pdf'))
+    expect(
+      pdfs,
+      `Tracked PDFs: ${pdfs.join(', ')}. Nothing in this package needs to ship a PDF -- the proposals are ` +
+        `generated at runtime -- so a committed one is most likely someone else's document.`,
+    ).toEqual([])
+  })
+})

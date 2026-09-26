@@ -958,3 +958,33 @@ nowhere else. It refuses anything under 1, and `--minutes` with no value.
 
 **Your sequence is unchanged and now finishes the job:** stop the loop, `npm run demo:tidy -- --minutes 2`,
 then warm the functions. Both forms are in `docs/demo-runbook.md` and `SUBMISSION.md`'s checklist.
+
+## Your call: the interviewers' own brief was published in our public repo (2026-09-26, iteration 117)
+
+**Already done, no action needed for the live state:** `FDE_Project_Challenge.pdf` is out of the tracked
+tree and in `.gitignore`. It is still on disk, which is all the agents need — the plan reads it as ground
+truth — and a test now keeps it, and any other PDF, from coming back.
+
+**What happened.** The brief is the interviewers' document. It was committed, not ignored, and this
+repository is **public**, so their private hiring challenge was published under our name where any future
+candidate could find it. It is not a secret in the credential sense — nothing authenticates with it — it is
+a question of whose material it is, and of what a reviewer concludes about how this team handles a
+confidential document belonging to someone else.
+
+**What is yours to decide: it remains in one commit of history.** Same shape as the SIP credential, and the
+same recommendation for the same reason.
+
+- **Recommendation: leave history alone.** A rewrite invalidates every commit id the deliverables cite —
+  the README's day-one window and commit counts, the plan's PR references, `10b63e8` and `c09f04d` in the
+  credential entry. That is a lot of verified accuracy traded for removing something a reviewer would have
+  to go looking for in a repository they already have the brief for.
+- **If you would rather it were gone entirely**, the honest options are to delete the GitHub repository and
+  push a fresh one after submission, or to rewrite with `git filter-repo` and accept re-verifying every
+  citation. Neither is a ten-minute job and neither should happen before you send.
+- **If a reviewer raises it**, the accurate answer is short: it was committed by mistake, it was removed as
+  soon as it was noticed, and the fix is enforced by a test rather than by remembering.
+
+**One thing I could not do.** I tried to read the PDF to check our deliverables against its own list, and
+my text extraction pulled embedded font data rather than page text. The Planner has read it and mapped the
+brief's requirements to files in `plans/06-master-plan.md`, so that mapping exists; I am recording that I
+did **not** independently re-verify it rather than implying I did.
