@@ -9,6 +9,42 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It133 SHIPPED: the architecture diagram's "Today (MVP)" page said the demo does not work.** Nothing was
+  open, so I audited the last two unaudited deliverables. `docs/where-this-goes.md` came back **clean** —
+  including *"twenty minutes … the number in their own brief"*, which I checked against the PDF: the brief
+  says *"a request that should take twenty minutes takes two days."* Then `docs/README-diagram.md` led me
+  into `docs/architecture.drawio`, **a named brief deliverable**, and its Today page — the page whose whole
+  job is *"what actually runs at the demo"* — carries **six wrong status markings**, every one understating
+  the build:
+  - `y_claude` **BLOCKED** — *"Key is not workspace-scoped and currently 400s. Code is written against the
+    contract."* The chat brain. **It answers on production.**
+  - `y_sol` **BLOCKED** — *"Blocked on account funding."* Provisioned at 29,784; live calls have been made.
+  - `y_ph` **PENDING** — *"Waiting on account funding."* The number is bought, attached and **printed in the
+    README**.
+  - `y_chat`, `y_ev`, `y_em` **PENDING** — `/api/chat`, the transcript webhook, and an email that has
+    actually been delivered.
+  Only `y_sm` (10DLC) is correctly BLOCKED, and **its stated reason repeated the premise I corrected in
+  It127**. A reviewer opening this page read a diagram saying the centerpiece is a mock, attached to a
+  README saying it works. **The contradiction is worse than either half.**
+- **Verified every promotion against the live systems, not the notes**, before changing one label:
+  Anthropic `POST /v1/messages` → **200**, `claude-sonnet-5`, 9/4 tokens · `+13057866217` **active**,
+  connection *Solstice FDE - Sol Voice* · assistant `anthropic/claude-haiku-4-5`, **29,784** chars,
+  **25** tools · **six voice sessions** in Postgres carrying **3–9 transcript messages** each, one
+  `taken_over` · sending domain `enriquecodes.com` **`status: verified`** with DKIM · **four proposals**
+  `status: sent`, `sent_via: email`. The page is now **24 LIVE / 0 PENDING / 1 BLOCKED**, borders moved
+  with the labels, legend rewritten, and SMS given the reason that is actually true — nothing was ever
+  registered, so the clock never started.
+- **Guarded three ways in `diagram-guide.test.ts`**: the counts the guide now states out loud must match
+  the page; **every tag must be backed by its border shape**, which is the promise the guide makes and the
+  thing this fix had to change in two places at once; and the two false reasons are banned by name.
+- **One red-check did not fire, and the guard was fine — my mutation was.** Flipping the first `dashed=0;`
+  in the file hit a cell outside the Today page, so the shape case passed. Re-run against `y_land`
+  explicitly it fails 1. Worth writing down: *a red-check that stays green means the guard is broken **or**
+  the mutation missed*, and those need telling apart before either is believed.
+- Also: `AGENTS.md`'s own It119 correction block said the email path worked *"with Telnyx's sandbox domain
+  the only limit"*. The domain is a **verified custom** one. **A correction block that has itself gone
+  stale** — the fifth instance of a stated principle outliving its implementation.
+
 - **It132 SHIPPED: `docs/how-this-was-built.md`'s flagship anecdote did not add up.** This is the
   deliverable that argues the whole agentic approach, and its most persuasive sentence read *"would have
   converted **24** silent 401s into **11** working calls and **11** confusing ones"*, after calling them

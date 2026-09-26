@@ -7803,3 +7803,123 @@ as its anchor and replaced it, orphaning that bullet's continuation lines under 
 by reading the file back before committing rather than by a test — there is no guard for a status file
 that has become ungrammatical, and it is mine, so the fix was to restore the header. Worth noting only
 because an anchor that consumes a neighbouring entry's first line is a quiet way to lose it.
+
+---
+
+## It133 — the architecture diagram told a reviewer the demo does not work
+
+Nothing was open, so I went after the last two deliverables nobody had audited.
+
+**`docs/where-this-goes.md` came back clean**, which is worth recording as a negative result because
+it is the first doc in this sweep that did. Its most checkable claim is an attributed quote of the
+client's own brief — *"the two-day quote becomes twenty minutes, **which is the number in their own
+brief**"* — and misquoting phData's document back to phData would have been the worst kind of error in
+the package. Extracted the PDF: *"a request that should take **twenty minutes** takes **two days**."*
+Both numbers, correctly attributed. `getReservation` and `getPropertyRate` are real accessors, the
+audit field really is `overrode_rules`, and the engine really does have eleven `GRP-` rules, which the
+doc's illustrative *"the eleven rules your managers override most often"* happens to match exactly.
+
+Then `docs/README-diagram.md` sent me into `docs/architecture.drawio`, and that is where the iteration
+actually was.
+
+### The Today page said the centerpiece was a stub
+
+`architecture.drawio` is a **named brief deliverable**, and its *Today (MVP)* page exists for exactly
+one purpose, stated in its own guide: *"What actually runs at the demo … Status is marked honestly as
+LIVE, PENDING or BLOCKED."* Six of its nodes said the opposite of the truth, and every one of them
+understated the build:
+
+```
+y_claude  BLOCKED  "Key is not workspace-scoped and currently 400s. Code is written against the contract."
+y_sol     BLOCKED  "Voice runtime. Blocked on account funding, not on design."
+y_ph      PENDING  "Telnyx DID ... Waiting on account funding."
+y_chat    PENDING  "/api/chat ... Holds the Anthropic key, runs the tool loop"
+y_ev      PENDING  "/api/telnyx/events ... inserts only new turns"
+y_em      PENDING  "Telnyx Email API ... Waiting on the sending domain."
+```
+
+The first line is the one that matters. **The chat brain, in a submitted deliverable, marked BLOCKED
+and annotated as code written against a contract rather than something that runs.** The chat bubble is
+the centerpiece of the demo and of the README's opening. A reviewer who opens the diagram reads that
+the guest channel is a mock — and then reads a README saying Sol answers on chat and on a real phone
+number. **The contradiction is worse than either half would be alone**, because one of them is lying
+and the reviewer cannot tell which.
+
+The legend repeated it (*"the Anthropic key is not workspace-scoped, and 10DLC carrier registration
+cannot clear in time"*), and so did `docs/README-diagram.md`.
+
+### Verified against the systems, not against the notes
+
+I could have promoted these from the log — several iterations have asserted each of them. Given that
+the whole class of error I have been fixing all night is *a claim nobody re-derived*, that would have
+been the wrong way to fix a page about honest status. So, before touching a label:
+
+```
+Anthropic  POST /v1/messages              -> 200, model claude-sonnet-5, 9 in / 4 out
+Telnyx     GET /v2/phone_numbers          -> +13057866217, status active, "Solstice FDE - Sol Voice"
+Telnyx     GET /v2/ai/assistants/<id>     -> anthropic/claude-haiku-4-5, 29,784 chars, 25 tools
+Postgres   sessions where channel=voice   -> 6, each with 3-9 messages and 7-8 tool_invocations,
+                                             one of them status taken_over
+Telnyx     GET /v2/email_domains          -> enriquecodes.com, status verified, DKIM verified
+Postgres   proposals where sent_at notnull-> 4, status sent, sent_via email, 09-24 and 09-25
+```
+
+Two of those deserve a note. The voice-session query is what actually proves `/api/telnyx/events`:
+six real calls whose turns are in Postgres, which is the webhook having run, not a claim that it
+would. And one of those sessions is `taken_over` — the supervisor ladder, in the data, from a real
+call. The email domain is the one I most expected to confirm the PENDING marking, because *"waiting on
+the sending domain"* is a plausible thing to still be waiting on; it is verified, with DKIM, and four
+proposals went out through it.
+
+The first Anthropic probe returned **404** and I nearly wrote it down as evidence the key was broken.
+It was a 404 because I had typed a model id that does not exist; the app uses `claude-sonnet-5`, and
+with that it is a clean 200. An auth failure would have been a 401. That is the fifth instrument error
+in this project and the same shape as all of them: the tool ran, returned something, and the something
+was about my input rather than about the system.
+
+### What changed
+
+The page is now **24 LIVE, 0 PENDING, 1 BLOCKED**. Borders moved with the labels — LIVE is
+`dashed=0`, BLOCKED keeps `dashPattern=2 3` — because the guide promises *"the tag is backed by a
+shape, not a colour"*, and a promoted label with a blocked border would have made that promise false
+for anyone who cannot see colour. The XML was re-parsed after editing, since every other check in
+`diagram-guide.test.ts` is meaningless if the file stops being valid.
+
+SMS stays BLOCKED, which is the honest exception, but **its reason was wrong for a second reason**. It
+said *"Carrier registration cannot clear before submission"* — the same premise I corrected in
+`plans/03-messaging.md` at It127, where the brief's five business days make the timing argument
+collapse. The true reason is simpler and worse: **no brand or campaign was ever registered**, so the
+carrier clock never started. The node says that now.
+
+`docs/README-diagram.md` states the three counts out loud and says plainly that the page was wrong and
+why, rather than quietly reading correct. That felt like the right call for a document whose selling
+point is honest status: a status page that was silently understating itself for a day is a more useful
+thing to admit than to tidy away.
+
+### The guard, and a red-check that did not fire
+
+Three cases added to `diagram-guide.test.ts`. The counts in the guide must match the page, in both
+directions, so page and guide cannot drift apart again. Every tag must be backed by its border shape.
+And the two false reasons are banned by name — `not workspace-scoped` and `cannot clear before
+submission` — so neither can come back through a copy-paste from an old revision.
+
+**The shape red-check passed when it should have failed**, and working out why was the useful part. I
+mutated the first `dashed=0;` in the file, expecting a LIVE node drawn as blocked; 13 tests stayed
+green. The guard was not broken — my mutation had hit a cell outside the Today page, because
+`dashed=0;` appears on the future-state page too and the first occurrence is not a Today status node.
+Re-run against `y_land` by id, it fails 1, exactly as designed.
+
+Worth stating as a rule, because I have now had it both ways in this project: **a red-check that stays
+green means the guard is broken *or* the mutation missed**, and those have to be told apart before
+either is believed. Five guards here passed while broken; this is the first time a mutation was the
+thing at fault, and treating it as a broken guard would have led me to loosen a case that was working.
+
+### One more stale correction
+
+`AGENTS.md` carries a correction block I wrote at It119 saying the email path is proven *"with
+Telnyx's sandbox domain the only limit"*. The domain is a verified custom one, and was already at the
+time. **A correction block that has itself gone stale** — the fifth instance in this project of a
+stated principle outliving its implementation, and the funniest, since the block exists to stop
+exactly this. Fixed, with the measurement rather than another assertion.
+
+`npx tsc -b` clean. `npx vitest run` **783 tests / 56 files** green (up 7).

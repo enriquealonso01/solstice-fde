@@ -4,50 +4,57 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 181 — 2026-09-26 02:53 EST
+## Iteration 183 — 2026-09-26 03:07 EST
 
 **The plan is accurate and correctly ordered. No agent task is open and none was filed.**
 
-### Chased `grounded: false` on a successful lookup to the edge of filing a defect
+### Beat 2 is verified end to end
 
-`transcripts/voice-call.md:107` — the one capture the README admits was *"taken on trust rather than
-re-run"* — shows `get_reservation` returning R55015 correctly and marked ***(returned ungrounded)***. I
-reproduced it on production and isolated it:
+```
+turn 1  (NO session_id)  "Confirmation R55004, last name Chen"
+        -> server minted 151041f6-…    "Thanks, Michael — you're verified."
+turn 2  "Can I get a late checkout?"   -> "What time would you like to check out?"   (no re-identification)
+turn 3  "2pm please."
+        -> "2pm checkout is confirmed — you're Platinum tier, so it's guaranteed, no need to check in
+            with the front desk."
+messages persisted for that session: 6
+```
 
-| tool | ok | grounded | citations |
-|---|---|---|---|
-| `get_property_info` · `identify_guest` · `check_late_checkout` | true | **true** | 1 · 2 · 5 |
-| **`get_reservation`** | true | **false** | **2** |
+Exactly what the cheat sheet promises, and it **names the tier as the reason**. Completes **G7's Platinum
+half** and confirms **assumption 15** — *"a verified identity survives the whole session"* — in production.
 
-`grounded` is not private: `integration-recommendation.md` offers it as the answer to *"We will not know what
-it did"*, and `role-walkthroughs.md` sends a reviewer to the Tool trace panel to look at it.
+### I reproduced "beat 2 is broken" five times first, with a broken probe
 
-### It is deliberate, and well designed
+Non-UUID session ids, then a self-invented UUID, then a memory probe: every run said turn 2 asks the guest to
+re-identify. **Two stacked mistakes:**
 
-`getReservation` returns `toolUngrounded` on **one condition** — `refund_class === 'not_documented'` — and
-`_deps.ts:106` says why: *"`grounded: false` **obliges the agent to say it cannot confirm and to escalate**."*
+1. **Non-UUID** → `chat.ts:792` mints a fresh uuid and sets `isNewSession: true`. Every turn cold.
+2. **A UUID I invented** → passes the regex, so `isNewSession` is **false**, so **no `sessions` row is ever
+   created**, and `persistMessage`'s `messages` insert fails on the FK **fire-and-forget, silently.**
+   Confirmed with the service-role key: `sessions` **0 rows**, `messages` **0**.
 
-**R55015's rate plan in the CSV phData sent: `Loyalty Redemption`.** Live: `refund_class not_documented`,
-`escalation_required true`, reason *"No written policy covers cancellation or refund of a Loyalty Redemption
-booking."*
+**Correct protocol, which the browser uses:** send **no** `session_id` on turn 1, read the `session` SSE event
+(`chat.ts:287`), reuse that id. `src/lib/chatClient.ts` never invents one.
 
-**That is assumption 6 firing as written.** The reservation facts are grounded; the *refund terms* are not,
-and the envelope carries the weaker of the two so the agent cannot promise on the stronger. **The voice
-transcript's annotation is evidence, not a blemish** — the one capture nobody re-ran shows a guardrail firing
-on a real call.
+### Fifteenth near-miss — iteration 181's warning, acute
 
-### Twelfth near-miss, and the most instructive
+*"Rigour aimed at the wrong question gets you a stronger wrong answer."* **Five times over.** Each repetition
+— longer gap, real demo guest, valid UUID, memory probe — made the case *look* stronger while the instrument
+stayed broken. **Reproducibility is not validity.**
 
-I noticed an anomaly, **reproduced it on production**, **isolated it against four siblings**, and established
-it was reader-visible in two deliverables. Every step made the case stronger. **Then the answer was a
-documented helper in the same file, with its reason in a comment three lines above its definition.**
+**And the answer was already in a deliverable I had read.** `how-this-was-built.md:121`, one of day two's four
+findings: *"a **malformed `session_id`** bought a fully working but completely untraced conversation."* **I
+verified two other claims in that exact file at iteration 169** and missed the one describing the trap I was
+standing in. *(Second tell, also mine: iteration 158's `session_id=like.planner-it157*` failed with `operator
+does not exist: uuid ~~ unknown` — I learned the column is a uuid and drew no conclusion.)*
 
-**And the tell was in my own first output:** it printed `data keys: … escalation_required, escalation_reason`.
-**A tool that returns an escalation reason is not quietly failing to be grounded — it is telling you why it is
-not.** I read past it because I had already decided what the anomaly was.
+### No task, and the reason
 
-**Rigour aimed at the wrong question gets you a stronger wrong answer** — that is the failure mode to watch
-now, not sloppiness. **Before filing, read the function that produced the field.**
+I nearly filed the silent-unknown-uuid behaviour as a robustness gap. **Checked first: the exposure is not on
+a documented path** — the only `/api/chat` curls in any deliverable are the runbook's warm-up and a 405 note —
+**and the class is already disclosed**, at `how-this-was-built.md:121` and `README.md:215` (*"possession of
+the session id is therefore possession of that identity"*). **Filing it would be re-filing what the package
+already says** — the T45 mistake.
 
 ### Open
 
@@ -60,7 +67,7 @@ now, not sloppiness. **Before filing, read the function that produced the field.
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
 
-**Tester silent 6h24m.** Inbox and In progress empty. No lock held.
+It132 shipped. **Tester silent 6h38m.** Inbox and In progress empty. No lock held.
 
 ### The single most important remaining item
 

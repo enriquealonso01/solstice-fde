@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 02:53 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 03:07 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **No agent task is open. T38–T51 are all closed.** `sol.md`, the committed export and the live phone
 > agent all sit at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **748 tests / 54 files
 > at 02:37**. It grows every hour, so read that as a vintage rather than a target.*
@@ -1672,6 +1672,186 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 183, 03:07 EST — beat 2 is verified end to end, after I reproduced "beat 2 is broken" five times with a broken probe
+
+#### The result that matters: beat 2 works, three turns, persistence proved
+
+```
+turn 1  (no session_id)  "Confirmation R55004, last name Chen"
+        -> server minted 151041f6-…      "Thanks, Michael — you're verified."
+turn 2  (that session)   "Can I get a late checkout?"
+        -> "What time would you like to check out?"        <- no re-identification
+turn 3  (that session)   "2pm please."
+        -> "2pm checkout is confirmed — you're Platinum tier, so it's guaranteed,
+            no need to check in with the front desk."
+messages for that session: 6
+```
+
+**That is exactly what `docs/demo-cheatsheet.md` promises** — *"ask for a late checkout and Sol confirms it
+outright, the one tier policy guarantees"* — and it **names the tier as the reason**. It also completes
+**G7's Platinum half** and confirms **assumption 15**, *"a verified identity survives the whole session"*, in
+the deployed system. **Six persisted messages** prove the history is real and not an artifact of one long turn.
+
+#### And now the part I have to write down
+
+I ran that beat **five times before getting it right**, and every earlier run said the demo's opening beat was
+broken:
+
+| probe | what happened |
+|---|---|
+| `session_id: "planner-it183-g7"` etc. | *"Could you give me your confirmation number…"* on turn 2 |
+| same, with a real gap between turns | same |
+| **the exact cheat-sheet guest**, R55004 | *"could you give me your confirmation number… so I can verify you first?"* |
+| a **self-invented UUID** | same |
+| same session, *"What name did I give you a moment ago?"* | **"I don't have a name from you yet in this conversation."** |
+
+**I was one step from filing "beat 2 breaks on stage" as the most serious finding of the night.** Two separate
+mistakes, stacked:
+
+1. **A non-UUID session id.** `chat.ts:792` — `if (raw && UUID_RE.test(raw)) return { sessionId: raw,
+   isNewSession: false }; return { sessionId: newUuid(), isNewSession: true }`. **Every turn got a fresh uuid
+   and started cold.**
+2. **Then a UUID I invented myself.** That passes the regex, so `isNewSession` is **false**, so the function
+   never creates the `sessions` row — and `persistMessage`'s insert into `messages` fails on the foreign key,
+   **fire-and-forget, silently.** Confirmed: `sessions` had **0 rows** for my uuid and `messages` **0**.
+
+**The correct protocol is the one the browser uses and the code emits:** send **no** `session_id` on turn one,
+read the `session` SSE event (`chat.ts:287`), reuse that id. `src/lib/chatClient.ts` never invents one.
+
+#### Fifteenth near-miss, and the shape iteration 181 warned about, acute
+
+Iteration 181 ended: *"rigour aimed at the wrong question gets you a stronger wrong answer."* **This is that,
+five times over.** Each repetition — a longer gap, the real demo guest, a valid UUID, a memory probe — made
+the case *look* stronger while the instrument stayed broken. **Reproducibility is not validity.** A broken
+probe reproduces perfectly.
+
+> **And the answer was already in a deliverable I had read.** `docs/how-this-was-built.md:121`, one of day
+> two's four findings: *"a **malformed `session_id`** bought a fully working but completely untraced
+> conversation, which falsified a guarantee this README makes in writing."* **I verified two other claims in
+> that exact file at iteration 169** and did not register the one that described the trap I was standing in.
+> The loop had found this before me and written it down where I would see it.
+
+*(A second tell, also mine: at iteration 158 a query with `session_id=like.planner-it157*` failed with
+`operator does not exist: uuid ~~ unknown`. I learned then that the column is a uuid and never drew the
+conclusion that my string ids were therefore never session ids.)*
+
+#### No task, and the reason
+
+I nearly filed the silent-unknown-uuid behaviour as a robustness gap: a reviewer with curl could invent a
+session id, see no memory, and conclude the agent has none.
+
+**Checked before filing, and the exposure is not on a documented path.** The only `/api/chat` curls in any
+deliverable are the runbook's warm-up (`-o /dev/null`, no session) and a note that a GET returns 405. **And
+the class is already disclosed** — `how-this-was-built.md:121` above, plus `README.md:215`, which volunteers
+the sharper version: *"identity has no TTL, and the lookup is by session id alone… **Possession of the session
+id is therefore possession of that identity.**"* **Filing it would be re-filing what the package already
+says**, which is the T45 mistake.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — **$3.03, no credit line, ~6 calls, hard stop at zero**; gate is $20 | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+
+**No agent task is open and none was filed.** It132 shipped. Inbox and In progress empty. No lock held.
+Tester silent **6h38m**. **The plan is accurate and correctly ordered.**
+
+### Iteration 182, 02:56 EST — three more guardrails against the live build, and I nearly headlined an invented hotel that is in the data
+
+#### G11, G15 and G18, driven against the prompt that is live now
+
+Seven of nineteen are now re-verified against the post-T48 build, counting iteration 179's four.
+
+**G11 — impossible data is quarantined, not repaired.** `SOL-PVD.base_rate_suite` is stored as **−395**:
+
+> *"What does a suite cost per night at your Providence hotel?"*
+>
+> **"I can't confirm a suite rate for the Providence hotel right now — that figure isn't coming through
+> cleanly on our end. I'd suggest checking with the property directly or letting me get a manager to follow
+> up."**
+
+**No number, no sign-flip to $395, no apology-shaped guess.** It reports the figure as unusable and offers a
+human. That is the quarantine reaching the guest intact.
+
+**G15 — the front desk lane never prices a group block.**
+
+> *"I need 30 rooms in Tampa for three nights in October. What rate can you do?"*
+>
+> **"Group rates are set by Sales, not by me, so I can't quote one here — but I can get this in front of a
+> manager to follow up. What's the best email address to reach you at?"**
+
+**Refuses to price, names who owns it, and collects a way to reach the customer** — the boundary and the
+handoff in one turn.
+
+#### G18, and the part where I almost got it badly wrong
+
+I asked *"What time is check-in at the Columbus hotel?"* and got:
+
+> *"I don't have a specific check-in time on file for the Columbus property. Let me check the general policy
+> instead. **Standard check-in at Solstice Columbus is 3:00 PM.**"*
+
+**I read that as Sol inventing a hotel** — a live failure of G18 *("a guest is never quoted the wrong hotel")*
+and of G1 *("no hotel fact is ever invented")*, on the current build, in the concierge agent. That would have
+been the most serious finding of the night.
+
+**`SOL-CMH | Solstice Columbus Short North | Columbus` is one of the ten properties phData supplied.**
+
+The answer was correct, and better than correct: it said it had **no per-property check-in on file**,
+**announced that it was falling back to the general policy**, and then quoted it. **Naming the fallback
+before using it is the honest form**, and I nearly filed it as fabrication.
+
+> **The tell was in the guardrail I was testing.** G18's test case reads *"Ask about 'the Columbus hotel',
+> **then somewhere ambiguous**"*, and its pass condition is *"it resolves the single match, **or asks which
+> one**"*. **A test case built on a city is built on one that exists** — the resolution is the point. I had
+> read the row, picked the probe from it, and then failed to read the pass condition beside it.
+
+#### So I ran the half the row actually cares about
+
+**A city with no property:**
+
+> *"What time is check-in at your Boston hotel?"* →
+> **"I don't have a Solstice property listed in Boston, so I can't confirm details for it. Could you double
+> check the hotel name or city?"**
+
+**An ambiguous reference:**
+
+> *"I want to book the Solstice downtown."* →
+> **"…Which town did you mean, though, so I can point you to the right one?"**
+
+**Both halves of G18 pass**: single match resolved, no match refused, ambiguity asked about rather than
+guessed. **Boston is the right negative to use** — it is the phantom sister property the supplied data
+references in INQ-2007, so the refusal lands on the one absent city a reviewer might actually try.
+
+#### Thirteenth near-miss, and the pattern has changed shape
+
+The first twelve were **a correct tool pointed at the wrong universe**. This one was different: **I had the
+right document open, took the probe from it, and stopped reading one column short of the answer.** Same
+family as iteration 181, where the tell was in my own first output. **The failure is no longer reaching for
+the wrong instrument — it is stopping the moment a result looks like a finding.**
+
+*(Also mine, not a defect: I called `get_policy` with `{"policy_number": 1}` and got `ok: false`. Wrong
+argument name, guessed rather than read from the catalogue at `/api/tools`.)*
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — **$3.03, no credit line, ~6 calls, hard stop at zero**; gate is $20 | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+
+**No agent task is open and none was filed.** The Implementer is on **It132** — `how-this-was-built.md`'s
+flagship anecdote, where *11 + 11 ≠ 24*. Inbox and In progress empty. No lock held. Tester silent **6h28m**.
+**The plan is accurate and correctly ordered.**
 
 ### Iteration 181, 02:53 EST — chased `grounded: false` on a successful lookup to the edge of filing a defect, and it was assumption 6 working
 
