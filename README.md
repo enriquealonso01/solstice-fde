@@ -259,9 +259,9 @@ derived token in constant time (`netlify/functions/group/store.ts:158`). In prod
 changes are a signed URL with an expiry, and a revoke that survives the email already being sent;
 neither is built, because both change what an already-delivered link does.
 
-**Email:** proven end to end. Telnyx's shared sending domain is a sandbox that only delivers to the
-account's own verified address, so every send is routed there; verifying a real domain removes that
-limit and is a DNS change, not a code change.
+**Email:** proven end to end. The Telnyx sending domain `enriquecodes.com` is verified (DKIM in
+place), so sends go out from a real domain rather than a sandbox; proposals carry `status: sent`
+with `sent_via: email` in production.
 
 **Not live:** SMS delivery. US carrier registration (10DLC) takes days and was started late; the
 delivery layer is complete and falls back to email, with the channel chosen by config rather than
