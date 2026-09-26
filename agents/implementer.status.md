@@ -9,6 +9,30 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It159 SHIPPED → the document read aloud on stage quotes the product five times and was in no quote
+  guard.** `docs-quote-drift` covers `live-modification.md` and `role-walkthroughs.md`; **`demo-cheatsheet.md`
+  was in neither list.**
+- **All five measured against the code, all five exact:** both chip labels (`summarize()` returns them
+  verbatim — and the beat's own instruction is *“Point at the chips, not at the sentence”*), the Policy 7
+  arithmetic (`aggregation_note`), the boundary ($45/$50 → `front_desk`, $55 → `agm`), and R55006's folio
+  directive from the shipped data. Nothing was broken — and nothing would have said so.
+- **Sol's own sentences deliberately not pinned:** model output, and a test demanding exact wording would
+  fail on a paraphrase that is just as good.
+- **Red-check, seven mutations, both directions.** Document drifting from code: chip label **1**, aggregated
+  chip **1**, folio quotation **1**, boundary figure **1**. Code drifting from document: chip stops naming the
+  authority **1**, aggregation sentence reworded **1**, **the comp limit moved to $40 → 2 failed** — that last
+  one is the one worth having, because it makes the cheat sheet false on screen with nobody touching it.
+- **The scratch-first rule paid for itself immediately.** Developed and run from `.scratch-it159/`, where it
+  failed **twice**: `findReservationById` lives in `tools/lookups`, not `_lib/data`; and **my containment
+  assertion was backwards** — R55006's note is two sentences and the cheat sheet correctly quotes only the
+  directive, so the check must be *what the document claims is in the note*, not the reverse. Both would have
+  been red in the shared tree under my old habit.
+- **Instruments:** **sixth heredoc escape casualty** (`p.split('\')` became a line continuation) — switched
+  to `sed`. New rule for myself: **anything with a backslash goes in `sed` or a script file, never a
+  heredoc.** And **two mutations skipped from guessing anchors** (the chip string is inside an em-dash
+  template; the limit is `front_desk_comp_authority_cents` in `rules.ts`) — both re-run with anchors read out
+  of the files. *Third iteration in four with a skipped mutation, same cause every time.*
+
 - **It158 SHIPPED → ran the last box on the checklist, and found it could print `OK` while production was
   behind.** The Planner named the gap: *“the last box is the one I cannot check for you… run the script so
   `main` matches production.”* I deploy every iteration and hold `.env`, so I ran it **verbatim**: it works,

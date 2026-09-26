@@ -10371,3 +10371,85 @@ after leaving a file in the wrong state twice. Nothing was left modified, no anc
 red-check needed no second attempt. First iteration in five without an instrument failure.
 
 `npx tsc -b` clean. `npx vitest run` **930 tests / 65 files** green (up 5).
+
+---
+
+## It159 — the document read aloud on stage quotes the product five times, and was in no quote guard
+
+Seventh empty board. `docs-quote-drift.test.ts` pins the one rules-derived sentence that
+`live-modification.md` and `role-walkthroughs.md` quote, and says so in its own scope note.
+**`demo-cheatsheet.md` was in neither list** — the document a presenter reads from, whose row-one beat
+quotes the product word for word in five places.
+
+### Checked and clean on the way in
+
+After It149 changed the approval vocabulary in every group verdict, I swept the deliverables and the
+prompt for drift I might have left. **None.** Every remaining "general manager" is a Policy 13 or Policy 15
+citation, the signed proposal PDF, or a statement that a GM tier is deliberately absent. `sol.md:230` —
+*"You do not approve, price, discount, hold or negotiate a group block: that is Sales and the General
+Manager"* — restates Policy 13 as a scope boundary for the concierge, which is correct and should stay.
+
+### What the cheat sheet quotes, all five measured against the code
+
+```
+chip, one $45 item     "$45.00 — inside front desk authority"     summarize() returns exactly this
+chip, aggregated       "$70.00 — needs AGM or GM"                 summarize() returns exactly this
+Policy 7 arithmetic    "minibar charge $45.00 + late housekeeping $25.00 = $70.00"   aggregation_note, verbatim
+the boundary           $45 -> front_desk, $50 -> front_desk, $55 -> agm              all three exact
+the directive          "Do not adjust folio directly -- escalate to property AGM for review"   in R55006's data
+```
+
+All five hold today, which is the point — nothing was broken, and nothing would have said so. The beat's own
+instruction is *"Point at the chips, not at the sentence"*, so two of those five are the words on screen
+while he is pointing at them.
+
+Sol's own sentences are deliberately **not** pinned. Those are model output, and a test demanding exact
+wording from a model would fail on a paraphrase that is just as good.
+
+### Red-check, seven mutations, both directions
+
+The document drifting from the code, and the code drifting from the document:
+
+```
+doc: chip label reworded                       1 failed
+doc: aggregated chip reworded                  1 failed
+doc: folio quotation paraphrased               1 failed
+doc: boundary drops a figure                   1 failed
+code: chip stops naming the authority          1 failed
+code: aggregation sentence reworded            1 failed
+code: front-desk comp limit moved to $40       2 failed
+restored                                       6 passed   four files byte-identical
+```
+
+The last one is the one worth having: move the limit and the cheat sheet's *"$45 — inside front desk
+authority"* becomes false on screen without anyone touching the document.
+
+### The scratch-first rule paid for itself immediately
+
+It157 wrote *"get a new test file green before it lands in the shared tree"* after my iteration 156 left the
+suite red for three minutes and cost the Planner an investigation. I followed it: the file was developed and
+run from `.scratch-it159/`, and it failed **twice** there —
+
+1. **`findReservationById` is not exported from `_lib/data`**; it lives in `tools/lookups`. A `TypeError`, two
+   cases red.
+2. **My containment assertion was backwards.** `R55006`'s `internal_notes` is two sentences and the cheat
+   sheet quotes only the directive half, correctly. I had asserted the *document* contains the *whole note*,
+   which fails on a correct document. The right direction is the one that can drift: whatever the document
+   **claims** the note says must appear **in** the note.
+
+Both would have been red in the shared tree under my previous habit. Neither was.
+
+### Instrument notes
+
+**Sixth heredoc escape casualty.** A `p.split('\\')` in a Python heredoc arrived as a line continuation and
+the script would not parse. Switched that substitution to `sed`, which is what it needed. The rule is
+already written down; I keep reaching for the heredoc anyway, so: **for anything with a backslash, use `sed`
+or a script file — never a heredoc.**
+
+**Two mutations skipped, both from guessing anchors.** The registry's chip string sits inside a template with
+an em dash and the comp limit is `front_desk_comp_authority_cents` in `rules.ts`, not `front_desk: 5000`
+where I looked for it. A skipped mutation is not a passing mutation, so both were re-run with anchors read
+out of the files — 1 failed and 2 failed respectively. *Third iteration in four with a skipped mutation, and
+every time the cause was typing an anchor instead of reading one.*
+
+`npx tsc -b` clean. `npx vitest run` **936 tests / 66 files** green (up 6).
