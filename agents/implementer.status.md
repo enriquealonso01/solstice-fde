@@ -10,6 +10,17 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It86: beat 6 tells the presenter to say something the Cost screen contradicts.** Continued
+  the rehearsal into the two beats nobody had exercised. **Beat 7 is correct** — the backend map has
+  exactly seven tabs. **Beat 6 is not.**
+- It says *"telephony is the majority of the bill, not the AI"*. Computed from the same rows the page
+  reads: **model $1.34, telephony $1.30 — telephony is 49.1%**, so the model is marginally the larger
+  share and the screen shows the opposite of the line.
+- **The insight is right and the sentence is wrong**, which is the useful distinction: our traffic is
+  **148 chat sessions to 9 calls**. At production voice volumes telephony dominates by construction
+  ($0.1085/min against a fraction of a cent per chat turn). The claim belongs to the projection, not
+  to the measured row.
+
 - **CLAIMED It85: rehearsed the demo against the final build, and beat 2's second question lands
   about one time in four.** Ran the runbook's verbatim prompts. Checkout time, the parking refusal and
   beat 5's healthy late checkout are all correct. **"Can I bring my dog?" is not.**

@@ -203,8 +203,16 @@ Admin, Cost. Two numbers:
 - **Cost per conversation**, measured, not modelled.
 - **The monthly projection at 140 properties**, with inputs they can argue with.
 
-Point out that **telephony is the majority of the bill, not the AI**. It reframes the whole
-conversation and it is the opposite of what most people assume.
+**Say this about the projection, not about the measured row: at production voice volumes telephony
+is the majority of the bill, not the AI.** It reframes the whole conversation and it is the opposite
+of what most people assume — a voice minute is $0.1085 against a fraction of a cent for a chat turn.
+
+**Do not say it about the numbers on screen, because they show the opposite.** Our own traffic is
+almost all chat — about 148 chat sessions to 9 calls — so on the measured figures the model and
+telephony come out near-equal, with the model marginally *higher*. A sceptic who reads the split
+while you claim telephony dominates has caught you. Point at the **projection** inputs instead: raise
+the voice share to what a hotel group actually sees and telephony takes over in front of them, which
+is a better moment than the assertion was.
 
 ### 7. Architecture, for the engineer (2 min)
 
