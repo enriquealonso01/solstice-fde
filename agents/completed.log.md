@@ -3958,3 +3958,48 @@ block will truncate the voice prompt, and the guard will catch it — but the ne
 should expect to wrap something in the same edit.
 
 `npx tsc -b --force` clean. `npx vitest run`: **476 passed, 37 files**.
+
+## It73 — I staled a document in #50/#54, then promoted it to the front page in #97
+
+Everything in the plan is closed and the four remaining items are Enrique's, so I went back over the
+exposure I had created myself.
+
+**PR #97 moved `docs/role-walkthroughs.md` into the README's main deliverable table.** It is a
+click-by-click walkthrough of the admin console that quotes the UI as it goes. **PRs #50 and #54 —
+also mine — reworded that UI**, removing engineering vocabulary for T29. I never went back to the
+walkthrough. So one iteration after signposting the document, I found it telling a reviewer to look
+for text that had not been on screen for hours.
+
+| The doc quoted | The screen actually says |
+|---|---|
+| `· written to audit_log` | `· written to the audit trail` |
+| `scoped by role in the database` | `each one sees only its own work` |
+
+The second is the worse one. The sentence around it reads *"— note the wording"*, **pointing a
+reviewer at wording that no longer existed.** I rewrote it to note the wording that is there now, and
+to say why it changed: it describes what a person sees rather than where the rule lives, and the rule
+is still in the database.
+
+### Three of the five hits were not bugs, and saying so is part of the work
+
+`SIP client`, `tool_invocations` and `audit_log` in the diagram guide are the documents describing the
+system **in their own words**, not quoting a screen. They are still true. A sweep that reported five
+problems would have been wrong in a way that costs someone else an hour.
+
+### The guard is an explicit list, on purpose
+
+`walkthrough-quotes.test.ts` pins each quoted UI string to the source file that must still contain
+it. I did not write a parser that guesses which backticked spans are UI text: these documents quote
+schema names, tool names and their own prose the same way, and a guard with false positives is one
+people learn to ignore — the lesson from `list-counts`, where a wider pattern flagged three
+non-problems. Adding a case is a deliberate act.
+
+Red-checked by reproducing the exact bug — reworded the UI, left the doc alone:
+
+> *"docs/role-walkthroughs.md tells a reviewer the screen says 'each one sees only its own work', and
+> src/pages/admin/AdminHome.tsx no longer contains that text."*
+
+It also asserts the doc still contains the quote, so a case cannot rot into vacuous truth if someone
+rewrites the walkthrough instead of the UI.
+
+`npx tsc -b --force` clean. `npx vitest run`: **481 passed, 38 files**.

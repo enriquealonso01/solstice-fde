@@ -4,48 +4,58 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 100 — 2026-09-25 ~20:10 EST
+## Iteration 101 — 2026-09-25 ~20:16 EST
 
 ### All tasks closed. The plan is accurate and correctly ordered.
 
-Inbox empty. No lock held. Suite 476/37. Guardrails 18 of 19.
+Inbox empty. Suite 476/37. Guardrails 18 of 19. Migration 004 unapplied on the **tenth** check.
 
-### I audited the deliverable text my own specs produced
-
-After iteration 99 — a sentence I specified that was true and left a false impression — I checked
-the rest.
-
-**T33's disclosure holds, claim by claim:**
+### The staged G16 row shipped with its re-provision
 
 ```
-notify is an inert string array          ✓   _delivery/ carries proposals and audit   ✓
-no screen lists escalations              ✓   the queue view is marked FUTURE          ✓
+compile  29363  71938db505f8
+live     29363  71938db505f8     match: true     margin: 637
 ```
 
-It says *"nothing notifies the manager"* without hedging, so the impression matches the fact. The
-spec that produced it asked for **the mechanism to be named**, not for a gap to be acknowledged —
-apparently the difference that matters.
+The Tester predicted **681 → 637** when staging it. It is 637. The live voice prompt now names
+`warm_transfer_instructions` as where G16 is enforced on the phone.
 
-**The guardrail sentence is now adequately scoped.** `README.md:90` states its subject twice as the
-table and its nineteen rules, and the open defect is disclosed twenty-five lines below. **I
-considered adding a cross-reference and decided against it** — after yesterday's correction,
-over-correcting is the likelier error now.
+**This validates the process call from iteration 98:** I declined to file a task and instead wrote
+the staged row into the open-work section so it would not be lost in a 5,000-line log. Picked up
+within two iterations, with the re-provision the note did not explicitly demand. **Navigation was
+the whole intervention.**
 
-### The concern I brought to this iteration was already closed
+### A demo beat promised the opposite of what the system does
 
-*"One defect is open at the time of writing"* **becomes wrong the moment Enrique does item 1 on his
-list**, and nothing I had recorded said so. It is covered at `HUMAN_INTERVENTION.md:753`: *"If you
-apply migration 004 before you submit, delete both"*, with `git revert fe04948` offered if he
-disagrees with disclosing it at all, and the epistemic bound stated — *"My first draft said a rep
-could 'send a block that was never approved'; I never sent one."*
+Tester iteration 59 audited `docs/demo-cheatsheet.md` against live tools. Three of four behavioural
+claims held verbatim; the fourth did not:
 
-**I added the post-apply step to item 1 in the plan's open-work table**, so it sits beside the SQL
-rather than 750 lines into another file.
+> **a $45 minibar returns `front_desk`, `escalation_required: false`** — the beat promised an AGM
+> escalation. $50 the same; **$55 returns `agm`.** Fixed in PR #98.
 
-**Second iteration running where I found a plausible gap and found it already closed.** That is what
-this system looks like when it is finished rather than merely quiet.
+**That beat would have failed in front of the panel**, on the document Enrique reads while presenting.
+
+### Their rule, from their own false start
+
+> *"My first pass called all five guest rows mismatches by reading name and tier out of
+> `get_reservation`, which carries neither. **A near-total failure rate is a confession by the
+> instrument.**"*
+
+Belongs beside *"the wrong version was more interesting than the right one."* When nearly everything
+fails, suspect the instrument first.
+
+### I audited beat 5 — it holds, and it outlived my correction
+
+Captured from production, not imagined. It now **embeds the reasoning** for the fixture I corrected:
+*"Use Platinum: Gold is conditional on availability by policy, so a Gold guest gets a hedged answer
+even on a healthy system and the contrast disappears."* The scoped-outage move — the policy question
+still answers while the PMS is down — is the strongest thing in the runbook, and it closes by
+guarding the real hazard: confirm all three switches read healthy.
+
+The degraded reply promises *"a colleague follow up with you shortly"* — **no actor, no day**, which
+is the standard set in Tester iteration 47 and left in place by T33. Consistent.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — and if it is applied before submitting, **delete the disclosure
-paragraph in `README.md` and the row in `SUBMISSION.md`**.
+**The `drop policy` paste** — and if applied before submitting, delete the disclosure paragraph in
+`README.md` and the row in `SUBMISSION.md`.
