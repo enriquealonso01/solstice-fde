@@ -4,52 +4,56 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 164 — 2026-09-26 01:35 EST
+## Iteration 166 — 2026-09-26 01:40 EST
 
-**The plan is accurate and correctly ordered.** Verification only; no task filed, nothing started.
+**The plan is accurate and correctly ordered.** Verification only; no task filed.
 
-### Checked `docs/demo-cheatsheet.md` line by line — the one document read live in front of the panel
+### Checked `docs/role-walkthroughs.md` against the screen it describes
 
-41 lines, and the only deliverable read **under pressure, mid-beat**. It has been wrong twice before —
-It107's log is *"the cheat sheet's $45 row says the opposite of what happens, for the second time."*
+326 lines, **Katie's "explain it to a non-technical audience" ask**, promoted into the README's main
+deliverable table by PR #97, and **never checked by me**. It is also the doc with the most exposure to the
+T29 failure — PRs #50/#54 reworded admin UI to strip engineering vocabulary, and a walkthrough that quotes
+the screen goes stale silently.
 
-**Five guest rows against `data/solstice-guest-profiles.csv` — all exact, including every date:**
+**Every sampled UI quote is still on screen:** `All channels`, `Voice`, `Chat`, `Needs a decision`,
+`Ready to send`, `Sent`, `Tool trace`, `Session facts`, `audio ready`, `Open`.
 
-| row says | data says |
-|---|---|
-| R55004 Chen, Platinum, Denver, Jul 20–23 | Chen, Platinum, SOL-DEN, 2026-07-20 → 07-23 |
-| R55005 Franklin, Silver, Nashville, Cancelled | Franklin, Silver, SOL-NSH, Cancelled |
-| R55006 Webb, Gold, Tampa, Checked-in, Suite | Webb, Gold, SOL-TPA, Checked-in, Suite |
-| R55001 Bennett, Silver, Chicago, Jul 14–17 | Bennett, Silver, SOL-CHI, 2026-07-14 → 07-17 |
-| R55003 Subramaniam, Gold, Austin, Jul 18–21 | Subramaniam, Gold, SOL-AUS, 2026-07-18 → 07-21 |
-
-**The $45 row, driven against production — four separable claims, all hold:**
+**And its sharpest claim is exact to the character.** Line 62 shows `Unknown caller +*******2646` and says
+the masking is *"in the database layer, not blurred in CSS"*:
 
 ```
-POST /api/tools/check_comp_authority  R55006
-  $45   front_desk   escalation_required false   may_promise true
-  $50   front_desk   escalation_required false   remaining $0.00   <- boundary inclusive
-  $55   agm          escalation_required true    authority_exceeded
-  [minibar $45 + late housekeeping $25]  total $70.00  agm  escalation_required true
+netlify/functions/telnyx/index.ts:422   `Unknown caller ${maskPhone(from)}`
+maskPhone('+13055552646')            -> '+*******2646'
 ```
 
-**And the quoted sentence is verbatim.** The tool returned *"Policy 7 requires the items to be added up
-before authority is tested: **minibar charge $45.00 + late housekeeping $25.00 = $70.00. That exceeds the
-$50.00 per-stay front-desk authority**, so it needs AGM or GM sign-off the same day…"* — the cheat sheet
-quotes it word for word and **under-quotes** the rest, which is the right direction to be wrong in.
+**Already pinned from the other side** — `scripts/data/__tests__/pii.test.ts:23` asserts
+`maskPhone('+13125550148') === '+*******0148'` and `:61` asserts masking is idempotent. **No task:** the
+format a reviewer compares is guarded at the source, and the string lives outside `src/` where a UI rewording
+cannot reach it.
 
-**The directive is real:** R55006's `internal_notes` say *"Do not adjust folio directly -- escalate to
-property AGM for review."* So the row's point stands and it is the interesting one — at $45 the tool says
-`escalation_required: false` and Sol escalates anyway, **from the customer's own per-reservation directive,
-not from the money.**
+### Sixth near-miss, same fix
 
-**And I checked the inference the R55004 row does not spell out:**
-`ROOM_CLASS_LADDER = ['Standard Double','Standard King','Deluxe King','Suite']` and R55004 is booked **Deluxe
-King** — so *"then ask for a suite"* is exactly the next class up. The row is right for a reason it does not
-state.
+My first sweep searched only `src/**` and reported **`Unknown caller` — not found**, which reads as a stale
+quote in a promoted deliverable. **The label is generated server-side, which is the paragraph's own point.**
+I opened the failing hit before writing, and it was the evidence, not the defect.
 
-**Seventeen separable claims across data, production and source. All seventeen hold. No task filed** — worth
-recording precisely because the last two times anyone looked at this file, it was wrong.
+Hand-rolled compiler · "any env value is a secret" · line-oriented grep over a wrapped phrase · zero-row RLS
+probe · string count read as import count · **now a source search scoped to the wrong tree.** All six were a
+**correct tool pointed at the wrong universe.** The habit that catches them: **open the hit, or the miss,
+before writing the sentence.**
+
+### T49 shipped (PR #160) and says what I most wanted it to
+
+It asserts `exports/telnyx-assistant.json.instructions === compileInstructions(agent/sol.md)` plus a sanity
+check, and **writes down its own reach unprompted**: *"it cannot see Telnyx… It will be red between the edit
+and the re-export, and that is the point. Do not make it green by regenerating the export from a stale live
+assistant."* Suite **679 green**.
+
+### My timestamps drifted ahead again
+
+Iteration 165's heading said 01:40; the clock read 01:38. I fixed this at iteration 159 and went back to
+arithmetic. **This iteration's headings were substituted from `date` by the command that wrote them** — the
+only version of the fix that survives me.
 
 ### Open
 
@@ -60,13 +64,13 @@ recording precisely because the last two times anyone looked at this file, it wa
 | 3 | **T21** — delete `INQ-2012`/`INQ-2013`, cascade count first | Enrique — **do** |
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
 | 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
-| T49 | Pin compile === committed export | **CLAIMED It123** |
+| T50 | Chen's second reservation — **(a) and (b) only; (c) is a recommendation *not* to** | any agent |
 | — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
 
-**Tester silent 5h03m** — `agents/tested.log.md` unchanged since 2026-09-25 20:26:34 EDT. Inbox empty.
-No lock held.
+**Tester silent 5h12m.** Inbox empty. No lock held. The Implementer is on It124 auditing `plans/00`–`03`,
+which `AGENTS.md`'s first line sends a reader to and nobody has read — **I stayed off it deliberately.**
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — unchanged, and its live evidence is still the Tester's twelfth check at 20:26,
-the oldest evidence behind anything on Enrique's list.
+**The `drop policy` paste** — unchanged, and its live evidence is still the Tester's twelfth check at 20:26.
+**The most useful agent item is T50(a)**, one cheat-sheet line that protects the demo's best moment.

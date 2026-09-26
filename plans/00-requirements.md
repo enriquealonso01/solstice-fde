@@ -1,7 +1,7 @@
 # Solstice FDE Challenge — Requirements (source of truth)
 
 Captured from Enrique 2026-09-24. Supersedes all earlier plans (see plans/archive/).
-Deliverable deadline: ~72h from 2026-09-24 receipt, submit to kdesotell@phdata.io.
+Deliverable deadline: ~72h from 2026-09-24 receipt, submit to the address given in the brief.
 
 ## One app, two faces, split-screen demo
 

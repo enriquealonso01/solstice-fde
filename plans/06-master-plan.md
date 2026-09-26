@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 01:35 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
+> ## 01:40 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
 > *All agent work is closed — T38–T43 and T45, each re-verified against the live files at 00:55, not
 > from the log; **T44 shipped in It118 and T46 in It120**, each correcting a premise of mine while doing it.
 > **T47 shipped in It121 and T48 in It122, refresh and re-export included** — `sol.md`, the committed
@@ -120,7 +120,7 @@
 > **All five of the document fixes this banner used to list here — T38, T39, T40, T41, T42 — are
 > done**, along with T43 and T45. Checked at 00:55 against the live files with a whitespace-normalised
 > match rather than `grep`, because each of those phrases can wrap a line. **What is left for an agent
-> is T49**, immediately below.
+> is T50**, immediately below.
 >
 > ### Two constraints anyone editing should know
 >
@@ -379,7 +379,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 ---
 
-# ▶ OPEN WORK — three things for Enrique to DO, two decisions that need no action, and T49 for an agent.
+# ▶ OPEN WORK — three things for Enrique to DO, two decisions that need no action, and T50 for an agent.
 
 *Everything below this section is closed, or evidence.*
 
@@ -395,7 +395,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > edits this next: **when you close a task, delete its entry from this screen in the same edit.** The
 > record lives in the verification log; it does not need a second home above the work.
 >
-> **What remains for an agent is T49.** What remains for Enrique is the items in the
+> **T49 shipped in It123. What remains for an agent is T50.** What remains for Enrique is the items in the
 > table below, and every one of them now also appears in `HUMAN_INTERVENTION.md` — items 1 and 4
 > reached it at 00:05 in the update block at **line 63**, which closed the routing gap iteration 156
 > filed T45 for.
@@ -1590,7 +1590,7 @@ running system, not written from memory. Section 0 is this iteration's evidence;
 it is inherited and still owes a check.
 
 - **Live:** https://solstice-hotel-group.netlify.app - **Phone:** +1 (305) 786-6217
-- **Submission:** tomorrow, **2026-09-26 11:00 EST**, to kdesotell@phdata.io. Enrique's call, made.
+- **Submission:** tomorrow, **2026-09-26 11:00 EST**, to the address given in the brief. Enrique's call, made.
 - **Repo:** 209 tracked files, **379 tests passing, 24 files** (Implementer's count at 15:16) (314 → 322 with `transfer-honesty.test.ts`,
   → 330 with `tool-naming.test.ts`). Verified by me at 13:14. Gotcha: plain `npx tsc -b` reports
   `TS6053` from a stale `tsconfig.tsbuildinfo`; `--force` clears it. Not a real error.
@@ -1601,6 +1601,175 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 166, 01:40 EST — checked the click-by-click walkthrough against the screen it describes, and it holds to the character
+
+#### Why this one
+
+`docs/role-walkthroughs.md` is 326 lines, it is **Katie's "explain it to a non-technical audience" ask**, and
+PR #97 promoted it into the README's main deliverable table. **I had never checked it.** It is also the
+document with the most surface area for the T29 failure — PRs #50 and #54 reworded a lot of admin UI to strip
+engineering vocabulary, and a walkthrough that quotes the screen goes stale silently when the screen moves.
+
+#### Every sampled UI quote is still on the screen
+
+`All channels` · `Voice` · `Chat` · `Needs a decision` · `Ready to send` · `Sent` · `Tool trace` ·
+`Session facts` · `audio ready` · `Open` — **all present in the components.**
+
+#### And its sharpest claim is exact to the character
+
+Line 62: *"Look at the Guest column on a phone call. It reads like `Unknown caller +*******2646`. **The phone
+number is masked in the database layer, not blurred in CSS.**"*
+
+```
+netlify/functions/telnyx/index.ts:422   `Unknown caller ${maskPhone(from)}`
+maskPhone('+13055552646')            -> '+*******2646'
+```
+
+**The string the walkthrough prints is what the code produces, character for character** — and it is produced
+in a Netlify function, not a component, **which is the evidence for the sentence's own point about where the
+masking happens.**
+
+**It is also already pinned from the other side.** `scripts/data/__tests__/pii.test.ts:23` asserts
+`maskPhone('+13125550148') === '+*******0148'`, and `:61` asserts masking a masked value does not double-mask.
+**So no task:** the format the reviewer will compare is guarded at the source, and the string lives outside
+`src/`, where a UI rewording cannot reach it.
+
+#### Sixth near-miss, and the same fix worked again
+
+My first sweep searched only `src/**` and reported **`Unknown caller` — not found**, which reads as a stale
+quote in a promoted deliverable. **The label is generated server-side**, which is the whole point of the
+paragraph it appears in. **I opened the one failing hit before writing anything**, and it was the evidence
+rather than the defect.
+
+> Hand-rolled compiler · "any env value is a secret" · line-oriented grep over a wrapped phrase · zero-row
+> RLS probe · string count read as import count · **and now a source search scoped to the wrong tree.**
+> Every one of them was a **correct tool pointed at the wrong universe.** The habit that keeps catching them
+> is the cheapest one available: **open the hit, or the miss, before writing the sentence.**
+
+#### T49 shipped, and it says the thing I most wanted it to say
+
+PR #160. It asserts `exports/telnyx-assistant.json.instructions === compileInstructions(agent/sol.md)`, plus a
+sanity check that the export has instructions at all. **And it writes down its own reach**, unprompted beyond
+the task:
+
+> *"**What this guard does not do, stated because a guard believed to watch production is worse than one
+> whose reach is written down: it cannot see Telnyx.**… It will be red between the edit and the re-export,
+> and that is the point. Do not make it green by regenerating the export from a stale live assistant: that
+> makes all three agree on the old text and silently reverts the edit."*
+
+Suite **679 green**, up 2.
+
+#### My own timestamps drifted ahead again
+
+Iteration 165's heading says **01:40**; the clock read **01:38** when I opened this one. I fixed this at
+iteration 159, said *"from here the heading comes from `date`"*, and then went back to arithmetic. **This
+entry's heading was substituted from `date` by the command that wrote it**, which is the only version of the
+fix that survives me.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Last valid check 20:26 (Tester); **not re-provable by me** | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique — **do** |
+| 3 | **T21** — two rows, cascade count first | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| T50 | Chen's second reservation — **(a) and (b) only; (c) is a recommendation *not* to** | any agent |
+| — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
+
+Inbox empty. No lock held. Tester silent **5h12m**. **The plan is accurate and correctly ordered.**
+
+### Iteration 165, 01:40 EST — the demo's showpiece beat has two possible answers, and which one you get is undirected
+
+#### The finding
+
+**`G10004` — Michael Chen — is the only guest of 24 with two reservations**, and he is the guest the demo's
+best beat uses.
+
+```
+R55004  SOL-DEN  2026-07-20  Confirmed  Platinum    <- the cheat sheet's beat
+R55015  SOL-AUS  2026-09-05  Confirmed  Platinum    <- nearest to "now"
+identify_guest -> most_relevant_reservation_id: "R55015"
+```
+
+`check_upgrade_eligibility`, measured against production:
+
+| input | result |
+|---|---|
+| `{"guest_id":"G10004"}` | **`guaranteed`, `may_promise: true`** — *"Suite inventory exists for 2026-09-05"* |
+| `{"reservation_id":"R55004"}` | **`policy_gap_manager_decision`, `may_promise: false`, `escalation_required: true`** |
+
+**Not a worse answer on the wrong branch — the opposite answer.** The showpiece refusal becomes a
+confirmation, on the beat the cheat sheet calls *"the better moment of the two"*, and **G8** is one of the
+nineteen guardrails.
+
+#### It works today, and I drove it rather than reasoning about it
+
+Two live runs of *"Hi, confirmation R55004, last name Chen. I'd like to upgrade to a suite"*:
+
+> *"Suites are showing sold out for your July 20 dates at Denver Union Station… I'm putting this in front of
+> the manager on duty."*
+>
+> *"…Suites are showing sold out for July 20 at Denver Union Station. That's a judgment call the manager on
+> duty needs to make."*
+
+**Both correct. Both Denver.** Sol uses the confirmation number the guest gave.
+
+> **But `most_relevant_reservation_id` appears nowhere in `agent/sol.md`**, and neither does any instruction
+> about a guest with more than one stay. **The payload hands the model a field literally named *most
+> relevant* pointing at the other reservation**, and the right behaviour rests entirely on its judgement.
+> **Two runs is evidence, not reliability.**
+
+#### Already visible in two committed deliverables, and unexplained
+
+`transcripts/platinum-late-checkout.md:14` shows *"Verified Michael Chen (Platinum) _(cites: … **Reservation
+R55015**)_"*, and `transcripts/voice-call.md:107` shows `get_reservation` returning **R55015**, Austin.
+**Neither is wrong** — late checkout is a tier guarantee and I checked both paths return
+`guaranteed / may_promise: true` — **but nothing explains why the "Denver, Jul 20–23" guest is identified
+against an Austin reservation.**
+
+#### Filed as T50, and I recommended *against* the fix that would feel most thorough
+
+**(a)** one line on the cheat sheet row, **(b)** one clause in `transcripts/README.md`. Both cost nothing but
+words.
+
+**(c) A prompt clause in `agent/sol.md` — do not do this before the demo.** It would have to stay in the
+voice prompt, because a phone guest gives a confirmation number too. **The margin is 216 characters**; a
+usable clause is ~130, leaving ~86, and this file's own banner warns that two edits of ~210 truncate the live
+prompt. **Spending 60% of the remaining head-room nine hours out, to reduce an unmeasured risk on a beat that
+worked twice, is the wrong trade.** It is the right fix for the week after, and the task says so.
+
+#### Also re-verified: the transcripts README's own claim table
+
+Three of its four rows, driven against production. All hold.
+
+- **Chicago parking** → `rate_available: false`, `chain_wide_rate_exists: false`, plus an explicit
+  `instruction_to_agent`: *"Do not quote a parking price, an estimate, a range, or a number you recall from
+  anywhere."*
+- **Chen is Platinum** → `identify_guest` returns Platinum, 62,000 points, with **`email_masked`** and
+  **`phone_masked`** rather than the raw values.
+- **2pm is guaranteed** → `decision: "guaranteed"`, `may_promise: true`, *"Policy 6: … no blackout dates and
+  no exceptions."*
+
+The fourth, R55005's service-recovery window, needs an identified guest first — the identity gate refusing a
+bare `reservation_code` is itself the behaviour G12 claims, so the row stands on the Tester's earlier run.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Last valid check 20:26 (Tester); **not re-provable by me** | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique — **do** |
+| 3 | **T21** — two rows, cascade count first | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| T49 | Pin compile === committed export | **CLAIMED It123** |
+| T50 | Chen's second reservation — **(a) and (b) only; (c) is a recommendation *not* to** | any agent |
+| — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
+
+Inbox empty. No lock held. Tester silent **5h07m**. **The plan is accurate and correctly ordered.**
 
 ### Iteration 164, 01:35 EST — verified the one document Enrique reads *while presenting*, line by line, and it is correct
 

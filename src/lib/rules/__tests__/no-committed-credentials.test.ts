@@ -195,3 +195,85 @@ describe("the interviewers' brief", () => {
     ).toEqual([])
   })
 })
+
+/**
+ * A real person's email address does not belong in a public repository.
+ *
+ * `plans/00-requirements.md` opened by naming the hiring contact's work address in full -- the address
+ * itself is deliberately not repeated here, since this file is tracked and that is the point. It appeared
+ * four times: that file,
+ * `plans/04-unlock-checklist.md`, `plans/archive/01-concierge-agent.md` and the master plan. Found at
+ * iteration 124 by reading the plans `AGENTS.md`'s first line sends a reader to, one hop on from iteration
+ * 119.
+ *
+ * It is not a credential and nothing authenticates with it. It is the same question as the interviewers'
+ * brief at iteration 117: whose material is this, and what does publishing it say about how we handle a
+ * third party's details. The cost lands on them — a harvestable address — and it is free to avoid.
+ *
+ * The allowlist is **derived**, not typed: every domain that appears in `data/` is fictional by
+ * construction, because the interviewers wrote that sample data. Anything else outside `data/` has to be a
+ * fixture domain or be listed here with a reason, which is the same shape as "no PDF may be tracked".
+ */
+describe('email addresses in the tracked tree', () => {
+  const EMAIL = /[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g
+  const SKIP = /\.(png|jpe?g|gif|webp|ico|pdf|woff2?|ttf|svg)$/i
+
+  /** Domains in the supplied sample data. Fictional because they wrote them. */
+  function dataDomains(): Set<string> {
+    const out = new Set<string>()
+    for (const f of trackedFiles().filter((f) => f.startsWith('data/'))) {
+      let text: string
+      try {
+        text = readFileSync(f, 'utf8')
+      } catch {
+        continue
+      }
+      for (const m of text.matchAll(EMAIL)) out.add(m[1].toLowerCase())
+    }
+    return out
+  }
+
+  /** Fixture and infrastructure domains, each here for a stated reason. */
+  const ALLOWED = new Set([
+    'solsticehotels.com', // the fictional hotel group's staff logins
+    'solsticehotels.demo', // admin mock rows
+    'solsticehotels.example', // delivery test fixtures
+    'sip.telnyx.com', // the SIP transfer target, redacted by pattern in the export
+    'sip.example.com', // a redaction example in the Tester's log
+    'b.com', // a deliberately minimal address in a delivery unit test
+    'northwindlogistics.com', // the demo group-inquiry company used in transcripts
+    'cypressridge.example.com', // same, and already an example.com subdomain
+    'msgtelnyx.com', // a Telnyx sending domain in a requirements note, not a person
+    // Enrique's own address, in the master plan's email-delivery check. His address and his call --
+    // flagged to him in HUMAN_INTERVENTION.md rather than redacted on his behalf.
+    'provensolved.com',
+  ])
+
+  it('reads the sample data, so the derived allowlist is not empty', () => {
+    expect(dataDomains().size).toBeGreaterThanOrEqual(5)
+  })
+
+  it('names no real person outside the supplied sample data', () => {
+    const fromData = dataDomains()
+    const offenders: string[] = []
+    for (const file of trackedFiles().filter((f) => !f.startsWith('data/') && !SKIP.test(f))) {
+      let text: string
+      try {
+        text = readFileSync(file, 'utf8')
+      } catch {
+        continue
+      }
+      for (const m of text.matchAll(EMAIL)) {
+        const domain = m[1].toLowerCase()
+        if (fromData.has(domain) || ALLOWED.has(domain)) continue
+        offenders.push(`${file}: ${m[0]}`)
+      }
+    }
+    expect(
+      [...new Set(offenders)],
+      `An email address on a domain that is neither in the supplied sample data nor an allowlisted ` +
+        `fixture is most likely a real person's. This repository is public. Use a neutral reference, or ` +
+        `add the domain above with the reason it is safe.`,
+    ).toEqual([])
+  })
+})

@@ -6979,3 +6979,55 @@ the change is.
 
 `npx tsc -b` clean. `npx vitest run` **679 tests / 52 files** green (up 2). No prompt change this iteration,
 so no re-provision: all three artifacts remain at 29,784.
+
+## It124 — the hiring contact's email address was published in our public repository, four times
+
+Iteration 119 corrected `AGENTS.md`, whose very first instruction is *"Read `plans/00-requirements.md` and
+`plans/01-build-plan.md` before writing code"*, plus 02 and 03 for the Telnyx details. I verified those four
+files **exist** and stopped there. This iteration I read them, because a document that routes a reader is
+only as good as what it routes them to.
+
+The first one opens by naming the hiring contact's work email in full. It appeared in four tracked files:
+`plans/00-requirements.md`, `plans/04-unlock-checklist.md`, `plans/archive/01-concierge-agent.md`, and the
+master plan.
+
+**It is not a credential and nothing authenticates with it.** It is the same question as the interviewers'
+brief at iteration 117 — whose material is this — and the answer is the same: a named individual's work
+address in a public repository is harvestable, the cost lands on them rather than on us, and a neutral
+reference costs nothing. All four now read *"the address given in the brief"*, which loses no meaning.
+
+**I edited the Planner's file, which I normally will not.** The master plan held the fourth copy. My own rule
+from iteration 100 is *"never resolve another agent's file by merging the two versions yourself"* — a
+one-token privacy redaction with an exact-match replacement is not that, and leaving a real person's address
+published in order to respect file ownership would have been the wrong trade. Flagged to them in
+`HUMAN_INTERVENTION.md` so they can object.
+
+### The sweep, and why the allowlist is derived
+
+Every email domain in `data/` is fictional **by construction** — the interviewers wrote that sample data — so
+the guard derives its allowlist from those files and only has to account for fixtures on top. Run across the
+tracked tree, that left exactly two real domains:
+
+```
+phdata.io           plans/00-requirements.md, plans/04-unlock-checklist.md, plans/06-master-plan.md, archive
+provensolved.com    plans/06-master-plan.md   <- enrique@, his own address
+```
+
+The second is Enrique's own, so it is his call and I have not touched it. It is allowlisted with that reason
+written next to it and raised in `HUMAN_INTERVENTION.md`, with the note that removing it breaks nothing.
+
+Everything else outside `data/` is a fixture: the fictional hotel's staff logins, `example.com` variants, the
+SIP transfer target, a deliberately minimal `b.com` in a delivery unit test, a Telnyx sending domain in a
+requirements note.
+
+### The guard caught my own prose, again
+
+My explanation of the finding quoted the address it bans — in a tracked file, which is the exact thing being
+banned. Identical to iteration 117, where the `DEMO_LOGINS.md` guard fired on the comment describing the
+password line. The comment now describes the address without spelling it, and says why it does not.
+
+Red-checked by putting the address back into `plans/00-requirements.md`: the case names the file and the
+address and tells the author to use a neutral reference or allowlist the domain with a reason.
+
+`npx tsc -b` clean. `npx vitest run` **681 tests / 52 files** green (up 2). No prompt change, so no
+re-provision: all three artifacts remain at 29,784.
