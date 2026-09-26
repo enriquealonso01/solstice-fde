@@ -26,10 +26,23 @@ import { execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { isGitClone } from './shippedFiles'
 
 const repoRoot = resolve(__dirname, '../../../..')
 
+/**
+ * Unlike the other two git-dependent guards, this one genuinely cannot run outside a clone: "committed
+ * but missing from the working tree" has no meaning where there is nothing to have committed to, and a
+ * ZIP download contains exactly what was tracked, so the failure it protects against cannot occur there.
+ *
+ * It therefore skips, with the reason stated, rather than throwing during collection — which is what it
+ * did until iteration 137, taking its own assertions down with it and reporting a git error instead of a
+ * result.
+ */
+const inAClone = isGitClone(repoRoot)
+
 function gitTestFiles(): string[] {
+  if (!inAClone) return []
   const out = execFileSync('git', ['ls-files', '*.test.ts', '*.test.tsx'], {
     cwd: repoRoot,
     encoding: 'utf8',
@@ -37,7 +50,7 @@ function gitTestFiles(): string[] {
   return out.split('\n').map((l) => l.trim()).filter(Boolean)
 }
 
-describe('the test suite is the suite that ships', () => {
+describe.skipIf(!inAClone)('the test suite is the suite that ships (clone only)', () => {
   const tracked = gitTestFiles()
 
   it('finds tracked test files, so a git failure cannot make this vacuous', () => {

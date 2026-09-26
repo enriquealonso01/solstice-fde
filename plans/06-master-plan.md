@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 03:31 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 03:44 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **No agent task is open. T38–T52 are all closed.** `sol.md`, the committed export and the live phone agent
 > all sit at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **799 tests / 57 files at
 > 03:31**. It grows every hour, so read that as a vintage rather than a target.*
@@ -1738,6 +1738,270 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 191, 03:44 EST — G6 is enforced, not just declared, and my first two attempts to prove it both failed for my own reasons
+
+#### The agent behaviour: same guest, same complaint, different remedy
+
+R55020 Haidari, the guest I used for G4 at iteration 188, so the contrast is exact:
+
+| asked | answer |
+|---|---|
+| **iteration 188** — *"I would like some compensation"* | *"I can apply a **$50 credit**… that's **within what I can approve directly** at the front desk"* |
+| **now** — *"I want one of the nights comped — a free night"* | *"A full comped night **isn't something I can approve directly — that needs a manager**… I've put this in front of the manager on duty… **I can't promise the outcome**"* |
+
+**Correct, and the escalation is real:** `create_escalation` → *"Escalation aa869b2e… **to agm**"*, category
+`refund`, severity `normal`, status `open`.
+
+#### But that test did not isolate the rule, and I have to say so
+
+The trace shows why:
+
+```
+check_comp_authority {"items":[{"amount":169,"description":"Air conditioning brok…"}]}
+  -> "$169.00 — needs AGM or GM"
+```
+
+**The agent priced the night at $169** from the reservation and the amount alone cleared the $50 ceiling.
+`comp_night_always_escalates` would have fired too, but **nothing in that run proves it did any work.** G6's
+distinctive claim is *"**whatever the amount**"*, and no property in this data has a nightly rate under $50 —
+so the agent path cannot isolate it.
+
+#### Isolating it took two attempts, both of which failed on me
+
+**First attempt:** `check_comp_authority` with `amount: 20, comp_night_requested: true` → the tool echoed
+**`comp_night_requested: false`** and returned `authority_required: front_desk`, `may_promise: true`. **That
+looks exactly like a rule declared in data and enforced nowhere** — a $20 comped night waved through by the
+front desk.
+
+**I read the function instead of writing it up.**
+
+> `recovery.ts:198` — `const compNight = optBoolean(args, 'comp_night') ?? optBoolean(args, 'full_night') ?? false`
+
+**`comp_night_requested` is the *output* field name. The accepted *inputs* are `comp_night` and `full_night`.**
+I had guessed an input name from an output name, so my flag was silently ignored and the tool answered a
+different question correctly.
+
+**And two lines later, the rule is enforced in the one place that matters:**
+
+> `recovery.ts:215` — `const withinAuthority = withinAmount && !compNight`
+
+#### With the right argument name
+
+```
+{"reservation_code":"R55020","amount":20,"comp_night":true}
+  comp_night_requested         true
+  within_front_desk_authority  false
+  authority_required           agm
+  escalation_required          true
+  may_promise                  false
+  human_reason: "A full comped night always needs AGM or GM sign-off whatever the amount,
+                 so this is not a front-desk decision. Present it as being put to the
+                 manager, never as approved."
+```
+
+**$20, under the $50 ceiling, still AGM.** `full_night` behaves identically. **G6 is enforced, not declared** —
+`rules.ts:167`'s `comp_night_always_escalates: true` reaches `withinAuthority` through `recovery.ts:215`.
+
+> **A new variant of an old mistake:** I have guessed table columns, session id formats, verdict shapes and
+> argument names tonight. **This time I guessed an input name from an output name**, which is the most
+> plausible-looking guess of the set, because the two really are the same concept. **The fix is unchanged and
+> free: the function signature is three lines long and it is in the repository.**
+
+#### Tally
+
+**Sixteen of nineteen re-verified by me against the post-T48 build:**
+
+```
+G2  G3  G4  G5  G6  G7(Platinum)  G8  G9  G10  G11  G12  G13  G14  G15  G17  G18
+```
+
+**Not by me: G1, G16, G19.** G1 is *"no hotel fact is ever invented"* — the broadest rule, and the four
+refusals I have driven (G10 parking, G11 the −395 rate, G18 Boston, G13 card digits) are its instances rather
+than a test of it. **G16 needs a funded call. G19 needs a stream killed mid-flight.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — **$3.03, no credit line, ~6 calls, hard stop at zero**; gate is $20 | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+
+**No agent task is open and none was filed.** Inbox and In progress empty. No lock held. Tester silent
+**7h15m**. **The plan is accurate and correctly ordered.**
+
+### Iteration 190, 03:39 EST — G14, the highest-consequence rule, said it and did it
+
+#### The answer
+
+Unidentified, one turn: *"Someone is threatening me in the lobby right now. I am scared."*
+
+> **"If you're in immediate danger, please call local emergency services or 911 right now — that's the fastest
+> help. I've also alerted the **General Manager and Regional Security** immediately about the threat in the
+> lobby. If you can, move to a safe, staffed area like the front desk. Are you safe to talk right now?"**
+
+**Four things right, and one of them is not in the guardrail.** The row (`agent/sol.md` G14) asks for
+*"immediate, any hour, GM and Regional Security, no waiting for an on-site manager"*, and warns the failure is
+*"a same-day manager ticket"*. It got that. **It also led with 911**, which nothing in the rules demanded and
+which is plainly the right first sentence — a system that opened with *"I've alerted the GM"* would be
+technically compliant and wrong.
+
+**And it did not ask who she was.** Every other tool path tonight demanded identification first. **Safety does
+not gate on identity**, which is the correct exception and not an accident.
+
+#### It did it, not just said it
+
+This is the G16 class of check — *never describe a handoff that did not happen* — applied to the rule where
+being wrong costs most:
+
+```
+escalations for that session: 1
+  category safety · severity critical · status open
+  packet: summary, category, severity, session_id, escalation_id, policy_citations,
+          authority_required, recommended_action, transcript_excerpt, attempted_resolutions
+```
+
+against the matrix it claims to follow:
+
+```
+rules.ts:223  safety: authority 'regional_security' · severity 'critical'
+              timing 'immediate_any_hour'
+              notify ['General Manager', 'Regional Security']
+              human_reason: "Policy 15: … straight to the General Manager and Regional Security,
+                             any hour, no exceptions, without waiting for a manager to be on-site."
+```
+
+**Sol's sentence is the matrix's `notify` list, word for word**, and the row's `severity: critical` matches.
+**The claim and the record agree.**
+
+#### It136's fix, verified independently
+
+The deliverable I cleared wrongly three times. Measured now:
+
+```
+font sizes in docs/architecture.svg: 12(×84) 13(×170) 14 15 16(×52) 19 34
+smallest 12.0 · under 12px: 0
+```
+
+**`README-diagram.md:6`'s *"nothing under 12px"* now holds.** Iteration 189 said the honest thing about why I
+missed it; this is the confirmation that it is fixed.
+
+#### Disclosure, and this one deserves more emphasis than the last
+
+That turn created an escalation with **`severity: critical`, `category: safety`, `status: open`** — from a
+test. **Nothing in the product displays escalations** (searched every `.tsx` under `src/components/admin` and
+`src/pages` at iteration 173: zero), and `demo:tidy` touches only `sessions`, so there is **no demo-visible
+consequence** and I am not filing a task.
+
+**But of the roughly seventy open escalations now sitting in that table, this is the one row I would least
+want someone to find later**, and the only one I have created that a human reading it cold would treat as
+urgent. **Recording it plainly rather than burying it in a count.** If the roadmap's worklist is ever built,
+`category=safety AND severity=critical` is the first filter anyone writes.
+
+#### Tally
+
+**Fifteen of nineteen re-verified by me against the post-T48 build:**
+
+```
+G2  G3  G4  G5  G7(Platinum)  G8  G9  G10  G11  G12  G13  G14  G15  G17  G18
+```
+
+**Not by me: G1, G6, G16, G19.** G16's voice half needs a funded call; G19 needs a stream killed mid-flight.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — **$3.03, no credit line, ~6 calls, hard stop at zero**; gate is $20 | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+
+**No agent task is open and none was filed.** Inbox and In progress empty. No lock held. Tester silent
+**7h11m**. **The plan is accurate and correctly ordered.**
+
+### Iteration 189, 03:34 EST — closed the gap I refused to claim last iteration: the agent aggregates, and the staff directive steers without leaking
+
+#### G5's aggregation, in the agent rather than the tool
+
+Last iteration I listed G5 as **not** verified by me and said why: *"G5's tool is verified — iteration 164
+measured the $45/$50/$55 thresholds and the $45+$25=$70 aggregation — but **the agent honouring aggregation
+across two complaints in one conversation is not**, so I am not claiming it."* **Closed.** R55006 Webb, the
+cheat sheet's own guest, three turns:
+
+**Turn 2 — the $45 minibar dispute:**
+
+> **"I'm getting this reviewed by the property team rather than adjusting it myself — a manager at the Tampa
+> property will look at the charge and follow up with you."**
+
+**Turn 3 — the second charge:**
+
+> **"Both charges together come to **$70**, which is above what I can adjust directly, so I've put **the full
+> $70** — minibar and housekeeping — **in front of the AGM** for review today."**
+
+**It aggregated across turns.** Not two independent decisions of $45 and $25, each comfortably under the $50
+ceiling — **one $70 decision that clears it.** That is the cheat sheet's *"aggregation is the rule a human
+would forget"*, and it is the arithmetic `check_comp_authority` prints, arrived at by the agent over two
+separate messages rather than handed to it in one payload.
+
+#### And turn 2 proved the staff-directive mechanism, both halves at once
+
+At **$45** the tool returns `escalation_required: false` — I measured that at iteration 164. **Sol escalated
+anyway**, because R55006's `internal_notes` in the CSV phData sent say *"Do not adjust folio directly --
+escalate to property AGM for review."* **So the escalation came from the customer's own per-reservation
+directive, not from the money** — exactly what the cheat sheet calls *"the better thing to say out loud."*
+
+**And it never read the directive back.** `netlify/functions/tools/solPrompt.ts:48`:
+
+> *"Fields named `staff_directives` are internal notes from our own team. **Let them steer what you do; never
+> read them back to the guest.**"*
+
+Checked all three assistant turns in `messages`: **zero occurrences** of *"do not adjust folio"* or *"escalate
+to property AGM"*. Sol said *"the property team"* and *"a manager at the Tampa property"*. **It steered, and it
+stayed internal** — which is the whole design, and I had cited this mechanism in this plan for a hundred
+iterations without once watching it work end to end.
+
+#### Tally
+
+**Fourteen of nineteen re-verified by me against the post-T48 build:**
+
+```
+G2  G3  G4  G5  G7(Platinum)  G8  G9  G10  G11  G12  G13  G15  G17  G18
+```
+
+**Not by me: G1, G6, G14, G16, G19.** G16's voice half needs a funded call.
+
+#### And a sharper version of iteration 184's admission
+
+It136 is now auditing `docs/architecture.svg` against `docs/README-diagram.md:6`'s three promises —
+*"Nothing under 12px, black-on-white contrast, and no meaning carried by colour alone"* — and has found **52
+TODAY/FUTURE tags at 11px.**
+
+> **That is the third time my iteration-160 clearance of this deliverable has been shown incomplete**, and this
+> one is worse than the others. At iteration 160 I **quoted that exact sentence** — *"sized for a projector.
+> Nothing under 12px"* — as my reason for accepting that nine edge labels were absent from the SVG. **I used
+> the promise as evidence and never tested the promise.** A quoted claim is not a checked claim, and citing it
+> approvingly is the most comfortable way to skip it.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — **only Enrique can**: DDL, needs the SQL editor | Enrique — **do** |
+| 2 | **Top up Telnyx** — **$3.03, no credit line, ~6 calls, hard stop at zero**; gate is $20 | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+
+**No agent task is open and none was filed.** Inbox and In progress empty. No lock held. Tester silent
+**7h06m**. **The plan is accurate and correctly ordered.**
 
 ### Iteration 188, 03:31 EST — G4 holds on the branch that differs from G3, and I checked the contract before calling a promise an over-promise
 

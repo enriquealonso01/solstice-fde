@@ -19,11 +19,11 @@
  * those commands. A floor cannot go stale by the repository growing; it can only be broken by being
  * set too high, and that fails here rather than in front of a reviewer.
  */
-import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { shippedFiles } from './shippedFiles'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..')
 // Normalised, because README.md is CRLF in this checkout and LF in others. The first version of the
@@ -31,14 +31,13 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..')
 // passes by looking in the wrong place, which is the failure this whole file exists to catch.
 const readme = readFileSync(join(repoRoot, 'README.md'), 'utf8').replace(/\r\n/g, '\n')
 
-/** Tracked files, from git, so the counts match what a reviewer cloning this repo would see. */
-const tracked: string[] = execFileSync('git', ['ls-files', '-z'], {
-  cwd: repoRoot,
-  encoding: 'utf8',
-  maxBuffer: 32 * 1024 * 1024,
-})
-  .split('\0')
-  .filter(Boolean)
+/**
+ * The files that ship, so the counts match what a reviewer sees. Git when this is a clone, a
+ * `.gitignore`-aware walk when it is not — because the floors exist so a reviewer can check the
+ * README's numbers, and until iteration 137 this threw during collection for anyone who downloaded
+ * the ZIP instead of cloning.
+ */
+const tracked: string[] = shippedFiles(repoRoot).files
 
 /** `wc -l` counts newlines, so a file with no trailing newline is one short. Match that. */
 const lines = (rel: string): number => {

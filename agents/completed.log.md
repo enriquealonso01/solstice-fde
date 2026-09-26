@@ -8207,3 +8207,112 @@ The guide now carries the measured numbers beside the promises, the way the READ
 It131: the smallest size, the lowest contrast ratio, and the 31-to-31 border correspondence.
 
 `npx tsc -b` clean. `npx vitest run` **803 tests / 57 files** green (up 4).
+
+---
+
+## It137 — the suite we invite a reviewer to run did not run for a reviewer who downloaded the ZIP
+
+Nothing was open. Six iterations of auditing what the deliverables *claim* had reached the end of the
+docs, so I turned to what a reviewer actually *does*. `README.md` says, twice:
+
+> a test suite of over 700 tests (**`npx vitest run` for the live number**).
+
+and, at the top of the install section, `npm install`. It never says `git clone`. So the supported path
+is: get the files, install, run the suite. That path was broken.
+
+### Three tests asked git for the file set
+
+```
+no-committed-credentials.test.ts:20   execFileSync('git', ['ls-files'], …)
+suite-integrity.test.ts:33            execFileSync('git', ['ls-files', '*.test.ts', …])
+repo-floors.test.ts:35                execFileSync('git', ['ls-files', '-z'], …)   <- mine, It131
+```
+
+GitHub's **Download ZIP** produces a tree with no `.git`. I reproduced it rather than reasoned about it:
+copied the 262 tracked files to a scratch directory, junctioned `node_modules`, and ran the three.
+
+```
+FAIL  no-committed-credentials.test.ts   fatal: not a git repository
+FAIL  repo-floors.test.ts                fatal: not a git repository
+FAIL  suite-integrity.test.ts            fatal: not a git repository
+Test Files  3 failed (3)        Tests  no tests
+```
+
+**`Tests no tests`** is the part that matters. These did not fail an assertion — they failed during
+*collection*, so their tests never ran. The credential scan contributed **zero of its twelve
+assertions** and printed a git error where a credential result belongs. That is precisely the failure
+shape this suite has been finding in itself all night: not a guard that is wrong, a guard that is not
+executing while looking like it is.
+
+And the irony is exact: `repo-floors.test.ts` exists so a reviewer can check the README's counts
+themselves instead of trusting us, and it was one of the three files that broke for them.
+
+### My first attempt at the repro was wrong, and it looked convincing
+
+Before the copy-the-tree approach I put a `git` shim that exits 128 on `PATH` and reran the three tests.
+**All three passed.** For about a minute that read as "the tests already handle a missing git."
+
+They did not. Git Bash's `PATH` is POSIX (`/c/…`), Node on Windows resolves executables through the
+Windows path list, and setting `process.env.PATH` after Node has started does not change what
+`execFileSync` looks up. The real git ran the whole time. Same lesson as It133, and the third time this
+session: **a check that stays green means the guard holds or the probe missed**, and the two have to be
+told apart before either is believed. The tree-without-`.git` version needs no PATH trickery and is a
+faithful simulation of the actual reviewer, which is why it found what the shim could not.
+
+### The fix: prefer git, fall back to a walk, and skip what genuinely cannot run
+
+`src/lib/rules/__tests__/shippedFiles.ts` resolves "the files that ship" twice over. Git first, because
+inside a clone it is the exact answer and it excludes untracked scratch files. Where git cannot answer,
+it walks the tree with `.gitignore` applied — which for a ZIP is the same set by construction, since the
+archive contains what was tracked. It also treats a *successful but empty* git call as a failure, because
+an empty list would be a silent hole rather than an error.
+
+`no-committed-credentials` and `repo-floors` now use it, so they keep running with the same file set.
+
+**`suite-integrity` does not get a fallback, and that is deliberate.** Its check is "committed but missing
+from the working tree", which cannot happen in a ZIP — the archive *is* the tracked set, so the failure it
+protects against does not exist there. A fallback would have invented a result. It skips, with the reason
+in the describe title: `the test suite is the suite that ships (clone only)`.
+
+Measured both ways:
+
+```
+in the clone          Test Files 58 passed            Tests 809 passed
+in a tree with no .git Test Files 57 passed | 1 skipped  Tests 804 passed | 5 skipped | 0 failed
+```
+
+**The first draft of my own new guard was the single remaining failure in the no-git run.** It asserted
+`isGitClone(repoRoot) === true` before comparing the two paths — a guard that assumed exactly the thing I
+was removing the assumption about, and it failed for the audience the whole iteration exists for. The
+three cases that can only be checked where both paths work are `skipIf`-ed now, and the reason is written
+above them.
+
+### The load-bearing case, and a red-check that lied
+
+The fallback can only be proven faithful somewhere both paths run, so the important case is one direction
+only: **everything git tracks must appear in the walk.** The walk may return more — an agent's new test
+file before it is committed — but never less, or a guard running from a ZIP would scan a smaller set than
+the same guard running here.
+
+Red-checked four ways. The walk returning nothing fails 2. Preferring the walk inside a clone fails 1.
+Dropping the exact-name rules, so `.env` and `DEMO_LOGINS.md` would be scanned and counted, fails 1.
+
+And one mutation lied. Removing `node_modules`, `dist` and `.netlify` from the hardcoded exclusion list
+left all six green — because `.gitignore` lists those directories and `readIgnore` puts them back. The
+guard was correct; the mutation was ineffective, which is a different thing and had to be distinguished
+before concluding anything. Cutting **both** sources — the hardcoded list and the `.gitignore` directory
+rules — fails 1, as it should.
+
+### Two lines of documentation, because the prose had the same hole
+
+`README.md`'s floors block prints five `git ls-files` commands. Those need a clone too, so it now says so
+in the same parenthetical that already warns about `xargs` and the filename with spaces, and points out
+that `npx vitest run` checks every floor either way.
+
+`agents/README.md` gains the rule, next to It135's note about `git checkout`: **never shell out to `git`
+from a test without a fallback**, because the failure lands during collection and a test that never runs
+looks exactly like a test that passes. With the exception named — if a check has no meaning outside a
+clone, `describe.skipIf(!isGitClone(root))` it and say so in the title.
+
+`npx tsc -b` clean. `npx vitest run` **809 tests / 58 files** green in the clone, **804 passed / 5 skipped
+/ 0 failed** without `.git`.
