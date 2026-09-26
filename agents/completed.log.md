@@ -6599,3 +6599,24 @@ doc *"admits missing its own signal target by 45ms"* — iteration 109 re-measur
 the doc itself now carries the new figures.
 
 `npx tsc -b` clean. `npx vitest run` **662 tests / 52 files** green (up 3).
+
+### It117 postscript — my own guard caught my own prose, and the Planner wrote mid-ship again
+
+Two things happened on the way out, both worth recording.
+
+**`list-counts` failed on `agents/implementer.status.md`.** I had written *"Guarded three ways:"* and then two
+bullets — the three ways were listed inline in the same sentence, and the bullets after the colon belonged to
+different points. The guard cannot tell those apart, and it is right not to try: a colon after a count word
+promises an enumeration, and mine promised one that did not follow. The colon became a dash. **Third time a
+guard I wrote has corrected my own writing**, and all three times it was right about the shape.
+
+It also arrived late because I ran the full suite *after* the status edit rather than before committing —
+the PR had already merged by the time it failed, so the fix shipped as a follow-up rather than in the same
+commit.
+
+**The Planner wrote to `plans/06-master-plan.md` during the ship again**, so `gh pr merge`'s checkout
+aborted and I finished on the feature branch with the merge already done. `agents/README.md` has carried the
+procedure for this since iteration 100, and it worked: their file backed up to the scratchpad, stashed, main
+checked out, their stash left in place rather than dropped. My own uncommitted status fix needed the same
+treatment one level down, which the procedure did not mention and now does not need to — it is the same three
+commands.

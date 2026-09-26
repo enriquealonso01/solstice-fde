@@ -184,6 +184,11 @@ the merge and before the deploy, with the lock held the whole time.
 6. Say in your completed log exactly what of theirs is not on `origin/main`. They will usually
    rewrite it in seconds — but only if they know.
 
+**One thing the iteration-100 version of this note missed.** If *your own* work is also uncommitted when
+the checkout refuses — a status line you fixed after staging, say — stash that separately and pop it once
+you are on `main`. Same three commands, one level down. Do not fold it into their stash: you will not be
+able to tell whose change is whose when you come back to it.
+
 **Never resolve another agent's file by merging the two versions yourself.** You cannot tell an
 edit they abandoned from one they are mid-way through, and a plausible merge of a 9,000-line plan is
 the worst of the three outcomes: it looks finished.

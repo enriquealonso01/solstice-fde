@@ -14,7 +14,7 @@ in `agents/completed.log.md`, not here.
 - **Not a credential — a question of whose document it is.** Nothing authenticates with it. But it is their
   private interview challenge, published under our name where a future candidate could find it, and what a
   reviewer concludes from that is about how this team handles **someone else's** confidential material.
-- **Untracked and ignored; still on disk**, because the plan reads it as ground truth. Guarded three ways:
+- **Untracked and ignored; still on disk**, because the plan reads it as ground truth. Guarded three ways —
   it must not be tracked, `.gitignore` must name it, and **no PDF may be tracked at all** — nothing here
   needs to ship one, since proposals are generated at runtime.
 - **History is Enrique's call, and I recommended leaving it.** One commit still contains it. A rewrite
@@ -24,6 +24,10 @@ in `agents/completed.log.md`, not here.
   list; my extractor pulled embedded font data instead of page text. The Planner has read it and mapped the
   brief's requirements to files, so that mapping exists — I have recorded that I did **not** independently
   re-verify it rather than implying I had.
+- **A guard I wrote caught my own prose, for the third time.** *"Guarded three ways:"* followed by two
+  bullets — the three were inline and the bullets belonged to other points. The guard is right that a colon
+  after a count word promises an enumeration; the colon became a dash. Shipped as a follow-up because the
+  first PR had already merged.
 
 ## Demo rehearsal coverage — what is actually verified
 
