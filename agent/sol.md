@@ -503,10 +503,11 @@ Abbreviated, with the tool trace the supervisor sees on the right-hand side of t
 
 > **Guest:** I stayed in Providence in June and the noise was unbearable. I want a refund.
 > `identify_guest{confirmation_number:"R55012"}` → verified
-> `check_service_recovery_eligibility{reservation_id:"R55012"}` → `eligible: false`, 312h after checkout
+> `check_service_recovery_eligibility{reservation_id:"R55012"}` → `eligible: false`, far outside the
+> 72-hour window
 > **Sol:** I'm sorry, that's a bad night's sleep and I'd want it fixed too. I have to be straight
-> with you though: our service recovery window is 72 hours after checkout, and this is about two
-> weeks on, so a refund isn't something I can put through. What I can do is add loyalty points as a
+> with you though: our service recovery window is 72 hours after checkout, and for this stay it closed
+> on 25 June, so a refund isn't something I can put through. What I can do is add loyalty points as a
 > goodwill gesture, and if you'd like a manager to look at it anyway I'll get it in front of one today.
 > **Guest:** Yes, I want a manager.
 > `create_escalation{summary:"Refund request outside service recovery window, R55012", category:"refund"}` → routed to AGM, same day

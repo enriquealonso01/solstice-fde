@@ -4,46 +4,45 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 155 — 2026-09-26 ~00:32 EST
+## Iteration 156 — 2026-09-26 ~00:36 EST
 
-### The human's entry point does not contain the top item, and tells him the rest is history
+### T45: two of Enrique's four decisions exist only in a file he is never told to read
 
-Checked all four of my items against `HUMAN_INTERVENTION.md`, not just the one I got caught on.
+| | HI short list | SUBMISSION checklist | runbook | this plan |
+|---|---|---|---|---|
+| **1. `drop policy` (RLS)** | — | — | — | **only here** |
+| 2. Telnyx top-up | yes | yes | yes | yes |
+| 3. T21 two rows | yes | — | — | yes |
+| **4. SIP credential** | — | — | — | **only here** |
 
-```
-"## Start here — the short list, 2026-09-25 15:30"
-the RLS hole was found at 17:52 (PR #62)
-drop policy / prop_write / migration 004 in that block: 0
-prop_write appears only at lines 559 and 758, deep in the body
-```
+`plans/06-master-plan.md` is mine — `agents/README.md` lists it as *Planner writes, others read*.
+**Enrique is never directed to it.** Following the three documents addressed to him, he tops up
+Telnyx, deletes two rows, runs `demo:tidy`, and **never learns the RLS hole can be closed with three
+lines or that a credential decision exists.**
 
-**Two and a half hours apart.** The block Enrique is told to read first lists Telnyx, the two junk
-inquiries and `demo:tidy` — **not the one item with a live security consequence.** And it says:
+### Nobody made a mistake, which is why it survived
 
-> *"Read this block; the rest is history and evidence."*
+Short list dated **15:30**; RLS found **17:52**; credential ~**22:30**. **Both written up properly**
+(`:559`, `:758`, `:678`) and thorough. **The short list was never reopened** — and it says *"Read
+this block; the rest is history and evidence."*
 
-**That routes a reader away from it.** The entry and its recovery exist further down and are
-correct; they are not where the file says to look. **I cannot edit that file**, so my banner now
-opens item 1 by saying where the entry is, why it is missing from the short list, and that the short
-list points the other way.
+> **An index nobody reopens is a filter that silently hides everything discovered after it was
+> written.**
 
-### Their list had something mine did not
+### T45 filed because the fix is not mine
 
-Theirs ends: **"→ portal.telnyx.com, Billing. About $30."** Mine said *"top up to at least $20"* and
-never said **where** — and last iteration I read item 2 as a stranger and **judged it fine.** Taken
-and credited.
+It belongs in `HUMAN_INTERVENTION.md`, which the Implementer and Tester append to. **T45 asks for a
+dated update block, not an edit of the 15:30 list** — append-only by protocol — naming the two items
+with line pointers to the entries that already exist.
 
-> **Two files, each holding the half the other was missing.** The short list has the portal link and
-> not the security item; my banner had the security item and not the portal link.
+### And it is survivable if never done
 
-### The symmetry is the point
+**The RLS hole is disclosed** in three places (PR #95), so shipping without applying it is a stated
+open defect — always defensible. **What is lost is the choice, not the honesty.** The credential
+recommendation — accept, rotate after the demo — is also what happens by default.
 
-It154: my file **contradicted** the record. It155: the record **omits** what my file leads with.
-
-> **Neither file is wrong; together they were incomplete in both directions.** Two summaries of the
-> same state do not converge by being written carefully — **they converge by being read against each
-> other.**
+**A routing fix worth making, not an emergency**, and the task says so.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — and it is **not** in `HUMAN_INTERVENTION.md`'s short list.
+**The `drop policy` paste** — and **T45**, which is what would put it in front of him.

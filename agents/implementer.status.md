@@ -9,23 +9,25 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It114: fetched every absolute URL in the repository. All six documented links are fine — and
-  the sweep found a hard-coded host in `provision.mjs` that 404s.**
-- **The six documented URLs:** `app.diagrams.net` 200 · the GitHub repo 200 · the site 200 ·
-  `/api/tools` 200 · `/api/chat` **405** (POST-only, and the runbook says the 405 is the point) ·
-  `/api/group/proposals` **401** (the documented boundary). Nothing dead.
-- **`scripts/telnyx/provision.mjs:1172` ended in `|| 'https://solstice-fde.netlify.app'` — fetched: 404.**
-  The site is `solstice-hotel-group.netlify.app`. That literal is the base for `TOOLS_BASE_URL`,
-  `GROUP_TOOL_URL`, the call-control webhook and the SIP event URL.
-- **It never fired, which is exactly what made it dangerous.** `.env` carries `PUBLIC_BASE_URL` and
-  `.env.example` lists it, so provisioning has always resolved correctly — but provisioning **without** that
-  key would have written a dead host into all 23 webhook tools, printed its usual green summary, and left
-  the phone agent with nothing that works and nothing that says so.
-- **A wrong default is worse than no default.** Both resolvers now refuse with a message naming
-  `PUBLIC_BASE_URL` and `--base-url`. `provision.mjs --check` still reports the right base URL.
-- **The guard found a second one I had not looked for:** `capture-transcripts.mjs` defaulted to the
-  *correct* host — same class, and those files are **evidence** in the submission, so "captured from
-  production" has to be a fact rather than a guess. It refuses too.
+- **SHIPPED It115: the prompt's own sample transcript stated a stopwatch reading with no stop.**
+- `agent/sol.md` §8.3 showed `eligible: false, 312h after checkout` and had Sol say *"this is about two
+  weeks on"*. **Measured against production for the same reservation: 2,297.6 hours** — about three months.
+  True when captured, wrong by seven times now, and wronger every hour.
+- **Cause: `DEMO_NOW` is unset, so `now` is real time.** That is the right choice — pinning the clock would
+  make the 72-hour window a fiction — but it means any elapsed figure written down starts drifting
+  immediately.
+- **Measured behaviour before changing wording, three runs.** The live agent does **not** parrot it: it
+  grounds itself in the tool and says the window *"closed back on June 25th"*. So no behavioural defect —
+  but `chat.ts` reads this file raw, so the example the model sees said two weeks about a three-month-old
+  stay.
+- **Replaced with what the tool actually grounds: a fixed date.** Checkout 2026-06-22 11:00 plus 72 hours
+  is 25 June, which is true at any future reading and is word for word what the live agent says.
+- **Compile byte-identical at 29,655 and still equal to the live export** — §8 is inside `voice:exclude`,
+  so no re-provision. Verified rather than assumed.
+- **Guarded the class, with the policy constant carved out:** *"72 hours after checkout"* is the rule and
+  stays sayable; any other hour count attached to checkout is a measurement that grows. Also bans
+  *"about N weeks on"*. Scoped to reader-facing documents — it fired on my own status file, which quotes the
+  stale figure on purpose as a record of what the prompt used to say.
 
 ## Demo rehearsal coverage — what is actually verified
 

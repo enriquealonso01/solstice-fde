@@ -157,3 +157,61 @@ describe('claims about quantities that change while nobody is looking', () => {
     ).not.toMatch(/\d+\s*chat\s*sessions?\s*to\s*\d+\s*calls?/i)
   })
 })
+
+/**
+ * A deliverable may not state elapsed time since a fixed past event as a figure, because it grows.
+ *
+ * `agent/sol.md` §8.3 illustrated the service-recovery refusal with `eligible: false, 312h after checkout`
+ * and had Sol say *"this is about two weeks on"*. Both were true when captured. Measured at iteration 115
+ * against production for the same reservation: **2297.6 hours**, about three months. Wrong by seven times,
+ * in a sample transcript inside a named deliverable, and wrong by a little more every hour.
+ *
+ * It was not harming behaviour — asked the same question, the live agent grounds itself in the tool and says
+ * the window *"closed back on June 25th"*, which I measured three times before deciding what to change. But
+ * `chat.ts` reads this file raw, so the example the model sees said two weeks about a stay three months past.
+ *
+ * The durable form is what the tool actually grounds: a **fixed date**. Checkout was 2026-06-22 11:00 and
+ * the window is 72 hours, so it closed on 25 June, and that sentence will be true at any future reading —
+ * which is also, word for word, what the live agent says.
+ *
+ * The rule here distinguishes the **policy constant** from an **elapsed measurement**: "72 hours after
+ * checkout" is the rule and must stay sayable; any other hour count attached to checkout is a stopwatch
+ * reading with no stop.
+ */
+describe('elapsed time stated as a figure', () => {
+  const WINDOW_HOURS = '72'
+
+  // Deliverables only, for the same reason the chat-pair ban above is: the coordination files quote
+  // stale figures on purpose, as a record of what they said before they were fixed. This ban fired on
+  // agents/implementer.status.md for exactly that -- my own note about what the prompt used to claim.
+  const READER_FACING = DOCS.filter((d) => !d.startsWith('agents/') && d !== 'HUMAN_INTERVENTION.md')
+
+  it.each(READER_FACING)('%s states no hour count after checkout except the policy window', (doc) => {
+    const full = join(repoRoot, doc)
+    if (!existsSync(full)) return
+    const flat = readFileSync(full, 'utf8').replace(/\s+/g, ' ')
+    const offenders = [...flat.matchAll(/([0-9][0-9.,]*) ?(?:h|hours|hrs) (?:after|since|past) checkout/gi)]
+      .map((m) => m[1].replace(/[,]/g, ''))
+      .filter((n) => n !== WINDOW_HOURS)
+
+    expect(
+      offenders,
+      `${doc} states ${offenders.join(', ')} hours after checkout. The 72-hour window is a policy ` +
+        `constant and fine; any other figure is time since a fixed date, which grows every hour. ` +
+        `agent/sol.md said 312h and production now returns 2297.6. Say the date the window closed instead.`,
+    ).toEqual([])
+  })
+
+  it.each(READER_FACING)('%s does not date a sample by how long ago it was', (doc) => {
+    const full = join(repoRoot, doc)
+    if (!existsSync(full)) return
+    const flat = readFileSync(full, 'utf8').replace(/\s+/g, ' ')
+    expect(
+      [...flat.matchAll(/about (?:a|one|two|three|four|five|[0-9]+) (?:weeks?|months?|years?) (?:on|ago|later)/gi)].map(
+        (m) => m[0],
+      ),
+      `${doc} describes a fixed past event as "about N weeks on". That was accurate once. Name the date, ` +
+        `or the span between two dates, so the sentence survives being read tomorrow.`,
+    ).toEqual([])
+  })
+})

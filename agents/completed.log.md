@@ -6436,3 +6436,59 @@ file and line.
 `npx tsc -b` clean. `npx vitest run` **630 tests / 51 files** green (up 6). No prompt change and no
 re-provision — the resolver change does not alter what a configured run produces, which is why
 `--check` was worth running before shipping.
+
+## It115 — the prompt's sample transcript stated a stopwatch reading with no stop
+
+It114's find was a default the happy path had hidden for the whole project, so I went looking for the rest
+of that class. The one worth having was the clock.
+
+`nowFrom()` reads `process.env.DEMO_NOW` and otherwise returns real time, and **`DEMO_NOW` is unset**. That
+is the right choice — pinning the clock would turn the 72-hour service-recovery window into a fiction — but
+it means any elapsed figure committed to prose starts drifting the moment it is written.
+
+`agent/sol.md` §8.3, the sample transcript for the refund that cannot happen:
+
+> `check_service_recovery_eligibility{reservation_id:"R55012"}` → `eligible: false`, **312h after checkout**
+> **Sol:** … our service recovery window is 72 hours after checkout, and **this is about two weeks on** …
+
+Measured against production for the same reservation:
+
+```
+checkout_at                        2026-06-22T11:00:00Z
+window_hours                       72
+hours_since_checkout_now           2297.6        <- the transcript says 312
+eligible                           false
+```
+
+Both figures were accurate when captured. **2,297.6 hours is about three months, not two weeks** — wrong by
+seven times, in a named deliverable, and wronger every hour it sits there.
+
+**I measured the behaviour before touching the wording**, because the interesting question was whether the
+model copies the stale example. `chat.ts` reads `agent/sol.md` **raw**, so the illustration is in the
+context. Three runs of the same complaint: it does not copy it. It grounds itself in the tool and says the
+window *"closed back on June 25th"*. So this is a documentation defect, not a behavioural one — worth saying
+plainly rather than dressing up as a near-miss.
+
+**The fix is the form the tool already grounds: a fixed date.** Checkout plus 72 hours is 25 June, which is
+true at any future reading, and is word for word what the live agent says. The hour count became *"far
+outside the 72-hour window"*.
+
+**Compile byte-identical at 29,655, still equal to the live export**, because §8 sits inside
+`voice:exclude`. Verified with the compiler rather than assumed, so no re-provision was needed.
+
+### The guard, and the line it has to walk
+
+The rule is: a deliverable may not state elapsed time since a fixed past event as a figure. The trap is that
+*"72 hours after checkout"* is the **policy constant** and has to stay sayable, while *"312h after checkout"*
+is a stopwatch reading. So the ban allows 72 and rejects any other hour count attached to checkout, and
+separately rejects *"about N weeks on"*.
+
+It fired immediately on `agents/implementer.status.md`, which quotes `312h` on purpose as a record of what
+the prompt used to claim — the same situation that took `completed.log.md` out of the chat-pair ban at
+iteration 106. Scoped to reader-facing documents, with the reason written next to the filter.
+
+Red-checked both patterns by restoring each original phrase: each fails naming the figure and the current
+measurement.
+
+`npx tsc -b` clean. `npx vitest run` **652 tests / 51 files** green (up 22 — the two new cases run across
+every deliverable).
