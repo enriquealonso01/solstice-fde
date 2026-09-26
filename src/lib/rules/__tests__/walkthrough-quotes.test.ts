@@ -22,6 +22,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { compileInstructions } from '../../../../scripts/telnyx/provision.mjs'
 
 const repoRoot = resolve(__dirname, '../../../..')
 
@@ -246,5 +247,85 @@ describe('refusals the walkthrough quotes', () => {
       `${source} returns that message with a different status than the ${status} ${doc} shows. ` +
         `The section's argument is that "who are you" and "you are not allowed" answer differently.`,
     ).toContain(`status: ${status}`)
+  })
+})
+
+/**
+ * The fabricated policy quotation, banned by name and across line breaks.
+ *
+ * Iteration 93 found `README.md` attributing *"subject to same-day availability"* to Policies 1 and 6
+ * when that phrase appears **zero** times in the policy document the brief supplied, and fixed it
+ * there. It was in two more places, and the sweep that should have found them could not:
+ *
+ *   - `agent/sol.md` — wrapped across a line break, `same-day` ending one line and `availability`
+ *     starting the next, so a line-oriented `grep` reported nothing. **And that copy reached the
+ *     compiled voice prompt**, so the live phone agent was carrying an invented quotation of the
+ *     interviewers' own document.
+ *   - `netlify/functions/tools/availability.ts` — the header comment of the very service the
+ *     quotation exists to justify.
+ *
+ * That is the third time this session a line wrap has defeated a check. The lesson is in the shape of
+ * this test rather than its subject: **normalise whitespace before searching a document for a
+ * phrase**, because prose wraps and the thing you are looking for does not care where.
+ *
+ * The positive cases above pin the two real phrases. This one bans the invented one, which no
+ * "quote must exist in the source" rule can catch — an invented quotation has no source to check it
+ * against. It also checks the compiled prompt directly, because that is the artifact the phone agent
+ * actually runs on, and it is the only one of the three copies that a guest could be told.
+ */
+describe('the invented policy phrase stays gone', () => {
+  const PHRASE = 'subject to same-day availability'
+  const flat = (s: string) => s.replace(/\s+/g, ' ')
+
+  /** This file has to name the phrase to explain itself; nothing else may. */
+  const SELF = 'src/lib/rules/__tests__/walkthrough-quotes.test.ts'
+
+  const FILES = [
+    'README.md',
+    'SUBMISSION.md',
+    'agent/sol.md',
+    'netlify/functions/tools/availability.ts',
+    'docs/demo-runbook.md',
+    'docs/demo-cheatsheet.md',
+    'docs/role-walkthroughs.md',
+    'docs/how-this-was-built.md',
+    'docs/integration-recommendation.md',
+    'docs/where-this-goes.md',
+    'docs/live-modification.md',
+    'docs/latency-target.md',
+  ]
+
+  it('is genuinely absent from the policy document, which is why it may not be quoted', () => {
+    const policy = readFileSync(
+      join(repoRoot, 'data/SOLSTICE HOTEL GROUP — FRONT DESK POLICY REFERENCE.md'),
+      'utf8',
+    )
+    expect(flat(policy)).not.toContain(PHRASE)
+  })
+
+  it.each(FILES)('%s does not attribute it to the policy document', (file) => {
+    const full = join(repoRoot, file)
+    if (!existsSync(full)) return
+    expect(
+      flat(readFileSync(full, 'utf8')),
+      `${file} quotes ${JSON.stringify(PHRASE)} as policy language. It is in no policy. Policy 1 ` +
+        `says "based on same-day room availability" and Policy 6 "based on same-day inventory". ` +
+        `Compared with whitespace flattened, because the copy in agent/sol.md hid across a line break ` +
+        `from the sweep that was meant to catch it.`,
+    ).not.toContain(PHRASE)
+  })
+
+  it('never reaches the compiled voice prompt, which is what a caller hears from', () => {
+    const compiled = compileInstructions(readFileSync(join(repoRoot, 'agent/sol.md'), 'utf8'))
+    expect(
+      flat(compiled.instructions),
+      'The live phone agent is carrying an invented quotation of the policy document the ' +
+        'interviewers wrote. This is the copy that can reach a guest.',
+    ).not.toContain(PHRASE)
+  })
+
+  it('keeps this file the only place the phrase is written down', () => {
+    // If the ban ever has to be lifted, the exemption should be a deliberate edit here.
+    expect(flat(readFileSync(join(repoRoot, SELF), 'utf8'))).toContain(PHRASE)
   })
 })

@@ -5612,3 +5612,72 @@ rather than the reverse.
 
 `npx tsc -b` clean. `npx vitest run` **586 tests / 48 files** green (up 6). Nothing written anywhere:
 every probe was a GET, a HEAD, a list, or a refusal.
+
+## It103 — the invented quotation was in two more places, and one of them was the live phone prompt
+
+No task open. I went after an integration property nobody had checked: **does every tool the live
+assistant carries resolve to a route that exists?** A webhook tool whose name has drifted returns
+`404 Unknown tool` mid-conversation, on the phone, with the guest waiting, and nothing in the suite
+would notice.
+
+**It does.** The export's 25 are 11 guest tools at `/api/tools/<name>`, 12 group tools at
+`/api/group/tool`, plus the platform's native `transfer` and `hangup` — 23 webhook, matching what
+provisioning reports. `/api/tools` advertises **12**, one more than the assistant carries, and the
+extra is `transfer_to_human`: the chat runtime's stand-in for a native transfer chat does not have.
+Not a mismatch.
+
+### The find
+
+Reading §4 to check that table, the next paragraph said:
+
+> **Why it had to exist.** Policy 1 and Policy 6 both turn on the phrase *"subject to same-day
+> availability"*.
+
+That is the fabrication I fixed in the README at iteration 93. It occurs **zero** times in the policy
+document the interviewers wrote. It was in two more places:
+
+- **`agent/sol.md:274` — and it reached the compiled voice prompt.** The live phone agent was carrying
+  an invented quotation of the interviewers' own document. Of the three copies, this is the only one a
+  guest could be told.
+- **`netlify/functions/tools/availability.ts:5`** — the header comment of the very service the
+  quotation exists to justify.
+
+**Why iteration 93 missed them, which is the part worth keeping.** The copy in `sol.md` wraps across a
+line break — `same-day` ends one line, `availability` begins the next — so `grep` found nothing, and my
+T41 sweep looked for quoted spans that *do* appear in the policy document rather than for this one that
+does not. Two blind spots stacked. **Third time this session a line wrap has defeated a check**: it
+also hid the README's own multi-line quote from a sweep, and it is why the policy-quotation guard
+already flattened whitespace for its positive cases while the negative case did not exist at all.
+
+### What shipped
+
+Both copies now carry the accurate wording — Policy 1's *"based on same-day room availability"* and
+Policy 6's *"based on same-day inventory"*, which is the stronger argument anyway: two policies
+reaching for the same missing data in two vocabularies.
+
+**Re-provisioned, because this one was in the prompt.** I diffed the live prompt against the new
+compile before touching the assistant, and the change was that one sentence and nothing else — no
+guardrail, no tool, no routing text. Then re-exported from live:
+
+```
+compile 29151   export 29151   identical true   margin 849
+fabricated phrase in the live prompt: 0
+tools: 25, assistant id unchanged
+```
+
+11 Telnyx API calls, no telephony spend, balance $3.57.
+
+**Banned by name** in `walkthrough-quotes.test.ts`: the phrase may not appear in any of twelve
+deliverables, nor in `availability.ts`, nor **in the compiled voice prompt** — that last case checks the
+artifact the phone agent actually runs on. Whitespace is flattened everywhere, which is the whole
+lesson. A companion case requires the phrase to remain written in the test file itself, so lifting the
+ban has to be a deliberate edit rather than a deletion nobody notices. Red-checked by restoring the
+original line-wrapped sentence: the file case and the compile case both fire.
+
+**Reported, not changed.** The `transfer_to_human` row in §4 is true of `/api/tools` and of chat, but
+voice has no tool by that name — it has the native transfer, whose `warm_transfer_instructions` already
+require `create_escalation` first. The row therefore describes the right behaviour under a name voice
+does not expose. I am not spending prompt margin on a claim about call behaviour I cannot test without
+placing a paid call, so it is recorded here for the Planner rather than guessed at.
+
+`npx tsc -b` clean. `npx vitest run` **601 tests / 48 files** green (up 15).
