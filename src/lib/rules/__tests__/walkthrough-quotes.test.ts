@@ -52,6 +52,25 @@ const QUOTED_UI: { doc: string; quote: string; source: string }[] = [
     quote: 'proposals delivered',
     source: 'src/pages/admin/AdminHome.tsx',
   },
+  // Added after sweeping every backticked span in the walkthrough rather than the handful I
+  // remembered changing. The first pass in It73 checked a list of strings I knew I had reworded --
+  // a predicted enumeration, which is the mistake this session keeps paying for. Of 24 UI-looking
+  // quotes, 19 are literals in source and are pinned here; the other five are assembled at
+  // runtime and were verified by hand instead (see the log for It75).
+  { doc: 'docs/role-walkthroughs.md', quote: 'Clarifying questions out', source: 'src/pages/admin/GroupInbox.tsx' },
+  { doc: 'docs/role-walkthroughs.md', quote: 'Full transcript retained', source: 'src/pages/admin/SupervisorDashboard.tsx' },
+  { doc: 'docs/role-walkthroughs.md', quote: 'Needs decision', source: 'src/components/admin/ui.tsx' },
+  { doc: 'docs/role-walkthroughs.md', quote: 'Supervisor took the call', source: 'src/pages/admin/SupervisorDashboard.tsx' },
+  { doc: 'docs/role-walkthroughs.md', quote: 'audio failed', source: 'src/components/admin/SupervisorLadder.tsx' },
+  { doc: 'docs/role-walkthroughs.md', quote: 'audio live', source: 'src/components/admin/SupervisorLadder.tsx' },
+  { doc: 'docs/role-walkthroughs.md', quote: 'audio ready', source: 'src/components/admin/SupervisorAudioStatus.tsx' },
+  { doc: 'docs/role-walkthroughs.md', quote: 'audio unavailable', source: 'src/components/admin/SupervisorLadder.tsx' },
+  { doc: 'docs/role-walkthroughs.md', quote: 'browser unsupported', source: 'src/components/admin/SupervisorLadder.tsx' },
+  { doc: 'docs/role-walkthroughs.md', quote: 'connecting audio', source: 'src/components/admin/SupervisorLadder.tsx' },
+  { doc: 'docs/role-walkthroughs.md', quote: 'conversations, messages and actions, live', source: 'src/pages/admin/SupervisorDashboard.tsx' },
+  { doc: 'docs/role-walkthroughs.md', quote: 'none yet', source: 'src/pages/admin/GroupInbox.tsx' },
+  { doc: 'docs/role-walkthroughs.md', quote: 'not permitted', source: 'src/components/admin/SupervisorLadder.tsx' },
+  { doc: 'docs/role-walkthroughs.md', quote: 'ready to price', source: 'src/pages/admin/GroupInbox.tsx' },
 ]
 
 describe('UI text quoted by the walkthroughs', () => {

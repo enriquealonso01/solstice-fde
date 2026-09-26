@@ -4,50 +4,49 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 103 — 2026-09-25 ~20:26 EST
+## Iteration 104 — 2026-09-25 ~20:30 EST
 
-### All tasks closed. The plan is accurate and correctly ordered.
+### T38 filed: the fix for the live-demo trap points at the wrong hotel
 
-Inbox empty. No lock held. Migration 004 still unapplied.
+PR #104 found a real trap — `thresholds.ts` quotes the demo snippet in its header comment at line
+10, so a search lands there before the real entry, and the only tell is *"allowed 15"* staying 15.
+The Tester hit it themselves and named their own mistake in the warning.
 
-### The behavioural exposure I flagged was found within one iteration — and it was the big one
-
-`role-walkthroughs.md`'s *"Proving the boundary, in ten seconds"* told a reviewer to type
-`/admin/cost` as `sales@` and said *"You are refused. The API returns 403 to that token, not a
-redirect."*
-
-**Driven as written, both steps redirect.** PR #102's own summary of the damage:
-
-> *"A sceptical reviewer following that section concludes the boundary is just the UI, which is the
-> opposite of what the section argues… the redirect is the weakest evidence in the system and it was
-> the only thing the reviewer was told to look at."*
-
-### I verified the correction with a real token
+**The instruction is wrong.** The string occurs **four** times:
 
 ```
-no token          GET /api/group/proposals  ->  401
-concierge token   GET /api/group/proposals  ->  403
-  "This role cannot see group sales. Group sales inquiries are readable by group_sales and admin
-   only, which is what row level security enforces in the database as well."
+ 10  header comment  (the trap)
+ 54  SOL-AUS  Austin        <- "the second occurrence"
+ 93  SOL-TPA  Tampa
+106  SOL-PHX  Phoenix       <- what the demo needs
 ```
 
-Exactly as the corrected section claims. The proof now rests on measured API behaviour, with the
-PostgREST reading — **zero rows of thirteen, not a filtered view** — as the part that distinguishes
-enforcement from presentation.
+Following *"search for the second occurrence"* edits **Austin**; `INQ-2009` is **Phoenix**, so the
+verdict does not move — **the exact failure the warning exists to prevent.** The doc is internally
+inconsistent: *"around line 106"* is right, the ordinal is not. **T38 replaces it with `'SOL-PHX'`.**
 
-### Two defects in two iterations, in the document I promoted
+### Two things I looked at and misread
 
-T37 moved it into the README's main table; #101 found stale UI quotes, #102 found this. **Both were
-latent beforehand; neither was caused by the promotion.** But the sequence was mine and it was
-backwards: **audit first, promote second.** It cost nothing only because there were two iterations
-left to find out in.
+**Iteration 102:** I read that header comment and called it a point in the file's favour — *"the
+file even has the change instruction in its own header comment."* It is a footgun, and the Tester
+walked into it within the hour. I saw the duplication and registered it as helpfulness.
 
-### The last unaudited deliverable's structural claims hold
+**Iteration 103:** I confirmed the boundary curl returns 403 with `-w "HTTP %{http_code}"`, which
+prints the status and not the protocol. PR #104 found the response block claimed **HTTP/2 403**
+while the curl negotiates **HTTP/1.1**, by **re-testing their own fix rather than assuming their
+half was right.**
 
-`how-this-was-built.md` and the README describe six agents on day one, three on day two, **25
-commits on day one**. Git: **25 on 2026-09-24**, 112 on 2026-09-25, 137 total. Matches exactly.
+Same shape both times: I checked what I set out to check and not what was beside it. **Their method
+— drive the document as written, then re-drive your own correction — found three defects today that
+reading found none of.**
+
+### Now verified end to end
+
+`live-modification.md`'s **After** block — the one step I could not confirm in iteration 102, since
+editing `thresholds.ts` is not mine — reproduces verbatim, including *"5 points over"* and the
+unchanged **$7806.15**. PR #106 pins the code block against drift.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — and delete the disclosure in `README.md` and `SUBMISSION.md` if it is
-applied before submitting.
+**The `drop policy` paste.** **T38 is the only agent item and it is one phrase**, but it is on the
+beat the panel watches him type, so it should go first among agent work.

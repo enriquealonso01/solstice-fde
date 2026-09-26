@@ -71,6 +71,11 @@
 
 *Everything below this section is closed, or evidence.*
 
+> **T38 is open and it is small and urgent.** `docs/live-modification.md` tells the presenter to
+> *"search for the second occurrence"* — which is **`SOL-AUS`, Austin**, not `SOL-PHX`. Editing it
+> changes the wrong hotel and the demo verdict does not move: the exact failure the warning was
+> written to prevent. One phrase.
+
 | # | Enrique's item | Why it is first / what it costs |
 |---|---|---|
 | 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr` | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at `HUMAN_INTERVENTION.md:753`. **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md` §13 with **no deliverable edit**. Three lines, in the SQL editor. |
@@ -93,6 +98,55 @@ slightly wrong about the test, the guardrail is verified and the behaviour is ri
 secondary list in `SUBMISSION.md`. Two README rows and one bullet. *Everything else an agent could
 take is closed; the four items above require spending money or an irreversible change to a live
 system, which is the boundary working.*
+
+### T38. "Search for the second occurrence" points at the wrong hotel — one phrase, on the beat the panel watches
+
+*Urgent for its size. `docs/live-modification.md` is the script Enrique types in front of the panel,
+and PR #104's warning — written to prevent a confusing thirty seconds — currently causes the exact
+failure it warns about. One phrase. No code, no deploy.*
+
+**What the doc now says** (`docs/live-modification.md:22-28`):
+
+> **Search for the second occurrence, not the first.** … a search for
+> `max_discount_auto_approve_pct: 15` lands on the comment around line 10 before it reaches the real
+> entry around line 106.
+
+**The trap it identifies is real** — the header comment at line 10 quotes the snippet, and the
+testing agent edited it on their first attempt, with *"allowed 15"* staying 15 as the only tell.
+**The instruction that fixes it is wrong.** `max_discount_auto_approve_pct: 15` occurs **four**
+times, not two:
+
+| Line | Property |
+|---|---|
+| 10 | the header comment — the trap |
+| **54** | **`SOL-AUS`, Solstice Austin Congress Ave** ← *"the second occurrence"* |
+| 93 | `SOL-TPA`, Tampa |
+| **106** | **`SOL-PHX`, Phoenix Camelback** ← the one the demo needs |
+
+So a presenter following the instruction edits **Austin's** ceiling. `INQ-2009` is Camelback
+Fitness Retreat at **Phoenix**, so the verdict does not move, *"allowed 15"* stays 15 — **the same
+confusing thirty seconds, now produced by the warning itself.**
+
+Note the doc is internally inconsistent: *"around line 106"* is correct while *"the second
+occurrence"* is not, so a reader who scrolls is fine and a reader who searches — which is what the
+sentence tells them to do — is not.
+
+**Do this.** Replace the ordinal with the property, which is also robust against anyone reordering
+the file:
+
+> **Edit the `SOL-PHX` entry, not the first match.** The header comment at the top of the file
+> quotes this same snippet, and two other properties share the same 15% ceiling, so a search for
+> `max_discount_auto_approve_pct: 15` finds three wrong lines before the right one. **Search for
+> `'SOL-PHX'` instead** and change the `max_discount_auto_approve_pct` on the entry below it, around
+> line 106. The tell that you edited the wrong line is that *"allowed 15"* stays 15.
+
+**Keep the rest of PR #104's paragraph**, including *"the testing agent made it on its first attempt
+at this exact edit"* — a warning that names its own author's mistake is the one people believe.
+
+**Check when done:** the instruction names `SOL-PHX` rather than an ordinal; `grep -c
+"max_discount_auto_approve_pct: 15" src/lib/rules/thresholds.ts` returns **4**, and the doc's text
+is consistent with that; `npx vitest run` still passes, including the code-block pin from PR #106.
+
 
 ### T37. Two documents are unreachable from the README, and one of them answers a named ask
 
@@ -1005,6 +1059,70 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 104, 20:30 EST — the fix for the live-demo trap points at the wrong hotel
+
+#### T38, and it is on the beat the panel watches him type
+
+PR #104 found a real trap: `thresholds.ts` quotes the demo snippet in its **header comment** at line
+10, so a search for `max_discount_auto_approve_pct: 15` hits the comment before the real entry. The
+Tester hit it themselves, the output did not move, and *"the only tell was 'allowed 15' staying
+15"*. They wrote the warning and named their own mistake in it, which is the version of a warning
+people believe.
+
+**The instruction that fixes it is wrong.** That string occurs **four** times, not two:
+
+| Line | Property |
+|---|---|
+| 10 | header comment — the trap |
+| **54** | **`SOL-AUS`, Austin Congress Ave** ← *"the second occurrence"* |
+| 93 | `SOL-TPA`, Tampa |
+| **106** | **`SOL-PHX`, Phoenix Camelback** ← what the demo needs |
+
+A presenter who follows *"search for the second occurrence"* edits **Austin**. `INQ-2009` is at
+**Phoenix**, so the verdict does not move and *"allowed 15"* stays 15 — **the exact confusing thirty
+seconds the warning exists to prevent, now caused by the warning.**
+
+The doc is internally inconsistent about it: *"around line 106"* is right, *"the second occurrence"*
+is wrong. **Someone who scrolls is fine; someone who searches — which is what the sentence tells
+them to do — is not.** T38 replaces the ordinal with `'SOL-PHX'`, which also survives anyone
+reordering the file.
+
+#### Two things I looked at and misread
+
+**I read that header comment in iteration 102** and wrote *"the file even has the change instruction
+in its own header comment"* — as a point in its favour. It is a footgun, and the Tester walked
+into it within the hour. **I saw the duplication and registered it as helpfulness.**
+
+**And my iteration-103 verification was shallower than theirs.** I confirmed the boundary curl
+returns 403 using `-w "HTTP %{http_code}"`, which prints the status and not the protocol. PR #104
+found that the response block claimed **"HTTP/2 403"** while the pasted curl negotiates **HTTP/1.1**
+— *"pinning a protocol version in an example response is a detail that can only be wrong"* — by
+**re-testing their own fix rather than assuming their half was right.**
+
+Both are the same shape: I checked the thing I set out to check and did not look at what was beside
+it. Their method — **drive the document as written, then re-drive your own correction** — found
+three defects today that reading found none of.
+
+#### What is now verified end to end
+
+`docs/live-modification.md`'s **After** block, the one step I explicitly could not confirm in
+iteration 102 because editing `thresholds.ts` is not mine to do: the Tester reproduced **both**
+blocks verbatim, including *"5 points over"* and the unchanged **$7806.15**. PR #106 pins the code
+block so it cannot drift from the file it tells you to type into.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — and delete the disclosure if applied | Enrique |
+| 2 | Telnyx top-up, $3.09 | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T38** one phrase in `live-modification.md` | **Agents — open** |
+
+Inbox empty. No lock held.
+
 
 ### Iteration 103, 20:26 EST — the behavioural exposure I flagged was found within one iteration, and it was the significant one
 
