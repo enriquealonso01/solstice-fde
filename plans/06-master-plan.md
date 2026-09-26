@@ -1234,6 +1234,78 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 115, 21:22 EST — mapped where the demo's data actually comes from, and who has verified each path
+
+Last iteration I checked one link. This iteration I traced all of them, because *"is the demo showing
+the provided data"* turns out to have **three different answers depending on which table you mean**,
+and nobody had written that down.
+
+#### The trace
+
+`netlify/functions/_lib/data.ts:26-30`:
+
+```ts
+import propertiesJson   from '../../../data/generated/properties.json'
+import guestsJson       from '../../../data/generated/guests.json'
+import reservationsJson from '../../../data/generated/reservations.json'
+import policiesJson     from '../../../data/generated/policies.json'
+import inquiriesJson    from '../../../data/generated/inquiries.json'
+```
+
+**The concierge tools never touch Supabase.** Guests, reservations, properties and policies are
+compiled into the deployed bundle. `lookups.ts` → `_deps.ts` → `_lib/data.ts` → generated JSON, and
+that is the whole path.
+
+#### So the map, which is the useful artefact
+
+| What | Source of truth | Reaches the demo via | Verified by |
+|---|---|---|---|
+| guests, reservations, properties, policies | `data/*.csv` | `data/generated/*.json`, **imported into the functions** | `npm run data:check` + a current deploy |
+| the ten portal inquiries | `data/*.csv` | **Supabase** | my field comparison, iteration 114 — 56 of 60 exact, 4 deliberate |
+| proposals, sessions, escalations | created at runtime | **Supabase** | the Tester's PDF sweep and session counts |
+
+**Two consequences worth having in the room:**
+
+1. **`data:check` passing plus a current deploy is a complete proof for the concierge path.** Not a
+   spot check — every guest, reservation, property and policy the agent can reach is the provided
+   file, compiled in. Two commands, and the answer to *"how do we know it is not making up rates"*.
+2. **The inquiry path is the only one where the CSV and the database can disagree**, which is
+   exactly why iteration 114's comparison was worth running and why it is the one I would re-run if
+   anything is touched before 11:00.
+
+#### Beat 5's fixture, confirmed through the path it actually travels
+
+```
+R55004 in data/generated/reservations.json : true
+  guest_id G10004 · property SOL-DEN · rate_plan Loyalty Redemption
+  guest: Michael Chen · tier: Platinum
+```
+
+**Platinum**, which is the whole point of that beat: the guarantee is unconditional, so the
+before-and-after contrast under failure injection survives. Verified in the bundle the deployed
+function reads, not only in the CSV.
+
+#### Part of T39 landed
+
+**PR #115 gave the runbook the preview command it was missing** — the tidy dry run,
+`node scripts/cleanup-phantom-sessions.mjs`. That was the half of T39 I folded in at iteration 110.
+
+**Three fixes remain**, all still paste-ready at the top of `▶ OPEN WORK`: T38's `SOL-PHX` phrase,
+T39's *"all three costed options"*, and T40's fallback row.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | Three paste-ready fixes | anyone, two minutes |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
 ### Iteration 114, 21:18 EST — completed the data chain, and found Katie's "handle ambiguity" ask verified in the database
 
 #### The verification chain had three links and only two were checked

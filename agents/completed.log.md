@@ -4493,3 +4493,51 @@ Red-checked both: removing the script fails with the document that names it, and
 destructive fails on the pair.
 
 `npx tsc -b --force` clean. `npx vitest run`: **525 passed, 43 files**.
+
+## It84 — a guard that stops running looks exactly like a guard that passes
+
+Nothing was reopened for me: the Tester's 403 finding against `role-walkthroughs.md` is already fixed
+in the file. So I took the failure that has actually happened in this repository rather than one I
+imagined.
+
+At their iteration 55, `list-counts.test.ts` was in `HEAD`, in `origin/main`, and **not on disk**.
+Vitest cannot loudly skip what it cannot see, so it did not run: the suite reported 36 files where it
+should have reported 37, and the guard protecting the deliverable against miscounts was itself not
+being executed. Three agents share one working tree; a stray `reset` is all it takes, and they say so
+themselves — the most likely cause was their own.
+
+**That is the worst failure a guard can have.** A missing guard is visible. A guard that quietly stops
+running is indistinguishable from one that passes.
+
+State today is clean — 43 tracked, 43 on disk — but that is a snapshot of something that drifted an
+hour ago.
+
+### What the red-check shows is the whole argument
+
+Deleting `list-counts.test.ts` and running the suite:
+
+```
+before this guard :  43 passed (43)      <- green, and one file quietly gone
+after  this guard :  1 failed | 42 passed (43)
+                     "committed but missing from the working tree, so vitest never loads them
+                      and the suite silently shrinks: src/lib/rules/__tests__/list-counts.test.ts"
+```
+
+Same broken state, opposite signal.
+
+### I dropped half of what I first wrote, and that is the other half of the work
+
+The first version also failed on **untracked** test files — green here, absent from a reviewer's
+clone. Real, and the mirror of the same hole. It failed immediately by reporting **itself**, because a
+new test file is untracked until committed.
+
+Which means it would go red for any agent mid-iteration, every time, and **a guard that cries wolf
+gets ignored** — the lesson `list-counts` taught when a wider pattern flagged three non-problems.
+Worse, it was redundant: the ship sequence already requires a clean tree before deploying, and
+`git status --porcelain` counts untracked files. So the guard covers the direction nothing else does,
+and the comment says why the other is absent rather than leaving it looking like an oversight.
+
+**It cannot protect itself** — if this file goes missing, nothing reports it. It covers the other
+forty-three, which is the case that occurred.
+
+`npx tsc -b --force` clean. `npx vitest run`: **527 passed, 44 files**.
