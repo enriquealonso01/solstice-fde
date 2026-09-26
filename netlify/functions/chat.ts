@@ -5,10 +5,13 @@
 //
 //   session  { session_id }
 //   delta    { text }
-//   tool     { name, status: "running" | "done", summary, citations }
+//   tool     { name, status: "running" | "done", summary, citations, enforced? }
 //   done     { message_id, latency_ms, first_token_ms, first_event_ms }
 //   error    { message }
 //   handoff  { message }        a human took this conversation; no delta follows on this turn
+//
+// `enforced: true` marks a tool call the runtime made itself (see escalateInCode); a model's own
+// call never carries the field.
 //
 // Request body: { message: string, session_id?: string, history?: [{ role, content }] }
 // `session_id` is optional on the first turn; the response's `session` event carries the id to
@@ -33,7 +36,7 @@
 //   4. The system prompt and tool definitions are stable across turns and carry a cache
 //      breakpoint, so repeat turns re-read the prefix instead of re-processing it.
 //
-// Be honest about which number is which. Measured against the live API on a turn that calls one
+// Two numbers, not one. Measured against the live API on a turn that calls one
 // tool: first chip lands well inside the budget; the first WORD of prose lands afterwards,
 // because the model has to see the tool result before it can answer. `done` carries both, and
 // both are written to `tool_invocations` as a `turn_metrics` row, so the dashboard shows the
@@ -42,15 +45,17 @@
 // THE KEY MAY FAIL. If the Anthropic call errors, we emit `error` with a guest-safe line and
 // then `done`, so the client re-enables input instead of hanging. We never fabricate a reply.
 
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import Anthropic from '@anthropic-ai/sdk'
 import type { Context } from '@netlify/functions'
 import type { Citation } from '../../shared/types'
+import { redactText } from './_lib/mask'
 import { getDatabase } from './tools/_deps'
+import { mergeTargetFor } from './tools/escalation'
 import type { ToolArgs, ToolContext } from './tools/helpers'
 import { recordToolInvocation, runningLabel, runTool, summarize, toolDefinitions } from './tools/registry'
-import { SOL_SYSTEM_BEGIN, SOL_SYSTEM_END, SOL_SYSTEM_PROMPT } from './tools/solPrompt'
+import { classifyIntent, mustEscalate } from './tools/routing'
+import type { EscalationCategory } from './tools/rules'
+import { SOL_SYSTEM_PROMPT } from './tools/solPrompt'
 
 // ------------------------------------------------------------------------------ config
 
@@ -60,17 +65,9 @@ const MAX_TOKENS = Number.parseInt(process.env.SOL_MAX_TOKENS ?? '4096', 10)
  *  with SOL_EFFORT if the panel wants to see the tradeoff live. */
 const EFFORT = (process.env.SOL_EFFORT ?? 'low') as 'low' | 'medium' | 'high' | 'xhigh' | 'max'
 /**
- * Adaptive thinking is the library default, and SOL_THINKING=disabled turns it off.
- *
- * Production ships `disabled`, and NOT as a latency dial -- which is how this comment and
- * .env.example both described it until iteration 120. Disabling is *slower* to first token; it is the
- * only configuration that produced zero behavioural violations across the four adversarial scenarios,
- * and with adaptive on Sol created a real escalation and then failed to tell the guest it had done so.
- * docs/latency-target.md, "What we traded, deliberately", has the measurements.
- *
- * Blank is not neutral: anything other than the string 'disabled' lands on adaptive, so an unset
- * variable is the configuration we rejected -- which is why .env.example now ships the value rather
- * than an empty key.
+ * Adaptive thinking is the library default; SOL_THINKING=disabled turns it off. Production ships
+ * `disabled` for behaviour, NOT as a latency dial: it was the only setting with zero behavioural
+ * violations in the adversarial scenarios (docs/latency-target.md). Anything but 'disabled' is adaptive.
  */
 const THINKING: Anthropic.ThinkingConfigParam =
   process.env.SOL_THINKING === 'disabled' ? { type: 'disabled' } : { type: 'adaptive' }
@@ -125,47 +122,11 @@ const GUEST_SAFE_FAILURE =
 const HANDOFF_NOTICE = 'A Solstice team member is with you now. They can see everything above.'
 
 // -------------------------------------------------------------------------- the prompt
-//
-// The agent definition is agent/sol.md. We read it at request time so the .md really is the
-// source of truth rather than documentation written after the fact, and fall back to the
-// compiled copy when the markdown is not in the deployed bundle.
-
-let cachedPrompt: string | null = null
 
 /**
- * What this channel actually has, appended to the shared agent definition.
- *
- * `agent/sol.md` is one definition compiled to two runtimes, and it tells Sol to call
- * `create_inquiry` the moment it has an email. The telephony runtime has that tool; this one does
- * not — `toolDefinitions()` is twelve concierge tools and `create_inquiry` is not among them. So
- * on chat the model was being instructed to reach for something that is not there, and when the
- * call failed it did the honest thing and explained itself to the guest: "I don't have a
- * create_inquiry tool available to me directly." Observed 3 times out of 3.
- *
- * A prompt rule forbidding that sentence (PR #26) cut it to 1 in 3 but could not remove it, which
- * is what you would expect: the model is not misbehaving, it is reporting a real contradiction.
- * Telling it the truth about this channel removes the contradiction instead of suppressing the
- * symptom.
- *
- * This does NOT decide whether chat should be able to open inquiries — that is a capability
- * question, it is with Enrique, and mounting the group tool layer here would pull it into this
- * function's bundle on the demo's main path. It only stops the prompt asking for something the
- * channel cannot do.
+ * What this channel has, appended after the shared prompt. Chat has no create_inquiry, and its
+ * escalations reach a manager's queue rather than the group sales board, so the note says both.
  */
-// This note is the LAST thing in the chat prompt, so it is the most salient instruction the model
-// has. Its first version said the escalation "reaches Sales with the details" and to "tell them
-// Sales will follow up". PR #66 established that neither is true: `escalations` is readable by
-// concierge and admin only, every notify list in the matrix is GM / Regional Security / Manager on
-// duty / AGM, and the row carries a free-text summary rather than the structured payload the group
-// sales board receives. A manager reads it and routes it onward.
-//
-// Measured on production before this change, four runs out of four told the guest otherwise, even
-// though the tool result in the model's own context read "Escalation … to agm":
-//   "I've logged this and it's going to our Sales team today. They'll reach out to dana.reyes@… "
-//   "This has gone to our Sales team … They'll reach out to dana.reyes@… with a quote."
-//   "This is logged and going to our Sales team today."
-// A named destination and a promised day, both wrong, to a guest. The model was not drifting; it
-// was following this note.
 const CHAT_CHANNEL_NOTE = `
 ON THIS CHANNEL
 You are on web chat, which has no inquiry-creation tool. Do not try to open a group inquiry here
@@ -177,36 +138,14 @@ Be careful what you promise about who has it. The escalation does not reach the 
 so do not tell the guest that Sales has it, that Sales or a team will contact them, or that it is
 going anywhere today. You may say that a group block is priced by Sales rather than by you, because
 that is true; what you have actually just done is put it in front of a manager, so say that much and
-no more. Never name who will make contact, and never promise when.`
+no more. For a group request, never name who will make contact, and never promise when.`
 
-function systemPrompt(): string {
-  if (cachedPrompt) return cachedPrompt
-  cachedPrompt = `${readPromptFromMarkdown() ?? SOL_SYSTEM_PROMPT}\n${CHAT_CHANNEL_NOTE}`
-  return cachedPrompt
+// solPrompt.ts is generated from agent/sol.md at build time. An empty prompt must stop the function
+// from loading, never let Sol answer with no rules.
+if (!SOL_SYSTEM_PROMPT.trim()) {
+  throw new Error('SOL_SYSTEM_PROMPT is empty: run `node scripts/gen-sol-prompt.mjs` to regenerate it from agent/sol.md.')
 }
-
-function readPromptFromMarkdown(): string | null {
-  // A bundled function may not ship the markdown, which is exactly why solPrompt.ts exists.
-  const candidates = [
-    join(process.cwd(), 'agent', 'sol.md'),
-    join(process.cwd(), '..', 'agent', 'sol.md'),
-    join(process.cwd(), '..', '..', 'agent', 'sol.md'),
-  ]
-  for (const path of candidates) {
-    try {
-      const md = readFileSync(path, 'utf8')
-      const start = md.indexOf(SOL_SYSTEM_BEGIN)
-      const end = md.indexOf(SOL_SYSTEM_END)
-      if (start >= 0 && end > start) {
-        const body = md.slice(start + SOL_SYSTEM_BEGIN.length, end).trim()
-        if (body.length > 0) return body
-      }
-    } catch {
-      // try the next candidate
-    }
-  }
-  return null
-}
+const SYSTEM_PROMPT = `${SOL_SYSTEM_PROMPT}\n${CHAT_CHANNEL_NOTE}`
 
 // ------------------------------------------------------------------------------- SSE
 
@@ -415,6 +354,12 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
   const sessionReady: Promise<unknown> = ensureSession(sessionId, undefined) // unconditional: see ensureSession
   void sessionReady.then(() => persistGuestMessage(sessionId, userText, isNewSession))
 
+  // Safety, medical and legal reach a human whatever the model does next, including failing: the
+  // guest's words are classified in code and escalated before the model is asked. A create_escalation
+  // from the model later in the turn merges into the same row.
+  const urgent = mustEscalate(intentOf(await classifyIntent({ utterance: userText }, ctx)))
+  if (urgent) await escalateInCode(emit, ctx, urgent, userText, sessionReady)
+
   // 3. History and the session's bound identity are the only reads on the critical path, they
   //    only happen on a continuing conversation, and they happen together.
   const [history, saved] = isNewSession
@@ -459,12 +404,7 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
   /** tool_use block ids whose "running" chip has already gone out mid-stream. */
   const announced = new Set<string>()
   let assistantText = ''
-  /**
-   * The model can speak in more than one round: a phrase before a tool call, the answer after
-   * it. Those are separate utterances and must never be concatenated character-to-character,
-   * which is what produced "...review it for you.This is now with our AGM...". Belt and braces
-   * behind the prompt-level fix: whatever the model does, the transcript stays readable.
-   */
+  /** Text from different tool rounds is separate utterances, never concatenated character-to-character. */
   let roundHasEmittedText = false
   let toolCalls = 0
   let failure: string | null = null
@@ -474,6 +414,8 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
   const usage = { input: 0, output: 0, cache_read: 0, cache_write: 0 }
   /** Cleared for the rest of the turn the first time the model rejects a tuning parameter. */
   let tuningEnabled = SEND_TUNING
+  /** Urgency the model's own classify_intent found, which the guest's exact words may not carry. */
+  let modelUrgent: EscalationCategory | null = null
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     let message: Anthropic.Message
@@ -587,8 +529,9 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
       // The classified intent is the supervisor console's label for this conversation. Persist it
       // here, where the result is already in hand, fire-and-forget like every write on this path.
       if (use.name === 'classify_intent' && result.ok) {
-        const classified = (result.data as { intent?: unknown } | undefined)?.intent
+        const classified = intentOf(result)
         if (typeof classified === 'string' && classified) void bindSessionIntent(sessionId, classified)
+        modelUrgent ??= mustEscalate(classified)
       }
 
       // A successful verification is session state, not just a tool result.
@@ -620,6 +563,10 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
 
     messages.push({ role: 'user', content: results })
   }
+
+  // The model's classify_intent found urgency the guest's words did not show. Unless the model filed
+  // that category itself, the runtime does: a transfer_to_human or another category does not count.
+  if (modelUrgent && modelUrgent !== urgent) await escalateInCode(emit, ctx, modelUrgent, userText, sessionReady, assistantText)
 
   const totalMs = Date.now() - turnStarted
   const firstTokenMs = firstTokenAt === null ? null : firstTokenAt - turnStarted
@@ -661,10 +608,10 @@ function systemBlocks(guestId: string | undefined, label: string | null): Anthro
     'CHANNEL',
     NARRATE_BEFORE_TOOLS
       ? 'This conversation is in the chat channel.'
-      : 'This conversation is in the chat channel. Say nothing before a tool call: give one answer once the tools have returned, and never restate something you have already said in this reply.',
+      : 'This conversation is in the chat channel. Apart from the 911 line in an emergency, say nothing before a tool call: give one answer once the tools have returned, and never restate something you have already said in this reply.',
   ].join('\n')
   const blocks: Anthropic.TextBlockParam[] = [
-    { type: 'text', text: [systemPrompt(), channel].join(PARAGRAPH_BREAK), cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: [SYSTEM_PROMPT, channel].join(PARAGRAPH_BREAK), cache_control: { type: 'ephemeral' } },
   ]
   if (guestId) {
     blocks.push({
@@ -696,26 +643,67 @@ function anthropicTools(): Anthropic.Tool[] {
   return cachedTools
 }
 
+// ------------------------------------------------------------------------- enforcement
+
+/**
+ * Files a safety, medical or legal escalation through the same create_escalation handler the model
+ * uses, once per session and category, and emits the chip the UI already renders, marked
+ * `enforced: true`.
+ */
+async function escalateInCode(
+  emit: Emit,
+  ctx: ToolContext,
+  category: EscalationCategory,
+  guestText: string,
+  sessionReady: Promise<unknown>,
+  reply = '',
+): Promise<void> {
+  await sessionReady // escalations.session_id references the sessions row
+  if (await hasOpenEscalation(ctx.session_id, category)) return
+
+  const guest = maskFreeText(guestText)
+  const args: ToolArgs = {
+    category,
+    summary: `Raised by the chat runtime (${category}): "${guest.slice(0, 300)}"`,
+    transcript_excerpt: `Guest: ${guest}${reply ? `\nSol: ${maskFreeText(reply)}` : ''}`.slice(0, 1200),
+    attempted_resolutions: ['Raised automatically by the chat runtime from the guest message; Sol may add detail.'],
+  }
+  emit('tool', { name: 'create_escalation', status: 'running', summary: runningLabel('create_escalation'), citations: [] as Citation[], enforced: true })
+  const result = await runTool('create_escalation', args, ctx)
+  await recordToolInvocation(ctx, 'create_escalation', args, result)
+  emit('tool', { name: 'create_escalation', status: 'done', summary: summarize('create_escalation', result), citations: result.citations ?? [], enforced: true })
+}
+
+/** redactText masks emails and phones. A card number is masked first, so no part of it survives as a "phone". */
+function maskFreeText(text: string): string {
+  return redactText(text.replace(/\d(?:[ -]?\d){12,18}/g, '[card number removed]'))
+}
+
+function intentOf(result: { data?: unknown }): unknown {
+  return (result.data as { intent?: unknown } | undefined)?.intent
+}
+
+/** Same rule as create_escalation's own merge: an open row of this category already covers it. */
+async function hasOpenEscalation(sessionId: string | undefined, category: EscalationCategory): Promise<boolean> {
+  try {
+    const db = getDatabase()
+    if (!db || !sessionId) return false
+    const { data } = await db.from('escalations').select('id,category,status').eq('session_id', sessionId)
+    return mergeTargetFor(data as Array<{ id: string; category: string; status: string }> | null, category) !== null
+  } catch {
+    return false
+  }
+}
+
 // ------------------------------------------------------------------------- persistence
 //
 // Every write below is best effort. AGENTS.md is explicit that the schema may not be applied
 // yet, and a missing table must degrade the dashboard, never the conversation.
 
 /**
- * The `sessions` row every other write depends on, created for EVERY turn rather than only a new one.
- *
- * `resolveSessionId` mints a fresh id when the caller's is malformed, which closed the disclosed case:
- * a non-uuid is rejected by Postgres with `22P02`, and on a fire-and-forget path that rejection is
- * swallowed. It left the neighbouring one. **A well-formed uuid the caller invented passes `UUID_RE`**,
- * so `isNewSession` was false, no row was inserted, and every child insert failed its foreign key --
- * silently. Measured on production at iteration 166's filing: a real `get_policy` call, a correct
- * answer to the guest, and `tool_invocations` unchanged. The validation closed the case that fails on
- * TYPE and left the case that fails on REFERENCE, while `agent/sol.md` promises every tool call is
- * recorded.
- *
- * Calling this unconditionally is the whole fix. The insert already treats a duplicate key as success,
- * so a continuing conversation pays one rejected insert on a path nothing awaits, and an id we never
- * issued gets the row that makes the rest of the turn recordable.
+ * The `sessions` row every other write depends on, attempted on every turn: a well-formed uuid the
+ * caller invented has no row, and without one every child insert fails its foreign key silently.
+ * A duplicate key is success, so a continuing conversation pays one rejected insert nothing awaits.
  */
 async function ensureSession(sessionId: string, guestId: string | undefined): Promise<void> {
   try {
@@ -830,11 +818,8 @@ async function bindSessionGuest(sessionId: string, guestId: string, label: strin
   }
 }
 
-/** Writes the classified intent onto the session so the supervisor console can label the
- *  conversation. Four admin surfaces read `sessions.intent` and NOTHING was writing it, so every
- *  session ever recorded rendered as "classifying…" — `intentLabel(null)` returns that string.
- *  `classify_intent` had the answer all along; it was only ever held in the tool trace.
- *  Best effort, like every other write here: a label is not worth failing a turn for. */
+/** Writes the classified intent onto the session, which is what the supervisor console labels the
+ *  conversation with. Best effort: a label is not worth failing a turn for. */
 async function bindSessionIntent(sessionId: string, intent: string): Promise<void> {
   try {
     const db = getDatabase()
@@ -921,19 +906,8 @@ function str(value: unknown): string | undefined {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
- * A caller-supplied session id is only usable if Postgres will accept it.
- *
- * Every write on this path is fire-and-forget so a turn is never held up by the database. That is
- * the right trade for latency and the wrong one for trust: a non-uuid id is rejected with `22P02`
- * and the rejection is swallowed, so the caller gets a fully working conversation that writes no
- * session, no messages and **no `tool_invocations` at all**. The agent answers, the tools run, and
- * nothing is recorded — which contradicts the guarantee that every tool call is traced, the thing
- * the supervisor screen and the audit story both rest on.
- *
- * So a malformed id is treated exactly as an absent one: mint a fresh session rather than trust it.
- * A client that sends rubbish loses continuity, which is its own fault and is visible to it in the
- * `session` event; it does not get to opt out of being recorded. This also stops that event
- * echoing caller-controlled text straight back.
+ * A malformed session id is treated as an absent one. Postgres rejects a non-uuid, and on these
+ * fire-and-forget writes that rejection would leave a conversation with nothing recorded.
  */
 export function resolveSessionId(raw: string | null | undefined): {
   sessionId: string

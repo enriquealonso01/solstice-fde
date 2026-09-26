@@ -13,8 +13,8 @@
  *   2. call control app — the voice application whose webhook_event_url is /api/telnyx
  *   3. phone number     — REUSES the number in TELNYX_PHONE_NUMBER and repoints it at (2).
  *                         --buy opts into purchasing a fresh US local number instead.
- *   4. assistant "Sol"  — instructions compiled from agent/sol.md, webhook tools registered
- *                         against the deployed /api/ endpoints
+ *   4. assistant "Sol"  — instructions compiled from the SOL:SYSTEM block of agent/sol.md, webhook
+ *                         tools registered against the deployed /api/ endpoints
  *   5. SIP connection   — Credential Connection for the browser supervisor leg
  *   6. WebRTC credential— on-demand telephony credential; /api/voice/credentials mints JWTs from it
  *   7. attach number    — binds the number to Sol
@@ -23,11 +23,15 @@
  *
  * Flags:
  *   --dry-run        Make NO network calls. Parse everything, print the plan. Safe at $0 balance.
+ *   --instructions-only
+ *                    Replace the existing assistant's instructions and nothing else: one POST whose
+ *                    body is { instructions }. With --dry-run, prints the method, URL, body keys and
+ *                    instruction length, and sends nothing. --refresh-instructions is an alias.
  *   --check          Preflight only: verify the API key and print the account balance. One call.
  *   --buy            Purchase a new US local number instead of reusing TELNYX_PHONE_NUMBER.
  *   --area-code=305  Area code to search when --buy is set. Default 305 (Miami).
  *   --base-url=URL   Public origin for webhook URLs. Default $PUBLIC_BASE_URL, then $URL.
- *   --refresh        Update an existing assistant's instructions and tools from agent/sol.md.
+ *   --refresh        Re-send the whole assistant (instructions, model, voice, tools) to the existing one.
  *   --force          Continue past a zero/low balance warning.
  *   --no-env-write   Print what would go into .env instead of writing it.
  *   --integration-secret
@@ -40,10 +44,11 @@
  * in plain language, and carries on to the steps that are still possible.
  */
 
-import { readFile, writeFile, copyFile, access } from 'node:fs/promises'
+import { readFile, writeFile, copyFile } from 'node:fs/promises'
 import { randomBytes } from 'node:crypto'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { extractSolSystem } from '../gen-sol-prompt.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = resolve(HERE, '..', '..')
@@ -76,7 +81,9 @@ const flags = {
   dryRun: argv.includes('--dry-run'),
   check: argv.includes('--check'),
   buy: argv.includes('--buy'),
-  refresh: argv.includes('--refresh') || argv.includes('--refresh-instructions'),
+  refresh: argv.includes('--refresh'),
+  // --refresh-instructions is the old name; it now means what it says.
+  instructionsOnly: argv.includes('--instructions-only') || argv.includes('--refresh-instructions'),
   force: argv.includes('--force'),
   noEnvWrite: argv.includes('--no-env-write'),
   integrationSecret: argv.includes('--integration-secret'),
@@ -201,46 +208,18 @@ async function api(path, { method = 'GET', body, query } = {}) {
 
 // ---------------------------------------------------------------------------- sol.md compile
 
-const STRIP_BLOCK = /<!--\s*voice:exclude\s*-->[\s\S]*?<!--\s*\/voice:exclude\s*-->/g
-const HTML_COMMENT = /<!--[\s\S]*?-->/g
-const FRONT_MATTER = /^---\r?\n[\s\S]*?\r?\n---\r?\n/
-
 const MAX_INSTRUCTION_CHARS = 30000
 
+/** The prompt's SPEAKING AROUND A TOOL CALL rule needs the runtime to name the channel; chat.ts does the same. */
+const VOICE_CHANNEL_NOTE = 'CHANNEL\nThis conversation is in the voice channel: a phone call.'
+
 /**
- * Compile agent/sol.md into the voice runtime's instructions.
- *
- * agent/sol.md is owned by another agent and is the SINGLE agent definition (plans/01, D11).
- * Compiling rather than copying means the file can carry chat-only material without it bloating
- * the voice prompt: anything between <!-- voice:exclude --> and <!-- /voice:exclude --> is
- * dropped, HTML comments are dropped, front matter is dropped.
- *
- * It deliberately does NOT inline business rules. Rules live in src/lib/rules/ as data and reach
- * the assistant through the webhook tools, so a threshold change is a one-line edit, not a
- * re-provision. AGENTS.md is explicit about that.
+ * The Telnyx assistant's instructions: the SOL:SYSTEM block of agent/sol.md, the same text the chat
+ * runtime sends, plus the voice channel line. Business rules reach the assistant through the webhook
+ * tools, never through these instructions.
  */
 function compileInstructions(markdown) {
-  let out = markdown
-    // Normalise line endings FIRST, before anything below collapses or measures them.
-    //
-    // Without this the compiled prompt depended on the checkout it was built from. *.md is not
-    // pinned in .gitattributes, so a Windows clone gets agent/sol.md with CRLF -- and then the
-    // blank-line collapse below matches nothing, because a run of three CRLF pairs contains no run
-    // of three bare newlines. Blank-line runs survive, and every carriage return is counted
-    // against the 30,000 cap.
-    //
-    // Measured on one commit: a CRLF checkout compiled to 29,411 characters, an LF checkout to
-    // 29,006. Same source, two artifacts, differing by 400 carriage returns and 5 blank lines --
-    // and those 405 phantom characters were being subtracted from the margin everyone reasoned
-    // about. Worse for a reviewer: the committed export is what the live assistant returned, so on
-    // their machine the compile would not reproduce it.
-    .replace(/\r\n?/g, '\n')
-    .replace(FRONT_MATTER, '')
-    .replace(STRIP_BLOCK, '')
-    .replace(HTML_COMMENT, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
-
+  let out = `${extractSolSystem(markdown)}\n\n${VOICE_CHANNEL_NOTE}`
   let truncated = false
   if (out.length > MAX_INSTRUCTION_CHARS) {
     out = `${out.slice(0, MAX_INSTRUCTION_CHARS)}\n\n[truncated at ${MAX_INSTRUCTION_CHARS} characters]`
@@ -248,35 +227,6 @@ function compileInstructions(markdown) {
   }
   return { instructions: out, truncated }
 }
-
-/** Pull a greeting out of a "## Greeting" section if sol.md defines one. */
-function extractGreeting(markdown) {
-  const m =
-    markdown.match(/^#{1,6}\s*Greeting\s*$([\s\S]*?)(?=^#{1,6}\s)/im) ??
-    markdown.match(/^#{1,6}\s*Greeting\s*$([\s\S]*)/im)
-  if (!m) return null
-  const block = m[1]
-  const quoted = block.match(/["“]([^"”]{10,300})["”]/)
-  if (quoted) return quoted[1].trim()
-  const firstLine = block
-    .split(/\r?\n/)
-    .map((l) => l.replace(/^[>\-*\s]+/, '').trim())
-    .find((l) => l.length > 10)
-  return firstLine ?? null
-}
-
-const PLACEHOLDER_INSTRUCTIONS = `You are Sol, the front-desk assistant for Solstice Hotel Group.
-
-PLACEHOLDER INSTRUCTIONS. agent/sol.md was not present when this assistant was provisioned.
-Re-run: node scripts/telnyx/provision.mjs --refresh
-
-Hard rules that apply regardless:
-- Never state a policy, rate, fee, or availability from memory. Call a tool. If the tool returns
-  grounded:false, say you cannot confirm it and escalate. Never improvise a hotel fact.
-- Never read back a full phone number, email address, or payment card number. The data layer
-  already masks them; keep them masked out loud.
-- If the guest asks for something beyond your authority, use create_escalation and tell the guest
-  a human will follow up. Do not promise an outcome you cannot verify.`
 
 // ---------------------------------------------------------------------------- tool registry
 
@@ -878,7 +828,7 @@ async function stepAssistant(env, baseUrl, sol) {
   if (skipped.length) console.log(`      skipped: ${skipped.join(', ')}`)
 
   const model = env.TELNYX_ASSISTANT_MODEL || 'openai/gpt-4o'
-  const greeting = env.TELNYX_ASSISTANT_GREETING || sol.greeting || DEFAULT_GREETING
+  const greeting = env.TELNYX_ASSISTANT_GREETING || DEFAULT_GREETING
 
   const body = {
     name: NAMES.assistant,
@@ -911,7 +861,7 @@ async function stepAssistant(env, baseUrl, sol) {
   const existing = list.ok ? (list.data ?? []).find((a) => a.name === NAMES.assistant) : null
 
   if (existing && !flags.refresh) {
-    record(NAMES.assistant, 'REUSED', `id ${existing.id} (pass --refresh to push agent/sol.md again)`)
+    record(NAMES.assistant, 'REUSED', `id ${existing.id} (pass --instructions-only to push agent/sol.md again)`)
     return { id: existing.id, greeting }
   }
 
@@ -1164,20 +1114,8 @@ async function stepVerifyTools(assistantId, expectedHeader) {
 // ---------------------------------------------------------------------------- main
 
 /**
- * Where every webhook this script bakes into the assistant will point.
- *
- * This used to end in `|| 'https://solstice-fde.netlify.app'`, which **does not exist** -- a 404. The real
- * site is `solstice-hotel-group.netlify.app`, and it was found at iteration 114 by fetching every absolute
- * URL in the repository rather than reading them.
- *
- * The literal never fired, because `.env` carries `PUBLIC_BASE_URL` and `.env.example` lists it. That is
- * exactly what made it dangerous: provisioning without that key would have written a dead host into
- * `TOOLS_BASE_URL`, `GROUP_TOOL_URL`, the call-control webhook and the SIP connection's event URL, and
- * reported success. The phone agent would have had 23 tools pointing nowhere, and nothing on screen would
- * have said so.
- *
- * A wrong default is worse than no default. Refusing costs one line in a setup step; a silently
- * misconfigured assistant costs a demo.
+ * Where every webhook this script bakes into the assistant will point. There is no default host: a
+ * wrong one would register every phone tool against a dead URL and still report success.
  */
 function resolveBaseUrl(env) {
   const candidate =
@@ -1192,12 +1130,53 @@ function resolveBaseUrl(env) {
   return String(candidate).replace(/\/+$/, '')
 }
 
+/**
+ * --instructions-only: replace the live assistant's instructions and nothing else. The body has one
+ * key, so model, voice, tools and telephony settings are not sent. Reads the assistant before and
+ * after, and reports whether anything besides the instructions moved.
+ */
+async function updateInstructionsOnly(env, instructions) {
+  section('Instructions-only update')
+  const id = env.TELNYX_ASSISTANT_ID || process.env.TELNYX_ASSISTANT_ID
+  if (!id) throw new Error('TELNYX_ASSISTANT_ID is not set. --instructions-only updates the existing assistant; it never creates one.')
+  const path = `/ai/assistants/${id}`
+  const body = { instructions }
+  console.log(`  POST ${TELNYX_API}${path}`)
+  console.log(`  body keys: ${Object.keys(body).join(', ')}`)
+  console.log(`  instructions: ${instructions.length} chars`)
+  if (flags.dryRun) {
+    console.log('\n--dry-run: nothing was sent.')
+    return
+  }
+
+  apiKey = env.TELNYX_API_KEY || process.env.TELNYX_API_KEY || null
+  if (!apiKey) throw new Error('TELNYX_API_KEY is not set.')
+  const before = await api(path)
+  if (!before.ok) throw new Error(`Could not read assistant ${id}: ${before.error}`)
+  const updated = await api(path, { method: 'POST', body })
+  if (!updated.ok) throw new Error(`Update failed: ${updated.error}`)
+  const after = await api(path)
+  if (!after.ok) throw new Error(`Updated, but the read-back failed: ${after.error}`)
+
+  console.log(`  live instructions match agent/sol.md: ${after.data?.instructions === instructions ? 'yes' : 'NO'}`)
+  for (const key of ['model', 'greeting', 'tools', 'voice_settings', 'transcription', 'telephony_settings']) {
+    const same = JSON.stringify(before.data?.[key]) === JSON.stringify(after.data?.[key])
+    console.log(`  ${key} unchanged: ${same ? 'yes' : 'NO'}`)
+  }
+  console.log(`  (${callCount} Telnyx API calls)`)
+}
+
 async function main() {
   console.log('Solstice FDE — Telnyx provisioning')
   console.log(`repo: ${REPO_ROOT}`)
   if (flags.dryRun) console.log('MODE: --dry-run, no network calls will be made')
 
   const { values: env } = await readEnvFile()
+  // Compile first: a missing or empty SOL:SYSTEM block stops the run before anything remote happens.
+  const sol = compileInstructions(await readFile(SOL_MD_PATH, 'utf8'))
+  console.log(`agent/sol.md: compiled ${sol.instructions.length} chars${sol.truncated ? ' (TRUNCATED)' : ''}`)
+  if (flags.instructionsOnly) return updateInstructionsOnly(env, sol.instructions)
+
   const baseUrl = resolveBaseUrl(env)
   console.log(`base url: ${baseUrl}`)
 
@@ -1205,20 +1184,6 @@ async function main() {
   if (flags.check) {
     console.log('\n--check only. Nothing was provisioned.')
     return
-  }
-
-  // Compile the agent definition before touching anything remote, so a missing sol.md is a loud
-  // warning at the top rather than a surprise halfway through.
-  let sol = { instructions: PLACEHOLDER_INSTRUCTIONS, greeting: null, source: 'placeholder' }
-  try {
-    await access(SOL_MD_PATH)
-    const md = await readFile(SOL_MD_PATH, 'utf8')
-    const compiled = compileInstructions(md)
-    sol = { instructions: compiled.instructions, greeting: extractGreeting(md), source: 'agent/sol.md' }
-    console.log(`agent/sol.md: compiled ${compiled.instructions.length} chars${compiled.truncated ? ' (TRUNCATED)' : ''}`)
-  } catch {
-    console.warn('\n  !  agent/sol.md not found. Sol will be created with PLACEHOLDER instructions.')
-    console.warn('     Once Agent A3 lands the file, re-run: node scripts/telnyx/provision.mjs --refresh\n')
   }
 
   const app = await stepCallControlApp(baseUrl)
@@ -1284,21 +1249,13 @@ async function main() {
   console.log('       Environment variables), then redeploy. Functions read process.env, not .env.')
   console.log('    3. Telnyx portal -> API Keys -> copy the Public Key into TELNYX_PUBLIC_KEY.')
   console.log('       Until it is set, the webhook accepts UNVERIFIED requests and logs a warning.')
-  if (sol.source === 'placeholder') {
-    console.log('    4. agent/sol.md is missing. Re-run with --refresh once it exists.')
-  }
   if (pre.balance !== null && pre.balance < 5) {
     console.log(`\n  Balance is ${pre.balance.toFixed(2)}. Enough to test, not enough to leave calls running.`)
   }
   console.log('')
 }
 
-// Run the CLI only when this file IS the entry point.
-//
-// Without this guard, importing anything from here runs the whole provisioning flow, which talks
-// to the live Telnyx API. That is why the instruction-size ceiling had no test: the one function
-// that knows the cap could not be imported to measure it. The compile is pure, so it is exported
-// and pinned by src/lib/rules/__tests__/voice-prompt-size.test.ts.
+// Run only as the entry point, so tests can import compileInstructions without touching Telnyx.
 if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
   main().catch((err) => {
     console.error(`\nFATAL: ${err.message}`)

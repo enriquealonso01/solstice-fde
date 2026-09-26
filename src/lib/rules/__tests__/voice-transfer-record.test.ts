@@ -1,101 +1,107 @@
-// A warm transfer is announced before it connects, so it needs a written record behind it.
+// G16: a failed handoff is never described as a handoff, on either channel.
 //
-// G16 is "a failed handoff is never described as a handoff". The chat branch of `transfer_to_human`
-// has refused to describe one since PR #7: with no escalation it tells the model to create one first
-// and never to say a colleague is joining. The voice branch only refused when **no transfer target was
-// configured** — and that is not the deployed configuration.
-//
-// Two variables decide it, and iteration 54 found that only one had been checked:
-//
-//     const target = process.env.TELNYX_TRANSFER_TARGET ?? process.env.DEMO_PHONE ?? null
-//
-// `TELNYX_TRANSFER_TARGET` is absent from the deployed environment. `DEMO_PHONE` is set. So
-// `configured` is TRUE in production, which the live tool confirmed:
-//
-//     POST /api/tools/transfer_to_human {"channel":"voice", …}
-//       -> transfer_available: True, directive: telnyx_warm_transfer, fallback: null,
-//          escalation_id: None,
-//          human_reason: "Announce the handoff before it happens … then step aside."
-//
-// Announce first, nothing in writing, and a transfer that can fail for reasons this branch cannot see.
-// So the configured path now also insists on a record when none exists. These tests pin the shape of
-// the decision rather than the prose, so rewording stays cheap and dropping the guarantee does not.
+// A warm transfer is announced before it connects, and on chat nobody is guaranteed to be watching.
+// So transfer_to_human must never tell the model a colleague is joining, and when no escalation
+// exists yet it must tell the model to create one first, so a written record exists either way.
 
-import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { afterEach, describe, expect, it } from 'vitest'
+import { transferToHuman } from '../../../../netlify/functions/tools/escalation'
+import type { ToolContext } from '../../../../netlify/functions/tools/helpers'
 
-const NL = String.fromCharCode(10)
-const src = readFileSync(join(process.cwd(), 'netlify/functions/tools/escalation.ts'), 'utf8')
+const chat = (): ToolContext => ({ channel: 'chat', session_id: 'sess-1' }) as ToolContext
+const voice = (): ToolContext => ({ channel: 'voice', session_id: 'sess-1' }) as ToolContext
 
-/** Comments quote the very phrases these cases forbid, so strip them. Iterations 8, 41, 42, 46. */
-function stripComments(text: string): string {
+/** `ToolResult.data` is deliberately opaque in the contract; these tests assert on its fields. */
+const fields = (result: { data?: unknown }): Record<string, unknown> => (result.data ?? {}) as Record<string, unknown>
+
+/** Phrases that promise a live handoff. None may ever be suggested to the model on chat. */
+const PROMISES_A_LIVE_HANDOFF = [/joining (this|the) chat/i, /is joining/i, /while they connect/i, /connecting you/i, /transferring you/i, /hold while/i]
+
+/** The guidance may name forbidden phrases in order to forbid them, so drop the prohibitions first. */
+function affirmativeGuidance(text: string): string {
   return text
-    .split(NL)
-    .filter((line) => !line.trim().startsWith('//') && !line.trim().startsWith('*'))
-    .join(NL)
+    .split(/(?<=[.!?])\s+|,\s*(?=(?:do not|don't|never)\b)/i)
+    .filter((clause) => !/^\s*(do not|don't|never)\b/i.test(clause.trim()))
+    .join(' ')
 }
 
-const code = stripComments(src)
-
-/** The voice branch only: from the channel check to the end of its return. */
-const voiceBranch = (() => {
-  const start = code.indexOf("if (ctx.channel === 'voice')")
-  const end = code.indexOf('request_supervisor_takeover')
-  return code.slice(start, end)
-})()
-
-describe('transfer_to_human on the voice leg', () => {
-  it('is reachable — the branch was located and still offers a warm transfer', () => {
-    expect(voiceBranch.length).toBeGreaterThan(300)
-    expect(voiceBranch).toContain('telnyx_warm_transfer')
+describe('transfer_to_human on chat', () => {
+  it('never tells the model to say a colleague is joining, with or without an escalation', async () => {
+    for (const args of [{ reason: 'Guest demands a manager', escalation_id: 'ESC-1' }, { reason: 'Guest demands a manager' }]) {
+      const guidance = affirmativeGuidance(String(fields(await transferToHuman(args, chat())).human_reason))
+      for (const pattern of PROMISES_A_LIVE_HANDOFF) expect(guidance, `guidance must not match ${pattern}`).not.toMatch(pattern)
+    }
   })
 
-  it('reads BOTH variables, because either one makes a transfer look configured', () => {
-    // The bug behind this file was checking one of these and concluding the other branch was live.
-    expect(voiceBranch).toContain('TELNYX_TRANSFER_TARGET')
-    expect(voiceBranch).toContain('DEMO_PHONE')
+  it('the filter still catches the original defect sentence', () => {
+    const defect = 'Tell the guest a colleague is joining the chat, keep them company until that happens.'
+    expect(PROMISES_A_LIVE_HANDOFF.some((p) => p.test(affirmativeGuidance(defect)))).toBe(true)
   })
 
-  it('asks whether an escalation exists, not only whether a transfer is configured', () => {
-    expect(voiceBranch).toMatch(/escalationExists/)
-    // and it must be consulted inside the configured path, not only the unconfigured one
-    const configuredAt = voiceBranch.indexOf('configured')
-    expect(voiceBranch.indexOf('escalationExists')).toBeGreaterThan(configuredAt)
+  it('reports that a supervisor can join, separately from anyone being on the way', async () => {
+    const data = fields(await transferToHuman({ reason: 'wants a manager', escalation_id: 'ESC-1' }, chat()))
+    expect(data.transfer_available).toBe(true)
+    expect(data.live_handoff_guaranteed).toBe(false)
   })
 
-  it('tells the model to create the record before announcing the handoff', () => {
-    expect(voiceBranch).toMatch(/create_escalation/)
-    expect(voiceBranch).toMatch(/before you announce the handoff|Create the escalation first/)
+  it('with no escalation on file, demands one before anything is said', async () => {
+    const data = fields(await transferToHuman({ reason: 'wants a manager' }, chat()))
+    expect(String(data.human_reason)).toMatch(/create the escalation/i)
+    expect(String(data.fallback)).toMatch(/nothing durable has reached a human/i)
   })
 
-  it('still steps aside when a record already exists, so it is not a blanket refusal', () => {
-    // Guard the guard: the cheap way to pass everything above is to refuse every transfer.
-    expect(voiceBranch).toMatch(/read the context back to the person picking up/)
-    expect(voiceBranch).toMatch(/transfer_available: configured/)
+  it('carries the context readback and the routing authority', async () => {
+    const data = fields(await transferToHuman({ reason: 'Guest reports a threat in the lobby', escalation_id: 'ESC-9' }, chat()))
+    expect(String(data.context_readback)).toContain('Guest reports a threat in the lobby')
+    expect(String(data.context_readback)).toContain('ESC-9')
+    expect(data.authority_required).toBeTruthy()
   })
 
-  it('keeps refusing outright when nothing is configured', () => {
-    expect(voiceBranch).toMatch(/No transfer destination is configured/)
-    expect(voiceBranch).toMatch(/Do not pretend a transfer happened/)
+  it('refuses a transfer with no reason', async () => {
+    expect((await transferToHuman({}, chat())).ok).toBe(false)
   })
 })
 
-describe('transfer_to_human on chat, which must not regress', () => {
-  const chatBranch = code.slice(code.indexOf('request_supervisor_takeover'))
-
-  it('still separates "a route exists" from "someone is coming"', () => {
-    expect(chatBranch).toMatch(/live_handoff_guaranteed: false/)
+describe('transfer_to_human on the voice leg', () => {
+  const saved = { target: process.env.TELNYX_TRANSFER_TARGET, demo: process.env.DEMO_PHONE, key: process.env.TELNYX_API_KEY }
+  const configure = (on: boolean) => {
+    delete process.env.TELNYX_TRANSFER_TARGET
+    if (on) {
+      process.env.DEMO_PHONE = '+15555550100'
+      process.env.TELNYX_API_KEY = 'test-key'
+    } else {
+      delete process.env.DEMO_PHONE
+      delete process.env.TELNYX_API_KEY
+    }
+  }
+  afterEach(() => {
+    for (const [name, value] of [['TELNYX_TRANSFER_TARGET', saved.target], ['DEMO_PHONE', saved.demo], ['TELNYX_API_KEY', saved.key]] as const) {
+      if (value === undefined) delete process.env[name]
+      else process.env[name] = value
+    }
   })
 
-  it('still refuses to say a colleague is joining when nothing is in writing', () => {
-    expect(chatBranch).toMatch(/Never describe a handoff that has not happened/)
-    expect(chatBranch).toMatch(/nothing durable has reached a human/)
+  it('with a transfer configured and no escalation, says to create the escalation before announcing', async () => {
+    configure(true)
+    const data = fields(await transferToHuman({ reason: 'wants a manager' }, voice()))
+    expect(data.directive).toBe('telnyx_warm_transfer')
+    expect(data.transfer_available).toBe(true)
+    expect(String(data.fallback)).toMatch(/create_escalation/)
+    expect(String(data.human_reason)).toMatch(/Create the escalation first/)
   })
 
-  it('shares one escalationExists rather than computing it twice', () => {
-    // It was declared in both branches after the voice fix; two copies drift.
-    const occurrences = code.split('const escalationExists').length - 1
-    expect(occurrences).toBe(1)
+  it('with an escalation on file, lets the transfer go ahead', async () => {
+    configure(true)
+    const data = fields(await transferToHuman({ reason: 'wants a manager', escalation_id: 'ESC-2' }, voice()))
+    expect(data.fallback).toBeNull()
+    expect(String(data.human_reason)).toMatch(/read the context back/)
+  })
+
+  it('with nothing configured, refuses to pretend and promises only a callback with a record', async () => {
+    configure(false)
+    const data = fields(await transferToHuman({ reason: 'wants a manager' }, voice()))
+    expect(data.transfer_available).toBe(false)
+    expect(String(data.human_reason)).toMatch(/Do not pretend a transfer happened/)
+    expect(String(data.fallback)).toMatch(/create an escalation/)
   })
 })
