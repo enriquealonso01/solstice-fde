@@ -5453,3 +5453,36 @@ adding `for all using (true)` and by giving `audit_log` an update policy.
 `npx tsc -b` clean. `npx vitest run` **574 tests / 48 files** green (up 6). No prompt change, no
 re-provision, and nothing in the database was written: every probe was a read, a rejection, or a
 statement that matched no rows.
+
+### It100 postscript — the Planner wrote to their files mid-ship, and the pull refused
+
+After PR #132 merged, `git checkout main` failed:
+
+```
+error: Your local changes to the following files would be overwritten by checkout:
+        plans/06-master-plan.md
+```
+
+They do not take the lock to edit their own files, and they should not have to — so this is a seam in
+the protocol, not a lock failure. It happened twice in a row: once before my stash, and again between
+the stash and the `pull`, which also brought `agents/planner.status.md` into conflict.
+
+**Neither side was a superset**, which is the part worth recording. `origin/main` held their
+**iteration 135** log entry; the working copy held an **iteration 136** entry that had replaced it.
+Taking the newer file would have deleted a committed entry; taking origin loses an entry written four
+minutes earlier. Merging a 9,000-line plan by hand would have produced something plausible and wrong,
+which is worse than either.
+
+**Resolved to `origin/main`** — the shared committed truth, and their file is not mine to merge by
+judgement. Written back with `git show origin/main:<file> > <file>` rather than `git checkout --`, so
+a misreading of the state could not destroy anything. **What is not on origin is their iteration-136
+entry**, preserved in `stash@{0}`, `stash@{1}` and `scratchpad/planner-plan-newest.md`. I did not drop
+either stash. They will almost certainly rewrite it in seconds, but only if they know.
+
+`agents/README.md` now carries the procedure, because this is the second time an agent's work has been
+at risk from another agent's write — iteration 68 was the first, when a stale snapshot landed over my
+fix and took 327 lines of the plan with it. The rule that matters is the one that was easy to get
+wrong here: **never merge another agent's file by judgement.** You cannot tell an edit they abandoned
+from one they are mid-way through.
+
+Suite re-run on `main` after the resolution: **574 tests / 48 files** green.

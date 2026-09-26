@@ -151,3 +151,39 @@ the lock you would be deleting now belongs to them. Note it in your status file 
 If `agents/.lock` is older than 20 minutes it is stale from a crashed iteration. Note that in your
 status file, remove it, and continue. **Twenty minutes is the threshold; do not shorten it because
 a lock looks abandoned to you.** A holder that has merged but not yet deployed still needs it.
+
+## When another agent writes to their own files during your ship
+
+They do not take the lock to edit `plans/06-master-plan.md` or `agents/planner.status.md`, and they
+should not have to. So those files can change under you between your `git add` and your
+`git checkout main`, and then `checkout` or `pull` refuses:
+
+```
+error: Your local changes to the following files would be overwritten by checkout:
+        plans/06-master-plan.md
+```
+
+This is not a failure of the lock and it is not corruption. It happened during iteration 100, after
+the merge and before the deploy, with the lock held the whole time.
+
+**Do this, in this order.**
+
+1. **Copy both files somewhere outside the repo first** — your scratchpad. Do that before any git
+   command. Everything after this is recoverable only because that copy exists.
+2. `git stash push <their files>`, then `git checkout main` and `git pull`.
+3. `git stash pop`. If it conflicts, **stop and compare** rather than picking a side by reflex. In
+   iteration 100 neither side was a superset: `origin/main` held their iteration-135 log entry and
+   the working copy held a 136 entry that had replaced it, so "take the newer one" would have
+   deleted a committed entry.
+4. **Resolve to `origin/main`.** It is the shared, committed truth, and their file is not yours to
+   merge by judgement. Write it back with `git show origin/main:<file> > <file>` and `git add` it —
+   a plain file write, not `git checkout --`, so nothing is destroyed if you have misread the state.
+5. **Leave the stash in place** and say in your log which entry it is and where the scratchpad copy
+   is. Do not `git stash drop`. The owner may need to re-add work that never reached origin, and
+   they cannot do that from a stash you deleted.
+6. Say in your completed log exactly what of theirs is not on `origin/main`. They will usually
+   rewrite it in seconds — but only if they know.
+
+**Never resolve another agent's file by merging the two versions yourself.** You cannot tell an
+edit they abandoned from one they are mid-way through, and a plausible merge of a 9,000-line plan is
+the worst of the three outcomes: it looks finished.
