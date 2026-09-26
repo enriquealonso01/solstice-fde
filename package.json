@@ -18,7 +18,8 @@
     "demo:preview": "node scripts/cleanup-phantom-sessions.mjs",
     "demo:tidy": "node scripts/cleanup-phantom-sessions.mjs --delete",
     "verdict": "vite-node scripts/show-verdict.ts --",
-    "email:check": "node scripts/check-email-domain.mjs"
+    "email:check": "node scripts/check-email-domain.mjs",
+    "eval:guardrails": "node scripts/eval/guardrails.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

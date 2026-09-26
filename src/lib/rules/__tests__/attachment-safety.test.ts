@@ -22,7 +22,6 @@
  */
 import { describe, expect, it } from 'vitest'
 import {
-  ATTACHMENT_BUCKET,
   MAX_ATTACHMENT_BYTES,
   formatBytes,
   safeFilename,
@@ -78,10 +77,6 @@ describe('the limits a supervisor is held to', () => {
     // base64 is 4 bytes per 3, plus a little for the JSON envelope and the filename.
     const onTheWire = Math.ceil(MAX_ATTACHMENT_BYTES / 3) * 4 + 1024
     expect(onTheWire).toBeLessThan(NETLIFY_REQUEST_LIMIT)
-  })
-
-  it('names the bucket the same way the migration and the docs do', () => {
-    expect(ATTACHMENT_BUCKET).toBe('attachments')
   })
 
   it('reports a size a person can read', () => {

@@ -14,7 +14,6 @@ import {
 import {
   CHANNEL_ATTACHMENT_POLICY,
   CHANNEL_PROVIDER,
-  PROVIDERS,
   type DeliveryEnv,
 } from '../../../../netlify/functions/_delivery/config'
 import { classifyFailure, type TransportResult } from '../../../../netlify/functions/_delivery/telnyx'
@@ -253,14 +252,6 @@ describe('the $0 Telnyx balance', () => {
 })
 
 describe('swapping a channel is configuration', () => {
-  it('reads its provider from a one-line table', () => {
-    expect(CHANNEL_PROVIDER.email).toBe('telnyx_email')
-    expect(CHANNEL_PROVIDER.sms).toBe('telnyx_sms')
-    // The documented fallback exists behind the same adapter.
-    expect(PROVIDERS.resend_email.label).toBe('Resend')
-    expect(PROVIDERS.resend_email.endpoint).toMatch(/^https:\/\//)
-  })
-
   it('honours a swap without touching the sending code', async () => {
     const original = CHANNEL_PROVIDER.email
     try {

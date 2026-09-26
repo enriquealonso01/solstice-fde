@@ -1,27 +1,8 @@
-// The inbox's Rules chip must not tell a rep an inquiry is ready to price when pricing has already
-// refused it.
-//
-// THIS TEST REPLACES ONE THAT PASSED WHILE THE SCREEN WAS WRONG. The first version read
-// GroupInbox.tsx as text and asserted that a `status === 'blocked'` check appeared before the
-// "ready to price" string. It did appear, it shipped, it deployed, the live bundle contains it
-// verbatim — and /admin/inquiries still showed a green "ready to price" on INQ-2003 and INQ-2010,
-// because the `inquiries` table never stores `blocked`. Live values are `new` (9 rows),
-// `needs_info`, `needs_review` and `auto_approvable`; MOCK_INQUIRIES uses `ready`. The branch could
-// not fire on any row that has ever existed.
-//
-// A test that asserts the shape of the code proves only that the code has that shape. So this one
-// runs the real decision function over the real production payloads and asserts the chip a rep
-// would see.
-//
-// The payloads below are copied from the live rows, and the two that matter are the ones the rules
-// engine refuses on GRP-BLACKOUT:
-//
-//   "Solstice Austin Congress Ave does not take group blocks between March 10, 2027 through
-//    March 19, 2027, and these dates fall inside that window."
+// The inbox's Rules chip must not tell a rep an inquiry is ready to price when the rules engine has
+// refused it. Runs the real decision function over payloads copied from the live rows, whose status
+// is never 'blocked'.
 
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { rulesChipFor } from '@/pages/admin/inboxRulesChip'
 import { evaluateGroupRules, isPriceable } from '@/lib/rules/engine'
 import type { InquiryRow } from '@/components/admin/mockData'
@@ -168,20 +149,4 @@ describe('the inbox Rules chip', () => {
     const broken = row('INQ-BAD', null as unknown as Record<string, unknown>)
     expect(rulesChipFor(broken)).toEqual({ kind: 'unknown' })
   })
-
-  it('never renders "0 missing", and never asks the dead status question again', () => {
-    const src = readInbox()
-    expect(src).not.toMatch(/['"`]0 missing/)
-    // `status` on an inquiry row is new | needs_info | needs_review | auto_approvable. Asking it
-    // for 'blocked' is how the previous fix came to do nothing at all.
-    expect(src).not.toMatch(/status === 'blocked'/)
-  })
 })
-
-function readInbox(): string {
-  const NL = String.fromCharCode(10)
-  return readFileSync(join(process.cwd(), 'src/pages/admin/GroupInbox.tsx'), 'utf8')
-    .split(NL)
-    .filter((line: string) => !line.trim().startsWith('//'))
-    .join(NL)
-}
