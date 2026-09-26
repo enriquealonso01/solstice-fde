@@ -4,63 +4,48 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 233 — 2026-09-26 07:46 EST
+## Iteration 235 — 2026-09-26 07:55 EST
 
-**The plan is accurate and correctly ordered. Nothing is open for an agent. No new tasks.**
+**Nothing is open for an agent. No new tasks.** My prompt lists `agents/README.md` among the files to read each
+iteration. **I have been checking its mtime and calling that reading it.** So I read all 329 lines, and it sent
+me to a false claim in my own file.
 
-`data:check` proves the generated JSON matches the CSVs the interviewers sent. **Nothing proved the seeded
-database does** — and that is the copy the group beat reads from. I checked it field by field.
+### What the working agreement says that I had not registered
 
-### Ten inquiries, a hundred field comparisons, ninety-nine exact
+The writer table gives **`BACKLOG.md` two writers: Enrique (Inbox), Planner (triage)**. I have described myself
+all night as owning one file. Nothing turned on it — the Inbox has been empty since before this segment — but if
+Enrique drops a line in there at 09:00, **clearing it into the plan is mine to do**, and I would have hesitated
+over a permission I already hold.
 
-```
-csv 10 rows · live 13 rows
-MISMATCH  INQ-2004.rooms_requested:  csv='around 25'  live=''
-extra live codes: INQ-2011, INQ-2012, INQ-2013
-```
+And the newest section exists because of me: *"**Get a new test file green before it lands in the shared tree.**
+It happened at iteration 156… the Planner found the suite red at 07:29… That is a whole iteration of theirs
+spent on a transient state of mine. Write the file in the scratchpad, run it there, and copy it in once it
+passes."* **A wasted iteration of mine became a written rule with a remedy, in a file the other agent owns** —
+a better answer to *"build with agents"* than any paragraph about agents.
 
-**The one mismatch is the ambiguity beat working**, and the live row states it better than any document:
-
-```
-INQ-2004  status: needs_info
-  rooms_requested:        None           <- not coerced
-  rooms_requested_raw:    'around 25'    <- their words, kept
-  rooms_requested_approx: 25             <- the parse, named so it cannot be read as a fact
-  missing_fields: [arrival_date, departure_date, rooms_requested, meeting_capacity_needed]
-```
-
-**The one field where a faithful copy would have been wrong is the one field that is not a copy.** The three
-extra rows are accounted for: INQ-2011 is the runbook's demo row (line 293); INQ-2012/2013 are T21's DELETE-ME
-rows.
-
-### The guest side closes on an arithmetic that only works because of a documented quirk
+### Then it sent me to a pointer of mine that was wrong twice over
 
 ```
-solstice-guest-profiles.csv  25 rows
-live                         25 reservations, 24 distinct guests
-more than one stay: {G10004: 2} -> R55004, R55015
+plan:326  "### All agent tasks are closed — T44, T46–T50 shipped; T38–T43, T45 closed in iteration 157"
+plan:330  "one thing only a Tester can do: re-verify the auto-triage agent … BACKLOG.md:50"
+BACKLOG.md:50   (blank)
+BACKLOG.md:54   "Caveat CLOSED at It129 (PR #166), and it had no test at all"
 ```
 
-25 rows → 25 reservations and **24** guests, the missing one being **Michael Chen**, the only guest with two
-stays — the thing the cheat sheet's first row warns about. A count that failed to close would look like a
-dropped row; this one closes *because* of the quirk the demo is built around. Properties: 10 and 10.
+**Three faults in five lines of my own file.** The heading named a task set from iteration 157 while T51–T60
+closed underneath it — the stale-heading failure I have cured twice this morning, recurring in the one place I
+had not looked. The pointer landed on a blank line. And the claim it supported was **the opposite of what the
+cited file says**: that caveat closed about eighty iterations ago.
 
-### So the chain has three links, and all three are now checked
+**So "one thing only a Tester can do" was false**, in a section summarising what is left — and with the Tester
+silent eleven hours, it reads as an open dependency on an agent that is not coming back.
 
-```
-their CSVs -> data/generated/*.json   "OK - 9 generated files match their sources"
-           -> the deployed bundle      the concierge path is compiled from those files
-           -> Postgres                 10/10 inquiries, 99/100 fields, 25/24/10 rows
-```
+**Corrected**: the heading carries no task numbers; the correction quotes `BACKLOG.md`'s own words instead of a
+line number; and I ran `triage.test.ts` — **15 green at 07:54** — before asserting it closes the caveat.
 
-### My instrument was wrong first, and it failed silently
-
-My first count asked `select=id` on tables keyed `guest_id`, `reservation_id` and `property_code`. It returned
-nothing countable and I was one sentence from concluding *"guest data is not in Postgres at all"* — a story I
-already half-believed, which is what made it dangerous.
-
-> **Third query of mine tonight naming a column that does not exist.** `select=*&limit=1` before
-> `select=<field>` costs one call and has now saved three wrong conclusions.
+> **The lesson is about where I looked, not about care.** I cured this exact failure twice today, both times in
+> the region I was already editing. **A stale summary does not live where you are working; it lives where you
+> stopped going.** Reading a file because a checklist names it — not because I had a question — is what found it.
 
 ### Open
 
@@ -68,15 +53,16 @@ already half-believed, which is what made it dangerous.
 |---|---|---|
 | 1 | **`drop policy` ×3** — **only Enrique can.** SQL at **609**, ***"### What to run"***. **Breaks nothing; verified three ways** | Enrique — **do** |
 | 2 | **Top up Telnyx** — under **$3.01** at 06:45, no credit line, fewer than six calls, hard stop at zero | Enrique — **do** |
-| 3 | **T21** — **delegable**: an agent has the key and declined on judgement. *Its two rows confirmed live again this iteration* | Enrique — **do** |
+| 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
 
-Nothing for an agent. Suite green at **923 / 65 files**. Tester silent since 20:26 (**11h20m**); no open
-findings. Inbox and In progress empty. No lock held; I took none. Plan guards re-run: **104 green**.
+Nothing for an agent, and **nothing waiting on the Tester** — that was the false claim. Suite green at
+**923 / 65 files**. Tester silent since 20:26 (**11h29m**); no open findings. Inbox and In progress empty. No
+lock held; I took none. Plan guards re-run: **104 green**.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** The grounding chain from their CSVs to the live database is now checked end to end.
-**The SQL is the one action left that nobody else can take.**
+**The `drop policy` paste.** With that block corrected, nothing in the plan claims an open dependency on anyone
+but Enrique. **The SQL is the one action left that nobody else can take.**

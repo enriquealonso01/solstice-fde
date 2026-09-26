@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 07:45 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 07:55 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **NOTHING IS OPEN FOR AN AGENT.** Every numbered task in this file is closed. **What is left is yours:
 > three things to do, three decisions that need no action.**
 >
@@ -9,10 +9,11 @@
 > looked for a shape `registry.ts` does not have. **Green again at 07:33.** The product was never
 > implicated — the failures were that file's own anti-vacuity cases doing their job.
 >
-> **The last box on `SUBMISSION.md`'s checklist is the one I cannot check for you:** *production is actually
-> serving your latest commit*. Its `OK`/`BEHIND` script covers an errored deploy and one that never
-> happened. **I have the other half** — at 07:06 the published files were byte-identical to this tree.
-> Tree matches `main`; run the script so `main` matches production.
+> **The last box on `SUBMISSION.md`'s checklist is the one I cannot run:** *production is actually serving
+> your latest commit*. **Run it — and it is stronger than it was an hour ago.** It158 found it would print
+> `OK` against a **deploy preview**, which is `state: ready` like any other and which this repo creates every
+> iteration; it now filters `context === 'production'` and compares `published_at`. **I have the other
+> half:** at 07:06 the published files were byte-identical to this tree, so the tree matches `main`.
 >
 > **A line for the ambiguity question, measured at 07:45 rather than described:** INQ-2004's live row holds
 > `rooms_requested: null`, `rooms_requested_raw: "around 25"`, `rooms_requested_approx: 25`, status
@@ -322,11 +323,19 @@ diverge.
 arithmetic: ~130 characters out of 216 of head-room, to reduce an unmeasured risk on a beat that worked
 twice. **They took the recommendation rather than the thorough-looking option.**
 
-### All agent tasks are closed — T44, T46–T50 shipped; T38–T43, T45 closed in iteration 157
+### Everything below this line is closed, or evidence
 
-Everything below this line is closed, or evidence. **What is left is Enrique's, plus one thing only a Tester
-can do:** re-verify the auto-triage agent, which writes drafts and so needs the service-role key or a
-signed-in rep. `BACKLOG.md:50` still carries that open caveat.
+*This heading names no task numbers on purpose. It read **“T44, T46–T50 shipped; T38–T43, T45 closed in
+iteration 157”** while T51 through T60 closed underneath it — the same failure the `▶ OPEN WORK` heading and
+the banner were each cured of. **The banner names what is open, and the banner is rewritten every
+iteration.***
+
+> **CORRECTED at iteration 235.** This block also claimed *“what is left is Enrique's, plus **one thing only
+> a Tester can do**: re-verify the auto-triage agent”*, citing `BACKLOG.md:50`. **Line 50 is blank**, and the
+> entry at 54 says the opposite: *“Caveat **CLOSED** at It129 (PR #166), and it had no test at all.”* It was
+> closed by `src/lib/rules/__tests__/triage.test.ts`, which runs the real sweep twice against the real
+> dataset with no database — **15 tests, run green at 07:54 before writing this.** **Nothing is waiting on a
+> Tester.**
 
 
 ### T51. The README states elapsed time as a figure, which is the one thing its own guard forbids
@@ -2528,6 +2537,132 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 235, 07:55 EST — read the file my own instructions name every iteration, and it found a false claim in mine
+
+**Nothing is open for an agent. No new tasks.** My prompt lists `agents/README.md` among the files to read each
+iteration. **I have been checking its mtime and calling that reading it.** So I read all 329 lines.
+
+#### What it says that I had not registered
+
+The writer table gives **`BACKLOG.md` two writers: Enrique (Inbox), Planner (triage)**. I have described myself
+all night as owning one file. In practice the Inbox has been empty since before this segment, so nothing turned
+on it — but if Enrique drops a line in there at 09:00, **moving it into the plan and clearing the Inbox is mine
+to do**, and I would have hesitated over a permission I already hold.
+
+And the newest section, at line 316, exists because of me:
+
+> **"Get a new test file green before it lands in the shared tree."** *"It happened at iteration 156… the
+> Planner found the suite red at 07:29… That is a whole iteration of theirs spent on a transient state of
+> mine. Write the file in the scratchpad, run it there against the real repository paths, and copy it in once
+> it passes. Costs nothing; it is the same file either way."*
+
+**A wasted iteration of mine became a written rule with a remedy, in a file the other agent owns.** That is the
+loop doing the thing it exists for, and it is a better answer to *"show us you can build with agents"* than any
+paragraph about agents.
+
+#### And reading it sent me to a pointer of mine that was wrong twice over
+
+`agents/README.md` reminded me that a line pointer is a claim. My plan carried one into `BACKLOG.md`, so I
+followed it:
+
+```
+plan:326  "### All agent tasks are closed — T44, T46–T50 shipped; T38–T43, T45 closed in iteration 157"
+plan:330  "one thing only a Tester can do: re-verify the auto-triage agent … BACKLOG.md:50 still
+           carries that open caveat"
+
+BACKLOG.md:50   (blank)
+BACKLOG.md:54   "Caveat CLOSED at It129 (PR #166), and it had no test at all"
+```
+
+**Three faults in five lines of my own file.** The heading named a task set from iteration 157 while T51 through
+T60 closed underneath it — the same stale-heading failure I have now cured in the `▶ OPEN WORK` block and in the
+banner, recurring in the one place I had not looked. The pointer landed on a blank line. And the claim it
+supported was **the opposite of what the cited file says**: the caveat closed about eighty iterations ago.
+
+**So "one thing only a Tester can do" was false, in a section that summarises what is left.** With the Tester
+silent for eleven hours, that sentence reads as an open dependency on an agent that is not coming back.
+
+**Corrected**: the heading carries no task numbers, the correction quotes `BACKLOG.md`'s own words rather than
+its line number, and I ran `triage.test.ts` — **15 green at 07:54** — before asserting that it closes the
+caveat, rather than repeating the claim that it does.
+
+> **The lesson is about where I looked, not about care.** I have cured this exact failure twice this morning and
+> both times in the region I was already editing. **A stale summary does not live where you are working; it
+> lives where you stopped going.** Reading a file because a checklist names it — rather than because I have a
+> question — is what found this one.
+
+#### State
+
+Suite green at **923 / 65 files**. Every numbered task closed. Enrique's six unchanged, `drop policy` first.
+Inbox and In progress empty. Tester silent since 20:26 (**11h29m**). No lock held; I took none.
+
+
+### Iteration 234, 07:48 EST — I named the gap correctly and then vouched for the instrument without examining it
+
+**Nothing is open for an agent. No new tasks.** At iteration 232 I wrote that the last box on the checklist —
+*"production is actually serving your latest commit"* — was the half I could not check, and handed it over as
+*"his, at send time — the OK/BEHIND script."* **It158 ran it and found the script could print `OK` while
+production was behind.**
+
+#### What the script actually selected
+
+`listSiteDeploys` returns **every context in one list**, and a deploy preview is `state: 'ready'` like any
+other. The script took the first ready deploy it found. **This repository opens a pull request every
+iteration**, so previews are produced constantly:
+
+```
+deploys returned: 100
+ready deploys whose context is NOT production: 2    newest a deploy-preview at 03:35
+```
+
+A preview newer than the last production deploy would have been compared against the commit and printed
+**`OK - production is serving your latest commit`** while production served an older build — *the exact failure
+the box exists to catch, in the last check before sending, under a line that says "Do not read a passing state
+alone as a pass."* It was safe today only because the newest preview happened to be hours old, **which is
+precisely why it would have gone unnoticed.**
+
+And a second one: it compared `created_at`, when the build started, not `published_at`, when that build began
+answering requests.
+
+#### Verified in the deliverable, since that file is one I can check
+
+```
+SUBMISSION.md:136   d.state==='ready' && d.context==='production' && d.published_at
+SUBMISSION.md:138   new Date(ready.published_at)
+SUBMISSION.md:147   "**Three** failures are covered." — errored · never happened · deploy preview
+presend-checklist.test.ts   15 tests green
+```
+
+All three filters present, the comparison moved to `published_at`, and the paragraph upgraded from *"two
+failures"* to three with the preview case spelled out — *"because a checklist whose explanation undersells it is
+how the next reader decides a filter is redundant and deletes it."*
+
+#### The part that is mine, and it is the third variation of one error tonight
+
+I did not miss the item — **I named it, in the banner, as the one thing I could not verify.** Then I described
+the instrument as though naming it were the same as checking it.
+
+```
+it219   read a guard's header, concluded the property it describes still held      -> it did not
+it230   read a file mid-edit, diagnosed a run that had already finished            -> wrong cause
+it234   named a script I could not run, and vouched for what it would catch        -> it caught less
+```
+
+> **Three costumes, one mistake: treating a described mechanism as a verified one.** In each case the
+> description was accurate about intent and silent about a gap, and **intent is the part a description is
+> always right about.** The correction is not "be more careful" — it is that *"I cannot check this"* must end
+> the sentence. **The moment I add what it would have found, I have made a claim on an instrument's behalf.**
+>
+> The honest form of my 232 note was one clause shorter: *"tree matches `main` (mine, 07:06); `main` matches
+> production is his box, and I have not examined it."*
+
+#### State
+
+Suite green at **923 / 65 files**; the checklist guard at **15**. Every numbered task closed. Enrique's six
+unchanged, `drop policy` first. Inbox and In progress empty. Tester silent since 20:26 (**11h22m**). No lock
+held; I took none.
+
 
 ### Iteration 233, 07:45 EST — closed the last unverified link in the grounding chain: their CSVs against the live database
 
