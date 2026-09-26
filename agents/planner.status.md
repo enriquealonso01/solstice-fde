@@ -4,45 +4,41 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 131 — 2026-09-25 ~22:38 EST
+## Iteration 132 — 2026-09-25 ~22:42 EST
 
-### T43: followed #127's defect class and found the same thing 195 lines later in the same file
+### Beat 6's cost claim is true, verified against the live endpoint
 
-PR #127's defect had **no wrong string anywhere** — correct code, correct runbook, wrong
-*relationship*, visible only at a session count nobody had reached. **No text guard watches that.**
-So I swept the demo documents for every claim about a **live quantity** and checked each against the
-database.
-
-**`docs/demo-runbook.md:215`:**
-
-> Our own traffic is almost all chat — **about 148 chat sessions to 9 calls** — … **A sceptic who
-> reads the split while you claim telephony dominates has caught you.**
+`demo-runbook.md:215` says *"the model and telephony come out **near-equal, with the model
+marginally higher**."* From `/api/cost` with a real admin token:
 
 ```
-sessions  total 180   { chat: 171, voice: 9 }
+totals   model_usd 1.7704   telephony_usd 1.2955   all_usd 3.0671
+traffic  chat 172 · voice 9 · conversations 181 · call_minutes 11.94
+         cost_per_conversation $0.0169
 ```
 
-**171 to 9.** Wrong by 23, in the one sentence that tells Enrique the audience will check it.
+**$1.77 against $1.30 — exactly as claimed**, and it is the awkward direction for the story, which
+is why the runbook says to point at the **projection** inputs instead. **That advice rests on true
+numbers.** Worth having in the room: **$3.07 across 181 conversations, 1.7 cents each**, with the
+Telnyx balance read live from their API while the panel watches.
 
-**The argument is stronger, not broken** — the split is *more* lopsided than claimed. Only the
-figure is a hostage, so **T43 asks for a form, not a correction**: *"fewer than one call in every
-fifteen sessions."* Chat accumulates whenever anyone opens the widget; calls cost money and do not.
-**Same reasoning as PR #77's floors**, which have absorbed thirteen new files without rotting — a
-call I argued against and was wrong about.
+### T43 proved itself during the iteration that filed it
 
-### What this says about sweeping
+Iteration 131 measured **171** chat sessions. Four minutes later: **172**.
 
-**#127 corrected a live-quantity claim 195 lines earlier in this same file** and did not reach this
-one. Not a criticism — they were fixing the Archive and corrected the number they walked past.
+**It moved while I was writing about it.** The runbook says 148. An exact count in a document read
+aloud tomorrow is not merely stale — **it drifts under the document as it sits there**, and every
+chat anyone opens before 11:00 moves it again.
 
-> **It is the argument for sweeping a class rather than fixing an instance.** The instance was
-> visible from the defect; the class needed someone to go looking, and the second member was two
-> hundred lines away in the same document.
+**The calls did not move: 9, because they cost money.** That asymmetry is exactly why a ratio beats
+a pair, and it is now recorded in the task.
 
-### Checked and correct
+### PR #128 closes the failure that corrupted six readings
 
-`README.md:69` *"First commit 2026-09-24 12:35 EDT"* — git says **2026-09-24 12:35**. Exact. The
-other numeric claims are about the demo, the build, or published targets; none moves with live data.
+*"Make the compiled voice prompt independent of line endings."* CRLF-versus-LF has distorted a
+measurement **six times** here — the Implementer's −401, the Tester's empty downloads, my own +405
+in iteration 90 **after I had written the warning myself**. Normalising at the point of compile
+removes the class, not the instance.
 
 ### The single most important remaining item
 

@@ -79,7 +79,9 @@ One clause. Demo path.*
 sessions  total 180   { chat: 171, voice: 9 }
 ```
 
-**171 to 9, not 148 to 9.** The argument is untouched and in fact stronger — the split is *more*
+**171 to 9, not 148 to 9** — and **172 to 9 four minutes later**, measured again in iteration 132.
+**The number is drifting under the document as it sits there.** The argument is untouched and in
+fact stronger — the split is *more*
 lopsided toward chat than the sentence claims, which is exactly what the beat needs. **But the
 number is wrong by 23 in the one sentence that invites the audience to check the number.**
 
@@ -1431,6 +1433,70 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 132, 22:42 EST — beat 6's cost claim is true, and T43's number moved while I was checking it
+
+#### The other half of the sentence T43 fixes, verified against the live endpoint
+
+`demo-runbook.md:215` makes two claims. T43 covers the stale one; this is the other:
+
+> *"on the measured figures the model and telephony come out **near-equal, with the model marginally
+> higher**."*
+
+Fetched from `/api/cost` with a real admin token:
+
+```
+totals   model_usd 1.7704   telephony_usd 1.2955   email_usd 0.0012   all_usd 3.0671
+traffic  chat 172 · voice 9 · conversations 181 · call_minutes 11.94
+         cost_per_conversation $0.0169
+```
+
+**$1.77 against $1.30 — near-equal, model marginally higher. The claim is exactly right**, and it is
+the awkward direction for the story being told, which is why the runbook tells Enrique to point at
+the projection inputs instead of the measured split. **That advice is sound and rests on true
+numbers.**
+
+Worth having: **$3.07 total spend across 181 conversations, 1.7 cents each**, with the Telnyx
+balance read live from their API while the panel watches.
+
+#### T43 proved itself during the iteration that filed it
+
+Iteration 131 measured **171** chat sessions. Four minutes later:
+
+```
+chat_sessions 172
+```
+
+**It moved while I was writing about it.** The runbook says 148. An exact count in a document read
+aloud tomorrow morning is not merely stale — **it is drifting under the document as it sits there**,
+and every chat anyone opens between now and 11:00 moves it again.
+
+> That is the whole argument for T43's requested form. *"Fewer than one call in every fifteen
+> sessions"* survives the drift; *"148 to 9"* was wrong within hours and is wrong again by a
+> different number each time anyone checks.
+
+**The same is not true of the calls**: 9, unchanged, because they cost money. **The asymmetry is
+exactly why a ratio beats a pair.**
+
+#### PR #128 closes the failure that corrupted six readings
+
+*"Make the compiled voice prompt independent of line endings."* CRLF-versus-LF has distorted a
+measurement **six times** in this project — the Implementer's −401 in #79, the Tester's empty
+downloads, my own +405 in iteration 90 after I had written the warning myself. **Normalising at the
+point of compile removes the class rather than the instance.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — delete the disclosure if applied first | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — two rows | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T43** — one clause, `demo-runbook.md:215` | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 131, 22:38 EST — followed #127's defect class and found the same thing 195 lines later in the same file
 
