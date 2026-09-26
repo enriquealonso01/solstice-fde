@@ -214,4 +214,85 @@ describe('elapsed time stated as a figure', () => {
         `or the span between two dates, so the sentence survives being read tomorrow.`,
     ).toEqual([])
   })
+
+  /**
+   * Widened at iteration 130, because the two cases above state a rule and then test the shape of the
+   * one bug that produced them. Both are anchored to the word "checkout", so both missed
+   * `README.md`'s *"Elapsed: about 24 hours, of which under 5 were active. First commit 2026-09-24
+   * 12:35 EDT"* — measured at 37.9 hours when it was found and 46.4 at submission, understating by
+   * nearly half, in the first file a reviewer opens. **The suite was green at 700 with that sentence
+   * in it.** Same shape as T47: a guard whose header is right and whose body is a transcript.
+   *
+   * Two patterns, because "elapsed" arrives two ways. A stopwatch label — `Elapsed: N hours` — has no
+   * stop, whatever it is anchored to. And a soft duration sitting in the same paragraph as an absolute
+   * date is worse than a wrong number on its own, because the paragraph hands the reader both ends of
+   * the subtraction and invites them to do it. That is how this one would have been caught: the README
+   * printed the first-commit timestamp one clause later.
+   *
+   * The durable forms are a fixed date, a span between two fixed dates, or a floor that only grows
+   * truer. `README.md` now says "two working sessions" and names the two windows by clock time.
+   */
+  const DURATION = String.raw`(?:[0-9][0-9.,]*|a|an|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:hours?|hrs?|days?|weeks?|months?)`
+  const ABSOLUTE_DATE = /\b20[0-9]{2}-[0-9]{2}-[0-9]{2}\b/
+
+  it('has patterns that still bite, and a corpus for them to bite on', () => {
+    // Both cases above pass by finding nothing, which is also what they do if the regex stops
+    // matching or the paragraph filter selects no paragraphs. Neither failure announces itself.
+    const sentence =
+      '**Elapsed: about 24 hours, of which under 5 were active.** First commit 2026-09-24 12:35 EDT.'
+    expect(sentence, 'the elapsed-label pattern no longer matches the sentence it was written for').toMatch(
+      new RegExp(String.raw`\bElapsed\b[^.]{0,24}?${DURATION}`, 'i'),
+    )
+    expect(sentence, 'the soft-duration pattern no longer matches').toMatch(
+      new RegExp(String.raw`\babout\s+${DURATION}`, 'i'),
+    )
+    expect(ABSOLUTE_DATE.test(sentence), 'the absolute-date pattern no longer matches').toBe(true)
+
+    const datedParagraphs = READER_FACING.filter((doc) => existsSync(join(repoRoot, doc))).flatMap((doc) =>
+      readFileSync(join(repoRoot, doc), 'utf8')
+        .split(/\n\s*\n/)
+        .filter((p) => ABSOLUTE_DATE.test(p)),
+    )
+    expect(
+      datedParagraphs.length,
+      'no reader-facing paragraph carries an absolute date any more, so the pairing case is inert',
+    ).toBeGreaterThan(0)
+  })
+
+  it.each(READER_FACING)('%s does not label a figure as elapsed time', (doc) => {
+    const full = join(repoRoot, doc)
+    if (!existsSync(full)) return
+    const flat = readFileSync(full, 'utf8').replace(/\s+/g, ' ')
+    const hits = [...flat.matchAll(new RegExp(String.raw`\bElapsed\b[^.]{0,24}?${DURATION}`, 'gi'))].map(
+      (m) => m[0],
+    )
+
+    expect(
+      hits,
+      `${doc} labels a figure as elapsed time: ${hits.join(' | ')}. A stopwatch started at a fixed past ` +
+        `event has no stop, so the figure is wrong by a little more every hour. README.md said ` +
+        `"Elapsed: about 24 hours" while git made it 37.9, and 46.4 by the time it was sent. Give the ` +
+        `two endpoints, or a span, and let the reader subtract if they want to.`,
+    ).toEqual([])
+  })
+
+  it.each(READER_FACING)('%s does not put a soft duration beside an absolute date', (doc) => {
+    const full = join(repoRoot, doc)
+    if (!existsSync(full)) return
+    // Paragraph scope rather than line scope: markdown wraps, and the pairing this catches is an
+    // argument made across a couple of sentences, not a coincidence of where the line broke.
+    const offenders = readFileSync(full, 'utf8')
+      .split(/\n\s*\n/)
+      .map((p) => p.replace(/\s+/g, ' ').trim())
+      .filter((p) => ABSOLUTE_DATE.test(p))
+      .flatMap((p) => [...p.matchAll(new RegExp(String.raw`\babout\s+${DURATION}`, 'gi'))].map((m) => m[0]))
+
+    expect(
+      offenders,
+      `${doc} says "${offenders.join(' | ')}" in a paragraph that also carries an absolute date. That ` +
+        `pair hands a reviewer both ends of a subtraction, and the answer will not be the number in the ` +
+        `sentence for long. This is exactly how README.md's "about 24 hours" read next to its own ` +
+        `"First commit 2026-09-24 12:35 EDT".`,
+    ).toEqual([])
+  })
 })

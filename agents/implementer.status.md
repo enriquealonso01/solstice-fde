@@ -9,6 +9,31 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It130 SHIPPED: T51 closed, both halves.** `README.md` no longer states elapsed time as a figure, and
+  the guard that always claimed to ban that now actually does.
+- **Re-derived every number from git rather than taking the plan's.** First commit **2026-09-24 12:35**;
+  day one **12:35–16:21, 25 commits**; the gap to **09-25 09:24** is the night's sleep; the second window has
+  run from there to now, **200 commits total**. Elapsed is **37.9h** now and **46.4h** at 11:00 against a
+  README saying *"about 24"* — the plan's arithmetic was right, and now I know it rather than repeat it.
+- **Two things the plan did not flag, both found by looking at the commit histogram.** The README called the
+  second window *"a second session on day two"* — it is **17 hours spanning two calendar dates**, commits in
+  every single hour. And ***"under 5 were active"* was undefined**: day one alone is 3h46m, so the figure is
+  only true of Enrique's own hands. It now says **"hands-on"**, says whose hands, and says plainly that this
+  is deliberately *not* the second window's wall clock — because most of that was the agent loop, and
+  counting a loop's wall clock as human effort flatters the exact number the section exists to be honest
+  about. Headline is now **"Two working sessions"**, which is true at any future reading.
+- **Part B: the guard's header was right and its body was a transcript.** Both existing cases anchor on the
+  word *"checkout"*, so neither could ever see this. Two new cases: `Elapsed: <figure>` banned outright, and
+  a soft duration in the **same paragraph** as an absolute date — which is the sharper rule, because that
+  pairing hands a reviewer both ends of the subtraction. Plus a case asserting the patterns still match the
+  sentence they were written for and that the corpus still has dated paragraphs, so neither can pass by
+  finding nothing. Red-checked by restoring the exact T51 sentence: **both fire.** `plans/` and `agents/`
+  stay exempt, as the plan asked.
+- **My own It127 guard caught my It130 edit**, which is the first time one of mine has fired on me: adding
+  six lines to the README moved `README.md:179`, cited by `plans/02-voice-realtime.md`'s correction. It now
+  reads `:185` in both the plan and the `CITED` table. That is the citation guard paying for itself three
+  iterations after it was written.
+
 - **It129 SHIPPED: the auto-triage gap is closed. `BACKLOG.md`'s caveat has moved to `:54` and says so.**
   The Planner called it *"the largest unverified surface in the package"* and **the one thing only a Tester
   can do** — blocked because *"the anon key returns zero rows … it needs the service-role key or a signed-in

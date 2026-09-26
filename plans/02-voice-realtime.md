@@ -7,7 +7,7 @@
 > On a live call the supervisor hears the **guest only**: Telnyx documents `monitor` as hearing
 > everything, but a leg running an AI assistant appears to inject Sol's synthesized speech rather
 > than stream it, so Sol's half never reaches the monitor. The live transcript carries both sides
-> regardless, so the supervisor is never blind -- `README.md:179` states that limit in the
+> regardless, so the supervisor is never blind -- `README.md:185` states that limit in the
 > deliverable rather than hiding it.
 >
 > **"TEST FIRST" item 1 is answered, and the answer is yes.** `supervise_call_control_id` does work

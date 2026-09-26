@@ -307,7 +307,7 @@ describe('the four build-phase plans', () => {
   // and `README.md` are both appended to during a session, so a citation into them is a live wire.
   const CITED: Array<[string, number, string]> = [
     ['HUMAN_INTERVENTION.md', 122, '10DLC registration not started on the funded account'],
-    ['README.md', 179, 'Partly working, and stated precisely because it matters'],
+    ['README.md', 185, 'Partly working, and stated precisely because it matters'],
     ['netlify/functions/voice/supervisor.ts', 13, 'supervise_call_control_id'],
   ]
 
