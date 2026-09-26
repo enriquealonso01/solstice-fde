@@ -63,7 +63,7 @@ Four things they did not ask for, which answer their email rather than the PDF:
 >
 > **Live system:** https://solstice-hotel-group.netlify.app
 > **Call Sol directly:** +1 (305) 786-6217 — ask about checkout times, a late checkout, or
-> whether you can bring a dog.
+> whether a service animal is welcome.
 > **Code:** https://github.com/enriquealonso01/solstice-fde
 >
 > To see the staff side, sign in at /login:

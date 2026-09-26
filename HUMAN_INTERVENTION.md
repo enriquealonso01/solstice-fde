@@ -774,3 +774,42 @@ the earlier entry above.
 
 **If you disagree with disclosing it, `git revert fe04948` removes both.** I would rather you overrule a
 disclosure you can see than not know it was a choice.
+
+---
+
+## Your call: a bare pet question makes Sol state something Policy 8 contradicts
+
+**Already fixed where I could**: the runbook, the cheatsheet and your email draft now ask it in words
+that work every time. This entry is about the behaviour underneath, which is yours to disclose or not.
+
+**What I measured, on the deployed build, seven times.**
+
+| Asked | Reached `get_policy` | What it said |
+|---|---|---|
+| *"Can I bring a dog?"* ×3 | **0 of 3** | *"Which property are you staying at? Pet policies vary by hotel."* |
+| *"Can I bring my dog?"* ×4 | **1 of 4** | three asked which hotel, one of those adding *"pet policy can vary by property"* |
+| *"Do your hotels allow dogs? I travel with a service animal."* ×3 | **3 of 3** | the full Policy 8 answer, ADA nuance included |
+| *"What is your policy on pets and service animals?"* ×3 | **3 of 3** | same |
+
+**Why it matters more than a missed demo beat.** Policy 8 says pets are *"not permitted at any
+Solstice property, with no exceptions and no pet-friendly floors"*. *"Pet policies vary by hotel"* is
+the opposite, and Sol says it **without calling a tool** — which is the thing G1 exists to prevent.
+Asked precisely, it is correct every time; it is the bare, property-less question that trips it.
+
+**Three options.**
+
+1. **Say nothing.** Defensible: the documented demo questions all work now, and the failure needs a
+   question no script asks. But a reviewer who types "can I bring a dog" finds it in a minute.
+2. **Add a line to the README's honest-limits paragraph.** Something like: *"A bare pet question with
+   no property named sometimes draws a clarifying question that misstates the policy as
+   property-specific; asked with any specificity it cites Policy 8 correctly. Measured, not
+   theorised."* Costs nothing, and it is the same move as disclosing the send gate — **and note the
+   send-gate disclosure already lives in three places, so this would be a fourth mention to keep in
+   step.**
+3. **Change the prompt.** I would not, today. It is a runtime verified hours ago, it needs a
+   re-provision and a re-run of the guardrails, and this loop has declined that trade twice on smaller
+   grounds.
+
+**My recommendation is 2**, and I have not done it because adding a second disclosed limitation to the
+front page is a judgement about how the package presents itself, which is yours. Say the word and it
+is one edit.

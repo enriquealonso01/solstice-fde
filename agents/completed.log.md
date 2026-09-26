@@ -4692,3 +4692,54 @@ claims.
 guards exist is exactly the kind of thing that quietly stops being true: all thirteen are on disk.
 
 `npx tsc -b --force` clean. `npx vitest run`: **527 passed, 44 files**.
+
+## It88 — the email invites the evaluator to ask the one question that does not work
+
+`SUBMISSION.md`'s draft email is the highest-stakes text in the package: the literal words that go to
+the person judging it. Re-read after a dozen PRs, one line stands out.
+
+> **Call Sol directly:** +1 (305) 786-6217 — ask about checkout times, a late checkout, or **whether
+> you can bring a dog.**
+
+That is the question It85 measured as unreliable — and the email hands it to **Katie**, on the phone,
+with nobody to recover it.
+
+Measured again with the email's own phrasing:
+
+```
+"Can I bring a dog?"  x3   ->  0 of 3 reached get_policy
+                              all three: "Pet policies vary by hotel"
+```
+
+With It85's runs that is **one landing in seven attempts**, and the deflection is not neutral: Policy 8
+says pets are *"not permitted at any Solstice property, with no exceptions and no pet-friendly
+floors."* *"Pet policies vary by hotel"* is the opposite of the documented policy, asserted **without
+calling a tool**, which is what G1 exists to prevent.
+
+The other two suggestions are fine. Checkout times cites Policy 1. A bare late-checkout request makes
+Sol ask who you are first — correct behaviour, and worth an evaluator seeing.
+
+**Fixed the email** to *"whether a service animal is welcome"*: 3 of 3 in measurement, and a better
+question for an evaluator anyway, because the ADA nuance is the part a general-purpose assistant gets
+wrong.
+
+### What I did not do, and why
+
+I did not add this to the README's honest-limits paragraph. It belongs there on the package's own
+standard — but adding a **second** disclosed limitation to the front page is a judgement about how the
+submission presents itself, and that is Enrique's, exactly as the SIP-credential history was. It is in
+`HUMAN_INTERVENTION.md` with the seven measurements, three options, a recommendation, and the wording
+ready to paste.
+
+I also flagged the bit that would otherwise be missed: the send-gate disclosure already lives in
+**three** places that must be kept in step, so a second disclosure is a fourth mention, not a
+standalone line.
+
+### The pattern across the last four iterations
+
+Rehearsing beats found: beat 2's question unreliable, beat 6 contradicting its own screen, and now the
+email inviting the worst of the three. **None of these were visible from reading.** Every one needed
+the thing to be run, and two of them needed it run several times, because the failure is
+probabilistic — a single green run would have confirmed the document.
+
+`npx tsc -b --force` clean. `npx vitest run`: **527 passed, 44 files**.

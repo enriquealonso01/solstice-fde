@@ -76,7 +76,13 @@
 
 > ### ⚡ THE FIXES, READY TO PASTE — three in two files, plus T41 in the README
 >
-> **T41 (new, iteration 117):** `README.md:133` quotes *"subject to same-day availability"* from
+> **T42 (new, iteration 119) — the likeliest to be spotted, by the people best placed to spot it.**
+> `transcripts/refund-outside-window.md:1` is titled *"Refund request outside the **service
+> recovery** window"*. It is a **Policy 2 cancellation** scenario — the transcript cites Policies 2
+> and 15 and never mentions Policy 5 — and *"outside the window"* is backwards: she cancelled
+> **inside** the 72 hours, which is why she was charged. **Change the H1 only.** Full text in T42.
+>
+> **T41 (iteration 117):** `README.md:133` quotes *"subject to same-day availability"* from
 > Policies 1 and 6. **Neither contains it** — Policy 1 says *"same-day room availability"*, Policy 6
 > says *"same-day inventory"*. Substance right, quotation wrong, and **the accurate version is the
 > better argument**: two policies reaching for the same missing data in different words is why it
@@ -201,6 +207,58 @@ mode rather than documenting a way around it.
 
 **Check when done:** the row distinguishes the two causes; the text-chat fallback is named; the rest
 of the table is untouched.
+
+
+### T42. A transcript is titled for the wrong policy, and the title is backwards about that policy too
+
+*A **sample transcript** is a named brief deliverable, and the interviewers wrote the policy
+document. **This is the mistake in the package most likely to be spotted by the person best placed
+to spot it.** One line — the H1 only. The body is correct throughout.*
+
+**`transcripts/refund-outside-window.md:1`:**
+
+> `# Refund request outside the service recovery window`
+
+**Two things are wrong with that sentence, and the transcript underneath it is right.**
+
+**1 — It names the wrong policy.** The document defines two different 72-hour windows pointing in
+opposite directions:
+
+| | Window | Direction |
+|---|---|---|
+| **Policy 2** — Standard cancellation | 72 hours | **before check-in** |
+| **Policy 5** — Service recovery | 72 hours | **after checkout** |
+
+The guest **cancelled a stay and was charged a night**. Sol applies **Policy 2**, correctly, and
+says so: *"your rate plan required cancellation 72 hours before check-in, and you cancelled about 36
+hours past that deadline."* The transcript's own citations are **Policies 2 and 15. Policy 5 never
+appears in it.**
+
+**2 — "outside the window" is backwards for Policy 2.** Policy 2 gives free cancellation *"up to 72
+hours before"* and charges a night for cancelling **inside** that window. She cancelled **inside**
+it — that is *why* she was charged. The title says the opposite of the thing that happened.
+
+**Do this — change the H1 and nothing else:**
+
+> `# Cancellation charge upheld, with a handoff that carries the context`
+
+The existing *"What this shows"* line is already accurate and should stay: *"Honest refusal, no
+false promise, and an escalation that carries full context rather than a dead end."* **The filename
+`refund-outside-window.md` is neutral and need not change** — renaming it would break
+`SUBMISSION.md` and `README.md`, and the guards that pin those links.
+
+**Worth knowing while you are deciding:** **no transcript in the package demonstrates Policy 5.**
+The only mention of service recovery in `transcripts/` is this title, and the only citation of
+Policy 5 anywhere in them is an incidental search hit in `service-animal.md`. **That is a gap, not a
+defect** — the brief asks for *"a few sample transcripts"* and six is a few — but it means the fix
+here is to correct the title, **not** to make the transcript match it.
+
+**Do not capture a new one to fill the gap.** It costs a live session and money, and G3 (service
+recovery is 72 hours from checkout) is already verified against production in the Tester's log,
+which is where the evidence for it belongs.
+
+**Check when done:** the H1 no longer says *"service recovery"*; the body is untouched; the filename
+is unchanged; `npx vitest run` green.
 
 
 ### T41. The README quotes a phrase the policy document does not contain — and the accurate version is a better argument
@@ -1287,6 +1345,76 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 119, 21:38 EST — a transcript is titled for the wrong policy, and the interviewers wrote the policy document
+
+Having checked every policy **number** last iteration, I went one layer down to the **facts** the
+transcripts state, against the source text.
+
+#### Most of them are exact
+
+`platinum-late-checkout.md:28` — *"as a Platinum member you have a guaranteed late checkout until
+**2:00 PM**"* — against Policy 6's *"a guaranteed late check-out until 2:00 PM, no blackout dates
+and no exceptions."* Word for word, including the guarantee.
+
+#### One is not, and it is the title rather than the answer
+
+`transcripts/refund-outside-window.md:1`:
+
+> `# Refund request outside the service recovery window`
+
+**The document defines two different 72-hour windows, pointing in opposite directions:**
+
+| | Window | Direction |
+|---|---|---|
+| **Policy 2** — Standard cancellation | 72 hours | **before check-in** |
+| **Policy 5** — Service recovery | 72 hours | **after checkout** |
+
+The guest cancelled a stay and was charged a night. **Sol applies Policy 2 correctly** — *"your rate
+plan required cancellation 72 hours before check-in, and you cancelled about 36 hours past that
+deadline."* The transcript cites **Policies 2 and 15**. **Policy 5 appears nowhere in it.**
+
+And *"outside the window"* is backwards even for Policy 2: free cancellation runs *up to* 72 hours
+before, and cancelling **inside** it costs a night. **She cancelled inside. That is why she was
+charged.** The title states the opposite of what happened.
+
+**T42 filed: change the H1, nothing else.** The body is right throughout, the *"What this shows"*
+line is already accurate, and the filename should stay because `SUBMISSION.md`, `README.md` and the
+link guards all point at it.
+
+#### Why this one is worth more than its size
+
+**The interviewers wrote the policy document.** Of everything in this package, a transcript titled
+for the wrong policy is **the single mistake most likely to be caught by the person best placed to
+catch it** — and it sits in a named deliverable, on the first line, where it is read before anything
+that would explain it.
+
+The body would then vindicate the system while the title contradicts it, which is worse than either
+alone.
+
+#### One gap noted and deliberately not filled
+
+**No transcript in the package demonstrates Policy 5.** The only mention of service recovery in
+`transcripts/` is this title, and the only Policy 5 citation is an incidental search hit in
+`service-animal.md`.
+
+**That is a gap, not a defect** — the brief asks for *"a few sample transcripts"* and six is a few.
+And **I explicitly told the task not to capture a new one**: it costs a live session and money, and
+**G3 — service recovery is 72 hours from checkout — is already verified against production** in the
+Tester's log, which is where that evidence belongs. **Fix the title; do not chase the transcript.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T38, T39, T40, T41, T42** — all paste-ready | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 118, 21:34 EST — checked every policy citation as a property, not a sample; all 34 hold
 
