@@ -1,4 +1,4 @@
-# Refund request outside the service recovery window
+# Cancellation charge upheld, with a handoff that carries the context
 
 **What this shows:** Honest refusal, no false promise, and an escalation that carries full context rather than a dead end.
 

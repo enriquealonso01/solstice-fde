@@ -1344,6 +1344,72 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 127, 22:20 EST — the slowest number in the package is in the transcript we tell people to read first, and that is fine
+
+T41 committed in **PR #125**. **T42 is the last agent item.**
+
+#### A cross-document question a reviewer will ask, checked
+
+The eight timings across `transcripts/`:
+
+```
+852 · 2593 · 2637 · 2773 · 2890 · 3134 · 3368 · 7450   (first token, ms)
+```
+
+`docs/latency-target.md` states: *"The spread is wider than the 2.4–4.5s we first reported: **870ms
+to 5040ms**."* **The package contains a 7450ms turn — 48% above that stated maximum.**
+
+**It is not a contradiction, and I checked before assuming it was.** The document scopes its claim
+in the sentence directly above the table: *"**Six fresh turns** against the deployed site, each a
+new session, four scenario shapes"*, and the table lists exactly those six. **The spread describes
+that sample and says so. Nothing needs changing.**
+
+#### But the question is obvious, so the answer should be ready
+
+The 7450ms turn is in `honest-handoff.md` — the transcript `SUBMISSION.md` tells Katie to **start
+with** — and it is a **three-tool turn**:
+
+```
+get_reservation · transfer_to_human · create_escalation        first token 7450ms · turn 8300ms
+```
+
+> *"Different samples. The latency table is six fresh turns, each a new session, and it says so. The
+> 7450ms turn is the heaviest in the package — three tool calls before the first word, including the
+> escalation that makes the refusal honest. **We did not exclude it. It is in the transcript we tell
+> you to read first**, next to the sentence where Sol says no."*
+
+**That is the strongest available answer**, because the slowest measurement anywhere in the package
+sits inside the artefact chosen as the opening exhibit. A document that reported a tidy spread and
+quietly kept the slow turn out of the transcripts would be worth less.
+
+#### Third time this has been the right output instead of a task
+
+`INQ-2004`'s *"around 25"*, `get_policy` returning three sections, and now this. **In each case the
+system was correct and the question was predictable**, and the useful artefact was an answer rather
+than a change.
+
+> That is what the last hours of this look like: the checks increasingly **confirm** rather than
+> correct, and the output that still has value is **anticipating what will be asked** about things
+> that are already right.
+
+#### T42, the last one
+
+`transcripts/refund-outside-window.md:1` still reads *"Refund request outside the service recovery
+window"* on a transcript that is entirely **Policy 2 cancellation**. **H1 only; the body is right.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T42** — one line | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
 ### Iteration 126, 22:14 EST — T41 fixed in the tree, and both quotes now match the source byte for byte
 
 #### Verified against the policy document rather than against the diff

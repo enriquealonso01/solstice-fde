@@ -4,45 +4,39 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 126 — 2026-09-25 ~22:14 EST
+## Iteration 127 — 2026-09-25 ~22:20 EST
 
-### T41 fixed in the tree, verified against the policy document rather than the diff
+### T41 committed (PR #125). T42 is the last agent item.
 
-Both replacements checked **in both directions** — present in the README, present verbatim in the
-provided policy reference:
+### A cross-document question a reviewer will ask, checked and answered
 
-```
-"based on same-day room availability"   README True   policy file True
-"based on same-day inventory"           README True   policy file True
-"subject to same-day availability"      README False  (the invented one, gone)
-```
+Eight first-token timings across `transcripts/`: `852 · 2593 · 2637 · 2773 · 2890 · 3134 · 3368 ·
+7450`. `docs/latency-target.md` states the spread as **870ms to 5040ms** — so the package contains
+a turn **48% above** its stated maximum.
 
-**And it took the argument, not just the correction:** the assumption now says the two policies
-*"use different words for it"*, so *"two policies reach for the same missing data in two
-vocabularies, which is the clearest argument that it belongs behind one service."* **The
-justification for the net-new tool is stronger than before it was wrong.** Uncommitted; it lands
-with whatever ships next.
+**Not a contradiction, and I checked before assuming.** The document scopes the claim one line
+above the table: *"**Six fresh turns** against the deployed site, each a new session."* The spread
+describes that sample and says so. **Nothing needs changing.**
 
-### One remains, and it is the one to do first
+**But the question is obvious**, and the 7450ms turn is in `honest-handoff.md` — the transcript
+`SUBMISSION.md` says to **start with** — and it is a **three-tool turn**: `get_reservation`,
+`transfer_to_human`, `create_escalation`.
 
-**T42** — `transcripts/refund-outside-window.md:1` is titled *"Refund request outside the service
-recovery window"* on a transcript that is entirely **Policy 2 cancellation**, cites Policies 2 and
-15, and never mentions Policy 5 — and *"outside the window"* is backwards, since she cancelled
-**inside** the 72 hours.
+> *"Different samples. The table is six fresh turns and says so. The 7450ms turn is the heaviest in
+> the package — three tool calls before the first word, including the escalation that makes the
+> refusal honest. We did not exclude it. It is in the transcript we tell you to read first."*
 
-**The interviewers wrote that policy document.** It is the mistake most likely to be caught by the
-person best placed to catch it, on the first line of a named deliverable. **H1 only; the body is
-right throughout.**
+**The strongest available answer**, because the slowest measurement anywhere sits inside the opening
+exhibit. A tidy spread with the slow turn quietly kept out of the transcripts would be worth less.
 
-### On my own checking, which was wrong twice about these
+### Third time an answer was the right output instead of a task
 
-Iteration 122: a tightened `grep` reported T41 fixed when it was not. This time T41 really is fixed
-— and I did not treat my own check as sufficient. **I read the paragraph, then verified both quotes
-against the source file.**
+`INQ-2004`'s *"around 25"*, `get_policy` returning three sections, and now this. **The system was
+correct and the question predictable each time.**
 
-> The check tells you a string is absent. **It cannot tell you the replacement is right**, and here
-> the replacement was the whole point.
+> The checks now increasingly **confirm** rather than correct. What still has value is
+> **anticipating what will be asked** about things that are already right.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.**
+**The `drop policy` paste.** **T42** is the last agent item — one line, the transcript H1.
