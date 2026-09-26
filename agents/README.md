@@ -117,6 +117,25 @@ test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || { echo "NOT ON 
 test -z "$(git status --porcelain)" || echo "tree is dirty - check whose work that is before deploying"
 ```
 
+**Verify your deploy with a GET, never with a chat message.** `POST /api/chat` is the obvious way to
+prove the site answers, and it is the wrong one: it opens a `sessions` row marked `active`, and
+`npm run demo:tidy`'s default leaves anything under thirty minutes old on screen. Beat 3 of the demo
+opens by putting the supervisor dashboard up and saying it is empty. Measured 2026-09-26 06:20Z —
+**257 active sessions**, three of them created by the single iteration that went looking. Use the
+static routes and the method guard instead:
+
+```bash
+for p in / /admin /login; do curl -s -o /dev/null -w "$p %{http_code}\n" "$SITE$p"; done
+curl -s -o /dev/null -w "GET /api/chat %{http_code}\n" "$SITE/api/chat"   # 405, writes nothing
+```
+
+`netlify/functions/chat.ts:227` rejects any non-POST, and it runs before the session id is resolved
+at `netlify/functions/chat.ts:243` and before the row is written at
+`netlify/functions/chat.ts:579` — so the GET warms the same container and leaves nothing behind.
+`docs/demo-runbook.md:60` gives Enrique the same rule for the same reason. If you genuinely need a
+POST to verify a behaviour, do it — and say in `agents/completed.log.md` that you left a session
+behind, so whoever runs the last tidy knows it is there.
+
 Both halves have now fired for real, one iteration apart. On 2026-09-25 a `git pull --ff-only` hit
 *"Not possible to fast-forward"* on a diverged local main and **the deploy ran from a tree that was
 not `origin/main`**. The next iteration `git checkout main` was refused outright — *"Your local
