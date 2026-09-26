@@ -10726,3 +10726,73 @@ directly — I reached for the heredoc anyway. Rewrote the script with the Write
 time.
 
 `npx tsc -b` clean. `npx vitest run` **948 tests / 66 files** green (up 4).
+
+---
+
+## It163 — "the files a reviewer reads" was six paths, and none of them was in `docs/`
+
+Empty board. Before picking anything I checked four things that looked like plausible gaps, and **three of
+them were already handled** — which is worth recording, because the alternative is inventing work:
+
+- **All three SUBMISSION invitations are covered.** The parking refusal was driven against production (plan
+  line 4286, with the tool call and Sol's answer captured); INQ-2007 is in `inquiries.test.ts`; the
+  failure-injection beat was pinned at It156.
+- **`sol.md` ↔ committed-export parity** is guarded by `voice-prompt-size.test.ts`'s *"the committed export
+  against the file it exports"*.
+- **`how-this-was-built.md`'s flagship anecdote** is guarded by `built-doc-counts.test.ts`, against the
+  export a reviewer can open.
+- **The phantom `availability_service`** survives in eight tracked files — and every one is right:
+  `plans/05-requirements-audit.md:16` and `plans/01-build-plan.md:34` are **correction blocks that quote it
+  to correct it**, the rows at `:49` and `:167` are the ones those blocks supersede, `plans/archive/*` are
+  historical plans, and the `agents/` logs are the record of removing it. I nearly filed the A5 row as a
+  defect before reading sixteen lines up.
+
+### The gap
+
+`tool-naming.test.ts` exists because `availability_service` was advertised as the brief's net-new tool in the
+README twice, in SUBMISSION.md, in both architecture files and on the Backend map, and nothing ever answered
+to it. Its scope note says it guards *"the files a reviewer reads"* and lists six paths.
+
+**Not one of the nine `docs/*.md` files is among them** — including `docs/README-diagram.md`, whose entire
+subject is the diagram two entries above it in the same list. `docs/` holds the runbook, the cheat sheet, the
+live-modification walkthrough, the role walkthroughs, the integration recommendation, the latency target,
+where-this-goes, how-this-was-built and README-diagram. All nine are clean today. None was checked.
+
+That is the shape this suite keeps finding in itself: **a list that reads as complete.** Six paths, an
+honest-sounding scope note, and a category of file missing from it.
+
+### The fix is not nine more paths
+
+Typing the nine in would be the same list one entry longer, and would miss the tenth document on the day
+someone writes it. `docs/` is enumerated now, so a new deliverable is covered because it exists rather than
+because somebody remembered. `AGENTS.md` joined the fixed list too — it is at the repository root and a
+reviewer opens it.
+
+Seven fixed paths plus nine enumerated documents: **16 surfaces**, up from 6.
+
+### Red-check, and the decisive pair
+
+The same phantom sentence planted in `docs/README-diagram.md`, run against both versions of the guard:
+
+```
+guard as it was BEFORE It163    8 passed   (NOTHING FAILED)
+the same plant, guard AFTER     1 failed   x docs/README-diagram.md does not mention availability_service
+```
+
+**Before, a reader-facing document could name a tool that does not exist and the guard reported the
+deliverables clean.** That is the whole argument, in one pair of runs.
+
+Also:
+
+```
+phantom planted in AGENTS.md              1 failed
+the docs enumeration filtered to nothing  1 failed   x reads every reader-facing document, not a list of six
+restored                                 19 passed   three files byte-identical
+```
+
+The last one matters as much as the first: an enumeration that silently returns nothing turns every per-file
+case into a loop over an empty list, which is the vacuity failure It157 swept the suite for. The floor says
+14 surfaces and 8 documents, so the guard cannot narrow without saying so.
+
+`npx tsc -b` clean. `npx vitest run` **959 tests / 66 files** green (up 11 — ten new per-file cases and the
+floor).

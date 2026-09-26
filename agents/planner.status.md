@@ -4,64 +4,68 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 242 — 2026-09-26 08:28 EST
+## Iteration 244 — 2026-09-26 08:41 EST
 
-**The plan is accurate and correctly ordered. Nothing is open for an agent.** Every numbered task is closed, so
-I went back to the demo arc and found a beat I had only ever verified by its policy number.
+**The plan is accurate and correctly ordered. Nothing is open for an agent. No new tasks.**
 
-### The service-animal guardrail, driven
+It162 found `README.md` calling the proposal link's path segment *"32-character **random**"* when it is
+`HMAC-SHA256(PROPOSAL_LINK_SECRET, "proposal:" + code)` truncated to 32, and corrected it. I checked whether my
+own file repeats the error — and then whether the consequence is real.
 
-The cheat sheet promises *"no pets anywhere, service animals always and free, and staff may ask what task it
-performs but not for papers."* Driven with its own wording:
+### My file says *unguessable*, which is accurate and partial
 
-> *"Pets aren't allowed at any Solstice property, but **service animals are always welcome, chain-wide, free of
-> charge**. The front desk **may ask what task the animal is trained to do**, but **won't ask for certification,
-> documentation, or a demo**."*
+The diagram and my plan say *"32-character unguessable path"*, not *random*. **Unguessable** is a claim about an
+attacker without the secret and it survives; **random** implies independent entropy per object, which is what
+It162 struck. **But accurate-and-partial is how the README's version started**, so I amended my own passage
+rather than leave the fix to the README alone.
+
+### Then I reproduced it, because a security claim deserves more than a citation
+
+Computing the HMAC in Python from `PROPOSAL_LINK_SECRET` and the code alone — no repository code involved:
 
 ```
-get_policy {"query":"pet policy, service animals","section_id":"8"}  ->  Policy 8
-grounded true · 1 tool call · 1253ms first event · 3019ms first token · 3804ms turn
+derived token appears in the stored pdf_path:  6 of 6 live proposals
+  PRP-2001 · PRP-2001-2 · PRP-2002 · PRP-2007 · PRP-2008 · PRP-2011
+deterministic: yes    length: 32
 ```
 
-Three parts, all present, **and the ADA limit stated in both directions** — what staff may ask and what they may
-not. That is the half a generic assistant gets wrong.
+**That is the whole attack, executed** — secret plus a sequential code yields every customer's link offline, and
+the codes go `PRP-2011`, `PRP-2012`.
 
-### It sharpened a panel answer, because my trace did not match the transcript
+> **No token value appears anywhere in my file**, which is the same reason the finding matters: the path *is*
+> the credential, so quoting one to prove the point would be the leak I was describing. **The boolean is the
+> evidence; the value is the vulnerability.**
 
-The transcript records `get_policy — Policy 8, 4, 5`, and panel answer #3 exists to explain that retrieval; it
-was re-run at iteration 194 and gave **8, 5, 7**. **My run returned one citation** — the model supplied
-`section_id: "8"` and skipped the search.
+The design stays defensible — `store.ts:150` says why, and its second clause is a real property: the table holds
+the path, so keeping the token out of a column is what the derivation buys.
 
-> The answer covered *"a different secondary set"*. It did not cover **no secondary set at all**, and a reviewer
-> who drives the question and sees one clean citation could reasonably conclude the transcript's three-policy
-> retrieval was staged. **Added: three policies, a different three, or one — and section 8 is in every one of
-> them.**
+### One thing added to Enrique's row 1
 
-### A loose end from iteration 232, closed
+It162 also measured that **the pending `drop policy` SQL does not touch any of this** — the three statements are
+on `proposals`, `inquiries` and `follow_ups`, which are tables; the PDFs live in a bucket. Added to row 1,
+because it removes a worry at 10:55 rather than adding one.
 
-I nearly published `"Stand00 AM."` as a quote then, and wrote that the prose lived *"under a key I had not
-accounted for."* **The key is `text`.** My parser required `type === 'text'` alongside it — a field that does not
-exist. **The parser was wrong about the shape, not the shape about the parser.**
+### Two process faults of my own
 
-### One repair of my own
-
-My first insertion of that panel clause landed **inside a wrapped sentence**, splitting *"Do not hand-edit the /
-capture to match"*. Caught by reading the file after writing it and moved below the closing line. *The oldest
-rule in my log: read the file back in the same breath you wrote it.*
+- **The first of my two edits failed its assertion and the second did not**, so for about a minute the log entry
+  described amendments that were not in the file. **A log entry written before the edit is a forecast.** Both
+  are applied and read back now.
+- **I spliced into a wrapped sentence again** — the same fault as iteration 242. The mechanical form: **insert
+  after a line that ends a sentence, not after the line that happens to contain the anchor.**
 
 ### Open
 
 | # | Item | Owner |
 |---|---|---|
-| 1 | **`drop policy` ×3** — **only Enrique can.** SQL at **609**, ***"### What to run"***. **Breaks nothing; verified three ways** | Enrique — **do** |
+| 1 | **`drop policy` ×3** — **only Enrique can.** SQL at **609**. **Breaks nothing; does not touch proposal storage** | Enrique — **do** |
 | 2 | **Top up Telnyx** — under **$3.01** at 06:45, no credit line, fewer than six calls, hard stop at zero | Enrique — **do** |
 | 3 | **T21** — **delegable**: an agent has the key and declined on judgement | Enrique — **do** |
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
 
-Nothing for an agent, nothing waiting on the Tester (silent since 20:26, **12h02m**). Suite green at **944 / 66
-files** as of 08:21. Inbox and In progress empty. No lock held; I took none. Plan guards re-run: **104 green**.
+Nothing for an agent, nothing waiting on the Tester (silent since 20:26, **12h15m**). Suite green at **944 / 66
+files**. Inbox and In progress empty. No lock held; I took none. Plan guards re-run: **104 green**.
 
 ### The single most important remaining item
 
