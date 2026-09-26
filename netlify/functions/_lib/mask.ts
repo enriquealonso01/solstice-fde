@@ -62,11 +62,17 @@ const EMAIL_IN_TEXT = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g
 // 10-digit North American numbers with optional country code and common separators.
 // Deliberately does not match ISO dates (4-2-2 digits).
 const PHONE_IN_TEXT = /(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/g
+// 13 to 19 digits, optionally grouped by spaces or hyphens: a card number. Removed before the
+// phone pattern runs, which would otherwise keep a card's first digits and its last four.
+const CARD_IN_TEXT = /\d(?:[ -]?\d){12,18}/g
 
 /** Mask PII found inside free text: transcript excerpts, guest notes, tool results. */
 export function redactText(text: string | null | undefined): string {
   if (!text) return ''
-  return text.replace(EMAIL_IN_TEXT, (m) => maskEmail(m)).replace(PHONE_IN_TEXT, (m) => maskPhone(m))
+  return text
+    .replace(EMAIL_IN_TEXT, (m) => maskEmail(m))
+    .replace(CARD_IN_TEXT, '[card number removed]')
+    .replace(PHONE_IN_TEXT, (m) => maskPhone(m))
 }
 
 const EMAIL_KEY = /e-?mail/i

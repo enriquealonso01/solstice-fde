@@ -2,22 +2,21 @@
 //
 // The challenge asks for "native export files from your platform of choice". This is that file:
 // the real assistant as Telnyx holds it, tools and all, so a reviewer can see the actual agent
-// configuration rather than our description of it.
+// configuration rather than our description of it. Read-only: one GET, nothing is sent to Telnyx.
 //
 // The shared tool secret is REDACTED. Provisioning injects it from TOOL_WEBHOOK_SECRET, so the
 // export stays reproducible without publishing a credential that unlocks the guest data tools.
 //
 //   node scripts/telnyx/export-assistant.mjs
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadEnv } from '../data/lib/env.mjs'
+import { compileInstructions } from './provision.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
 
-// Guarded, because the header above says this exists so a reviewer can see the real assistant config
-// -- and a reviewer has no .env. The unguarded read that used to be here threw ENOENT before the
-// check below could say what was missing.
+// A reviewer has no .env; loadEnv returns quietly and the check below says what is missing.
 loadEnv()
 
 const { TELNYX_API_KEY, TELNYX_ASSISTANT_ID, TOOL_WEBHOOK_SECRET } = process.env
@@ -39,22 +38,8 @@ const assistant = await res.json()
 const REDACTION = 'REDACTED_INJECTED_FROM_TOOL_WEBHOOK_SECRET'
 
 /**
- * SIP credential usernames are redacted by PATTERN, not by looking a value up in `.env`.
- *
- * The transfer target `sip:gencred…@sip.telnyx.com` shipped unredacted in a public export while
- * `SUBMISSION.md` said the file had its secrets removed. It was missed because redaction only knew
- * about one value, `TOOL_WEBHOOK_SECRET`, and a scan I ran over the export looked for API-key
- * prefixes, JWTs and `service_role` — a list of things I predicted rather than a rule about what
- * may leave.
- *
- * So this matches the shape instead: every `sip:<user>@sip.telnyx.com` loses its local part. A
- * reviewer learns nothing from that string which the adjacent `name` ("Solstice front desk") does
- * not already say, and a pattern cannot be defeated by a second credential appearing under a key
- * nobody thought to check.
- *
- * A credential username is not a password — nobody registers as that connection without the secret,
- * which is not in this file. The exposure is that a stranger can address SIP traffic at a named
- * connection. Low, not zero, and not a reason to ship it.
+ * SIP credential usernames are redacted by pattern, not by looking a value up in `.env`: every
+ * `sip:<user>@sip.telnyx.com` loses its local part, whatever key it appears under.
  */
 const SIP_URI = /sip:[^@"\s]+@sip\.telnyx\.com/g
 const SIP_REDACTION = 'sip:REDACTED_TRANSFER_TARGET@sip.telnyx.com'
@@ -85,8 +70,7 @@ if (TOOL_WEBHOOK_SECRET && serialised.includes(TOOL_WEBHOOK_SECRET)) {
   process.exit(1)
 }
 
-// Refuse to write a file that still carries an addressable SIP credential. The earlier check only
-// knew about one secret, and that is exactly how the transfer target shipped.
+// Refuse to write a file that still carries an addressable SIP credential.
 const leakedSip = serialised.match(/sip:(?!REDACTED_TRANSFER_TARGET)[^@"\s]+@sip\.telnyx\.com/)
 if (leakedSip) {
   console.error(`ABORTED: an unredacted SIP target survived redaction (${leakedSip[0].slice(0, 12)}…). Not writing the file.`)
@@ -97,10 +81,15 @@ mkdirSync(resolve(root, 'exports'), { recursive: true })
 const out = resolve(root, 'exports', 'telnyx-assistant.json')
 writeFileSync(out, `${serialised}\n`)
 
+const compiled = compileInstructions(readFileSync(resolve(root, 'agent', 'sol.md'), 'utf8')).instructions
+const live = clean.instructions ?? ''
 const tools = (clean.tools ?? []).map((t) => t?.webhook?.name ?? t?.type).filter(Boolean)
 console.log(`Wrote exports/telnyx-assistant.json`)
 console.log(`  model        : ${clean.model}`)
 console.log(`  voice        : ${clean.voice_settings?.voice ?? '(default)'}`)
-console.log(`  instructions : ${(clean.instructions ?? '').length} chars`)
+console.log(`  instructions : ${live.length} chars`)
+console.log(
+  `  matches sol.md: ${live === compiled ? 'yes' : `NO, agent/sol.md compiles to ${compiled.length} chars; run provision.mjs --instructions-only`}`,
+)
 console.log(`  tools        : ${tools.length}`)
 console.log(`  secret leaked: no`)

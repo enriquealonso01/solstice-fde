@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/gen-sol-prompt.mjs",
     "build": "tsc -b --noCheck && vite build",
     "postbuild": "node scripts/check-bundle-pii.mjs",
     "preview": "vite preview",

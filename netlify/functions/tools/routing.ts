@@ -9,13 +9,76 @@
  */
 import type { ToolResult } from '../../../shared/types'
 import { toolFail, toolOk, toolState } from './_deps'
-import { normalizeText, optString, policyCitation, type ToolArgs, type ToolContext } from './helpers'
-import { GROUP_BLOCK_RULES } from './rules'
-import { inferCategory } from './escalation'
+import { optString, policyCitation, type ToolArgs, type ToolContext } from './helpers'
+import { GROUP_BLOCK_RULES, type EscalationCategory } from './rules'
 
-export type Intent = 'safety_escalation' | 'group_booking' | 'guest_concierge' | 'mixed' | 'unclear'
+export type Intent =
+  | 'safety_escalation'
+  | 'medical_emergency'
+  | 'legal_threat'
+  | 'group_booking'
+  | 'guest_concierge'
+  | 'mixed'
+  | 'unclear'
 
-const SAFETY_SIGNALS = ['threat', 'weapon', 'assault', 'police', 'law enforcement', 'unsafe', 'intruder', 'harass', 'ambulance', 'injured', 'chest pain', 'unconscious', 'emergency']
+/**
+ * Messages that must reach a human in the same turn, in priority order. chat.ts escalates them in
+ * code before the model answers, so every signal here files a real escalation: they are whole-word
+ * phrases that mean urgency, not topics ("police station", "I'm an attorney" and "emergency exit"
+ * are ordinary questions).
+ */
+const URGENT: Array<{ intent: Intent; category: EscalationCategory; signals: string[] }> = [
+  {
+    intent: 'safety_escalation',
+    category: 'safety',
+    signals: [
+      'fire', 'smell smoke', 'full of smoke', 'gun', 'gunshot', 'shooting', 'shots fired', 'weapon', 'bomb',
+      'pulled a knife', 'has a knife', 'assault', 'assaulted', 'attacked', 'violence', 'violent', 'intruder', 'broke into',
+      'broken into', 'breaking into', 'following me', 'stalking', 'harassed', 'harassing', 'harassment', 'threatened me',
+      'threatening me', 'threatened us', 'threatening us', 'death threat', 'feel unsafe', "don't feel safe", 'in danger',
+      'call the police', 'called the police', 'calling the police', 'this is an emergency', "it's an emergency",
+      'missing child', 'child is missing',
+    ],
+  },
+  {
+    intent: 'medical_emergency',
+    category: 'medical',
+    signals: [
+      'medical emergency', 'chest pain', 'chest pains', 'heart attack', 'stroke', "can't breathe", 'cant breathe',
+      'cannot breathe', 'not breathing', 'trouble breathing', 'unconscious', 'unresponsive', 'collapsed', 'fainted',
+      'passed out', 'seizure', 'overdose', 'overdosed', 'choking', 'bleeding', 'allergic reaction', 'anaphylactic',
+      'ambulance', 'paramedic', 'paramedics', 'injured', 'slipped and fell',
+    ],
+  },
+  {
+    intent: 'legal_threat',
+    category: 'legal',
+    signals: [
+      'lawsuit', 'legal action', 'sue you', 'sue the', 'sue your', 'going to sue', 'will sue', "i'll sue", 'sued', 'suing',
+      'see you in court', 'take you to court', 'taking you to court', 'small claims', 'my lawyer', 'my lawyers',
+      'my attorney', 'our lawyer', 'our attorney', 'get a lawyer', 'getting a lawyer', 'my solicitor', 'negligence', 'negligent',
+    ],
+  },
+]
+
+/** Ordinary phrases that contain an urgent word, removed before URGENT is matched. */
+const NOT_URGENT = ['fire pit', 'fire pits', 'fire place', 'fire exit', 'fire exits', 'fire escape', 'fire door', 'fire safety']
+
+/** `words(text)` with the NOT_URGENT phrases taken out, ready for whole-word URGENT matching. */
+function urgentWords(said: string): string {
+  return NOT_URGENT.reduce((text, phrase) => text.split(words(phrase)).join(' '), said)
+}
+
+/** The first URGENT category the text names, in priority order, or null. */
+export function urgentCategory(text: string): EscalationCategory | null {
+  const said = urgentWords(words(text))
+  return URGENT.find((u) => u.signals.some((s) => said.includes(words(s))))?.category ?? null
+}
+
+/** The escalation category an intent obliges this turn, or null for an ordinary one. */
+export function mustEscalate(intent: unknown): EscalationCategory | null {
+  return URGENT.find((u) => u.intent === intent)?.category ?? null
+}
 
 const GROUP_SIGNALS = [
   'room block',
@@ -66,6 +129,11 @@ const CONCIERGE_SIGNALS = [
   'lost',
 ]
 
+/** Lower-case words, single-spaced and padded, so "I can't breathe!" becomes " i can t breathe ". */
+function words(text: string): string {
+  return ` ${text.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()} `
+}
+
 /** "15 rooms", "a block of 40", "20 guest rooms" -> the number. */
 function extractRoomCount(text: string): number | null {
   const patterns = [/(\d{1,4})\s*(?:guest\s*)?rooms?/i, /block\s*of\s*(\d{1,4})/i, /(\d{1,4})\s*(?:keys|nights? for \d+ rooms)/i]
@@ -83,29 +151,35 @@ export async function classifyIntent(args: ToolArgs, _ctx: ToolContext): Promise
   const utterance = optString(args, 'utterance') ?? optString(args, 'message') ?? optString(args, 'text')
   if (!utterance) return toolFail('Need the guest message to classify.')
 
-  const q = normalizeText(utterance)
+  const said = words(utterance)
+  // Urgent signals match whole words only. Group and concierge signals match at the start of a word,
+  // so "pet" matches "pets" but not "carpet".
+  const urgentText = urgentWords(said)
+  const urgentSaid = (signal: string) => urgentText.includes(words(signal))
+  const startsAWord = (signal: string) => said.includes(words(signal).trimEnd())
   const signals: string[] = []
 
-  const safetyHits = SAFETY_SIGNALS.filter((s) => q.includes(normalizeText(s)))
-  const groupHits = GROUP_SIGNALS.filter((s) => q.includes(normalizeText(s)))
-  const conciergeHits = CONCIERGE_SIGNALS.filter((s) => q.includes(normalizeText(s)))
+  const urgentHits = URGENT.map((u) => ({ ...u, hits: u.signals.filter(urgentSaid) }))
+  const groupHits = GROUP_SIGNALS.filter(startsAWord)
+  const conciergeHits = CONCIERGE_SIGNALS.filter(startsAWord)
   const roomCount = extractRoomCount(utterance)
 
-  signals.push(...safetyHits.map((s) => `safety:${s}`))
+  for (const u of urgentHits) signals.push(...u.hits.map((s) => `${u.category}:${s}`))
   signals.push(...groupHits.map((s) => `group:${s}`))
   signals.push(...conciergeHits.map((s) => `concierge:${s}`))
   if (roomCount !== null) signals.push(`rooms:${roomCount}`)
 
-  // Rule 1. Safety outranks everything, including a perfectly ordinary booking
+  // Rule 1. Safety, medical and legal outrank everything, including a perfectly ordinary booking
   // question in the same sentence.
-  if (safetyHits.length > 0) {
+  const urgent = urgentHits.find((u) => u.hits.length > 0)
+  if (urgent) {
     return toolOk(
       {
-        intent: 'safety_escalation' as Intent,
+        intent: urgent.intent,
         confidence: 'high',
         signals,
-        escalation_category: inferCategory(utterance),
-        route: 'Escalate now under Policy 15 before answering anything else in the message.',
+        escalation_category: urgent.category,
+        route: `Policy 15: call create_escalation with category "${urgent.category}" in this reply, before answering anything else in the message.`,
       },
       { citations: [policyCitation(15)] },
     )

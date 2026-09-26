@@ -164,7 +164,7 @@ const ROUTING_SPECS: ToolSpec[] = [
   {
     name: 'classify_intent',
     description:
-      'Decide whether a message is a personal concierge question, a group booking request, or a safety escalation. Policy 13 bars the concierge side from approving, pricing or discounting a group block, so a group request has to be routed, not answered.',
+      'Decide whether a message is a personal concierge question, a group booking request, or a safety, medical or legal escalation. Policy 13 bars the concierge side from approving, pricing or discounting a group block, so a group request has to be routed, not answered.',
     parameters: {
       utterance: { type: 'string', description: 'The guest message to classify.', required: true },
     },

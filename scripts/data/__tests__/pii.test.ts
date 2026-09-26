@@ -36,6 +36,12 @@ describe('masking primitives', () => {
     expect(redacted).not.toContain('312-555-0148')
   })
 
+  it('removes a card number whole, before the phone pattern can keep part of it', () => {
+    for (const card of ['4111111111114417', '4111 1111 1111 4417', '4111-1111-1111-4417', '378282246310005']) {
+      expect(redactText(`Card ${card}, phone 312-555-0148`), card).toBe('Card [card number removed], phone ***-***-0148')
+    }
+  })
+
   it('masks a nested argument object and reports which paths it touched', () => {
     const { masked, masked_fields } = maskArgs({
       guest: { email: 'laura.bennett@example.com', phone: '312-555-0148' },
