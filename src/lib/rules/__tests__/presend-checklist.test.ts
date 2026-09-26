@@ -98,7 +98,9 @@ describe('GET /api/chat writes nothing', () => {
   const CITED: Array<[string, number, string]> = [
     ['netlify/functions/chat.ts', 227, "req.method !== 'POST'"],
     ['netlify/functions/chat.ts', 243, 'resolveSessionId'],
-    ['netlify/functions/chat.ts', 579, "from('sessions').insert("],
+    // Was 579 until iteration 166, when the T63 fix added a comment block above it. Re-pointed by
+    // reading the line, which is the only way that has ever worked here.
+    ['netlify/functions/chat.ts', 595, "from('sessions').insert("],
     ['docs/demo-runbook.md', 60, 'Do not warm it by sending a real chat message'],
   ]
 

@@ -9,6 +9,35 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It166 SHIPPED → T63 (`!!`): the fix closed the case that fails on TYPE and left the case that fails on
+  REFERENCE.** A well-formed uuid the caller invented passes `UUID_RE`, so `isNewSession` was false, no
+  `sessions` row existed, and every child insert failed its foreign key **silently**. Measured 08:57: a real
+  `get_policy` call, a correct answer, `tool_invocations` 1180 → 1180.
+- **One line.** `ensureSession` now runs on **every** turn, not only a new one. The insert already treated a
+  duplicate key as success, so a continuing conversation pays one rejected insert on a path nothing awaits
+  (`void sessionReady.then(...)` — no guest-visible latency). `resolveSessionId` untouched, so all eleven
+  existing cases stand.
+- **Where the comment went mattered more than what it said.** My first attempt put ten lines above the write
+  block; `tsc` passed and **two citation guards went red** — the shift moved `saved?.guest_id` 311 → 320, and
+  **`agent/sol.md:391` cites `chat.ts:311`**. Editing the prompt would force regenerating the committed export
+  and leave the live assistant out of parity until a re-provision, which needs credit and is Enrique's call.
+  **A citation fix is not worth breaking a three-way parity claim an hour before submission.** Redone as one
+  line for one line — **zero shift** — with the explanation on `ensureSession`, below 311. Verified by reading
+  227, 243, 311; only `from('sessions').insert(` moved, 579 → **595**, cited in two files, both mine.
+- **The disclosure is appended, not rewritten.** The plan **quotes line 339's exact phrase** and
+  `intervention-routing` resolves it, so editing it would turn the suite red until the Planner edited their own
+  file. Line 339 is byte-identical; the resolution is dated, quotes the superseded sentence, and carries the
+  curl to see it. **`docs/how-this-was-built.md` corrected in place** (no line pointers) and it tells both
+  halves now — *a fix a test suite confirms is not the same as a fix that covers the defect.*
+- **Four cases: hazard as behaviour, mitigation at source** (the suite has no database, so a write that never
+  happens cannot be observed). Red-check: pre-It166 `chat.ts` **1** · gate reinstated **1** · duplicate-key
+  tolerance removed **1** · ordered chain broken **1** · restored **15 passed**, two files byte-identical.
+- **My duplicate-key case was satisfied by my own comment.** It matched `/duplicate key/i` anywhere in
+  `chat.ts`, and the JSDoc I added twenty minutes earlier says *“treats a duplicate key as success”* — so
+  removing the tolerance from the **code** left the phrase in the **prose** and the case passed. It145's defect
+  inside a guard written the same iteration. **Fourth time this session an assertion has been satisfied by
+  prose rather than the thing.** Now strips comments and matches `!/duplicate key/i.test(error.message)`.
+
 - **It165 SHIPPED → re-measured the Download-ZIP claim, then made it stop depending on remembering.**
 - **It still passes:** extracted with `git archive`, no `.git`, `npm ci`, then **961 passed / 5 skipped / 0
   failed**, `tsc -b` clean, `data/generated` present because it is tracked. **No defect** — after twelve new

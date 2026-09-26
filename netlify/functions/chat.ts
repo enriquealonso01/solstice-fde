@@ -297,7 +297,7 @@ async function runTurn({ emit, ctx, sessionId, isNewSession, userText, fallbackH
   // 2. Writes are fire-and-forget, but ORDERED: `messages.session_id` has a foreign key onto
   //    `sessions`, so racing the two inserts loses the guest's message. Chaining keeps the
   //    ordering without putting either round trip on the path the guest is waiting on.
-  const sessionReady: Promise<unknown> = isNewSession ? ensureSession(sessionId, undefined) : Promise.resolve()
+  const sessionReady: Promise<unknown> = ensureSession(sessionId, undefined) // unconditional: see ensureSession
   void sessionReady.then(() => persistGuestMessage(sessionId, userText, isNewSession))
 
   // 3. History and the session's bound identity are the only reads on the critical path, they
@@ -572,6 +572,22 @@ function anthropicTools(): Anthropic.Tool[] {
 // Every write below is best effort. AGENTS.md is explicit that the schema may not be applied
 // yet, and a missing table must degrade the dashboard, never the conversation.
 
+/**
+ * The `sessions` row every other write depends on, created for EVERY turn rather than only a new one.
+ *
+ * `resolveSessionId` mints a fresh id when the caller's is malformed, which closed the disclosed case:
+ * a non-uuid is rejected by Postgres with `22P02`, and on a fire-and-forget path that rejection is
+ * swallowed. It left the neighbouring one. **A well-formed uuid the caller invented passes `UUID_RE`**,
+ * so `isNewSession` was false, no row was inserted, and every child insert failed its foreign key --
+ * silently. Measured on production at iteration 166's filing: a real `get_policy` call, a correct
+ * answer to the guest, and `tool_invocations` unchanged. The validation closed the case that fails on
+ * TYPE and left the case that fails on REFERENCE, while `agent/sol.md` promises every tool call is
+ * recorded.
+ *
+ * Calling this unconditionally is the whole fix. The insert already treats a duplicate key as success,
+ * so a continuing conversation pays one rejected insert on a path nothing awaits, and an id we never
+ * issued gets the row that makes the rest of the turn recordable.
+ */
 async function ensureSession(sessionId: string, guestId: string | undefined): Promise<void> {
   try {
     const db = getDatabase()

@@ -10955,3 +10955,98 @@ quotes the call. With the pre-flight stripping comments the same way: 0 calls le
 
 `npx tsc -b` clean. `npx vitest run` **972 tests / 68 files** green here, **967 passed / 5 skipped / 0
 failed** in a tree with no `.git`.
+
+---
+
+## It166 — T63: the fix closed the case that fails on type and left the case that fails on reference
+
+`agent/sol.md` G17 promises *"Every tool call is recorded, masked."* The disclosed defect was a
+**malformed** session id: Postgres rejects a non-uuid with `22P02`, every write on that path is
+fire-and-forget, the rejection is swallowed, and the caller gets a fully working untraced conversation.
+That fix shipped and `session-id.test.ts` holds it in eleven cases.
+
+The Planner measured the neighbour at 08:57: a **well-formed uuid the caller invented** passes `UUID_RE`,
+so `isNewSession` is false, no `sessions` row is created, and every child insert fails its foreign key —
+silently, on the same path. A real `get_policy` call, a correct answer to the guest, `tool_invocations`
+1180 → 1180.
+
+**Validating the id closed the case that fails on TYPE and left the case that fails on REFERENCE.**
+
+### The fix is one line, and `ensureSession` already made it safe
+
+```ts
+- const sessionReady: Promise<unknown> = isNewSession ? ensureSession(sessionId, undefined) : Promise.resolve()
++ const sessionReady: Promise<unknown> = ensureSession(sessionId, undefined) // unconditional: see ensureSession
+```
+
+The insert already treats a duplicate key as success — that is in the original code, by design. So a
+continuing conversation pays one rejected insert on a path nothing awaits (`void sessionReady.then(...)`,
+so no guest-visible latency), and an id we never issued gets the row that makes the turn recordable.
+`resolveSessionId` is untouched, so all eleven existing cases stand, including *"never echoes
+caller-controlled text back in the id it returns."*
+
+### Where the explanation goes turned out to matter more than what it says
+
+My first attempt put a ten-line comment above the write block. `tsc` passed and **two citation guards went
+red**: the block shifted `saved?.guest_id` from 311 to 320, and `agent/sol.md:391` cites `chat.ts:311`.
+
+`agent/sol.md` is the prompt. Editing it changes the compiled instructions, so `exports/telnyx-assistant.json`
+would have to be regenerated and the live Telnyx assistant would sit out of parity with both until a
+re-provision — which needs credit and is Enrique's call. **A citation fix is not worth breaking a
+three-way byte-identical parity claim an hour before submission.**
+
+So the statement became one line in place of one line — **zero shift** — and the explanation went onto
+`ensureSession`, which sits below 311 and above 579. Verified by reading lines 227, 243 and 311 rather
+than by arithmetic: all three unchanged. Only `from('sessions').insert(` moved, 579 → **595**, cited in
+exactly two files and both mine: `agents/README.md` and `presend-checklist.test.ts`.
+
+*`doc-citations` and `presend-checklist` both caught this before I could ship it. They are the T55 lesson
+in working order.*
+
+### The disclosure, appended rather than rewritten
+
+T63 said *"fix the code or widen the sentence — but not neither."* Fixing it makes
+`HUMAN_INTERVENTION.md:339` — *"today's honest answer is 'unless the caller sends a malformed session
+id'"* — describe a limit that no longer exists.
+
+I could not rewrite that line. **The plan quotes its exact phrase**, and `intervention-routing.test.ts`
+resolves that pointer, so editing it would turn the suite red until the Planner edited their own file. So
+the resolution is appended, dated, quoting the superseded sentence so a reader who met it knows which one
+is corrected, and carrying the curl to see it rather than take it. Line 339 is byte-identical and every
+pointer still resolves.
+
+`docs/how-this-was-built.md` has no line pointers into it, so it is corrected in place — and it becomes a
+better document for it. It listed the malformed id among the things the loop found. It now tells both
+halves: the loop found it, the fix shipped with eleven tests holding it, and two hours later the same
+agent tried a uuid it had **invented rather than been given**. *A fix that a test suite confirms is not
+the same as a fix that covers the defect*, and what told them apart was an agent measuring the live system
+instead of reading the diff. That is the document's own argument, made with its strongest example.
+
+### Guarded, four cases, hazard as behaviour and mitigation at source
+
+The behaviour needs a database and the suite has none, so: the **hazard** is executable —
+`resolveSessionId('11111111-…')` really does return `isNewSession: false`, and that is correct, because it
+is not the parser's job to know which uuids exist — and the **mitigation** is at source, because a write
+that never happens cannot be seen from a suite where `tryGetDb()` is null.
+
+```
+chat.ts exactly as before It166        1 failed   <- the T63 defect
+the gate reinstated verbatim           1 failed
+duplicate-key tolerance removed        1 failed
+the ordered chain broken               1 failed
+restored                              15 passed   two files byte-identical
+```
+
+### And the duplicate-key case was satisfied by my own comment
+
+The third mutation first reported **nothing failed**. The case matched `/duplicate key/i` anywhere in
+`chat.ts` — and the JSDoc I had added to `ensureSession` twenty minutes earlier says *"treats a duplicate
+key as success"*. Removing the tolerance from the **code** left the phrase in the **prose** and the
+assertion passed.
+
+Iteration 145's defect, in a guard written to protect a fix in the same iteration. **Fourth time this
+session an assertion has been satisfied by prose rather than by the thing.** It now strips comments and
+matches the code shape `!/duplicate key/i.test(error.message)`, with a floor so the stripping cannot leave
+nothing to check. Re-run: 1 failed.
+
+`npx tsc -b` clean. `npx vitest run` **980 tests / 68 files** green (up 4).

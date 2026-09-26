@@ -124,6 +124,17 @@ the package makes in writing and that the supervisor dashboard and the audit tra
 **None of those would have been caught by the tests, which passed throughout.** They were found by
 an agent whose only job was to disbelieve the other two.
 
+The G17 one is the best of them, because the loop caught it **twice**. The first finding was the
+malformed id, and the fix validated `session_id` against a uuid and minted a fresh one when it did not
+match. That shipped, with eleven test cases holding it. Two hours later the same agent tried a uuid it
+had **invented rather than been given** — well-formed, so it passed validation, and no `sessions` row
+existed for it, so every child insert failed its foreign key on the same silent path. The guest still got
+a correct answer from a real tool call, and nothing was recorded. *The validation had closed the case
+that fails on type and left the case that fails on reference.* Both are closed now, by creating the
+session row on every turn rather than only a new one. **A fix that a test suite confirms is not the same
+as a fix that covers the defect**, and the only thing that told us apart was an agent measuring the live
+system instead of reading the diff.
+
 It kept finding them, and the later ones were quieter. Five separate guards turned out to be
 **passing while broken** — each one testing the shape of the single bug its author had in front of
 them rather than the rule its own header stated. The auto-triage sweep, a named deliverable, had
