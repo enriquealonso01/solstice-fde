@@ -5308,3 +5308,68 @@ it; add a fresh `env.SEED_REGION` read to `seed-users.mjs` and the guard names t
 
 `npx tsc -b` clean. `npx vitest run` **565 tests / 47 files** green (up 7). No prompt change, so no
 re-provision: compile === export === live still 29,006, margin 994.
+
+## It99 — the documented logins work; the password that unlocks them was guarded by one unasserted line
+
+No task open again, so I took the demo claim that has never actually been exercised. `SUBMISSION.md`
+hands the evaluator three accounts, the runbook's pre-flight says *"both signed in already"*, and all
+three role walkthroughs open on a sign-in. The rehearsal had only ever recorded that `/admin` and
+`/login` return **200** — which is the page, not a session. If the credentials do not work, every
+graded admin screen is unreachable and three walkthroughs open on a login form.
+
+**All three sign in against production, on the documented role:**
+
+```
+supervisor@solsticehotels.com     OK  role=concierge    name=Dana Reyes
+sales@solsticehotels.com          OK  role=group_sales  name=Marcus Feld
+admin@solsticehotels.com          OK  role=admin        name=Enrique Alonso
+```
+
+Password grant against `/auth/v1/token` with the anon key, then a `profiles` read with the returned
+session, so this exercises the same path the browser does including RLS on the profile row. I printed
+role and name only; the password never left the process.
+
+**Two more claims, both clean.** The three emails and role labels in `SUBMISSION.md` match what
+`scripts/seed-users.mjs` creates exactly — no drift between the generator and the deliverable. And
+`DEMO_LOGINS.md` exists on this machine, is ignored at `.gitignore:8`, and has **0** commits in
+history, so `SUBMISSION.md`'s statement about where the password lives is true.
+
+**A negative result worth recording**, since I went looking for it: no deliverable claims the concierge
+tools never touch a database. The plan's `IF THEY ASK` answer says it, and in context — guests,
+reservations, properties and policies compiled into the bundle — it is right. The tools do reach
+Postgres, but only through `getDatabase()` for escalations and session records, never for reference
+data. Nothing to fix, and worth knowing before anyone repeats the claim more broadly than the plan
+does.
+
+### The hardening
+
+`DEMO_LOGINS.md`'s second line is `Password for all three: <the live value>` — a working password for
+`admin@solsticehotels.com`, the account that sees every screen, the backend map and the cost page. The
+repository is **public**. The entire protection was one line of `.gitignore` with no test on it.
+
+That is not a hypothetical. This repo has lost that bet twice: a live Telnyx SIP credential shipped as
+a test fixture (the finding this guard file was written for, Tester iteration 51), and `inq.json`
+arrived via `git add -A`. A `git add -f`, a rebase that touches `.gitignore`, or a tidy-up that
+"cleans" the ignore list are each one command away.
+
+Three cases added to `no-committed-credentials.test.ts`, in its existing idiom — shape-based, because
+`vitest.setup.ts` strips credentials and no test here can know the value:
+
+1. `DEMO_LOGINS.md` must not appear in `git ls-files`.
+2. `.gitignore` must still name it, since that line is the whole protection.
+3. No tracked file may carry a **filled** password line.
+
+**Case 3 caught my own first attempt at it.** Matching any non-space after the colon flagged three
+innocent files: the email draft's `<paste from DEMO_LOGINS.md>`, the plan quoting that sentence, and
+the comment I had just written above the test. A guard that fires on prose about a secret is a guard
+people learn to ignore, so it now wants what a password looks like — one token, eight characters or
+more, running to end of line, never an angle-bracket placeholder or the generator's own
+`${PASSWORD}` — and it still runs the file's existing `announcesItselfFake` check.
+
+Red-checked all three: `git add -f DEMO_LOGINS.md` fires cases 1 **and** 3, and case 3 named the card
+itself, which proves the pattern detects a real filled value rather than the words around it; removing
+the `.gitignore` line fires case 2. The card is untracked again — `git ls-files DEMO_LOGINS.md` returns
+nothing.
+
+`npx tsc -b` clean. `npx vitest run` **568 tests / 47 files** green (up 3). No prompt change, so no
+re-provision: compile === export === live still 29,006, margin 994.

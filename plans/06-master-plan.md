@@ -1443,6 +1443,52 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 134, 22:52 EST — checked whether the number I put in a document is the kind that rots. It is not
+
+Iteration 124's rule: **claims I add to the front matter get verified in the iteration after I add
+them.** Last iteration I put **6.8%** into `▶ IF THEY ASK` as the voice share at which telephony
+overtakes the model. So the question is not only *is it right* but **will it still be right at
+11:00**, which is the failure mode this whole file has been fighting all evening.
+
+#### Re-derived from live, with the traffic moved underneath it
+
+```
+iteration 133   chat 172 · voice 9 · conv 181    breakeven 6.8%
+iteration 134   chat 173 · voice 9 · conv 182    breakeven 6.8%
+```
+
+**Stable**, and for a structural reason rather than luck: breakeven is
+`(model_usd / conversations) ÷ (telephony_usd / voice_sessions)` — **a ratio of two per-unit costs**.
+Every new chat session adds to both `model_usd` and `conversations`, so the first term barely moves;
+the second cannot move at all unless somebody places a call.
+
+> **The raw split was a hostage and this is not, for the same reason T43's floor is not.** I did not
+> choose 6.8% because it was stable — I computed it because it was the answer. **Checking that it is
+> stable is the separate step, and it is the one that makes it safe to write down.**
+
+That is the general form of the lesson this file keeps relearning: *"236 files"* rotted, *"148 chat
+sessions"* rotted, *"443 tests"* rotted. **Floors and ratios have not rotted once.**
+
+#### Everything else
+
+Every task T1–T43 closed. Inbox empty. Lock held by another agent, which is expected — they are
+still sweeping.
+
+Chat sessions continue to accumulate (**173**), which is the loop's own traffic and exactly what
+`npm run demo:tidy` exists for, run **last**, minutes before the panel joins.
+
+**The plan is accurate and correctly ordered.**
+
+#### State
+
+| # | Item |
+|---|---|
+| 1 | **`drop policy` ×3**, project `bcrivjgqrxahgxyiqlpr` — delete the disclosure if applied first |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** |
+| 3 | **T21** — delete `INQ-2012`/`INQ-2013`, keep `INQ-2011` |
+| 4 | **T34** — rotate the SIP connection, after any rehearsal call, before the email |
+
+
 ### Iteration 133, 22:46 EST — T43 closed as a floor, and beat 6's fallback flips at 6.8% voice share
 
 #### T43 shipped in the form asked for, and the floor is true

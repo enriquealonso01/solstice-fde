@@ -9,26 +9,25 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It98: no task open, so I ran every documented command instead of checking it exists — and
-  the documented setup could not have worked.** `documented-commands` pins that each `npm run` named
-  in a deliverable is in `package.json`, which a broken command satisfies perfectly.
-- **Ran the read-only set, all green:** `data:check` (*"OK - 9 generated files match their sources"*),
-  `typecheck`, `npx vite-node scripts/show-verdict.ts -- INQ-2009` (matches the documented "Before"
-  output verbatim), `email:check`, `demo:preview`. `db:schema` with no URL takes its manual-
-  instructions path and exits **0**, which is the right behaviour.
-- **The defect: `README.md` step 5 could not run.** `scripts/seed-users.mjs` requires `DEMO_PASSWORD`
-  and deliberately has no default; `DEMO_PASSWORD` appeared **nowhere** — not `.env.example`, not the
-  README, not `docs/`. A reviewer copies the example, fills in every key it lists, and hits a wall on
-  a variable they had no way to know existed. `.env.example` lists its two siblings `DEMO_EMAIL` and
-  `DEMO_PHONE`, which is what made the gap invisible to a human pass. `SUPABASE_DB_URL` was missing
-  the same way, though step 3 degrades gracefully.
-- **Nearly filed two false findings and checked first**: the four `VITE_*` names are *derived* in
-  `vite.config.ts` from un-prefixed keys that are present, and `PROPOSAL_LINK_SECRET` has a deliberate
-  fallback cascade. Neither is a defect; both are now pinned so nobody re-files them.
-- **Guarded by deriving, not listing**: every `env.X` read by the three scripts the README pastes must
-  appear in `.env.example`, so the next undocumented variable fails until someone says what it is for.
-  Red-checked by removing `DEMO_PASSWORD` (the original state) and by adding a fresh `SEED_REGION`
-  read — the guard names both.
+- **SHIPPED It99: the three documented logins work, and the password that unlocks them was protected
+  by one unasserted line.**
+- **Verified what nobody had:** all three accounts in `SUBMISSION.md:22-24` sign in against production
+  and land on the documented role — `supervisor@` → `concierge` (Dana Reyes), `sales@` →
+  `group_sales` (Marcus Feld), `admin@` → `admin`. The rehearsal had only ever shown `/admin` and
+  `/login` return **200**, which is the page, not a session. Reported role and name only; the password
+  never left the process.
+- **Two more claims checked, both clean:** the emails and role labels in `SUBMISSION.md` match what
+  `seed-users.mjs` creates, and `DEMO_LOGINS.md` exists, is ignored and has **0** commits in history.
+- **The hardening:** that file's second line is `Password for all three: <live value>` for the account
+  that sees every screen, in a **public** repo, and the entire protection was one `.gitignore` line
+  with no test on it. This repo has lost that bet twice — the SIP credential committed as a fixture
+  (Tester It51) and `inq.json` via `git add -A`.
+- **Three cases added to `no-committed-credentials.test.ts`**: the card must not be tracked,
+  `.gitignore` must still name it, and no tracked file may carry a *filled* password line.
+- **The third case caught my own first attempt at it.** A loose pattern flagged three innocent files —
+  the email draft's `<paste from DEMO_LOGINS.md>`, the plan quoting it, and my own comment. Tightened to
+  what a password looks like; red-check A then matched the real card with its real value, which proves
+  it detects the thing and not the prose about it.
 
 ## Demo rehearsal coverage — what is actually verified
 
