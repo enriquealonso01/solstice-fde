@@ -8,6 +8,28 @@ purpose — it is all in the log.
 
 ---
 
+## Iteration 59 DONE — cheatsheet audited; one beat promised an escalation that does not happen (PR #98)
+
+PR #95's disclosure is intact on `origin/main` and nothing has touched either file since. **VERIFIED.**
+
+Then the audit nobody had done: `docs/demo-cheatsheet.md`, the file open in a tab during the demo. **All
+five guest rows match live data exactly** (name/tier from `identify_guest`, dates/property/status from
+`get_reservation`), and three of the four behavioural claims hold verbatim — Platinum's guaranteed 14:00,
+Silver's absence of one, and the suite refusal with `may_promise: false`.
+
+**THE FINDING:** *"Disputed $45 minibar charge … comp authority and AGM escalation."* Measured: $45 and
+$50 both return `front_desk` / `escalation_required: false`; $55 returns `agm`. **$45 is inside authority,
+so the beat shows no escalation at all.** And nothing rescues it — the reservation row has no folio, so
+the amount is whatever the guest asserts. PR #98 (`44aba8b`) states what happens at $45, quotes the
+threshold, and tells Enrique that naming a second charge makes it $70 and reaches the AGM — verified in
+the same pass, and the stronger beat anyway because a per-stay total is the rule a human forgets.
+
+**My first pass reported all five guest rows as mismatches** — it looked for name and tier in the
+`get_reservation` payload, which has neither. A 5-of-5 failure is almost always the instrument.
+
+**Migration 004: tenth consecutive check, still unapplied** — now disclosed, so it would ship as a stated
+defect rather than a found one.
+
 ## Iteration 58 DONE — PR #92's claims VERIFIED; the deliverables now disclose the open defect (PR #95)
 
 PR #92 cited my log in `README.md` and `SUBMISSION.md`, so I verified claims made *about* my own work:
@@ -679,6 +701,13 @@ superseded wording; other agents' PR #11, #20, #25, #43.
 36. **When a document starts citing your work, audit the citation, not just the work.** PR #92's claims
     about my log were all true, but only I could confirm that — and the same read is what surfaced what
     the sentence left out.
+
+37. **A near-total failure rate is a confession by the instrument.** Five of five cheatsheet rows
+    "failed" because I read name and tier out of `get_reservation`, which carries neither. When almost
+    everything fails at once, check the contract before writing the finding.
+38. **Audit the file that is open during the demo.** The cheatsheet had never been checked end to end and
+    one of its six beats promised the opposite of what the tool returns. Docs that drive a live
+    performance deserve the same treatment as code.
 
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real

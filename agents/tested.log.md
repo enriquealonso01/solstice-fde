@@ -5204,3 +5204,80 @@ my own two files.
 ### Migration 004: ninth consecutive check
 Unchanged. The difference after this iteration is that it is now disclosed rather than merely recorded in
 my log, so if it ships unapplied it ships as a stated known defect instead of something found.
+
+---
+
+## Iteration 59 — 2026-09-27 00:06–00:14Z — VERIFIED PR #95 and the cheatsheet's guest data. FIXED-PENDING: one cheatsheet beat promised an escalation that does not happen.
+
+### VERIFIED — PR #95's disclosure is intact
+`git log fe04948..origin/main -- README.md SUBMISSION.md` is empty: nothing has touched either file
+since I shipped the disclosure, and both lines are on `origin/main` verbatim.
+
+### The audit nobody had done: every fixture the cheatsheet asks Enrique to say out loud
+`docs/demo-cheatsheet.md` is 38 lines and is the file open in a tab during the demo. It names five
+confirmation numbers and makes a factual claim about each. **All five guest rows match live data
+exactly:**
+```
+R55004  Michael Chen, Platinum, Denver, 2026-07-20 -> 2026-07-23        MATCHES
+R55005  Denise Franklin, Silver, Nashville, status Cancelled            MATCHES
+R55006  Marcus Webb, Gold, Tampa, status Checked-in, room Suite         MATCHES
+R55001  Laura Bennett, Silver, Chicago, 2026-07-14 -> 2026-07-17        MATCHES
+R55003  Priya Subramaniam, Gold, Austin, 2026-07-18 -> 2026-07-21       MATCHES
+```
+Name and tier read from `identify_guest`, dates/property/status from `get_reservation`.
+
+**My first pass reported all five as mismatches.** It looked for the guest's name and tier in the
+`get_reservation` payload, which carries `guest_id` and no name. Wrong tool for two of the five fields —
+the same shape as rule 7, and the reason I check a suspicious result against the contract before writing
+it down. A 5-of-5 failure is almost always the instrument.
+
+### Three of four behavioural claims hold
+```
+R55004 "Guaranteed 2PM checkout, confirmed outright"
+  -> "Platinum members have a guaranteed late checkout until 14:00, with no blackout dates and no
+      exceptions. 14:00 is inside that, so it is confirmed, not requested."                   MATCHES
+R55001 "no automatic perk, subject to availability"
+  -> "Silver carries no late-checkout entitlement. Policy 1 makes late checkout same-day
+      availability and front-desk discretion, so it cannot be promised here."                 MATCHES
+R55004 "with no suite free Sol refuses to promise one and escalates to the manager on duty"
+  -> may_promise: false. "there is no Suite inventory on 2026-07-20 … competing claims on the last
+      room are a judgment call for the manager on duty. Do not promise the upgrade"            MATCHES
+```
+
+### THE FINDING — the $45 minibar beat does the opposite of what the line promises
+The cheatsheet said: *"Disputed $45 minibar charge. Ask to have it removed; comp authority and **AGM
+escalation**."* Measured on production, either side of the threshold:
+```
+$45  authority_required=front_desk  escalation_required=False
+     "Single item totalling $45.00. That is inside the $50.00 per-stay front-desk authority, so it can
+      be actioned without manager approval."
+$50  authority_required=front_desk  escalation_required=False
+$55  authority_required=agm         escalation_required=True
+```
+$45 is **inside** authority. Run as written, the beat shows no escalation at all.
+
+**Checked whether something else rescues it: no.** The reservation row has no folio —
+keys are `check_in_date, check_out_date, guest_id, nightly_rate, property_code, property_name,
+rate_plan, reservation_id, room_type, special_requests, status, total_nights`. The amount is whatever
+the guest asserts, so there is no second charge in the data to aggregate over $50.
+
+### Fixed — PR #98, `44aba8b`
+The row now states what actually happens at $45, quotes the measured threshold, and tells Enrique how to
+get the escalation if that is the moment he wants: naming a second charge makes it a $70 per-stay total,
+which returns `agm` and `escalation_required: true` — verified in the same pass ($45 + $25 = 7000 cents,
+`authority=agm`). That aggregation is the stronger beat anyway, because a per-stay total is exactly the
+rule a human forgets, and I verified it as G5 back at iteration 33.
+
+Docs only — the cheatsheet does not compile into the voice prompt, so no re-provision.
+
+### One instrument inconsistency of mine, worth naming because it looked like a defect
+Two of my probes printed an empty summary where an earlier one printed text. The tool returns
+`human_reason`, not `human_summary`; my first helper fell back to it and my second loop did not. Nothing
+wrong with the tool. **When the same call gives different output in two of my own harnesses, suspect the
+harness before the endpoint.**
+
+### Migration 004: tenth consecutive check, still not applied
+```
+PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
+```
+Now disclosed in the README and SUBMISSION, so if it ships it ships as a stated defect.
