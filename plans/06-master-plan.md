@@ -74,6 +74,11 @@
 
 *Everything below this section is closed, or evidence.*
 
+> **T40 is open:** the runbook's recovery row sends Enrique to the browser mic when the phone
+> fails — **same Telnyx account, same balance**, so if the phone failed for lack of credit the mic
+> fails identically. The balance-independent fallback is the **text** chat bubble (Anthropic, not
+> Telnyx). One clause.
+>
 > **T39 is open too, same beat:** the runbook tells Enrique to say *"all three costed options move
 > together"* while `show-verdict.ts` prints **one price** — true about the system, false about the
 > screen. One sentence.
@@ -105,6 +110,48 @@ slightly wrong about the test, the guardrail is verified and the behaviour is ri
 secondary list in `SUBMISSION.md`. Two README rows and one bullet. *Everything else an agent could
 take is closed; the four items above require spending money or an irreversible change to a live
 system, which is the boundary working.*
+
+### T40. The phone-failure fallback shares a failure mode with the phone — one clause
+
+*Small, and it protects the beat most likely to go wrong. `docs/demo-runbook.md`'s recovery table
+sends Enrique to the browser mic when the phone fails; the mic runs on the **same Telnyx account and
+the same balance**. For the failure mode that is currently most likely — an exhausted balance — the
+fallback fails for the same reason as the thing it is replacing.*
+
+**What the runbook says** (`## If something breaks`):
+
+> | The phone call fails | **Use the mic in the chat bubble.** Same agent, same tools. Say so and move on. |
+
+**"Same agent, same tools" is exactly right**, and that is the problem. `useTelnyxVoice.ts` connects
+with `VITE_TELNYX_ASSISTANT_ID` through `@telnyx/webrtc` to the **same assistant** the phone number
+reaches, on credentials minted by `netlify/functions/voice/credentials.ts` from the same account.
+Same assistant, same account, **same balance**.
+
+**Why it matters now rather than in the abstract:** the balance is **$3.03**, the project's own
+pre-send gate is *"above $20, or do not invite them to call the number"*, and a three-second voice
+call has been measured at roughly **$0.48**. If the phone fails because the account is out of money,
+the mic will fail identically, in front of the panel, immediately after Enrique has said *"same
+agent, same tools."*
+
+**The genuine balance-independent fallback is the text chat bubble.** `/api/chat` runs on
+`ANTHROPIC_API_KEY` against `claude-sonnet-5` and touches Telnyx not at all — a different vendor,
+different credentials, different failure mode. It is the honest answer for *"the voice path is
+unavailable"*, at the cost of the moment being text rather than speech.
+
+**Do this — amend the one row, keep the rest of the table as it is:**
+
+> | The phone call fails | **If it is a carrier or signal problem:** use the mic in the chat bubble — same agent, same tools, say so and move on. **If Telnyx is out of credit the mic fails too** (same account, same balance), so fall back to the **text** chat bubble, which runs on Anthropic and does not touch Telnyx. |
+
+**Do not restructure the section.** Every other row in that table is sound, and the two best lines
+in it — *"Do not apologise twice"* and *"Handling it calmly is worth more than not hitting it"* —
+are the reason a presenter will actually read it under pressure.
+
+**This is one more argument for item 2**, not a substitute: topping up to $20 removes the failure
+mode rather than documenting a way around it.
+
+**Check when done:** the row distinguishes the two causes; the text-chat fallback is named; the rest
+of the table is untouched.
+
 
 ### T39. The runbook says three costed options move; the script it points at prints one price
 
@@ -1126,6 +1173,73 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 108, 20:46 EST — audited my own file's headings and found two more that contradict their own contents
+
+Last iteration I noticed I had never executed my own document. So I read every heading above the
+verification log — the part of this file that claims to be current — and checked each against what
+sits underneath it.
+
+#### The section heading contradicted the two tasks directly below it
+
+Line 73 read:
+
+> **▶ OPEN WORK — nothing is left for an agent; all four items are Enrique's**
+
+**T39 is at line 109 and T38 at line 160**, both open, both agent work. I wrote that heading in
+iteration 95 when it was true, filed two tasks under it in iterations 104 and 105, and **never
+looked back up.** Anyone reading top-down was told there was nothing to do immediately above two
+things to do.
+
+Now: *"four items are Enrique's, and two one-sentence fixes are the agents'."*
+
+#### T17's heading has been wrong since PR #56
+
+> **T17. `agent/sol.md` contradicts the shipped chat runtime — WRITTEN, uncommitted, fix T19 into it**
+
+Verified: the telephony-only note is live at `agent/sol.md:77-80` **and present at HEAD** —
+*"`create_inquiry` and `update_inquiry` are telephony-only… stating the single exception is stronger
+than implying a symmetry the system does not have."*
+
+Its body still reads *"right now it tells them the opposite of what chat does."* **Iteration 75
+recorded that this needed no work and I never returned to the heading.** Marked CLOSED with the
+correction inline; the body is left as written, with its stale present tense flagged rather than
+rewritten.
+
+#### What this says about the file, and it is not a small thing
+
+**Every one of the last three stale facts was in the part of the plan that claims to be current, and
+every one was written by me and then outlived by events I myself recorded.** The verification log is
+accurate because each entry is dated and never touched again. The current-state sections are the
+ones that rot, precisely because they are the ones that are supposed to change.
+
+> This is the same structural lesson the README learned twice — *"figures are given as floors or
+> rounded, deliberately"* — and the same one `doc-citations.test.ts` and `list-counts.test.ts` were
+> built to enforce. **Those guards cover the eleven deliverable documents. Nothing guards this
+> file**, and it is the one three agents read first.
+
+I am not proposing a guard for it at 20:46 with four items outstanding. **But the next person to
+keep a long-lived planning document should know that its dated log will stay true and its summary
+will not, and that the summary is the part everyone actually reads.**
+
+#### Everything else above the log checks out
+
+T19 through T37 headings all carry accurate CLOSED markers with their PR numbers; **guardrail
+coverage reads 18 of 19**, corrected in iteration 83; T21's heading correctly describes it as
+Enrique's database call.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T38**, **T39** — one sentence each | Agents |
+
+Inbox empty. No lock held.
+
 
 ### Iteration 107, 20:42 EST — I drove the pre-send checklist and found two stale numbers in my own file
 
