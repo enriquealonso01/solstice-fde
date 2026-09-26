@@ -120,3 +120,86 @@ describe('GET /api/chat writes nothing', () => {
     }
   })
 })
+
+/**
+ * The last box on the checklist, which is the one nobody could check.
+ *
+ * `SUBMISSION.md` ends with *"production is actually serving your latest commit"* and pastes a script
+ * that prints `OK` or `BEHIND`. The Planner said plainly that this was the one box they could not check
+ * -- they had verified the published files are byte-identical to the tree, not that the tree is what
+ * production serves. Iteration 158 ran the script verbatim: it works, and it printed `OK`.
+ *
+ * **It could also have printed `OK` while production was behind.** It took the first deploy with
+ * `state: 'ready'`, and `listSiteDeploys` returns every context in one list, newest first. Measured
+ * against the real API: 100 deploys, of which **two are `context: 'deploy-preview'` and `state: 'ready'`
+ * like any other**. Opening a pull request builds one -- this repository opens one per iteration -- so a
+ * preview newer than the last production deploy would have been compared against the commit and passed.
+ * That is the exact failure the box exists to catch, in the last check before sending.
+ *
+ * It also read `created_at`, the moment the build started, rather than `published_at`, the moment that
+ * build began answering requests. A deploy can be ready and never published.
+ *
+ * So the script now requires `state === 'ready' && context === 'production' && published_at`, and this
+ * pins those filters, because they are one keystroke from being simplified away by someone tidying a
+ * long line -- and the result of that would be a check that always says OK.
+ */
+describe("the checklist's deploy-freshness script", () => {
+  const FILE = 'SUBMISSION.md'
+
+  /** The fenced block that contains the check, so the assertions below cannot match prose elsewhere. */
+  const script = (): string => {
+    const text = read(FILE)
+    const start = text.indexOf('listSiteDeploys')
+    expect(start, `${FILE} no longer pastes a listSiteDeploys check; re-point this rather than deleting it`).toBeGreaterThan(-1)
+    const fenceEnd = text.indexOf('```', start)
+    const block = fenceEnd === -1 ? text.slice(start) : text.slice(start, fenceEnd)
+    expect(block.length, 'the script block came back too short to be the script').toBeGreaterThan(200)
+    return block
+  }
+
+  it('counts only production deploys, not the previews a pull request builds', () => {
+    expect(
+      script(),
+      `${FILE}'s freshness check does not filter on context === 'production'. listSiteDeploys returns ` +
+        `previews and branch deploys in the same list, all with state 'ready'; two such deploys existed ` +
+        `when this was measured. Opening a PR builds one, so without the filter the check compares your ` +
+        `commit against a build nobody is serving and prints OK.`,
+    ).toMatch(/context\s*===\s*'production'/)
+  })
+
+  it('counts only deploys that were actually published', () => {
+    const block = script()
+    expect(
+      block,
+      `${FILE}'s check no longer requires published_at. A deploy can finish building and never be ` +
+        `published, which is ready and still not the thing answering requests.`,
+    ).toMatch(/published_at/)
+    expect(
+      block,
+      `${FILE}'s check compares created_at, the moment the build started, rather than published_at, the ` +
+        `moment it began serving.`,
+    ).not.toMatch(/new Date\(ready\.created_at\)/)
+  })
+
+  it('still only accepts a ready deploy, which was the original point', () => {
+    expect(script(), `${FILE}'s check stopped requiring state === 'ready'`).toMatch(/state\s*===\s*'ready'/)
+  })
+
+  it('still prints a verdict rather than leaving a timestamp to be eyeballed', () => {
+    const block = script()
+    expect(block, `${FILE}'s check no longer prints OK`).toMatch(/\bOK\b/)
+    expect(block, `${FILE}'s check no longer prints BEHIND`).toMatch(/\bBEHIND\b/)
+  })
+
+  it('says in prose what the script actually covers', () => {
+    // The prose counted two covered failures while the script covered two; it now covers three. A
+    // checklist whose explanation undersells it is how the next reader decides a filter is redundant.
+    const text = read(FILE)
+    expect(
+      text,
+      `${FILE} still says two failures are covered. The preview case is a third, and it is the one that ` +
+        `would pass silently.`,
+    ).toMatch(/\*\*Three\*\* failures are covered|three failures are covered/i)
+    expect(text, `${FILE} no longer explains the deploy-preview case`).toMatch(/deploy preview|deploy-preview/i)
+  })
+})

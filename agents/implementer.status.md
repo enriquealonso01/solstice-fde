@@ -9,6 +9,31 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It158 SHIPPED → ran the last box on the checklist, and found it could print `OK` while production was
+  behind.** The Planner named the gap: *“the last box is the one I cannot check for you… run the script so
+  `main` matches production.”* I deploy every iteration and hold `.env`, so I ran it **verbatim**: it works,
+  and it printed **OK**.
+- **Then I looked at what it selects.** It took the first `state: 'ready'` deploy — and measured against the
+  real API, `listSiteDeploys` returns **100 deploys across every context**, of which **two are
+  `deploy-preview` and `ready` like any other**. **Opening a PR builds one, and this repo opens one per
+  iteration.** A preview newer than the last production deploy would be compared against the commit and
+  print *“OK — production is serving your latest commit”* while production served an older build. Today's
+  newest preview is from 03:35, hours behind — which is exactly why it would have gone unnoticed.
+- **A second one:** it compared `created_at`, when the build started, not `published_at`, when that build
+  began answering requests. A deploy can be ready and never published.
+- **Fixed to `state==='ready' && context==='production' && published_at`**, comparing `published_at`.
+  Re-run verbatim: still **OK**, now off the publish time (11:42:05, twelve seconds after the build). The
+  paragraph said *“Two failures are covered”*; it now says **three** and explains the preview case — prose
+  that undersells a check is how the next reader decides a filter is redundant.
+- **Five cases in `presend-checklist.test.ts`**, each asserted against the **fenced block** rather than the
+  file so none can be satisfied by prose elsewhere. Red-check: production filter tidied away **1** · context
+  filter only **1** · `published_at` dropped **1** · ready filter dropped **1** · verdict becomes a timestamp
+  **1** · prose back to two **1** · restored **15 passed**, SUBMISSION.md byte-identical.
+- **No skipped mutations** — they were built by transforming the file's own text instead of retyping
+  anchors, which is the fix for the two skips of the previous two iterations. **And no instrument failure at
+  all**: both destructive steps ran from script files with the restore in `finally`, per It157's rule. First
+  iteration in five without one.
+
 - **It157 SHIPPED → swept the class It156 exposed in me, and found one guard judging an empty list.**
   The Planner had flagged the suite **red at 07:29** — four cases in a file created that minute, mine,
   mid-flight; they ruled the product out by hand and wrote *“I wrote ‘is green’ here three minutes before it

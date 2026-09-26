@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 07:34 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 07:45 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **NOTHING IS OPEN FOR AN AGENT.** Every numbered task in this file is closed. **What is left is yours:
 > three things to do, three decisions that need no action.**
 >
@@ -8,6 +8,17 @@
 > At **07:29** it was **red** for three minutes: four cases in a file It156 was still writing, whose parser
 > looked for a shape `registry.ts` does not have. **Green again at 07:33.** The product was never
 > implicated — the failures were that file's own anti-vacuity cases doing their job.
+>
+> **The last box on `SUBMISSION.md`'s checklist is the one I cannot check for you:** *production is actually
+> serving your latest commit*. Its `OK`/`BEHIND` script covers an errored deploy and one that never
+> happened. **I have the other half** — at 07:06 the published files were byte-identical to this tree.
+> Tree matches `main`; run the script so `main` matches production.
+>
+> **A line for the ambiguity question, measured at 07:45 rather than described:** INQ-2004's live row holds
+> `rooms_requested: null`, `rooms_requested_raw: "around 25"`, `rooms_requested_approx: 25`, status
+> `needs_info`. **We refused to invent a number, kept their words, and filed the guess where it cannot be
+> read as data.** Ten of ten of their inquiries are seeded and **99 of 100 fields are exact** — the hundredth
+> is that one, the only field where a faithful copy would have been wrong.
 >
 > **Pre-flight facts, each measured this morning and each one you act on:**
 >
@@ -2517,6 +2528,139 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 233, 07:45 EST — closed the last unverified link in the grounding chain: their CSVs against the live database
+
+**Nothing is open for an agent. No new tasks.** `data:check` proves the generated JSON matches the CSVs the
+interviewers sent. **Nothing proved the seeded database does** — and that is the copy the group beat reads from.
+Checked it, field by field.
+
+#### Ten inquiries, a hundred field comparisons, ninety-nine exact
+
+```
+csv rows 10   live rows 13
+MISMATCH  INQ-2004.rooms_requested:  csv='around 25'  live=''
+extra live codes: INQ-2011, INQ-2012, INQ-2013
+```
+
+**The one mismatch is the ambiguity beat working**, and the live row says so better than any document:
+
+```
+INQ-2004   status: needs_info
+  missing_fields:          ['arrival_date','departure_date','rooms_requested','meeting_capacity_needed']
+  rooms_requested:         None            <- not coerced
+  rooms_requested_raw:     'around 25'     <- their words, kept
+  rooms_requested_approx:  25              <- the parse, under a name that cannot be mistaken for a fact
+```
+
+**Three things at once: refuses to invent a number, preserves the original text, and records the approximation
+where nobody can read it as data.** That is the brief's *"make an assumption and state it"* implemented at the
+row level. **The one field where a faithful copy would have been wrong is the one field that is not a copy.**
+
+The three extra rows are accounted for: **INQ-2011** is a legitimate demo row the runbook uses at line 293, and
+**INQ-2012 / INQ-2013** are the DELETE-ME rows **T21** asks Enrique to remove.
+
+#### And the guest side closes on an arithmetic that only works because of a documented quirk
+
+```
+solstice-guest-profiles.csv   25 rows
+live                          25 reservations, 24 distinct guests
+guests with more than one stay: {'G10004': 2}  ->  R55004, R55015
+```
+
+**25 rows become 25 reservations and 24 guests**, and the missing one is **Michael Chen**, the only guest in the
+data with two stays — which the cheat sheet's first row already warns about, because identifying him without the
+confirmation number turns the suite refusal into a confirmation. *A count that did not close would have looked
+like a dropped row; this one closes precisely because of the thing the demo is built around.* Properties: **10
+and 10**.
+
+#### So the chain is complete, and it has three links, not two
+
+```
+their CSVs  ->  data/generated/*.json   npm run data:check   "OK - 9 generated files match their sources"
+            ->  the deployed bundle      the concierge path is compiled from those files
+            ->  Postgres                 this iteration: 10/10 inquiries, 99/100 fields, 25/24/10 rows
+```
+
+#### My instrument was wrong first, and it failed silently
+
+My first count query asked for `select=id` on `guests`, `reservations` and `properties`. **Those tables are
+keyed `guest_id`, `reservation_id` and `property_code`** — the request returned nothing countable and I was one
+sentence from concluding *"guest data is not in Postgres at all, only in the bundle."* It fit a story I already
+believed, which is what made it dangerous.
+
+> **Third query of mine tonight naming a column that does not exist** — `audit_log.target`, then `audit_log`
+> again, now this. Each time the schema was one request away. **`select=*&limit=1` before `select=<field>` costs
+> one call and has now saved three wrong conclusions.**
+
+#### State
+
+Suite green at **923 / 65 files**. Every numbered task closed. Enrique's six unchanged, `drop policy` first.
+Inbox and In progress empty. Tester silent since 20:26 (**11h19m**). No lock held; I took none.
+
+
+### Iteration 232, 07:40 EST — swept the document a reviewer opens first, which I had never read
+
+**Nothing is open for an agent. No new tasks.** `SUBMISSION.md` is the top-level deliverable and I had verified
+everything *about* it — 200 on raw, 8,695 bytes, the repo URL, the logins — **without ever reading it.** Fixed.
+
+#### Four checkable claims in the graded-items table, all correct
+
+| its claim | checked | result |
+|---|---|---|
+| *"over 5,400 lines"* of tester log | `wc -l agents/tested.log.md` | **5,436** — a floor, true with 36 to spare |
+| *"18 of the 19 guardrails verified against production"* | the Tester's own tally at `tested.log.md:3243` | **exact**: G1–G15, G17, G18, G19 |
+| *"the exception is G16's voice half"* | G16 absent from that list | **correct** |
+| net-new tool *"documented in `agent/sol.md` §4"* | §4 *Tool contracts* spans 255–302; the heading is at **276** | **inside it** |
+| *"five chat, one real phone call"* | six files in `transcripts/`, one of them `voice-call.md` | **correct** |
+
+*My own note said "17 of 19 plus G16's chat half" — that was **my** verification count, not the document's
+claim, and the document's claim is the one that is right.*
+
+The Tester had already audited that same sentence and left a finding worth repeating: *"'18 of 19, the exception
+needs a phone call' **reads as a clean sheet, and it is not**."* **The deliverable answers that objection in its
+own layout** — the *Known open defect* row sits directly above the guardrail row, so the two are read together.
+
+#### The one item I cannot check, and who checks which half
+
+The final checklist item is *"**Production is actually serving your latest commit.** Merging is not deploying,
+and a deploy can fail silently: one errored at 18:45 on 2026-09-25 and left `main` ahead of production until a
+retry two minutes later. Nobody was notified."* It ships with a script that prints `OK` or `BEHIND` and covers
+both an errored deploy and one that never happened.
+
+**I cannot run it** — it needs `git log` and the Netlify CLI. But the claim it protects has two halves, and the
+other half is already measured:
+
+```
+tree == main         mine, 07:06: published files byte-identical to the working tree, including one
+                     written 25 minutes earlier
+main == production   his, at send time: the OK/BEHIND script in SUBMISSION.md
+```
+
+**Together they close "what they get is what we tested."** Worth stating because each half looks like the whole
+thing from where it is checked, and I have already been caught once this morning claiming the broader version of
+a narrower measurement.
+
+#### Live now, and a quote I did not publish
+
+```
+POST /api/chat  "What time is check-out?"   HTTP 200 in 4.45s
+tool trace: get_policy running -> done
+```
+
+The deployed function ran the tool loop. **I am not quoting the reply**, because my first extraction produced
+`"Stand00 AM."` — overlapping fragments from a crude regex — and the clean parse found the prose under a key I
+had not accounted for. The tempting move was to tidy that into the sentence it obviously meant.
+
+> **Do not publish a quote from a parser you have not validated.** The measured parts — status, timing, the tool
+> trace — are evidence. The reconstructed part is not, and *"it is obvious what it meant"* is precisely the
+> argument that turns a garbled read into a confident misquotation.
+
+#### State
+
+Suite green at **923 / 65 files**. Every numbered task closed. Enrique's six unchanged, `drop policy` first.
+Inbox and In progress empty. Tester silent since 20:26 (**11h14m**). No lock held; I took none.
+
 
 ### Iteration 231, 07:34 EST — green again, and my diagnosis of the red was wrong because I measured a moving file
 
