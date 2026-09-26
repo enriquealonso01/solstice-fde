@@ -4972,3 +4972,65 @@ voice compile, so no re-provision: compile === live === export still 29,411, mar
 
 Next: **T42** — `transcripts/refund-outside-window.md` is titled for the wrong policy, and the title
 is backwards about that policy too.
+
+## It94 — T42: a sample transcript titled for a policy it never applies
+
+`transcripts/refund-outside-window.md:1` read *"# Refund request outside the service recovery
+window"*. A sample transcript is a named brief deliverable and the people reading it wrote the policy
+document, so this is close to the cheapest mistake in the package for the best-placed reader to catch.
+
+I checked both halves of the Planner's claim against the supplied policy reference before changing a
+character:
+
+- **Policy 2, Standard cancellation window:** *"cancelled free of charge up to 72 hours before the
+  scheduled check-in date. **Cancel inside that 72-hour window** and the guest forfeits one night's
+  room and tax."*
+- **Policy 5, Service recovery window:** *"has **72 hours after checkout** to report it and be
+  considered for a refund, a credit, or a comp night."*
+
+The transcript is Denise Franklin, R55005: she cancelled a Nashville stay and was charged a night.
+Sol's own words are *"your rate plan required cancellation 72 hours before check-in, and you
+cancelled about 36 hours past that deadline"* — 36 hours **inside** Policy 2's window, which is
+precisely why the charge stands. The tool citations in the transcript are **Policies 2 and 15**.
+Policy 5 does not appear, and its clock never started: there was no stay and no in-stay problem to
+report. So the title named the wrong policy, and *"outside the window"* also pointed the wrong way
+for the policy that does apply.
+
+**Where the phrase came from, which the plan did not say.** Policy 15 lists *"refund requests outside
+the service recovery window"* verbatim as an escalation trigger, and `agent/sol.md:502` uses that
+exact string as a `create_escalation` summary — **correctly**, for R55012, a refund request 312 hours
+after checkout. Right sentence, wrong transcript. I left `sol.md` alone: it is accurate there, and
+editing it would mean re-provisioning the voice assistant for a cosmetic reason.
+
+**The title lived in two places, and the plan's "change the H1 and nothing else" would have left
+one.** `scripts/capture-transcripts.mjs:51` is what generated this file; its `SCENARIOS` list writes
+both the H1 and the "What this shows" line for all four generated transcripts. Fixing only the
+markdown would have loaded the wrong title back into the next re-capture. I checked all four
+title/shows pairs first: **every one matched its file exactly**, so nothing in the repo would have
+noticed the divergence I was about to create. Both changed in the same commit.
+
+**New guard — `src/lib/rules/__tests__/transcript-titles.test.ts`:**
+
+1. Each generated transcript's H1 and "What this shows" line must equal what the generator would
+   write. Failing either says which file and which direction.
+2. A parse-count assertion: the number of scenarios parsed must equal the number declared, so a title
+   containing an apostrophe cannot quietly drop a case out of coverage. (Fifth time a silent
+   scanned-nothing is the failure mode I have to design against.)
+3. No transcript may be titled *service recovery* unless it cites **Policy 5**.
+
+It parses the generator as **text rather than importing it** — that script runs its capture at module
+scope, reads `.env` and calls production. A guard must never be the thing that makes a network
+request.
+
+Red-checked three ways: revert the markdown alone → the mismatch fires in both directions; revert
+**both**, i.e. the repo exactly as it stood this morning → the Policy 5 case fires, so the guard
+catches the real defect rather than only its own fix; give a title an apostrophe → the parse-count
+case fires.
+
+`npx tsc -b` clean. `npx vitest run` 536 tests / 45 files green (up 6). No prompt change, so no
+re-provision: compile === live === export still 29,411, margin 589.
+
+**Not done, deliberately:** no transcript in the package demonstrates Policy 5. The plan flags this as
+a gap rather than a defect and says not to capture one — it costs a live session, and G3 is already
+verified against production in the Tester's log, which is where that evidence belongs. Agreed, and
+the new guard's third case will catch any future title that claims the gap is filled when it is not.

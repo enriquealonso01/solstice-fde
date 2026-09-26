@@ -9,21 +9,28 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It93: T41 — the README quoted a phrase the policy document does not contain.**
-  `README.md:133` attributed *"subject to same-day availability"* to Policies 1 and 6, inside the
-  justification for `availability.ts`, the only net-new service and a named brief deliverable.
-- **Checked against the document the brief supplied, not the generated JSON:** that phrase occurs
-  **0** times. Policy 1 says *"based on same-day room availability"*, Policy 6 *"based on same-day
-  inventory"*, and the nearest real phrase, *"subject to availability"*, belongs to the **Gold** 1 PM
-  clause — where it marks a benefit as *conditional*, the opposite of the guaranteed benefit the
-  quotation was being used to argue about.
-- **The accurate version is the better argument.** Two policies reach for the same missing data in
-  **two different vocabularies**, which is the clearest case that it belongs behind one service. The
-  paragraph now quotes both phrases verbatim and says so.
-- **Pinned it.** A third block in `walkthrough-quotes.test.ts` holds quotations of the policy
-  reference to the policy reference. Different risk from quoting our own UI: nobody here can reword
-  the source to make a stale quote true, and the reviewer holds the original. A sweep of all twelve
-  deliverables found exactly these two spans; both halves red-checked.
+- **SHIPPED It94: T42 — a sample transcript was titled for the wrong policy.**
+  `transcripts/refund-outside-window.md:1` said *"Refund request outside the service recovery
+  window"*. The transcript under it is a **Policy 2** cancellation charge, and Policy 5 never
+  appears in it.
+- **Verified both halves before touching the H1.** Policy 2 is *"free of charge up to 72 hours before
+  the scheduled check-in date… cancel inside that 72-hour window and the guest forfeits one night"*.
+  Policy 5 is *"72 hours **after checkout** to report it"*. The guest cancelled **36 hours past the
+  deadline — inside** Policy 2's window, which is why she was charged; she never had a stay, so
+  Policy 5's clock never started. The title named the wrong policy **and** pointed the wrong way.
+- **Found where the phrase came from.** Policy 15 lists *"refund requests outside the service
+  recovery window"* as an escalation trigger, and `agent/sol.md` §8 uses that exact summary string
+  **correctly**, for R55012 — a real refund request 312h after checkout. Right sentence, wrong
+  transcript. Left `sol.md` alone: it is right, and touching it means a re-provision.
+- **The title lived in two places.** `scripts/capture-transcripts.mjs:51` writes the H1 and the
+  "What this shows" line for all four generated transcripts. Fixing only the markdown would have
+  left the wrong title loaded in the generator — and all four agreed before this change, so nothing
+  would have complained. Both fixed in one commit.
+- **New guard `transcript-titles.test.ts`**: every generated transcript's H1 and "What this shows"
+  must match the generator, and no transcript may claim *service recovery* unless it cites Policy 5.
+  It parses the generator as text rather than importing it — that script calls production at module
+  scope, and a guard must never be the thing that makes a network request. Red-checked on the repo's
+  **original** state: it fails on exactly the defect T42 describes.
 
 ## Demo rehearsal coverage — what is actually verified
 
@@ -57,7 +64,7 @@ in `agents/completed.log.md`, not here.
 - Guards I own, each red-checked by reintroducing the defect it catches: `admin-prose`,
   `voice-prompt-size`, `doc-citations` (counts, links), `list-counts`, `export-redaction`,
   `escalation-dedupe`, `walkthrough-quotes`, `data-seam`, `browser-env`, `doc-paths`,
-  `diagram-guide`, `documented-commands`, `suite-integrity`.
+  `diagram-guide`, `documented-commands`, `suite-integrity`, `transcript-titles`.
 - **Open for Enrique** (`HUMAN_INTERVENTION.md`): the `drop policy` SQL — the only item with a live
   security consequence, and disclosed in three places that must be deleted together if he applies it ·
   the Telnyx top-up, which unblocks beat 3 and G16 · `INQ-2012`/`INQ-2013` · rotating the SIP

@@ -48,7 +48,7 @@ const SCENARIOS = [
   },
   {
     slug: 'refund-outside-window',
-    title: 'Refund request outside the service recovery window',
+    title: 'Cancellation charge upheld, with a handoff that carries the context',
     shows: 'Honest refusal, no false promise, and an escalation that carries full context rather than a dead end.',
     turns: [
       'This is Denise Franklin, reservation R55005. I cancelled my Nashville stay and was charged a night. I want a full refund.',
