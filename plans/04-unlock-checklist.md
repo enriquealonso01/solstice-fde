@@ -35,5 +35,5 @@ Everything here blocks a build agent. Ordered by how long the queue is, not by i
 
 ## 5. Confirm before build agents start
 
-- [ ] Submission target: Sunday 2026-09-27 to kdesotell@phdata.io
+- [ ] Submission target: Sunday 2026-09-27, to the address given in the brief
 - [ ] Panel date once Katie schedules it (decides whether SMS is live or falls back to email)

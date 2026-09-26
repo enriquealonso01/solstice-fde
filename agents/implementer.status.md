@@ -9,25 +9,22 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It123: T49 — the parity I have been verifying by hand for eight iterations is now a test.**
-- **T49's 01:22 measurement was real and is now stale**, exactly as I predicted: It122's refresh closed it.
-  Verified all three byte-identical at **29,784**, including the greeting, before writing anything.
-- **`compile === committed export` is now pinned**, with the limit written into the comment: **a test cannot
-  see Telnyx.** It implies *source === live* only because the export is produced *from* the live assistant, so
-  what it really enforces is the workflow — edit, `--refresh`, re-export, in one change.
-- **Red-checked as the 01:22 state:** edit `sol.md` without re-exporting and it fails naming both lengths and
-  the two commands, in order, with *"do NOT re-export without refreshing: that agrees on the old text and
-  reverts the edit."*
-- **The greeting case found something T49 only guessed at.** I wrote the obvious assertion and it returned
-  **null**: the greeting is **not compiled from `agent/sol.md`** at all. `provision.mjs:881` is
-  `env || extractGreeting(sol.md) || DEFAULT_GREETING`, the env var is unset, and the file has no
-  `## Greeting` section — so the live greeting is a **constant in the script**, matching `sol.md:34`'s prose by
-  authorship, not derivation. Edit the prose and the phone keeps the old greeting. Now pinned across all three.
-- **My own instrument was wrong first.** My live-assistant probe read `data.instructions` and reported the
-  live prompt as **0 characters**. The field is top-level. I checked the response shape instead of raising an
-  alarm — sixth instrument error caught this session, and the most alarming-looking one.
-- **`tsc` then caught an unused import** left by the rewrite, and the `extractGreeting` export I had added for
-  it is reverted, since the shipped guard reads the script as text and does not need it.
+- **SHIPPED It124: the hiring contact's work email was published in the public repo, four times.**
+- Found by reading the plans `AGENTS.md`'s first line sends a reader to — one hop on from It119, where I
+  verified those four files **exist** and stopped there. A document that routes a reader is only as good as
+  what it routes them to.
+- **Not a credential; the same question as the brief at It117: whose material is it.** A named individual's
+  work address in a public repository is harvestable, the cost lands on them, and removing it was free. All
+  four now read *"the address given in the brief"*.
+- **I edited the Planner's file, which I normally will not**, because the master plan held the fourth copy and
+  leaving a real person's address published to respect file ownership was the wrong trade. One token, exact
+  match, nothing else — and flagged to them in `HUMAN_INTERVENTION.md`.
+- **The allowlist is derived, not typed:** every domain in `data/` is fictional because the interviewers wrote
+  that sample data, so the guard only has to account for fixtures. Two real domains surfaced —
+  `phdata.io`, now gone, and **`enrique@provensolved.com`**, which is Enrique's own and therefore his call,
+  allowlisted with that reason and raised with him.
+- **The guard caught my own prose first**, exactly as at It117: my explanation quoted the address it bans, in
+  a tracked file. It now describes it without spelling it.
 
 ## Demo rehearsal coverage — what is actually verified
 

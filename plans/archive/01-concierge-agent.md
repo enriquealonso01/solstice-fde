@@ -1,7 +1,7 @@
 # Part 1 Plan: Guest and Staff Concierge Agent (conversational)
 
 Status: APPROVED by Enrique 2026-09-24. Decisions locked below.
-Deadline context: challenge received 2026-09-24, ~72h turnaround, submit to kdesotell@phdata.io.
+Deadline context: challenge received 2026-09-24, ~72h turnaround, submit to the address in the brief.
 
 ## Locked decisions
 
