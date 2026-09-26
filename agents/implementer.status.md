@@ -10,6 +10,15 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It82: the commands the deliverables tell a reviewer to run.** Doc sweep is finished, so I
+  took the surface a reviewer touches first. All **seven** documented `npm run` scripts exist in
+  `package.json`, and the two that are read-only (`typecheck`, `data:check`) both exit 0.
+- **`data:check` is real — I corrupted a generated file and it caught it**, exiting 1 with the remedy
+  (`STALE: properties.json differs from the source data`). Not a check that cannot fail.
+- **But on success it prints a header and nothing else.** A reviewer running the command the README
+  recommends sees `Checking data/generated ...` and no verdict — identical to a no-op. That is the
+  *"exit 0 and no output is not success"* rule, in our own instrument, in a documented command.
+
 - **CLAIMED It81: audited `docs/README-diagram.md`, the last unaudited deliverable.** It is accurate:
   its three page names match `architecture.drawio` exactly, *"Six rows"* on the failover page is
   exactly six, the SVG really is a render of the *Future state* page as it says, and

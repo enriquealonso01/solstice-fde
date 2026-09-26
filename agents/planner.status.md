@@ -4,51 +4,45 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 112 — 2026-09-25 ~21:08 EST
+## Iteration 113 — 2026-09-25 ~21:12 EST
 
-### My tasks were never routed to anyone. That is a design gap, not neglect
-
-Three one-sentence fixes have sat open for several iterations. Last iteration I responded by stating
-the priority more loudly. **Wrong diagnosis, and I asserted it without checking.**
+### The doc sweep is finished and good. I verified its last audit independently
 
 ```
-plan task numbers cited in the last 14 commits   1
-T38/T39/T40 mentioned in implementer.status.md   0
+pages in architecture.drawio : Future state (production) · Today (MVP) · Degradation and failover
+the guide's three rows       : exactly those three
+is plain XML, not deflated   : True
 ```
 
-`agents/README.md:35` contains the protocol's **only** work-selection rule:
+**Their claim holds.** The plain-XML assertion is the sharpest part: draw.io can save a **deflated
+body**, and every text-based check would then pass on nothing. **A test that can silently pass on an
+empty read is worse than no test** — guarded in the same commit that wrote it.
 
-> *"before editing, read the other agents' status files and pick something disjoint."*
+Three self-corrections in one PR, all the right kind: they caught themselves checking page names
+against the **SVG** when the guide describes the **.drawio**; their row count returned zero and they
+applied the Tester's rule — *"a near-total failure is a confession by the instrument"*; and the
+guard now keys on `font-weight:700`, **the structural marker**, not the words.
 
-**Nothing tells any agent to take work from the plan.** The ownership table lists the plan as
-*"Planner writes, others read"* — a document, not a backlog. T30, T33, T35, T36, T37 were taken
-**voluntarily**. That worked until the Implementer's own auditing outpaced my filing — and **#112,
-which landed while I wrote this, is the same class of defect I have been filing.** They are not
-declining this work; they are finding their own instances of it.
+### The nuance in "Every deliverable has now been audited"
 
-### What I got wrong
+**True, and about their sweep's coverage.** Silent about findings from outside it — and **three
+known defects are open in two deliverables it counts as audited**: T38 in `live-modification.md`,
+T39 and T40 in `demo-runbook.md`.
 
-I wrote *"T38, T39 and T40 come before any further guard work"* as though I could sequence another
-agent's queue. **I cannot, and the protocol never gave me that.** The note also implied
-mis-prioritisation when the real answer was that nobody had been told my file was a source of work.
+**Same shape as my own T35 mistake**, which I have the receipts on: I told them to write *"the
+exception is G16's voice half"* — accurate about guardrails, leaving a reader to conclude nothing
+else was open when the RLS hole was. PR #95 corrected me. Here the sentence is accurate about a
+sweep and would leave a reader concluding the documents are clean.
 
-**Assert a mechanism exists before appealing to it.** I spent an iteration raising my voice in a
-channel that was never wired up.
+**Not a criticism of the sweep.** It is the visible consequence of the routing gap: findings that
+live only in my file are invisible to a completion claim made from theirs. **A sweep can only
+declare clean what it can see.**
 
-### What I did instead
+### What follows — not another task
 
-The three fixes are now at the top of `▶ OPEN WORK` as **exact replacement text, ready to paste** —
-no task, no lock, no plan needed; two files, under two minutes; Enrique can do them himself. Plus
-the tidy line now carries the dry-run command it was missing.
-
-**If nothing routes work to a reader, the work has to cost nothing the moment someone's eye lands
-on it.**
-
-### The record should be clear
-
-Eight guards and a dozen document corrections in three hours, all found by auditing rather than by
-being told. **The coordination gap is mine** — I built a queue inside a file the protocol describes
-as reading material, then read silence as a priority problem.
+The three fixes stay at the top of `▶ OPEN WORK` as **exact replacement text**, needing no task, no
+lock, no agent. **The lesson is that I should have put them there when I filed them**, instead of
+three iterations later, after mistaking a wiring problem for a priority problem.
 
 ### The single most important remaining item
 

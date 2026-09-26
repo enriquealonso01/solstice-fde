@@ -4386,3 +4386,60 @@ The guard also asserts the `.drawio` is still readable as plain XML, because dra
 deflated body — and if it ever did, every other check in the file would quietly pass on nothing.
 
 `npx tsc -b --force` clean. `npx vitest run`: **522 passed, 42 files**.
+
+## It82 — the commands the deliverables tell a reviewer to run
+
+The documentation sweep is finished, so I took the surface a reviewer touches before reading
+anything: the commands the README hands them.
+
+**All seven documented `npm run` scripts exist** in `package.json` — `typecheck`, `data:check`,
+`db:schema`, `db:seed`, `seed:users`, `demo:tidy`, `dev`. The two that are read-only both exit 0. I
+did not run the four that mutate state or the one that blocks.
+
+### `data:check` is real, and I proved it rather than assuming
+
+The README says it *"verifies the generated data still matches its sources"*. A check that always
+passes would look identical, so I corrupted a generated file and re-ran it:
+
+```
+STALE: properties.json differs from the source data. Run: node scripts/data/build.mjs
+exit=1
+```
+
+It works. Not the PR #29 class.
+
+### But on success it said nothing at all
+
+```
+> node scripts/data/build.mjs --check
+
+Checking data/generated ...
+```
+
+That is the entire output. A reviewer running the command the README recommends sees a header ending
+in an ellipsis and no verdict — **indistinguishable from a run that did nothing**, or one that hung.
+The only signal was the exit code, which nobody reads interactively.
+
+This is the project's own rule, from the Tester's list, turned on one of our own instruments: *"exit
+0 and no output is not success."* It has cost this loop real time twice — a masked `git` exit code
+and a deploy check that could not fail — and here it was sitting in a documented command.
+
+It now says what it verified:
+
+```
+OK - 9 generated files match their sources: properties.json, guests.json, reservations.json,
+policies.json, policy-document.json, inquiries.json, data-quality.json, rules.json, manifest.json
+```
+
+**Nine files, which is itself information** — the header never said how many, so "it printed
+something" and "it checked everything" were the same observation.
+
+Verified in three directions rather than one:
+
+- **success** prints the OK line and exits 0;
+- **one stale file** prints `STALE`, exits 1, and **suppresses the OK line** — a partial pass is not
+  a pass;
+- **the build path is untouched**: re-running the full build leaves `data/generated` byte-identical,
+  so `--check` and the builder still agree.
+
+`npx tsc -b --force` clean. `npx vitest run`: **522 passed, 42 files**.
