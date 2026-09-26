@@ -4,42 +4,46 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 132 — 2026-09-25 ~22:42 EST
+## Iteration 133 — 2026-09-25 ~22:46 EST
 
-### Beat 6's cost claim is true, verified against the live endpoint
+### Every agent item is closed. The plan is accurate and correctly ordered.
 
-`demo-runbook.md:215` says *"the model and telephony come out **near-equal, with the model
-marginally higher**."* From `/api/cost` with a real admin token:
+### T43 shipped as a floor, and the floor is true
+
+PR #129. *"Our own traffic is almost all chat — **fewer than one call in every fifteen sessions**."*
+**9 voice in 181 is one in 20.1** — holds with room, and **keeps** holding as chat accumulates,
+which is the point: the count moved 171 → 172 while iteration 131 was being written.
+
+### Beat 6's fallback verified, and it is stronger than the runbook claims
+
+The recovery from the awkward measured split is *"raise the voice share and telephony takes over."*
+**The beat depends on that move and nobody had checked it works.**
+
+Projection arithmetic first:
 
 ```
-totals   model_usd 1.7704   telephony_usd 1.2955   all_usd 3.0671
-traffic  chat 172 · voice 9 · conversations 181 · call_minutes 11.94
-         cost_per_conversation $0.0169
+140 properties × 40/day × 30 = 168,000    endpoint 168,000   ✓
+$2,835.71 ÷ 140              = $20.26     endpoint $20.26    ✓
 ```
 
-**$1.77 against $1.30 — exactly as claimed**, and it is the awkward direction for the story, which
-is why the runbook says to point at the **projection** inputs instead. **That advice rests on true
-numbers.** Worth having in the room: **$3.07 across 181 conversations, 1.7 cents each**, with the
-Telnyx balance read live from their API while the panel watches.
+Then the crossing point, from live totals:
 
-### T43 proved itself during the iteration that filed it
+```
+measured voice share   5.0%   (9 of 181)
+telephony per session  $0.144 (1.33 min avg)      model per conversation  $0.0098
+telephony overtakes the model at   6.8%           headroom above today    1.8 points
+```
 
-Iteration 131 measured **171** chat sessions. Four minutes later: **172**.
+**Telephony takes over at under seven percent.** Not a marginal effect the panel must squint at —
+it happens almost immediately and then runs away.
 
-**It moved while I was writing about it.** The runbook says 148. An exact count in a document read
-aloud tomorrow is not merely stale — **it drifts under the document as it sits there**, and every
-chat anyone opens before 11:00 moves it again.
+> *"We're at 5% voice. Telephony passes the model at **6.8%**. Every hotel group is far above that,
+> which is why the projection is the honest view and our own bill is the misleading one."*
 
-**The calls did not move: 9, because they cost money.** That asymmetry is exactly why a ratio beats
-a pair, and it is now recorded in the task.
-
-### PR #128 closes the failure that corrupted six readings
-
-*"Make the compiled voice prompt independent of line endings."* CRLF-versus-LF has distorted a
-measurement **six times** here — the Implementer's −401, the Tester's empty downloads, my own +405
-in iteration 90 **after I had written the warning myself**. Normalising at the point of compile
-removes the class, not the instance.
+**Better than the runbook's current sentence**, because it names the crossing point instead of
+asserting a direction. **Not filed** — the runbook is settled and correct as written. It is now the
+sixth entry in `▶ IF THEY ASK`.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** **T43** is the only agent item — one clause.
+**The `drop policy` paste.**
