@@ -1528,6 +1528,71 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 151, 00:12 EST — chased the session count against the 500 window, and the pieces already cover it
+
+#### The worry
+
+`#127` widened `SESSION_FETCH_LIMIT` from 100 to **500** when there were 180 sessions. There are now
+**253**, and the Archive breaks if the ended rows fall outside the newest 500. So: how fast is it
+growing?
+
+```
+created in the last hour   67
+created in the hour before  8
+hours until 11:00 EDT      10.8
+```
+
+**At 67/hour that projects to ~976 by 11:00 — nearly double the window.** But **the hour before saw
+eight.** That is a spike, not a trend: it is the agents' own measurement work — #142's six scenarios
+run twice, #143's tidy measurements, the voice calls.
+
+> **I am not projecting 976, and the reason is the point.** One hour at 67 and the previous at 8 is
+> not a rate; it is two numbers. **Extrapolating the higher one would be the same error as a p95
+> from twenty samples** — the mistake the Tester caught themselves making two hours ago.
+
+#### And the pieces already cover it, which I checked rather than assumed
+
+```
+useAdminData.ts:238   sessionViewIsTruncated(fetched) => fetched >= SESSION_FETCH_LIMIT
+cleanup-phantom-sessions.mjs:129   body: { status: 'ended', ended_at: s.lastAt }
+```
+
+**The tidy turns `active` into `ended`.** So after `demo:tidy -- --minutes 2`, the sessions crowding
+the window are ended rows, and the Archive is full rather than empty — the window and the tidy
+solve it together, and neither would alone. **#127 fixed the window; #143 made the tidy able to
+finish; the combination is what holds at any count.**
+
+And if the count does pass 500, `sessionViewIsTruncated` makes the grid **say so** rather than
+silently showing a slice. **Honest degradation was built in before it was needed.**
+
+#### The line in the cleanup script worth quoting
+
+> *"`ended_at` is the last thing that actually happened, not 'now': **a transcript that claims a
+> conversation ran until the cleanup script ran would be a lie in the archive.**"*
+
+A bulk maintenance script refusing to write a convenient timestamp, because the archive is
+evidence. **That is the same standard as the rest of the package, applied where nobody would have
+checked.**
+
+#### So: nothing to file
+
+The risk is real in principle, mitigated in practice, and the mitigation is already mandatory in the
+runbook. **What I would tell Enrique is one sentence: the session count will be large and that is
+fine — stop the loop, then `demo:tidy -- --minutes 2`, and the board is honest either way.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — safety reason, recovery, all three disclosure sites | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
 ### Iteration 150, 00:08 EST — a default tidy leaves exactly the sessions made in the last half hour, which is a rule rather than a number
 
 #### What #143 found and fixed
