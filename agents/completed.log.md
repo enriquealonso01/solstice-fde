@@ -8820,3 +8820,110 @@ which for a committed file is proof rather than an impression. That check exists
 a mis-timed snapshot and It135 lost one to `git checkout`.
 
 `npx tsc -b` clean. `npx vitest run` **838 tests / 58 files** green (up 9).
+
+---
+
+## It143 — ran the beat nobody had run, and found the presenter pointing at the wrong part of the screen
+
+Nothing was open, so I went back to something I had noted several iterations ago and never closed: the
+Tester's iterations 59 and 60 each ended with a **FIXED-PENDING**. Those are fixes the Tester made and
+marked as awaiting verification, and an unverified fix on the demo path is worth more attention than a new
+document to audit.
+
+**It60's is closed.** Its own iteration 61 re-ran PR #102's curl as a reviewer would and got the `403
+Forbidden` the walkthrough promises. Nothing to do.
+
+**It59's was not.** The finding had been sharp: `docs/demo-cheatsheet.md` told Enrique the $45 minibar beat
+shows an escalation, and measured on production `$45 → authority_required=front_desk,
+escalation_required=False`. $45 is *inside* front-desk authority, so the threshold produces no escalation at
+all — *"Run as written, the beat shows no escalation."*
+
+The row was then rewritten to claim the escalation comes from somewhere else entirely: **R55006's own
+`internal_notes`**, *"Do not adjust folio directly — escalate to property AGM for review"*, overriding a
+generic threshold. That is a better beat than the original. **And nobody had ever run it.** The claim moved
+from one mechanism to another and the new one was never driven, which is precisely the state a
+FIXED-PENDING is meant to flag.
+
+### Driven on production, exactly the lines the cheat sheet gives
+
+```
+turn 1  "Confirmation R55006, last name Webb"
+        chips: identify_guest
+        "You're verified, Marcus. What can I help you with regarding your stay at Solstice Tampa?"
+
+turn 2  "There is a $45 minibar charge on my folio that I did not make. Please have it removed."
+        chips: get_reservation  |  check_comp_authority "$45.00 — inside front desk authority"
+               create_escalation "Escalation c88275ad… to agm"
+        "I can't remove that myself — a dispute like this needs the property's manager to review it.
+         I've flagged it for the AGM at Solstice Tampa Bayshore today, and they'll follow up."
+
+turn 3  "And they billed me $25 for late housekeeping as well."
+        chips: check_comp_authority "$70.00 — needs AGM or GM"  |  create_escalation c88275ad… to agm
+        "Together those two charges total $70, which is above what the front desk can adjust on its
+         own, so both are going to the AGM as one review rather than separately."
+```
+
+**The central claim holds, and it is the best part of the beat.** `check_comp_authority` returns
+`escalation_required: false` for $45, and `create_escalation` runs anyway. A per-reservation operational
+instruction from the interviewers' own data overrides a generic threshold, live, in front of the panel.
+That is now measured rather than asserted.
+
+### Two promises were not on the screen the row points at
+
+**Sol names neither figure.** The row said *"Sol confirms the amount is inside the $50 per-stay front-desk
+authority"*. Sol's prose contains no `$45` and no `$50`. Both numbers are on the
+`check_comp_authority` **chip** — *"$45.00 — inside front desk authority"*.
+
+**The arithmetic is real but not in the bubble.** The row said *"the tool prints the arithmetic — 'minibar
+charge $45.00 + late housekeeping $25.00 = $70.00. That exceeds the $50.00 per-stay front-desk
+authority'"*. I checked whether that string exists before assuming either way, and it does, in
+`recovery.ts`:
+
+```ts
+const aggregationNote = items.length > 1
+  ? `Policy 7 requires the items to be added up before authority is tested: ${…} = ${formatCents(total)}.`
+human_reason: `${aggregationNote} That exceeds the ${formatCents(limit)} per-stay front-desk authority, …`
+```
+
+So the tool really does compute it. But `chat.ts`'s done event sends `{ name, status, summary, citations }` —
+**not `human_reason`**. The model reads it and the supervisor tool trace shows it; the chat bubble never
+does. What appears there is the chip, *"$70.00 — needs AGM or GM"*, and Sol's paraphrase, *"above what the
+front desk can adjust on its own"*.
+
+This is the same distinction as iteration 128's *"cites Policy 1"*: true via the chip, not the prose. It
+matters more here. A presenter told *"the tool prints the arithmetic"* points at the chat bubble for a
+sentence that is not in it, and the panel looks where he points. **A wrong sentence in a cheat sheet is
+recoverable; a wrong gesture in front of an audience is not.**
+
+One thing better than the row claimed: on turn 3 `create_escalation` returned **the same escalation id** as
+turn 2. The second charge updates the existing escalation rather than opening a second one, so the row's
+*"the destination is the same AGM but the reason changes"* understates it — it is one review, which is the
+right behaviour and worth saying.
+
+### The row now says where to look
+
+It quotes what Sol actually says, names the three chips in order with what each reads, tells the presenter
+to point at the chips rather than the sentence, and says plainly that the itemised arithmetic lives in
+`human_reason` — visible to the model and in the supervisor trace, not in the bubble — **so do not promise
+the panel they will see it there.**
+
+### Guarded so the code can free the wording
+
+While `chat.ts` does not send `human_reason`, the cheat sheet may not say the tool prints the arithmetic. If
+someone surfaces that field, the ban lifts on its own — the It135 pattern, because a guard that blocks a
+legitimate improvement is a guard that gets deleted. Plus a ban on the Sol-says-$50 claim, and a requirement
+that the row still names the chips, since the beat only lands if the panel sees the authority finding and
+the escalation next to each other.
+
+This row has now been wrong three times, for three different reasons, which is why it is accumulating cases
+rather than corrections. Red-checked three ways: restoring *"the tool prints the arithmetic"* fails 1,
+restoring the Sol-says-$50 claim fails 1, and renaming the chips to "badges" fails 1. Snapshot taken after
+the fix was green.
+
+### One session left behind, on purpose
+
+Three turns on production means one `sessions` row, `43e5534b`. It138's rule is to say so in the log rather
+than leave it for whoever runs the last `demo:tidy`. It is six hours before that runs, so it is well past
+the thirty-minute floor and will be swept by the default.
+
+`npx tsc -b` clean. `npx vitest run` **842 tests / 58 files** green (up 4). No Telnyx spend.
