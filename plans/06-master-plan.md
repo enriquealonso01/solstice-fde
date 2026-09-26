@@ -74,6 +74,17 @@
 
 *Everything below this section is closed, or evidence.*
 
+> **Ordering, stated because it is my job to state it — iteration 111.** **T38, T39 and T40 come
+> before any further guard work.** They are three sentences, all in documents Enrique reads *while
+> presenting*, and T38 in particular costs thirty seconds of visible confusion in front of the panel
+> if it is followed as written.
+>
+> This is not a complaint about the guards. The suite has gone **476 → 516 tests** in about an hour
+> and every one of those guards was written after something actually rotted, which is the right
+> reason to write one. But a guard protects against **the next** regression, and these three are
+> **current defects on the demo path** with roughly fourteen hours left. **Fix the live documents,
+> then guard them.**
+
 > **T40 is open:** the runbook's recovery row sends Enrique to the browser mic when the phone
 > fails — **same Telnyx account, same balance**, so if the phone failed for lack of credit the mic
 > fails identically. The balance-independent fallback is the **text** chat bubble (Anthropic, not
@@ -1189,6 +1200,67 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 111, 21:04 EST — everything the plan asserts is true; I made the ordering explicit instead of assuming it
+
+Having driven every instruction-bearing document, I verified the whole set of claims this plan
+currently rests on, in one pass.
+
+```
+suite            516 passed        (476 an hour ago — the guards added ~40)
+deploy           ready 01:00:36Z   current with HEAD
+live refusals    /api/cost 401 · /api/group/inquiries 401 · /api/flags 401
+Telnyx balance   $3.03             unchanged
+INQ-2012/2013    2 rows            still present, T21 not yet run
+```
+
+**Nothing needed correcting.** The plan's four Enrique items describe the world as it is.
+
+#### What I changed: I stated the ordering rather than assuming it was read
+
+**T38, T39 and T40 have been open across several iterations** while three guards shipped — the
+walkthrough quote pin (#107), the service-role key test (#110), and the bare-path guard (#111). So
+I put the priority in the plan in as many words: **those three come before any further guard work.**
+
+Stating it is the part of my job I had been skipping. *"Keep the plan ordered, best-for-the-
+submission first"* is the instruction, and I had been filing tasks in order without ever saying that
+the order was a claim rather than a convenience.
+
+**The reasoning, written into the plan so it can be argued with:**
+
+- All three are **single sentences in documents Enrique reads while presenting**.
+- **T38 costs thirty seconds of visible confusion** in front of the panel if followed as written —
+  it sends him to edit Austin's threshold and the demo verdict does not move.
+- A guard protects against **the next** regression. These are **current defects on the demo path**,
+  with roughly fourteen hours left.
+
+**And the part that keeps it honest: this is not a complaint about the guards.** The suite went
+**476 → 516** in about an hour, and every one of those guards was written after something actually
+rotted — the citation drift, the rotting counts, the reworded UI strings, the SIP credential. That
+is the right reason to build one. **The sequencing is what I am asserting, not the value.**
+
+#### Seven guards, and what they say about the project
+
+Citations · list counts · README counts · walkthrough quotes · export redaction · committed
+credentials · service-role keys · bare paths. **Every one retrofitted after a real failure**, none
+speculative. A reviewer who reads `src/lib/rules/__tests__/` in order is reading a list of this
+project's mistakes, each one with a test standing over it.
+
+That is a better artefact than a clean test suite would have been, and it is worth saying out loud
+in the room if anyone asks why so many tests are about documentation.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance **$3.03**) | Enrique |
+| 3 | T21, two rows — **confirmed still present** | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T38, T39, T40 — before any further guard work** | Agents |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 110, 20:56 EST — drove the pre-demo checklist; it holds, with one command it names but never gives
 

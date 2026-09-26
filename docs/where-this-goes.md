@@ -42,9 +42,12 @@ contract and the rooming list.
 
 ## Six to twelve months: the compounding part
 
-**The agent learns the estate's own exceptions.** Every override is already written to the audit
-log with the rules it overrode and the person who approved it — `overrode_rules:
-["GRP-DISCOUNT-CEILING"]` and an actor, today, on every one. That is a data point about where the
+**The agent learns the estate's own exceptions.** Every override taken through the product is
+written to the audit log with the rules it overrode and the person who approved it —
+`overrode_rules: ["GRP-DISCOUNT-CEILING"]` and an actor. (One path goes underneath that, and it is
+the open defect the README names: until migration 004 is applied a signed-in rep can set the status
+column directly, which leaves no audit row and an empty `approved_by`. One SQL statement closes it.)
+The record is a data point about where the
 written policy and the real one disagree, and surfacing it is a product in itself:
 *here are the eleven rules your managers override most often, and what it costs you.*
 *Outcome: policy improves from evidence rather than from anecdote.*

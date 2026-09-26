@@ -10,6 +10,17 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It80: `docs/where-this-goes.md` contradicts the open defect the README discloses.** Audited
+  the vision document — the answer to Katie's second ask. It has no numeric claims, so the risk class
+  is present tense about things that are not true, and one is: *"Every override is already written to
+  the audit log … and an actor, **today, on every one**."*
+- **That is precisely what the disclosed defect falsifies.** `README.md:117` says a signed-in rep can
+  set `status` to `approved` from the browser, leaving *"an empty `approved_by`"* — no audit row, no
+  actor. The strongest phrasing in the package sits two documents from its own disclosure of the
+  opposite.
+- **And the cleanup instructions list two places to delete, not three.** Adding a caveat means adding
+  it to `HUMAN_INTERVENTION.md` too, or Enrique applies the SQL and leaves a stale caveat behind.
+
 - **DONE It79: audited `docs/how-this-was-built.md`. It is correct — my finding was not.** I read its
   ownership table's `voice/` as a phantom directory after `test -e voice` and `git log --all -- voice`
   both came back empty. **Both are root-relative**; the directory is `netlify/functions/voice/`, and

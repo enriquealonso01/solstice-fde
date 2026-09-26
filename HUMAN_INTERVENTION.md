@@ -749,8 +749,8 @@ row in the SUBMISSION table. Docs only — neither file compiles into the voice 
 never approved"; I never sent one. It now says the gate returns *allowed* on a proposal still carrying its
 blocking flag with `approved_by` empty, which is what I actually demonstrated.
 
-**If you apply migration 004 before you submit, delete both.** That is still the better outcome and it is
-one statement per table:
+**If you apply migration 004 before you submit, delete all three.** That is still the better outcome
+and it is one statement per table:
 
 ```sql
 drop policy if exists prop_write on proposals;
@@ -761,6 +761,16 @@ drop policy if exists fup_write  on follow_ups;
 Safe: nothing in the client writes those tables — `useAdminData.ts` only ever `.select()`s, and the only
 client-side writes anywhere are `invites` and `profiles`. Verification curl and the recovery note are in
 the earlier entry above.
+
+**The three places that mention it**, so none is left behind:
+
+1. `README.md` — the paragraph beginning *"One defect is open at the time of writing"*.
+2. `SUBMISSION.md` — the **Known open defect** row in the deliverables table.
+3. `docs/where-this-goes.md` — the parenthesis in *"The agent learns the estate's own exceptions"*.
+   Added later than the other two: that section claimed every override carries an actor **today, on
+   every one**, which is the one thing this defect makes untrue, so it was contradicting the
+   disclosure two documents away. If the SQL is applied, the parenthesis goes and the sentence is
+   simply true again.
 
 **If you disagree with disclosing it, `git revert fe04948` removes both.** I would rather you overrule a
 disclosure you can see than not know it was a choice.
