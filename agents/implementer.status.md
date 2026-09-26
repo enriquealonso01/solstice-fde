@@ -9,6 +9,30 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It148 SHIPPED → T58 (`!!`): I wrote "two lines below" and it is three. My own It146 wording, on the
+  stage beat.** Fixing T57's comment trap, I told the presenter to search `property_code: 'SOL-PHX',` and
+  change the ceiling **"two lines below it"**. From 103 that is **105**,
+  `group_block_auto_approve_max_rooms: 35,` — the rooms cap. The ceiling is at **106**, three below.
+- **The consequence is the precise trap the same paragraph exists to prevent.** Edit 105 and `allowed 15`
+  still reads 15, which that paragraph defines as *the tell that the edit did not land*. I replaced a search
+  that hit a comment with an offset that hits the wrong field — a new route to the identical stage failure,
+  eight minutes after writing the warning about it.
+- **The fix is not "say three".** An offset is a count, and counts rot the moment a field is added to that
+  object — the whole lesson of the T55 pointers that shifted by +13. The doc now says to change **the
+  `max_discount_auto_approve_pct` line inside that same object**, which is the only one of its name there,
+  and says in a second paragraph why a distance is the wrong shape *even when it is right*.
+- **Guarded the form, so a correct offset is banned too.** Any *"N lines below/down/after"* instruction in
+  that document fails, with the paragraph describing the old mistake exempted by its own framing. Plus a
+  positive case requiring the field to be named. Red-checked: the bad instruction back fails 1, and **a
+  correct "three lines down" also fails 1** — which is the point.
+- **My decoy-pointer case checked constants I had typed, not the document.** It hardcoded `[10, 54, 93]`, so
+  a red-check moving the doc's *"Tampa at 93"* onto **106 — Phoenix's own ceiling, the one line the
+  presenter must not be steered away from** — passed. It now parses the three numbers out of the sentence
+  the presenter reads. **Seventh time this session an assertion has verified its own copy of the answer.**
+  Re-run: moving a decoy onto Phoenix's line fails 1, drifting one off its line fails 1.
+- Restore verified against the **fixed snapshot** rather than HEAD — the file legitimately differs from HEAD
+  this iteration, so `git status` was the wrong instrument and `cmp` was the right one.
+
 - **It147 SHIPPED: swept T57's defect as a class and found one more — the live-modification beat's After
   block was never checked.** T57's problem was the shape, not the fragment: `toContain(fragment)` proves
   nothing about *which* occurrence satisfied it. Scanned every `toContain` literal in all 60 test files
