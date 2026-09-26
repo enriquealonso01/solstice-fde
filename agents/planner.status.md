@@ -4,51 +4,38 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 106 — 2026-09-25 ~20:38 EST
+## Iteration 107 — 2026-09-25 ~20:42 EST
 
-### The plan is accurate and correctly ordered. T38 and T39 remain open, one sentence each.
+### I drove the pre-send checklist and found three stale facts in my own file
 
-Inbox empty. No lock held.
+**1. The Telnyx item did not say what it requires.** `SUBMISSION.md`'s checklist says *"Telnyx
+balance above **$20**, or do not invite them to call the number."* My table said only *"Telnyx
+top-up, $3.09"* — which reads as **the amount to add**. Someone could put in $5, mark item 2 done,
+and learn at the final checklist that the panel must not be invited to call — after the email went
+out. **Corrected to "top up to at least $20", with the gate quoted.**
 
-### Drove the README's "Try it" — the first thing a reviewer executes
+**2. The balance is $3.03, not $3.09.** Measured: `balance 3.03 USD, available 3.03`. Drifted six
+cents while I quoted an hours-old figure in the file that is supposed to be current — the same class
+of staleness this project fixed twice in the README.
 
-It claims the group console holds *"the ten inquiries from the provided data plus any Sol has taken
-on a call."*
+**3. The banner still counted T36 as open.** It **closed in PR #90**, verified live. One call now
+settles **three** things, not four: beat 3, the live intent check, **G16 on voice**.
 
-```
-data/solstice-group-inquiries.csv   10 rows   INQ-2001 … INQ-2010
-live database                       13 rows   { portal: 10, voice: 3 }
-```
+**Three stale facts in two adjacent lines of the file I own.** I have spent five iterations checking
+other people's documents by executing them, and had not once executed my own.
 
-**Exactly right**, and it **stays** right after T21: removing `INQ-2012`/`INQ-2013` leaves 10 portal
-plus `INQ-2011`, which `README.md:127` calls *"the live example, captured on a real call."* The two
-deleted rows are `source: voice` as well — **test calls, not junk**, which is why T21 keeps the one
-with a real conversation behind it.
+### The rest of the checklist is sound
 
-### Three agents, three routes, one lesson
+Repository visibility · `demo:tidy` **last**, with the reason · failure switches healthy · site
+loads · `npx vitest run` green · and a deploy check that **ships the command rather than describing
+it**, earned from a real incident: *"a deploy can fail silently: one errored at 18:45 and left
+`main` ahead of production until a retry two minutes later. Nobody was notified."*
 
-PR #107 redid the walkthrough quote sweep and explained why version one was weak: *"it was a
-**predicted enumeration** and could only ever have found rewordings I remembered."*
+### T38 and T39 remain open
 
-Third independent arrival at the same failure:
-
-- **PR #81** (Implementer): *"the scan looked for a list of things I predicted, and a SIP URI is
-  none of them."*
-- **Iteration 89** (**me**): I bounded a credential sweep with five hand-picked `.env` variables;
-  `TELNYX_SIP_USERNAME` was not among them.
-- **PR #107** (Implementer): a sweep that could only find rewordings its author remembered.
-
-Redone as a property: **all 55 backticked spans → the 24 that look like on-screen prose → each
-checked against source.** Document correct, including five that looked wrong and are assembled at
-runtime.
-
-**The subtler half, which I would also have got wrong:** *"my sweep assumed on-screen text lives in
-`src/`."* `Unknown caller +*******2646` is written **server-side** into `guest_label`. A front-end
-sweep would have called a correct document wrong.
-
-> A predicted enumeration finds what you already suspect. **It cannot distinguish "nothing is wrong"
-> from "I did not think of it"** — and it returns clean either way.
+One phrase each, both on the live-change beat.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** Among agent work, **T38 and T39** — both on the beat the panel watches.
+**The `drop policy` paste.** And **item 2 is now "to $20+", not "$3.09"** — the old wording could
+have been completed without clearing the project's own gate.

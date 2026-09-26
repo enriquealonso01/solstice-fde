@@ -34,12 +34,19 @@ is the only component that knows a vendor's field names. Everything above it, in
 in this proof of concept, stays unchanged when a property migrates PMS.
 
 That seam already exists here, and it is narrower than "a directory". The tools call
-`getReservation` and `getPropertyRate`, never a vendor API, and **every read of the provided data
-goes through one file** — `netlify/functions/_lib/data.ts` holds all seven imports of
-`data/generated/*.json` and nothing outside it touches them. Swapping the CSVs for OPERA's
-Hospitality Integration Platform is a change to that file's implementation, not a rewrite. The
-group pricing path makes the same point in a comment: `getPropertyRate()` is the only sanctioned
-route to a nightly rate.
+`getReservation` and `getPropertyRate`, never a vendor API, and **every read of the provided data on
+the request path goes through one file** — `netlify/functions/_lib/data.ts` holds all seven imports of
+`data/generated/*.json`, and nothing that serves a request touches them directly. Swapping the CSVs
+for OPERA's Hospitality Integration Platform is a change to that file's implementation, not a
+rewrite. The group pricing path makes the same point in a comment: `getPropertyRate()` is the only
+sanctioned route to a nightly rate.
+
+**One file outside the seam reads the JSON, deliberately.** `scripts/show-verdict.ts` — the rehearsal
+aid the live-modification demo runs — loads `data/generated/*.json` itself, because its whole purpose
+is to print a verdict with **no network and no model** in front of an audience. It is not on the
+request path, and the consequence is worth naming rather than hiding: after a PMS integration it
+would still read the exported snapshot, not live inventory. Pointing it at the adapter is a small
+follow-on, not part of the swap.
 
 **Writes go through a queue with an approval gate, not straight at the PMS.** Booking an amenity or
 extending a checkout is a write, and PMS writes fail in ways reads do not: the property is in night
