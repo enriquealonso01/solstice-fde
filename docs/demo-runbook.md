@@ -150,8 +150,12 @@ The detail URL takes the row's uuid, not the code, so typing `/admin/inquiries/I
 "Inquiry not found" — a dead end you do not want to discover on stage.
 
 - One flag: they asked 17%, the property's ceiling is 15%.
-- Three costed options: approve at 15% for $7,994.25, escalate for a sign-off at 17%, or counter
-  at 16% with a value-add tied to their yoga request.
+- Three costed options, and it is worth reading the numbers out because they are what the gate
+  costs: approve at **15% for $7,994.25** today, escalate for a sign-off at **17%, $7,806.15**, or
+  counter at **16%, $7,900.20** with a value-add tied to their yoga request. The spread between the
+  first and second is **$188.10** — that is the price of the signature, and saying it out loud is
+  more concrete than "it needs approval". (All three verified against `priceBlock` at iteration 108
+  and pinned in `group-beat-prices.test.ts`.)
 - If asked who signs off: approval authority is a named human, not a role tier. The system
   enforces that an approval happened and is attributable in the audit log; a GM tier is a
   one-value enum addition in phase two. Stated as assumption 3 in the README.

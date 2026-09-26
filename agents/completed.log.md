@@ -5935,3 +5935,46 @@ iteration number in the message; deleting the directive from `reservations.json`
 
 `npx tsc -b` clean. `npx vitest run` **604 tests / 48 files** green (up 3). No prompt change, so no
 re-provision: compile === export === live still 29,655, margin 345.
+
+## It108 — beat 4's prices check out, and the one that mattered was missing
+
+It107 ran the cheat sheet's fixture rows and found one wrong. Beat 4 is the other place the runbook
+says money out loud, and it had two figures in circulation that mean different things — **$7,994.25**
+in the runbook and **$7,806.15** from `show-verdict.ts`. If either were attached to the wrong discount,
+Enrique reads out a number the screen contradicts on the beat that demonstrates the approval gate.
+
+**Measured against `price_block` for INQ-2009's own shape** (SOL-PHX, 15 Deluxe King rooms,
+2026-07-28 to 2026-07-31, three nights), rather than reasoned about:
+
+```
+15%  nightly_net 17765c   total 799425c = $7,994.25
+16%  nightly_net 17556c   total 790020c = $7,900.20
+17%  nightly_net 17347c   total 780615c = $7,806.15
+```
+
+**No defect.** The one figure the runbook printed is the right one for the 15% option, and
+`show-verdict.ts`'s $7,806.15 is the 17% option — two correct numbers for two different questions, not
+a contradiction. The ordering is the check that settles it: a *bigger* discount costs *less*, so
+neither figure can be on the wrong option.
+
+**What was wrong was an omission, and it was the point of the beat.** The line read *"Three costed
+options: approve at 15% for $7,994.25, escalate for a sign-off at 17%, or counter at 16% with a
+value-add"* — two of the three options with no price. Beat 4 exists to make the approval gate concrete,
+and the concrete thing is the **$188.10** between shipping today at the discount we can authorise and
+waiting for a signature at the one the customer asked for. *"It needs approval"* is an abstraction;
+*"$7,994.25 now or $7,806.15 with a named human's signature"* is the sentence that lands. The runbook
+now reads all three figures and states the spread.
+
+**Pinned to the function, not to my transcription of it.** `group-beat-prices.test.ts` recomputes each
+total through `priceBlock` — a pure function over the compiled property data, so no network — requires
+the runbook to carry each printed figure, requires the $188.10, and asserts monotonicity so a typo that
+happens to match a wrong implementation cannot slip through. The figures came from production first and
+the hermetic recomputation agrees with it to the cent.
+
+Red-checked both directions: replacing `$7,900.20` in the runbook fails with the missing figure named;
+bumping `base_rate_deluxe` from $209 by a dollar fails all three with the new totals printed
+(`expected 1181925 to be 799425`). `npm run data:check` confirms the generated files are back in step
+afterwards.
+
+`npx tsc -b` clean. `npx vitest run` **609 tests / 49 files** green (up 5). No prompt change, so no
+re-provision: compile === export === live still 29,655, margin 345.
