@@ -282,10 +282,31 @@ The nav filtering is cosmetic. Prove the real thing:
 
 1. Sign in as **`sales@`**.
 2. Type `/admin/cost` straight into the address bar, bypassing the hidden menu entirely.
-3. You are refused. The API returns **403** to that token, not a redirect and not an empty page.
+3. **The browser bounces you back to `/admin/inquiries`.** That is the router being tidy, and on its
+   own it proves nothing — a redirect is still the UI deciding. Do the mirror version if you like
+   (`supervisor@` at `/admin/inquiries` lands back on `/admin/sessions`), but do not stop here.
+4. **Now ask the API directly, which is where the boundary actually lives.** Open devtools, copy the
+   `access_token` out of the Supabase session in local storage, and:
 
-Do the mirror version too — `supervisor@` at `/admin/inquiries`. Anonymous requests to any of
-these endpoints return **401**.
+   ```bash
+   curl -i https://solstice-hotel-group.netlify.app/api/group/proposals \
+     -H "authorization: Bearer <a concierge token>"
+   ```
+
+   ```
+   HTTP/2 403
+   {"ok":false,"error":"This role cannot see group sales. Group sales inquiries are readable by
+    group_sales and admin only, which is what row level security enforces in the database as well."}
+   ```
+
+   Drop the header entirely and it is **401** — `Authorization: Bearer <supabase access token> is
+   required.` Two different refusals, because "who are you" and "you are not allowed" are two
+   different questions.
+
+The database enforces the same thing underneath: the same concierge token reading `inquiries`
+directly through PostgREST returns **zero rows of thirteen**, and `group_sales` reading `sessions`
+returns zero of the concierge's hundred-plus. Neither is a filtered view — the rows are not there
+to be had.
 
 **Why this matters more than it looks.** A hidden menu item is a suggestion. A 403 from the
 database to an authenticated user holding a real token is a boundary. If a panel member asks "but
