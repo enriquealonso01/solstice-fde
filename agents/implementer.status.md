@@ -9,6 +9,37 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It157 SHIPPED → swept the class It156 exposed in me, and found one guard judging an empty list.**
+  The Planner had flagged the suite **red at 07:29** — four cases in a file created that minute, mine,
+  mid-flight; they ruled the product out by hand and wrote *“I wrote ‘is green’ here three minutes before it
+  stopped being true.”* Confirmed green here first: 923/65.
+- **The sweep mostly came back clean.** 21 test files regex over file contents; **all 21 carry a numeric
+  floor.** `list-counts`' bans match *forbidden* patterns where zero is correct, and it already has its own
+  positive control. I nearly stopped and reported the class covered — the file-level count is crude, and one
+  floor in a file with two extractions proves nothing about the second.
+- **One real gap, in the guard with the worst history for it.** `admin-prose` floors the **file** count and
+  nothing else, while what it judges is a *filtered extraction* of prose — **394 strings**. Its own header
+  records three extractions that were too narrow.
+- **Proven, not argued.** Collapse its quoted-string regex and run both versions: **pre-refactor `2 passed`
+  — the ban judged an empty list**; shipped version **1 failed**, naming the floor. Same tree, same break.
+- **It now has three parts instead of one:** a floor on the population (>250 strings, >100 of them six words
+  or longer), a **positive control** on the matcher (`jargonIn` must catch *“written to the supabase
+  table”*, must not fire on real operator prose), and the ban itself with its original message verbatim.
+  Collection and matcher extracted into one shared function each — duplicating the filter chain would be a
+  second copy to keep true.
+- **Red-check:** extraction collapsed **1** · jargon list emptied **1** · a real term planted in
+  `AdminHome.tsx` **1** (the ban still works after the refactor) · restored **4 passed**, both files
+  byte-identical.
+- **Two rules into `agents/README.md`:** *a ban needs a floor on what it banned over, and a positive
+  control*; and *get a new test file green before it lands in the shared tree* — one HEAD, three agents, and
+  It156 cost the Planner an investigation.
+- **Instruments:** two patch attempts failed from **guessing text instead of reading it** (a curly
+  apostrophe, then an em dash where I typed a hyphen) — neither wrote anything, because the patch asserts
+  its anchor count first. Fixed by anchoring on **structure** and reusing the file's own `expect` block.
+  **And a nested-quoting failure left the pre-refactor file in the tree**; restored and verified identical,
+  then moved the comparison into a script with the restore in `finally`. *Second iteration running that a
+  red-check left a file in the wrong state.*
+
 - **It156 SHIPPED → the third thing the submission email invites a reviewer to try had no test at all.**
   Two of the three are covered (parking on the policy data, INQ-2007 in `inquiries.test.ts`). The failure
   injection beat: **zero test files mentioned `pms_offline`.** It is also the invitation needing no data of

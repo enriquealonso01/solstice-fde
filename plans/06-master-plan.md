@@ -1,14 +1,13 @@
 # Master plan: the whole picture
 
-> ## 07:31 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 07:34 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **NOTHING IS OPEN FOR AN AGENT.** Every numbered task in this file is closed. **What is left is yours:
 > three things to do, three decisions that need no action.**
 >
-> **Run `npx vitest run` yourself before you package — this line carries neither a count nor a verdict, and
-> at 07:29 that mattered:** it was **red**, four cases in a test file created that same minute (It156,
-> mid-flight). **The product is not implicated** — I reproduced the test's own regexes against the real
-> `registry.ts` and they parse all **11** handlers, so the failure is in how that new test reaches the file,
-> not in what it checks. *I wrote “is green” here three minutes before it stopped being true.*
+> **Run `npx vitest run` yourself before you package — this line carries neither a count nor a verdict.**
+> At **07:29** it was **red** for three minutes: four cases in a file It156 was still writing, whose parser
+> looked for a shape `registry.ts` does not have. **Green again at 07:33.** The product was never
+> implicated — the failures were that file's own anti-vacuity cases doing their job.
 >
 > **Pre-flight facts, each measured this morning and each one you act on:**
 >
@@ -2519,7 +2518,73 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 231, 07:34 EST — green again, and my diagnosis of the red was wrong because I measured a moving file
+
+**`npx vitest run`: 923 passed / 65 files.** It156 landed at 07:32 and the suite was red for about three
+minutes. **Nothing is open for an agent.**
+
+#### I got the cause wrong, and the way I got it wrong is the point
+
+At 07:31 I wrote — in the banner Enrique reads — that the four failures meant *"the failure is in how that new
+test reaches the file, not in what it checks"*, on the strength of reproducing the test's regexes against
+`registry.ts` and parsing **11** handlers.
+
+**The real cause, from It156's own entry:**
+
+> *"My `handlerOf()` looked for an inline `new Map(Object.entries({...}))`. The registry does not have one — it
+> builds the map from `CONCIERGE_HANDLERS` with a loop plus one explicit `handlers.set`. It parsed **nothing**…
+> `OUTAGE_REASON` was imported from `_deps`, which does not re-export it, so it arrived `undefined` and the `in`
+> operator threw."*
+
+The file reached `registry.ts` perfectly well. **The parser was looking for a shape that does not exist.**
+
+**Why my check said otherwise: I read the file after it had already been partly fixed.** The failing run was at
+07:29:04; I read the parser and reproduced its regexes at roughly 07:30–07:31, and the Implementer was editing
+continuously — the version I measured already used the `CONCIERGE_HANDLERS` pattern, which is why it parsed
+eleven entries. **I diagnosed a past failure with a present artifact and reported the result as fact.**
+
+> **The rule, and it is new tonight: a file under active edit is not evidence about a run that has already
+> finished.** Either capture the artifact at the moment of the failure, or say only what the failure output
+> says. My own instrument — reproducing a regex from disk — was sound; **what was wrong was the assumption that
+> the disk still held what the run had read.** That is the same family as *reproducibility is not validity*, one
+> layer down: **I reproduced something, just not the thing that failed.**
+>
+> The honest output at 07:31 was available and I skipped past it: *"four failures in a file created one minute
+> ago; three are its own anti-vacuity cases firing; the product is not implicated."* All three clauses were true
+> and none needed a diagnosis. **Corrected in the banner.**
+
+#### What It156 actually closed, which is worth more than the red window
+
+`SUBMISSION.md`'s email body offers a reviewer three things to try. Two were covered. The third — *"take the
+property management system offline and ask for a late checkout… **while policy questions keep working**"* — had
+**no test mentioning `pms_offline` or failure injection at all**, and it is the one a reviewer can act on with
+no data of their own: two clicks and one sentence.
+
+Both halves of that promise are decided by one table, so they are checkable from the wiring with nothing
+flipped: `check_late_checkout` **is** mapped to `pms_offline`; `get_policy` **is not**.
+
+**And the case that earns the file is the inverse direction:** any tool whose module calls
+`sameDayAvailability`, `houseOccupancy` or `availabilityByClass` must be mapped to `pms_offline` — derived from
+the source rather than restated — so a new inventory-dependent tool either inherits degradation or turns the
+suite red. *That closes the loop with T59 from the other side: T59 proved the net-new tool behaves, this proves
+nothing can quietly start depending on it without degrading with it.*
+
+It also notes why the Tester never covered this: **their permission layer refuses flag writes.** A gap that
+survived to submission day because the agent who would have found it could not reach the switch.
+
+#### State
+
+Suite green at **923 / 65 files**. Every numbered task closed; nothing open for an agent. Enrique's six
+unchanged, `drop policy` first. Inbox and In progress empty. Tester silent since 20:26 (**11h08m**). No lock
+held; I took none.
+
+
 ### Iteration 230, 07:31 EST — the suite is red, and my first screen said green three minutes after I wrote the rule against exactly that
+
+> **CORRECTED at iteration 231: the diagnosis below is wrong.** The new file reached `registry.ts` fine;
+> its parser looked for an inline `new Map(Object.entries({...}))`, a shape the registry does not have. My
+> regex reproduction parsed eleven entries because **I read the file after it had already been partly
+> fixed** — the failing run was 07:29:04 and I measured at ~07:31. Details in the iteration-231 entry above.
 
 **`npx vitest run`: 4 failed, 919 passed (923).** All four are in one file created at **07:29** —
 `src/lib/rules/__tests__/failure-injection.test.ts` — while I was reading the banner I had just rewritten.
