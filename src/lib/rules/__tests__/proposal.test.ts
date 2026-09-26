@@ -1,9 +1,10 @@
 // Proposal artifacts and the approval gate.
 //
 // The gate is the one the panel will try to break: a flagged proposal must not be sendable
-// until a named human has approved it, and that must be true however the send is triggered.
+// until a general manager has approved it, and that must be true however the send is triggered.
+// The separation-of-duties cases live in group-approvals.test.ts.
 
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { clearAuditMemory, recentAudit } from '../../../../netlify/functions/_delivery/audit'
 import { getProperty } from '../../../../netlify/functions/_lib/data'
 import {
@@ -13,6 +14,7 @@ import {
   pdfFilename,
 } from '../../../../netlify/functions/group/proposal'
 import {
+  actingAs,
   canSend,
   durabilityNote,
   findProposalByInquiry,
@@ -21,6 +23,9 @@ import {
   markSent,
   proposalCodeFor,
   resetProposalStore,
+  setClock,
+  type ApprovalTerms,
+  type Approver,
 } from '../../../../netlify/functions/group/store'
 import {
   approve,
@@ -35,6 +40,13 @@ import {
   send_proposal,
   submit_for_approval,
 } from '../../../../netlify/functions/group/tools'
+
+const GM: Approver = { id: 'user-gm', role: 'gm', name: 'Olivia Grant' }
+const SALES: Approver = { id: 'user-sales', role: 'group_sales', name: 'Marcus Feld' }
+
+// Before every arrival in the dataset, so the date rules do not rot with the calendar.
+beforeAll(() => setClock(() => new Date('2026-07-15T12:00:00Z')))
+afterAll(() => setClock(null))
 
 beforeEach(() => {
   resetProposalStore()
@@ -247,7 +259,7 @@ describe('the approval gate', () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
     const proposal = (await getProposal(generated.data!.proposal_id))!
     expect(proposal.status).toBe('draft')
-    expect(canSend(proposal).allowed).toBe(true)
+    expect((await canSend(proposal)).allowed).toBe(true)
   })
 
   it('refuses to send a flagged proposal before it is approved', async () => {
@@ -256,8 +268,9 @@ describe('the approval gate', () => {
     expect(generated.data!.status).toBe('awaiting_approval')
 
     const proposalId = generated.data!.proposal_id
-    const gate = canSend((await getProposal(proposalId))!)
+    const gate = await canSend((await getProposal(proposalId))!)
     expect(gate.allowed).toBe(false)
+    expect(gate.needs_approval).toBe(true)
     expect(gate.blocking.map((v) => v.rule_id).sort()).toEqual([
       'GRP-DISCOUNT-CEILING',
       'GRP-ROOMS-CAP',
@@ -281,35 +294,39 @@ describe('the approval gate', () => {
     )
   })
 
-  it('opens once a named human approves, and records who', async () => {
+  it('opens once a general manager approves, and records who and what they lifted', async () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2002' })
     const proposalId = generated.data!.proposal_id
 
-    await submit_for_approval({ proposal_id: proposalId, submitted_by: 'a sales rep' })
+    await actingAs(SALES.id, () => submit_for_approval({ proposal_id: proposalId, submitted_by: 'a sales rep' }))
     const approved = await approve({
       proposal_id: proposalId,
-      approved_by: 'Andrea Lin',
+      approver: GM,
       note: 'Repeat sports-team business, worth the extra rooms.',
     })
     expect(approved.ok).toBe(true)
+    expect(approved.http_status).toBe(200)
 
     const proposal = (await getProposal(proposalId))!
     expect(proposal.status).toBe('approved')
-    expect(proposal.approved_by).toBe('Andrea Lin')
-    expect(canSend(proposal).allowed).toBe(true)
+    expect(proposal.approved_by).toBe(GM.id)
+    expect((await canSend(proposal)).allowed).toBe(true)
 
     const row = recentAudit().find((e) => e.action === 'proposal.approved')
-    expect(row!.detail.approved_by).toBe('Andrea Lin')
-    expect(row!.detail.overrode_rules).toEqual(
-      expect.arrayContaining(['GRP-ROOMS-CAP', 'GRP-DISCOUNT-CEILING']),
-    )
+    expect(row!.detail.approved_by).toBe(GM.id)
+    expect(row!.detail.approver_role).toBe('gm')
+    const terms = row!.detail.terms as ApprovalTerms
+    expect(terms.flags.map(([rule]) => rule)).toEqual(['GRP-DISCOUNT-CEILING', 'GRP-ROOMS-CAP'])
+    expect(terms.stay).toEqual(['SOL-TPA', '2026-10-02', '2026-10-05'])
   })
 
-  it('refuses an anonymous approval', async () => {
+  it('refuses an approval from group sales, and says why', async () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2002' })
-    const result = await approve({ proposal_id: generated.data!.proposal_id, approved_by: '   ' })
+    const result = await approve({ proposal_id: generated.data!.proposal_id, approver: SALES })
     expect(result.ok).toBe(false)
-    expect(result.error).toContain('attributed to a person')
+    expect(result.http_status).toBe(403)
+    expect(result.error).toContain('Only a general manager can approve')
+    expect((await getProposal(generated.data!.proposal_id))!.status).toBe('awaiting_approval')
   })
 
   it('stays shut on a rejected proposal', async () => {
@@ -319,7 +336,7 @@ describe('the approval gate', () => {
       rejected_by: 'Andrea Lin',
       reason: 'Too much discount for October.',
     })
-    const gate = canSend((await getProposal(generated.data!.proposal_id))!)
+    const gate = await canSend((await getProposal(generated.data!.proposal_id))!)
     expect(gate.allowed).toBe(false)
     expect(gate.human_reason).toContain('turned down')
   })
@@ -348,7 +365,7 @@ describe('the judgment moment, acted on', () => {
     const fresh = (await getProposal(overridden.data!.proposal_id))!
     expect(fresh.pricing.discount_pct).toBe(17)
     expect(fresh.status).toBe('awaiting_approval')
-    expect(canSend(fresh).allowed).toBe(false)
+    expect((await canSend(fresh)).allowed).toBe(false)
 
     const row = recentAudit().find((e) => e.action === 'proposal.override')
     expect(row!.detail.actor).toBe('Diego Fuentes')

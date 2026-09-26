@@ -11,7 +11,7 @@
 //   POST /api/group/follow-up       staff    draft the "we need a few more details" message
 //   POST /api/group/follow-up-action staff   approve | send | discard that message
 //   GET  /api/group/communications  staff    the conversation thread for one inquiry
-//   POST /api/group/approve         staff    a named human approves an over-authority proposal
+//   POST /api/group/approve         gm       a general manager approves someone else's proposal
 //   POST /api/group/reject          staff    ...or turns it down
 //   POST /api/group/send            staff    shorthand for the send_proposal tool
 //   GET  /api/group/inquiries       staff    the inbox
@@ -21,9 +21,9 @@
 //   GET  /api/group                 open     health probe for the Backend Map
 //
 // "secret" is TOOL_WEBHOOK_SECRET, the same header the concierge tool layer takes, because the
-// Telnyx assistant is provisioned once and calls both. "staff" is a Supabase session whose
-// profile role is group_sales or admin, which is the same rule RLS enforces on these tables.
-// See auth.ts.
+// Telnyx assistant is provisioned once and calls both. "staff" is a Supabase session whose role
+// is group_sales, gm or admin, the same rule RLS enforces on these tables. "gm" is checked again
+// inside the approval itself (store.ts, checkApproval). See auth.ts.
 //
 // Like voice/index.ts we do NOT set `export const config = { path }`: a v2 path config would
 // move the function off /.netlify/functions/ and fight the redirect in netlify.toml, which is
@@ -43,7 +43,15 @@ import { auditLog, recentAudit } from '../_delivery/audit'
 import { authorizeStaff, authorizeToolCaller, type AuthOk } from './auth'
 import { currentSourceName, loadInquiries, loadProperties } from './_deps'
 import { runAssistant, buildSuggestions, ASSISTANT_MODEL, type AssistantTurn } from './assistant'
-import { findProposalByInquiry, getProposal, listProposals, tokenMatches } from './store'
+import {
+  actingAs,
+  canSend,
+  findProposalByInquiry,
+  getProposal,
+  listProposals,
+  tokenMatches,
+  type Approver,
+} from './store'
 import { pdfFilename } from './proposal'
 import { getCommunications } from './communications'
 import { actOnFollowUp, draftFollowUp, type FollowUpAction } from './followUps'
@@ -77,6 +85,11 @@ type AnyArgs = Record<string, unknown>
 function attribution(supplied: string | undefined, staff: AuthOk): string {
   const label = supplied?.trim()
   return label ? `${label} (${staff.role}, ${staff.actor})` : `${staff.role} ${staff.actor}`
+}
+
+/** The approver is the verified session and nothing else: no field of the request body counts. */
+function approverFrom(staff: AuthOk): Approver | null {
+  return staff.role === 'assistant' ? null : { id: staff.actor, role: staff.role, name: staff.name ?? null }
 }
 
 // Local copies rather than an import from another function's private `_lib`. Four lines is a
@@ -123,7 +136,7 @@ const TOOL_TABLE: Record<GroupTool, (args: AnyArgs) => Promise<ToolResult<unknow
  * ACCESS CONTROL, in one place so it cannot be forgotten on a new route.
  *
  *   /api/group/tool          shared secret  (the Telnyx assistant, a machine with no user)
- *   everything else          Supabase session + group_sales|admin  (a signed-in member of staff)
+ *   everything else          Supabase session + group_sales|gm|admin  (a signed-in member of staff)
  *   /api/group/pdf/...       the proposal's own capability token, or a staff session
  *   GET /api/group           open: a health probe that reports booleans and no customer data
  *
@@ -155,6 +168,12 @@ export default async function handler(req: Request, _context: Context): Promise<
   const staff = await authorizeStaff(req)
   if (!staff.ok) return json({ ok: false, error: staff.error }, staff.status)
 
+  // Whatever this request drafts or submits, by button, triage or side chat, is recorded as this
+  // user's, so they cannot then approve it.
+  return actingAs(staff.actor, () => staffRoute(route, url, req, staff))
+}
+
+async function staffRoute(route: string, url: URL, req: Request, staff: AuthOk): Promise<Response> {
   switch (route) {
     case 'assistant':
       return handleAssistant(req, staff)
@@ -183,7 +202,7 @@ export default async function handler(req: Request, _context: Context): Promise<
     case 'inquiries':
       return handleInquiries()
     case 'proposals':
-      return await handleProposals()
+      return await handleProposals(url.searchParams.get('proposal_id'))
     case 'audit':
       return json({ ok: true, entries: recentAudit(50) })
     default:
@@ -231,7 +250,8 @@ function health(): Response {
       'POST /api/group/tool': process.env.TOOL_WEBHOOK_SECRET?.trim()
         ? 'x-solstice-tool-key'
         : 'OPEN — TOOL_WEBHOOK_SECRET is not set on this deploy',
-      'staff routes': 'Supabase bearer token, role group_sales or admin',
+      'staff routes': 'Supabase bearer token, role group_sales, gm or admin',
+      'POST /api/group/approve': 'role gm, and not the person who created or submitted the proposal',
       'GET /api/group/pdf/<id>.pdf': 'per-proposal access token, or a staff session',
     },
   })
@@ -363,8 +383,8 @@ async function handleAssistant(req: Request, staff: AuthOk): Promise<Response> {
   if (!message?.trim()) return json({ ok: false, error: 'message is required' }, 400)
 
   const startedAt = Date.now()
-  // The assistant acts AS the signed-in rep: every approval, edit and send it performs is
-  // attributed to them in audit_log, exactly as if they had pressed the button themselves.
+  // The assistant acts as the signed-in rep: what it drafts, submits, edits or sends is recorded as
+  // theirs, because the handler runs every staff request inside actingAs. It cannot approve.
   const reply = await runAssistant({ inquiry_id, message, history, actor: attribution(undefined, staff) })
   const latency = Date.now() - startedAt
 
@@ -405,15 +425,18 @@ async function handleApproval(
   const { proposal_id, note, reason } = body.value
   if (!proposal_id) return json({ ok: false, error: 'proposal_id is required' }, 400)
 
-  // Attribution comes from the verified session, not from the body. A caller can supply a
-  // display name, but it can never stand in for who actually signed this off.
-  const actor = attribution(body.value.actor, staff)
+  if (action === 'approve') {
+    const approver = approverFrom(staff)
+    if (!approver) return json({ ok: false, error: 'Only a signed-in member of staff can approve.' }, 403)
+    const result = await approve({ proposal_id, approver, note })
+    return json(result, result.http_status)
+  }
 
-  const result =
-    action === 'approve'
-      ? await approve({ proposal_id, approved_by: actor, note })
-      : await reject({ proposal_id, rejected_by: actor, reason: reason ?? 'no reason given' })
-
+  const result = await reject({
+    proposal_id,
+    rejected_by: attribution(body.value.actor, staff),
+    reason: reason ?? 'no reason given',
+  })
   return json(result, result.ok ? 200 : 404)
 }
 
@@ -479,13 +502,19 @@ async function handleProposalAction(req: Request, staff: AuthOk): Promise<Respon
         note: justification ?? undefined,
       })
       break
-    case 'approve':
-      result = await approve({
-        proposal_id: proposalId,
-        approved_by: actor,
-        note: justification ?? undefined,
-      })
+    case 'approve': {
+      const approver = approverFrom(staff)
+      if (!approver) return json({ ok: false, error: 'Only a signed-in member of staff can approve.' }, 403)
+      const approval = await approve({ proposal_id: proposalId, approver, note: justification ?? undefined })
+      if (!approval.ok) {
+        return json(
+          { ok: false, proposal_id: proposalId, error: approval.error, human_summary: approval.error },
+          approval.http_status,
+        )
+      }
+      result = approval
       break
+    }
     case 'reject':
       result = await reject({
         proposal_id: proposalId,
@@ -679,13 +708,16 @@ async function handleInquiries(): Promise<Response> {
 
 /** Rows in the shape the admin proposal view renders: `ProposalRow`, money in integer cents.
  *  Read from the `proposals` table, so a proposal generated by one request is visible to the
- *  next one and to every other function instance. */
-async function handleProposals(): Promise<Response> {
-  const proposals = await listProposals()
+ *  next one and to every other function instance. `send_gate` is canSend's live answer, not the
+ *  stored status. `?proposal_id=` narrows it to one (code or row id). */
+async function handleProposals(only: string | null): Promise<Response> {
+  const one = only ? await getProposal(only) : null
+  const proposals = only ? (one ? [one] : []) : await listProposals()
+  const gates = await Promise.all(proposals.map((p) => canSend(p)))
   return json({
     ok: true,
     persisted: proposals.every((p) => p.persisted),
-    proposals: proposals.map((p) => ({
+    proposals: proposals.map((p, i) => ({
       id: p.proposal_id,
       proposal_id: p.proposal_id,
       inquiry_id: p.inquiry_id,
@@ -699,9 +731,16 @@ async function handleProposals(): Promise<Response> {
       sent_at: p.sent_at,
       created_at: p.created_at,
       approved_by: p.approved_by,
+      approver_name: p.approver_name ?? null,
       approved_at: p.approved_at,
       revision: p.revision,
       persisted: p.persisted,
+      send_gate: {
+        allowed: gates[i].allowed,
+        needs_approval: gates[i].needs_approval,
+        blocking: gates[i].blocking.map((v) => v.rule_id),
+        reason: gates[i].human_reason,
+      },
     })),
   })
 }

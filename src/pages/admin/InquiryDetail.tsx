@@ -8,9 +8,9 @@
 // is locked with the reason printed next to it, and unlocking it requires a written
 // justification that is kept on the record.
 
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import AdminShell from '@/components/admin/AdminShell'
+import AdminShell, { useStaffRole } from '@/components/admin/AdminShell'
 import ConversationThread from '@/components/admin/ConversationThread'
 import InquiryAssistant from '@/components/admin/InquiryAssistant'
 import {
@@ -27,7 +27,7 @@ import {
   SourceChip,
   VerdictChip,
 } from '@/components/admin/ui'
-import { isMissingBackend, postJson, useInquiry } from '@/components/admin/useAdminData'
+import { accessToken, useInquiry } from '@/components/admin/useAdminData'
 import {
   money,
   renderProposalBody,
@@ -37,6 +37,7 @@ import {
   type Pricing,
   type ProposalRow,
 } from '@/components/admin/mockData'
+import { APPROVER_ROLES } from '@/lib/rules/types'
 
 type Decision = 'send' | 'submit_for_approval' | 'approve' | 'override' | 'reject'
 
@@ -58,9 +59,71 @@ interface LogEntry {
   simulated: boolean
 }
 
+/** canSend's live answer from GET /api/group/proposals, which re-checks the rules as of today. */
+interface SendGate {
+  allowed: boolean
+  needs_approval: boolean
+  blocking: string[]
+  reason: string
+}
+
+/** The server's send gate for one proposal, or null when there is no backend to ask. */
+function useSendGate(proposalId: string | undefined, status: string | undefined): SendGate | null {
+  const [gate, setGate] = useState<SendGate | null>(null)
+  useEffect(() => {
+    if (!proposalId) return
+    let alive = true
+    void (async () => {
+      const token = await accessToken()
+      if (!token) return
+      try {
+        const res = await fetch(`/api/group/proposals?proposal_id=${encodeURIComponent(proposalId)}`, {
+          headers: { authorization: `Bearer ${token}` },
+        })
+        const body = (await res.json()) as { proposals?: { send_gate?: SendGate }[] }
+        if (alive) setGate(body.proposals?.[0]?.send_gate ?? null)
+      } catch {
+        // No backend: the stored verdicts are all there is to go on.
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [proposalId, status])
+  return gate
+}
+
+/**
+ * Posts one decision. A refusal keeps the server's own sentence (not an approver, your own
+ * proposal, a physical limit), which postJson swaps for a generic line on a 403 or 503.
+ * `reachable: false` means no backend answered at all.
+ */
+async function postDecision(body: Record<string, unknown>): Promise<{ ok: boolean; reachable: boolean; error: string | null }> {
+  const token = await accessToken()
+  if (!token) return { ok: false, reachable: true, error: 'Your session has expired. Sign in again.' }
+  let res: Response
+  try {
+    res = await fetch('/api/group/proposal-action', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    })
+  } catch {
+    return { ok: false, reachable: false, error: null }
+  }
+  const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null
+  if (!data) return { ok: false, reachable: res.status !== 404, error: `The server answered HTTP ${res.status}.` }
+  if (!res.ok || data.ok === false) {
+    return { ok: false, reachable: true, error: data.error ?? `The server answered HTTP ${res.status}.` }
+  }
+  return { ok: true, reachable: true, error: null }
+}
+
 export default function InquiryDetail() {
   const { id } = useParams<{ id: string }>()
   const { inquiry, proposal, source, loading, access, patchProposal } = useInquiry(id)
+  const { role } = useStaffRole()
+  const gate = useSendGate(proposal?.id, proposal?.status)
   const [log, setLog] = useState<LogEntry[]>([])
   const [prompt, setPrompt] = useState<Decision | null>(null)
   const [busy, setBusy] = useState(false)
@@ -104,7 +167,17 @@ export default function InquiryDetail() {
   const approved = proposal?.status === 'approved'
   const alreadySent = proposal?.status === 'sent'
   const rejected = proposal?.status === 'rejected'
-  const sendLocked = !proposal || rejected || (severity !== 'clear' && !approved) || channel === 'none'
+  // When the server answers, its live gate decides; the stored verdicts are the offline fallback.
+  const sendLocked =
+    !proposal || rejected || channel === 'none' || (gate ? !gate.allowed : severity !== 'clear' && !approved)
+  // The server decides (checkApproval); this only stops offering a button that will be refused.
+  const notApprover = !(role && APPROVER_ROLES.includes(role))
+  const hardStop = gate !== null && !gate.allowed && !gate.needs_approval
+  const approveLock = notApprover
+    ? 'Only a general manager can approve a block outside this property’s limits. Submit it for approval instead.'
+    : hardStop
+      ? gate.reason
+      : null
 
   const lockReason = !proposal
     ? 'There is no proposal yet. The inquiry is still missing information from the guest.'
@@ -112,15 +185,17 @@ export default function InquiryDetail() {
       ? 'This proposal was rejected. Nothing goes out from a rejected record.'
       : channel === 'none'
         ? 'There is neither an email address nor a phone number on this inquiry, so there is nowhere to send it.'
-        : severity !== 'clear' && !approved
-          ? `${proposal.verdicts.filter((v) => v.status !== 'pass').length} rule verdict(s) are outstanding. Approve or override with a justification before this can be sent.`
-          : null
+        : gate && !alreadySent
+          ? gate.allowed ? null : gate.reason
+          : severity !== 'clear' && !approved
+            ? `${proposal.verdicts.filter((v) => v.status !== 'pass').length} rule verdict(s) are outstanding. A general manager has to approve it before it can be sent.`
+            : null
 
   async function commit(action: Decision, justification: string | null) {
     if (!proposal || !inquiry) return
     setBusy(true)
     setActionError(null)
-    const res = await postJson<{ ok: boolean; status?: ProposalRow['status'] }>('/api/group/proposal-action', {
+    const res = await postDecision({
       inquiry_id: inquiry.id,
       proposal_id: proposal.id,
       action,
@@ -129,10 +204,10 @@ export default function InquiryDetail() {
         ? { override_discount_pct: proposal.pricing.requested_discount_pct }
         : {}),
     })
-    if (!res.ok && !isMissingBackend(res.failure)) {
-      // The backend is live and refused. Applying the transition anyway would leave the
-      // rep looking at an "approved" proposal that no record anywhere agrees with.
-      setActionError(res.error)
+    // A refusal is shown as the server worded it, and nothing changes on screen. Only the server
+    // can approve, so an approval is never simulated, even with no backend.
+    if (!res.ok && (res.reachable || action === 'approve')) {
+      setActionError(res.error ?? 'Approving needs the server, and it could not be reached.')
       setBusy(false)
       setPrompt(null)
       return
@@ -146,7 +221,7 @@ export default function InquiryDetail() {
     if (action === 'override') {
       const requested = proposal.pricing.requested_discount_pct
       patchProposal({
-        status: 'approved',
+        status: 'awaiting_approval',
         pricing: requested === undefined ? proposal.pricing : reprice(proposal.pricing, requested),
       })
     }
@@ -246,8 +321,9 @@ export default function InquiryDetail() {
                 <button
                   type="button"
                   className="btn-ghost"
-                  disabled={!proposal || busy || approved || alreadySent || rejected}
+                  disabled={!proposal || busy || approved || alreadySent || rejected || approveLock !== null}
                   onClick={() => request('approve')}
+                  title={approveLock ?? undefined}
                 >
                   Approve
                 </button>
@@ -270,6 +346,10 @@ export default function InquiryDetail() {
                   Reject
                 </button>
               </div>
+
+              {notApprover && proposal && severity !== 'clear' && !approved && !alreadySent && !rejected ? (
+                <p className="mt-3 text-xs text-solstice-stone">{approveLock}</p>
+              ) : null}
 
               {actionError ? (
                 <p role="alert" className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
@@ -530,7 +610,7 @@ function JustificationDialog({
             value={text}
             onChange={(e) => setText(e.target.value)}
             className="mt-1.5 w-full resize-none rounded-md border border-solstice-sand bg-white px-3 py-2 text-sm outline-none transition focus:border-solstice-ember focus:ring-1 focus:ring-solstice-ember"
-            placeholder="e.g. Repeat client, third block this year, GM approved the extra two points by phone."
+            placeholder="e.g. Repeat client, third block this year, worth the extra two points."
           />
         </label>
         <p className="mt-2 text-xs text-solstice-stone">

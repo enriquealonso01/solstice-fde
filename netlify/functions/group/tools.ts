@@ -54,7 +54,9 @@ import {
   buildProposalDocument,
   EDITABLE_PROSE_FIELDS,
   LOCKED_NUMERIC_FIELDS,
+  passableProse,
   pdfFilename,
+  proseProblem,
   type ProposalDocument,
   type ProposalProse,
   renderProposalHtml,
@@ -67,27 +69,24 @@ import {
   cachePdf,
   cachedPdf,
   canSend,
+  checkApproval,
+  contactPresent,
+  currentActor,
   durabilityNote,
   findProposalByInquiry,
   getProposal,
   hostPdf,
   markAwaitingApproval,
   markSent,
+  now,
   rejectProposal,
   requiresApproval,
   reserveProposalSlot,
   saveProposal,
   updateProposal,
+  type Approver,
   type StoredProposal,
 } from './store'
-
-/** The inquiry records handed to the engine have their real email and phone redacted, so
- *  "do we have any way of reaching this customer" has to come from the contact seam. */
-async function contactPresent(inquiryId: string): Promise<boolean> {
-  const contact = await loadInquiryContact(inquiryId)
-  if (!contact) return false
-  return Boolean(contact.email || contact.phone || contact.email_masked || contact.phone_masked)
-}
 
 // ---------------------------------------------------------------- 1. parse_inquiry
 
@@ -346,6 +345,7 @@ export async function evaluate_group_rules(args: EvaluateArgs): Promise<ToolResu
     received_date: args.received_date ?? context?.date_received ?? null,
     raw_values: { rooms_requested: context?.raw_rooms },
     contact_present: await contactPresent(inquiry.inquiry_id),
+    as_of: now(),
   })
 
   const blocking = result.verdicts.filter((v) => v.status === 'flag' || v.status === 'fail')
@@ -449,6 +449,7 @@ export async function price_block(args: PriceBlockArgs): Promise<ToolResult<Pric
         inquiry,
         property,
         contact_present: await contactPresent(inquiry.inquiry_id),
+        as_of: now(),
       })
       // Default to the compliant number, never the one we are not allowed to give.
       discount = Math.min(inquiry.requested_discount_pct ?? 0, evaluation.effective_discount_pct_ceiling)
@@ -508,7 +509,7 @@ export async function find_alternates(args: { inquiry_id: string; limit?: number
   )
   if (rules) citations.unshift(propertyCitation(rules.property_code, rules.property_name))
 
-  return ok({ ...result, human_summary: describeAlternates(result, rules) }, { citations })
+  return ok({ ...result, human_summary: describeAlternates(result) }, { citations })
 }
 
 // ---------------------------------------------------------------- 7. draft_clarifying_questions
@@ -617,19 +618,19 @@ export async function generate_proposal(
     received_date: context?.date_received ?? null,
     raw_values: { rooms_requested: context?.raw_rooms },
     contact_present: await contactPresent(inquiry.inquiry_id),
+    as_of: now(),
   })
 
   // Refuse to price what the rules say must not be priced.
   if (evaluation.pricing_blocked_by.length > 0) {
     const blockers = evaluation.verdicts.filter((v) => evaluation.pricing_blocked_by.includes(v.rule_id as never))
     const alternates = findAlternates({ inquiry, properties: await loadProperties() })
-    const rules = getPropertyRules(inquiry.preferred_property_code)
     await auditLog('proposal.refused', `inquiry:${inquiry.inquiry_id}`, {
       reason: evaluation.pricing_blocked_by,
       decision: evaluation.decision,
     })
     return fail(
-      `${blockers.map((v) => v.human_reason).join(' ')} ${describeAlternates(alternates, rules)}`.trim(),
+      `${blockers.map((v) => v.human_reason).join(' ')} ${describeAlternates(alternates)}`.trim(),
       {
         citations: [
           inquiryCitation(inquiry.inquiry_id, inquiry.company_name),
@@ -674,9 +675,10 @@ export async function generate_proposal(
   const slot = await reserveProposalSlot(inquiry.inquiry_id)
   const proposalId = slot.code
 
-  // A regeneration keeps whatever the rep had already written, unless they pass new prose.
+  // A regeneration keeps whatever the rep had already written, unless they pass new prose. Words
+  // the prose guard rejects are not carried forward.
   const existing = slot.replaces_existing ? await getProposal(proposalId) : null
-  const prose = args.prose ?? existing?.prose ?? {}
+  const prose = passableProse(args.prose ?? existing?.prose ?? {})
 
   const document = buildProposalDocument({
     proposal_id: proposalId,
@@ -741,6 +743,8 @@ export async function generate_proposal(
     pdf_hosted: Boolean(pdfUrl),
     replaced_existing: slot.replaces_existing,
     persisted: stored.persisted,
+    // Whoever drafts it cannot approve it (checkApproval reads this).
+    actor_id: currentActor(),
   })
 
   return ok(
@@ -760,7 +764,7 @@ export async function generate_proposal(
       text,
       human_summary:
         (needsApproval
-          ? `Proposal ${proposalId} is drafted at ${formatUsd(block.total_cents)}, and it is waiting on an approval before it can go anywhere. ${canSend(stored).human_reason}`
+          ? `Proposal ${proposalId} is drafted at ${formatUsd(block.total_cents)}, and it is waiting on an approval before it can go anywhere. ${(await canSend(stored)).human_reason}`
           : `Proposal ${proposalId} is ready at ${formatUsd(block.total_cents)}. Every rule check passed, so it can go straight out.`) +
         (slot.replaces_existing
           ? ` This replaces the earlier draft on the same inquiry rather than adding a second one.`
@@ -815,6 +819,7 @@ export async function materialiseProposal(
     received_date: context?.date_received ?? null,
     raw_values: { rooms_requested: context?.raw_rooms },
     contact_present: await contactPresent(inquiry.inquiry_id),
+    as_of: now(),
   })
 
   const line = proposal.pricing.line_items[0]
@@ -872,13 +877,15 @@ export async function submit_for_approval(args: {
   const proposal = await getProposal(args.proposal_id)
   if (!proposal) return fail(`We have no record of a proposal with the reference ${args.proposal_id}.`)
 
-  const gate = canSend(proposal)
-  if (gate.blocking.length === 0) {
+  const gate = await canSend(proposal)
+  if (!gate.needs_approval) {
+    // Either nothing needs signing off, or something no approval can lift. Say which.
+    if (!gate.allowed) return fail(gate.human_reason)
     return ok({
       proposal_id: proposal.proposal_id,
       status: proposal.status,
       blocking: [],
-      human_summary: `Proposal ${proposal.proposal_id} does not need an approval. Every check passed, so it can be sent as it stands.`,
+      human_summary: `There is nothing to submit on ${proposal.proposal_id}. ${gate.human_reason}`,
     })
   }
 
@@ -902,7 +909,7 @@ export interface SendProposalPayload {
   human_summary: string
 }
 
-/** THE GATE IS HERE. A flagged proposal cannot leave the building before an approval, whoever
+/** THE GATE IS HERE. Nothing leaves the building until `canSend` has re-checked it live, whoever
  *  or whatever is asking. */
 export async function send_proposal(args: {
   proposal_id: string
@@ -911,7 +918,7 @@ export async function send_proposal(args: {
   const proposal = await getProposal(args.proposal_id)
   if (!proposal) return fail(`We have no record of a proposal with the reference ${args.proposal_id}.`)
 
-  const gate = canSend(proposal)
+  const gate = await canSend(proposal)
   if (!gate.allowed) {
     await auditLog('proposal.send_blocked', `proposal:${proposal.proposal_id}`, {
       inquiry_id: proposal.inquiry_id,
@@ -1259,6 +1266,7 @@ export async function buildInquiryRow(inquiry: GroupInquiry): Promise<InquiryRow
     inquiry,
     property,
     contact_present: Boolean(contact?.email || contact?.phone || contact?.email_masked || contact?.phone_masked),
+    as_of: now(),
   })
 
   return {
@@ -1342,8 +1350,9 @@ const WHY_THE_NUMBERS_ARE_LOCKED =
  * Edits the PROSE of a proposal and re-renders both the email and the PDF from the stored
  * record, so the document a customer receives and the row a manager approved cannot drift.
  *
- * An edit to a proposal that has already been sent does not rewrite history. It opens the next
- * revision, carrying the new words, and leaves the sent one exactly as the customer has it.
+ * An edit to a proposal that has already been sent opens the next revision and leaves the sent
+ * one as the customer has it. The one exception is clearing words the prose guard rejects: that
+ * corrects the sent letter in place, so the customer's link stops showing test text.
  */
 export async function edit_proposal(args: EditProposalArgs): Promise<ToolResult<EditProposalPayload>> {
   const proposal = await getProposal(args.proposal_id)
@@ -1366,6 +1375,9 @@ export async function edit_proposal(args: EditProposalArgs): Promise<ToolResult<
     )
   }
 
+  const wording = proseProblem(args.edits)
+  if (wording) return fail(`${wording} Nothing was saved.`)
+
   const merged: ProposalProse = {
     ...proposal.prose,
     ...(args.edits.intro !== undefined ? { intro: args.edits.intro } : {}),
@@ -1375,8 +1387,15 @@ export async function edit_proposal(args: EditProposalArgs): Promise<ToolResult<
       : {}),
   }
 
+  const fields = attempted as (keyof ProposalProse)[]
+  const clearsResidue =
+    proposal.status === 'sent' &&
+    fields.length > 0 &&
+    fields.every((f) => isBlank(args.edits[f]) && proseProblem({ [f]: proposal.prose[f] }) !== null)
+  if (clearsResidue) for (const f of fields) delete merged[f]
+
   // Already with the customer: open the next revision rather than rewriting what they hold.
-  if (proposal.status === 'sent') {
+  if (proposal.status === 'sent' && !clearsResidue) {
     const regenerated = await generate_proposal({
       inquiry_id: proposal.inquiry_id,
       discount_pct: proposal.pricing.discount_pct,
@@ -1390,6 +1409,7 @@ export async function edit_proposal(args: EditProposalArgs): Promise<ToolResult<
     await auditLog('proposal.edited', `proposal:${fresh.proposal_id}`, {
       inquiry_id: proposal.inquiry_id,
       actor: args.actor,
+      actor_id: currentActor(),
       justification: args.justification,
       fields: attempted,
       opened_new_revision: true,
@@ -1402,7 +1422,10 @@ export async function edit_proposal(args: EditProposalArgs): Promise<ToolResult<
     )
   }
 
+  const removed = clearsResidue ? Object.fromEntries(fields.map((f) => [f, proposal.prose[f]])) : null
   proposal.prose = merged
+  // An approval signs the words too, so changed words need signing again.
+  if (proposal.status === 'approved') proposal.status = 'awaiting_approval'
 
   // Re-render from the record, never from whatever the caller happened to send us.
   const materialised = await materialiseProposal(proposal, { force_render: true })
@@ -1425,9 +1448,11 @@ export async function edit_proposal(args: EditProposalArgs): Promise<ToolResult<
   await auditLog('proposal.edited', `proposal:${proposal.proposal_id}`, {
     inquiry_id: proposal.inquiry_id,
     actor: args.actor,
+    actor_id: currentActor(),
     justification: args.justification,
     fields: attempted,
     opened_new_revision: false,
+    removed_from_sent_letter: removed,
     persisted: proposal.persisted,
   })
 
@@ -1440,6 +1465,10 @@ export async function edit_proposal(args: EditProposalArgs): Promise<ToolResult<
     ),
     { citations: [inquiryCitation(proposal.inquiry_id, proposal.proposal_id)] },
   )
+}
+
+function isBlank(value: unknown): boolean {
+  return value === null || (typeof value === 'string' && !value.trim()) || (Array.isArray(value) && value.length === 0)
 }
 
 async function editPayload(
@@ -1509,6 +1538,7 @@ export async function override_proposal(args: {
     inquiry_id: existing.inquiry_id,
     replaces_proposal: existing.proposal_id,
     actor: args.actor,
+    actor_id: currentActor(),
     justification: args.justification,
     ceiling_pct: existing.discount_pct,
     override_discount_pct: requested,
@@ -1528,24 +1558,50 @@ export async function override_proposal(args: {
   })
 }
 
-/** Deliberately NOT in GROUP_TOOLS. Approving one's own over-authority proposal is a human act
- *  with a named human attached to it, which is what makes the audit row worth anything. */
+export type ApprovalResult = ToolResult<{
+  proposal_id: string
+  status: string
+  approved_by: string
+  human_summary: string
+}> & {
+  /** What the staff route answers with. */
+  http_status: 200 | 403 | 404 | 409 | 503
+}
+
+/** Deliberately NOT in GROUP_TOOLS, so no agent can approve. `approver` comes from the verified
+ *  session; `checkApproval` decides whether they may. Approving sends nothing. */
 export async function approve(args: {
   proposal_id: string
-  approved_by: string
+  approver: Approver
   note?: string
-}): Promise<ToolResult<{ proposal_id: string; status: string; human_summary: string }>> {
+}): Promise<ApprovalResult> {
   const proposal = await getProposal(args.proposal_id)
-  if (!proposal) return fail(`We have no record of a proposal with the reference ${args.proposal_id}.`)
-  if (!args.approved_by?.trim()) {
-    return fail('An approval has to be attributed to a person. We do not record anonymous approvals.')
+  if (!proposal) {
+    return { ...fail(`We have no record of a proposal with the reference ${args.proposal_id}.`), http_status: 404 }
   }
-  await approveProposal(proposal, args.approved_by, args.note)
-  return ok({
-    proposal_id: proposal.proposal_id,
-    status: proposal.status,
-    human_summary: `${args.approved_by} approved proposal ${proposal.proposal_id}. It can now be sent.`,
-  })
+  const check = await checkApproval(proposal, args.approver)
+  if (!check.ok) {
+    await auditLog('proposal.approval_refused', `proposal:${proposal.proposal_id}`, {
+      inquiry_id: proposal.inquiry_id,
+      approver_id: args.approver.id,
+      approver_role: args.approver.role,
+      reason: check.reason,
+    })
+    return { ...fail(check.reason), http_status: check.status }
+  }
+  await approveProposal(proposal, args.approver, check.terms, args.note)
+  const gate = await canSend(proposal)
+  return {
+    ...ok({
+      proposal_id: proposal.proposal_id,
+      status: proposal.status,
+      approved_by: args.approver.id,
+      human_summary: `${args.approver.name ?? 'A general manager'} approved proposal ${proposal.proposal_id}. ${
+        gate.allowed ? 'It can now be sent.' : gate.human_reason
+      }`,
+    }),
+    http_status: 200,
+  }
 }
 
 export async function reject(args: {

@@ -35,8 +35,27 @@ import type { StaffRole } from '../../../shared/types'
 const ROLES: { value: StaffRole; label: string; scope: string }[] = [
   { value: 'concierge', label: 'Concierge supervisor', scope: 'Conversations only. Cannot read group inquiries.' },
   { value: 'group_sales', label: 'Group sales', scope: 'Group inquiries only. Cannot read guest conversations.' },
+  { value: 'gm', label: 'General manager', scope: 'Group inquiries, and the only role that can approve a block outside the property limits.' },
   { value: 'admin', label: 'Super admin', scope: 'Both surfaces, invites, and the backend map.' },
 ]
+
+/** The staff_role column cannot hold 'gm' until migration 006 runs; until then the gm login gets
+ *  it from scripts/seed-users.mjs. Set to true once 006 is applied. */
+const GM_IN_DATABASE = false
+
+function RoleOptions() {
+  return ROLES.map((r) =>
+    r.value === 'gm' && !GM_IN_DATABASE ? (
+      <option key={r.value} value={r.value} disabled>
+        {r.label} (after migration 006)
+      </option>
+    ) : (
+      <option key={r.value} value={r.value}>
+        {r.label}
+      </option>
+    ),
+  )
+}
 
 export default function AdminHome() {
   const sessions = useSessions()
@@ -286,11 +305,7 @@ function Members({ members }: { members: ReturnType<typeof useMembers> }) {
             onChange={(e) => setRole(e.target.value as StaffRole)}
             className="mt-1.5 rounded-md border border-solstice-sand bg-white px-3 py-2 text-sm outline-none transition focus:border-solstice-ember focus:ring-1 focus:ring-solstice-ember"
           >
-            {ROLES.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
+            <RoleOptions />
           </select>
         </label>
         <button type="submit" className="btn-primary" disabled={busy}>
@@ -324,11 +339,7 @@ function Members({ members }: { members: ReturnType<typeof useMembers> }) {
                   onChange={(e) => void changeRole(m.id, roleOverride[m.id] ?? m.role, e.target.value as StaffRole)}
                   className="rounded-md border border-solstice-sand bg-white px-2 py-1 text-sm outline-none focus:border-solstice-ember"
                 >
-                  {ROLES.map((r) => (
-                    <option key={r.value} value={r.value}>
-                      {r.label}
-                    </option>
-                  ))}
+                  <RoleOptions />
                 </select>
               </td>
               <td className="px-4 py-2.5 text-solstice-stone">{shortDate(m.created_at)}</td>

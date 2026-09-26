@@ -1,36 +1,33 @@
-// Proposal state: persisted in Postgres, and the approval gate over it.
+// Proposal state, persisted in Postgres, and the approval gate over it.
 //
-// THE MISTAKE THIS FILE USED TO MAKE. Proposals lived in a module-level Map. That works on a
-// laptop and is a lie on Netlify, where each invocation may land on a fresh function instance:
-// generate_proposal returned an id, and the very next request had never heard of it. Everything
-// a proposal needs to survive now goes to the `proposals` table, and memory is a cache in front
-// of it, never the record. `StoredProposal.persisted` says which you are looking at, and the
-// tools put it in front of the user, so "it worked locally" can never be mistaken for durable
-// again.
+// Memory is a cache in front of the `proposals` table, never the record: each Netlify invocation
+// may land on a fresh instance. `StoredProposal.persisted` says which one you are looking at, and
+// the tools put it in front of the user.
 //
-// THE GATE: a proposal carrying any `flag` or `fail` verdict cannot reach `sent` without an
-// explicit approval first. Enforced here, in the state machine, not in the prompt and not in the
-// UI. An agent that decides to be helpful cannot route around it.
+// THE GATE. `canSend` trusts no stored column. At send time it re-runs the rules engine on the
+// inquiry as of today and re-prices the block, then:
 //
-//   draft ──(no flags)──────────────► approved ──► sent
-//     │                                  ▲
-//     └──(any flag/fail)─► awaiting_approval ──(a named human approves)──┘
+//   anything in pricing_blocked_by (a physical limit, a past arrival) ──► never sent
+//   every rule passes                                                 ──► sendable
+//   flags remain ──► sendable only with an approval in audit_log that signs this exact proposal,
+//                    stay and flag set, by an approver role who did not create or submit it
 //
 // FITTING supabase/schema.sql. The table has columns for inquiry_id, status, verdicts, pricing,
-// pdf_path, sent_via, sent_to and sent_at, and nothing else. Three things a proposal needs have
-// no column: the human-facing code (PRP-2001), who approved it, and why it was rejected. Rather
-// than invent columns we cannot migrate from here, they live under one clearly-named key,
-// `pricing.__proposal`. If this becomes a real product, the migration is obvious and this
-// comment is the note that says so. The customer-facing PDF token is NOT stored anywhere; it is
-// derived (see accessTokenFor) so that a row read by anyone with database access still does not
-// hand them the link.
+// pdf_path, sent_via, sent_to and sent_at. The human-facing code (PRP-2001), who approved it and
+// why it was rejected have no column, so they live under one key, `pricing.__proposal`, until a
+// migration adds them. `__proposal.approved_by` is display only: the gate reads approvals from
+// audit_log and checks their signature. The customer's PDF token is not stored anywhere; it is
+// derived (see accessTokenFor), so reading the table does not hand anyone the link.
 
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
-import type { Proposal, RuleVerdict } from '../../../shared/types'
-import type { ProposalLineCents } from '../../../src/lib/rules/pricing'
+import type { GroupInquiry, Property, Proposal, RuleVerdict, StaffRole } from '../../../shared/types'
+import { APPROVER_ROLES, evaluateGroupRules, priceBlock, type EvaluationResult, type ProposalLineCents } from '../../../src/lib/rules'
+import { getPropertyRate } from '../_lib/data'
 import { tryGetDb } from '../_lib/db'
-import { auditLog, describeError } from '../_delivery/audit'
-import type { ProposalProse } from './proposal'
+import { auditLog, describeError, recentAudit } from '../_delivery/audit'
+import { loadInquiry, loadInquiryContact, loadInquiryContext, loadProperty } from './_deps'
+import { proseProblem, type ProposalProse } from './proposal'
 
 /**
  * The `proposals.pricing` jsonb payload, and the shape the admin UI renders against.
@@ -54,6 +51,7 @@ export interface ProposalMeta {
   code: string
   inquiry_code: string
   approved_by?: string | null
+  approver_name?: string | null
   approved_at?: string | null
   approval_note?: string | null
   rejected_reason?: string | null
@@ -83,6 +81,8 @@ export interface StoredProposal extends Omit<Proposal, 'line_items' | 'subtotal'
   pricing: Pricing
   sent_to: string | null
   approved_by: string | null
+  /** For sentences a person reads; `approved_by` is the user id. */
+  approver_name?: string | null
   approved_at: string | null
   approval_note: string | null
   rejected_reason: string | null
@@ -198,6 +198,7 @@ function fromRow(row: ProposalRow, inquiryCode: string): StoredProposal {
     sent_to: row.sent_to,
     sent_at: row.sent_at,
     approved_by: meta?.approved_by ?? null,
+    approver_name: meta?.approver_name ?? null,
     approved_at: meta?.approved_at ?? null,
     approval_note: meta?.approval_note ?? null,
     rejected_reason: meta?.rejected_reason ?? null,
@@ -217,6 +218,7 @@ function toRowPayload(proposal: StoredProposal): Record<string, unknown> {
     code: proposal.proposal_id,
     inquiry_code: proposal.inquiry_id,
     approved_by: proposal.approved_by,
+    approver_name: proposal.approver_name ?? null,
     approved_at: proposal.approved_at,
     approval_note: proposal.approval_note,
     rejected_reason: proposal.rejected_reason,
@@ -443,7 +445,102 @@ async function persist(proposal: StoredProposal, opts: { replaced?: boolean } = 
   }
 }
 
-// ---------------------------------------------------------------- the gate
+// ---------------------------------------------------------------- the clock
+
+let clock: () => Date = () => new Date()
+
+/** "Today" for every rule check in the group function. The engine never reads the clock itself. */
+export function now(): Date {
+  return clock()
+}
+
+/** Test seam: pin "today" so date rules do not rot with the calendar. Null restores the real one. */
+export function setClock(next: (() => Date) | null): void {
+  clock = next ?? (() => new Date())
+}
+
+// ---------------------------------------------------------------- who is acting
+
+const requestActor = new AsyncLocalStorage<string>()
+
+/** Runs one staff request as its verified user, so a proposal drafted or submitted anywhere inside
+ *  it (a button, triage, the side chat) records them as its author. */
+export function actingAs<T>(actorId: string, run: () => Promise<T>): Promise<T> {
+  return requestActor.run(actorId, run)
+}
+
+/** The verified user behind this request, or null for the machine caller. */
+export function currentActor(): string | null {
+  return requestActor.getStore() ?? null
+}
+
+// ---------------------------------------------------------------- the live rule check
+
+/** The inquiry handed to the engine has its real email and phone redacted, so "can we reach this
+ *  customer" comes from the contact seam. */
+export async function contactPresent(inquiryId: string): Promise<boolean> {
+  const contact = await loadInquiryContact(inquiryId)
+  if (!contact) return false
+  return Boolean(contact.email || contact.phone || contact.email_masked || contact.phone_masked)
+}
+
+export interface LiveCheck {
+  inquiry: GroupInquiry
+  property: Property | null
+  evaluation: EvaluationResult
+}
+
+/**
+ * The rules engine over the inquiry as it stands on `asOf`. Given a proposal's pricing, it judges
+ * what the proposal actually prices: never fewer rooms or a smaller discount than the row carries.
+ */
+export async function evaluateLive(
+  inquiryId: string,
+  asOf: Date,
+  pricing?: Pricing,
+): Promise<LiveCheck | null> {
+  const inquiry = await loadInquiry(inquiryId)
+  if (!inquiry) return null
+  const property = await loadProperty(inquiry.preferred_property_code)
+  const context = await loadInquiryContext(inquiryId)
+  const pricedRooms = pricing?.line_items[0]?.rooms ?? 0
+  const judged: GroupInquiry = pricing
+    ? {
+        ...inquiry,
+        rooms_requested:
+          inquiry.rooms_requested === null ? null : Math.max(inquiry.rooms_requested, pricedRooms),
+        requested_discount_pct: Math.max(inquiry.requested_discount_pct ?? 0, pricing.discount_pct),
+      }
+    : inquiry
+  const evaluation = evaluateGroupRules({
+    inquiry: judged,
+    property,
+    received_date: context?.date_received ?? null,
+    raw_values: { rooms_requested: context?.raw_rooms },
+    contact_present: await contactPresent(inquiryId),
+    as_of: asOf,
+  })
+  return { inquiry, property, evaluation }
+}
+
+/** The block re-priced by the engine today at the discount the proposal carries, or null when it
+ *  cannot be priced at all. */
+function repricedTotal(live: LiveCheck, pricing: Pricing): number | null {
+  const line = pricing.line_items[0]
+  if (!line || !live.property) return null
+  const rate = getPropertyRate(live.property.property_code, line.room_type)
+  if (!rate.ok) return null
+  const block = priceBlock({
+    property: live.property,
+    rooms: line.rooms,
+    arrival_date: live.inquiry.arrival_date,
+    departure_date: live.inquiry.departure_date,
+    room_type: line.room_type,
+    discount_pct: pricing.discount_pct,
+    nightly_rack_cents: rate.nightly_rate_cents,
+  })
+  return block.ok ? block.total_cents : null
+}
 
 export function blockingVerdicts(verdicts: RuleVerdict[]): RuleVerdict[] {
   return verdicts.filter((v) => v.status === 'flag' || v.status === 'fail')
@@ -453,56 +550,243 @@ export function requiresApproval(verdicts: RuleVerdict[]): boolean {
   return blockingVerdicts(verdicts).length > 0
 }
 
+/** Verdicts no approval can lift: a physical limit, a past arrival, a blackout, missing details. */
+function hardStops(evaluation: EvaluationResult): RuleVerdict[] {
+  return evaluation.verdicts.filter((v) =>
+    (evaluation.pricing_blocked_by as string[]).includes(v.rule_id),
+  )
+}
+
+function reasons(verdicts: RuleVerdict[]): string {
+  return verdicts.map((v) => v.human_reason).join(' ')
+}
+
+// ---------------------------------------------------------------- approvals
+
+export interface Approver {
+  /** The verified auth user id, never a name taken from a request body. */
+  id: string
+  role: StaffRole
+  name: string | null
+}
+
+export interface AuditRow {
+  action: string
+  detail: Record<string, unknown>
+}
+
+/** Audit rows about one proposal with one of `actions`, oldest first. Null when the log cannot be
+ *  read, which every caller treats as "not proven". */
+export type AuditReader = (proposalId: string, actions: readonly string[]) => Promise<AuditRow[] | null>
+
+export const readProposalAudit: AuditReader = async (proposalId, actions) => {
+  const subject = `proposal:${proposalId}`
+  const db = tryGetDb()
+  if (!db) {
+    return recentAudit(Number.MAX_SAFE_INTEGER)
+      .filter((e) => e.subject === subject && actions.includes(e.action))
+      .reverse()
+  }
+  const { data, error } = await db
+    .from('audit_log')
+    .select('action, detail')
+    .eq('subject', subject)
+    .in('action', [...actions])
+    .order('created_at', { ascending: true })
+  return error ? null : ((data ?? []) as AuditRow[])
+}
+
+/** Doing any of these to a proposal makes you its author, and an author cannot approve it. */
+const AUTHORING_ACTIONS = [
+  'proposal.generated',
+  'proposal.submitted_for_approval',
+  'proposal.override',
+  'proposal.edited',
+  'proposal.action.submit_for_approval',
+  'proposal.action.override',
+]
+
+/** What an approval is given for: the stay, and each flag with the numbers it was judged on. */
+export interface ApprovalTerms {
+  stay: [property: string, arrival: string | null, departure: string | null]
+  flags: [rule: string, actual: string | number, threshold: string | number][]
+}
+
+export function approvalTerms(live: LiveCheck): ApprovalTerms {
+  return {
+    stay: [live.inquiry.preferred_property_code, live.inquiry.arrival_date, live.inquiry.departure_date],
+    flags: blockingVerdicts(live.evaluation.verdicts)
+      .map((v): ApprovalTerms['flags'][number] => [v.rule_id, v.actual, v.threshold])
+      .sort((a, b) => a[0].localeCompare(b[0])),
+  }
+}
+
+/**
+ * What an approval signs: these terms, and this proposal's price, rooms and words. A later change
+ * to any of them (new dates, a lower seasonal ceiling, an override, an edit) voids the approval,
+ * and a row a browser inserts into audit_log (which RLS allows) cannot carry a valid one.
+ */
+export function approvalSignature(p: StoredProposal, approverId: string, terms: ApprovalTerms): string {
+  const material = {
+    proposal: p.proposal_id,
+    approver: approverId,
+    terms,
+    total_cents: p.pricing.total_cents,
+    discount_pct: p.pricing.discount_pct,
+    lines: p.pricing.line_items.map((l) => [l.room_type, l.rooms, l.nights, l.net_total_cents]),
+    prose: [p.prose.intro ?? null, p.prose.body ?? null, p.prose.customer_notes ?? null],
+  }
+  return createHmac('sha256', linkSecret())
+    .update(`approval:${JSON.stringify(material)}`)
+    .digest('base64url')
+}
+
+/** Who approved this proposal as it stands, from a signed row in audit_log recorded after its last
+ *  rejection, or null. */
+async function signedApproval(p: StoredProposal, terms: ApprovalTerms, read: AuditReader): Promise<string | null> {
+  const rows = (await read(p.proposal_id, ['proposal.approved', 'proposal.rejected'])) ?? []
+  const sinceRejection = rows.slice(rows.map((r) => r.action).lastIndexOf('proposal.rejected') + 1)
+  const row = sinceRejection.find((r) => {
+    const by = r.detail.approved_by
+    return typeof by === 'string' && r.detail.signature === approvalSignature(p, by, terms)
+  })
+  return row ? String(row.detail.approver_name ?? row.detail.approved_by) : null
+}
+
+export interface GateDeps {
+  /** "Today". Defaults to the group clock. */
+  now?: Date
+  /** Where approvals and authorship are read from. Defaults to audit_log. */
+  audit?: AuditReader
+}
+
+export type ApprovalCheck =
+  | { ok: true; terms: ApprovalTerms }
+  | { ok: false; status: 403 | 409 | 503; reason: string }
+
+/** Whether `approver` may approve `proposal` as it stands today. Each refusal says why. */
+export async function checkApproval(
+  proposal: StoredProposal,
+  approver: Approver,
+  deps: GateDeps = {},
+): Promise<ApprovalCheck> {
+  const id = proposal.proposal_id
+  if (!APPROVER_ROLES.includes(approver.role)) {
+    return {
+      ok: false,
+      status: 403,
+      reason: `Only a general manager can approve a group block that is outside the property's limits (Policy 13). You are signed in as ${approver.role.replace('_', ' ')}, so submit ${id} for approval instead.`,
+    }
+  }
+  const authored = await (deps.audit ?? readProposalAudit)(id, AUTHORING_ACTIONS)
+  if (!authored) {
+    return {
+      ok: false,
+      status: 503,
+      reason: `We could not read the audit log for ${id}, so we cannot confirm you did not create or submit it. Nothing was approved.`,
+    }
+  }
+  if (authored.some((row) => row.detail.actor_id === approver.id)) {
+    return {
+      ok: false,
+      status: 403,
+      reason: `You created or submitted ${id}, so you cannot also approve it. Another general manager has to sign it off.`,
+    }
+  }
+  if (proposal.status === 'sent' || proposal.status === 'rejected') {
+    return { ok: false, status: 409, reason: `${id} has already been ${proposal.status}, so there is nothing to approve.` }
+  }
+  const live = await evaluateLive(proposal.inquiry_id, deps.now ?? now(), proposal.pricing)
+  if (!live) {
+    return {
+      ok: false,
+      status: 409,
+      reason: `Inquiry ${proposal.inquiry_id} is no longer on file, so ${id} cannot be checked or approved.`,
+    }
+  }
+  const stops = hardStops(live.evaluation)
+  if (stops.length > 0) {
+    return { ok: false, status: 409, reason: `${id} cannot be approved. ${reasons(stops)} No approval can lift that.` }
+  }
+  return { ok: true, terms: approvalTerms(live) }
+}
+
 export interface GateDecision {
   allowed: boolean
   /** Safe to show a salesperson. */
   human_reason: string
+  /** The live verdicts in the way, or when allowed, the flags an approval lifted. */
   blocking: RuleVerdict[]
+  /** True when the one thing missing is an approval. */
+  needs_approval: boolean
 }
 
-/** The single authority on whether a proposal may be sent. */
-export function canSend(proposal: StoredProposal): GateDecision {
-  const blocking = blockingVerdicts(proposal.verdicts)
+/** The single authority on whether a proposal may be sent. See the note at the top of this file. */
+export async function canSend(proposal: StoredProposal, deps: GateDeps = {}): Promise<GateDecision> {
+  const id = proposal.proposal_id
+  const refuse = (human_reason: string, blocking: RuleVerdict[] = [], needs_approval = false): GateDecision => ({
+    allowed: false,
+    human_reason,
+    blocking,
+    needs_approval,
+  })
 
   if (proposal.status === 'sent') {
-    return {
-      allowed: false,
-      human_reason: `Proposal ${proposal.proposal_id} has already gone out to the customer. Sending it again would be the second copy they receive, so if something has changed we should generate a fresh proposal rather than resend this one.`,
-      blocking,
-    }
+    return refuse(
+      `Proposal ${id} has already gone out to the customer. Sending it again would be the second copy they receive, so if something has changed we should generate a fresh proposal rather than resend this one.`,
+    )
   }
-
   if (proposal.status === 'rejected') {
-    return {
-      allowed: false,
-      human_reason: `Proposal ${proposal.proposal_id} was turned down internally${proposal.rejected_reason ? `: ${proposal.rejected_reason}` : ''}. It cannot be sent as it stands.`,
-      blocking,
-    }
+    return refuse(
+      `Proposal ${id} was turned down internally${proposal.rejected_reason ? `: ${proposal.rejected_reason}` : ''}. It cannot be sent as it stands.`,
+    )
   }
 
+  const wording = proseProblem(proposal.prose)
+  if (wording) return refuse(`Proposal ${id} cannot go out with the words it has. ${wording} Edit the letter first.`)
+
+  const live = await evaluateLive(proposal.inquiry_id, deps.now ?? now(), proposal.pricing)
+  if (!live) {
+    return refuse(
+      `Inquiry ${proposal.inquiry_id} is no longer on file, so ${id} cannot be re-checked, and nothing goes out unchecked.`,
+    )
+  }
+
+  const stops = hardStops(live.evaluation)
+  if (stops.length > 0) return refuse(`This one cannot go out. ${reasons(stops)} No approval can change that.`, stops)
+
+  if (repricedTotal(live, proposal.pricing) !== proposal.pricing.total_cents) {
+    return refuse(
+      `The price on ${id} no longer matches what the rules engine produces for this inquiry today, so it has to be regenerated before it can go out.`,
+    )
+  }
+
+  const blocking = blockingVerdicts(live.evaluation.verdicts)
   if (blocking.length === 0) {
     return {
       allowed: true,
       human_reason:
-        'Every rule check on this block passed, so it is inside what we are allowed to approve on our own and can go out now.',
+        'Every rule check on this block passes as of today, so it is inside what we are allowed to approve on our own and can go out now.',
       blocking,
+      needs_approval: false,
     }
   }
 
-  if (proposal.status === 'approved') {
+  const approver = await signedApproval(proposal, approvalTerms(live), deps.audit ?? readProposalAudit)
+  if (approver) {
     return {
       allowed: true,
-      human_reason: `This proposal was outside our own authority, and ${proposal.approved_by ?? 'an authorised approver'} approved it${proposal.approved_at ? ` on ${proposal.approved_at.slice(0, 10)}` : ''}. It can go out now.`,
+      human_reason: `This proposal was outside our own authority, and ${approver} approved it exactly as it stands. It can go out now.`,
       blocking,
+      needs_approval: false,
     }
   }
 
-  const reasons = blocking.map((v) => v.human_reason).join(' ')
-  return {
-    allowed: false,
-    human_reason: `This one cannot go out yet. ${reasons} Someone with the authority to sign that off has to approve it first, and until they do, we hold the proposal rather than send it.`,
+  return refuse(
+    `This one cannot go out yet. ${reasons(blocking)} Someone with the authority to sign that off has to approve it first, and until they do, we hold the proposal rather than send it.`,
     blocking,
-  }
+    true,
+  )
 }
 
 // ---------------------------------------------------------------- transitions
@@ -517,6 +801,7 @@ export async function markAwaitingApproval(
   await auditLog('proposal.submitted_for_approval', `proposal:${proposal.proposal_id}`, {
     inquiry_id: proposal.inquiry_id,
     submitted_by: by,
+    actor_id: currentActor(),
     note: note ?? null,
     blocking_rules: blockingVerdicts(proposal.verdicts).map((v) => v.rule_id),
     persisted: proposal.persisted,
@@ -525,22 +810,28 @@ export async function markAwaitingApproval(
   return proposal
 }
 
+/** Records an approval. Call `checkApproval` first: this writes what it is given. */
 export async function approveProposal(
   proposal: StoredProposal,
-  by: string,
+  approver: Approver,
+  terms: ApprovalTerms,
   note?: string,
 ): Promise<StoredProposal> {
   proposal.status = 'approved'
-  proposal.approved_by = by
-  proposal.approved_at = new Date().toISOString()
+  proposal.approved_by = approver.id
+  proposal.approver_name = approver.name
+  proposal.approved_at = now().toISOString()
   proposal.approval_note = note ?? null
   await persist(proposal)
   await auditLog('proposal.approved', `proposal:${proposal.proposal_id}`, {
     inquiry_id: proposal.inquiry_id,
-    approved_by: by,
+    approved_by: approver.id,
+    approver_name: approver.name,
+    approver_role: approver.role,
+    terms,
+    signature: approvalSignature(proposal, approver.id, terms),
     note: note ?? null,
     discount_pct: proposal.discount_pct,
-    overrode_rules: blockingVerdicts(proposal.verdicts).map((v) => v.rule_id),
     persisted: proposal.persisted,
   })
   memory.set(proposal.proposal_id, proposal)

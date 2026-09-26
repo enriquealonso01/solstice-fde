@@ -174,7 +174,7 @@ const TOOLS: {
           },
         }
       }
-      const gate = canSend(proposal)
+      const gate = await canSend(proposal)
       return {
         ok: true,
         grounded: true,

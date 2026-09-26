@@ -3,7 +3,7 @@
 // Two features with one shared idea: anything that goes to a customer in the hotel's name gets
 // drafted, read by a person, approved, then sent, and the numbers are never typed by hand.
 
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { clearAuditMemory, recentAudit } from '../../../../netlify/functions/_delivery/audit'
 import { getCommunications } from '../../../../netlify/functions/group/communications'
 import {
@@ -15,9 +15,11 @@ import {
   resetFollowUpStore,
 } from '../../../../netlify/functions/group/followUps'
 import {
+  canSend,
   getProposal,
   markSent,
   resetProposalStore,
+  setClock,
 } from '../../../../netlify/functions/group/store'
 import {
   edit_proposal,
@@ -27,6 +29,10 @@ import {
 } from '../../../../netlify/functions/group/tools'
 
 const REP = 'Dana Reyes (group_sales, 0000-uuid)'
+
+// Before every arrival in the dataset, so the date rules do not rot with the calendar.
+beforeAll(() => setClock(() => new Date('2026-07-15T12:00:00Z')))
+afterAll(() => setClock(null))
 
 beforeEach(() => {
   resetProposalStore()
@@ -218,7 +224,7 @@ describe('editing a proposal', () => {
 
     const edited = await edit_proposal({
       proposal_id: generated.data!.proposal_id,
-      edits: { intro: 'Anything at all.' },
+      edits: { intro: 'Bethany, here is the block we discussed on the phone.' },
       justification: 'Tone.',
       actor: REP,
     })
@@ -255,7 +261,7 @@ describe('editing a proposal', () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
     const edited = await edit_proposal({
       proposal_id: generated.data!.proposal_id,
-      edits: { intro: 'Hello.' },
+      edits: { intro: 'Bethany, here is the block we discussed on the phone.' },
       justification: 'Tone.',
       actor: REP,
     })
@@ -272,7 +278,7 @@ describe('editing a proposal', () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
     const noReason = await edit_proposal({
       proposal_id: generated.data!.proposal_id,
-      edits: { intro: 'Hello.' },
+      edits: { intro: 'Bethany, here is the block we discussed on the phone.' },
       justification: '   ',
       actor: REP,
     })
@@ -281,7 +287,7 @@ describe('editing a proposal', () => {
 
     const anonymous = await edit_proposal({
       proposal_id: generated.data!.proposal_id,
-      edits: { intro: 'Hello.' },
+      edits: { intro: 'Bethany, here is the block we discussed on the phone.' },
       justification: 'Tone.',
       actor: '',
     })
@@ -293,7 +299,7 @@ describe('editing a proposal', () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
     await edit_proposal({
       proposal_id: generated.data!.proposal_id,
-      edits: { intro: 'Hello.' },
+      edits: { intro: 'Bethany, lovely to speak with you this morning.' },
       justification: 'They asked for a warmer opening.',
       actor: REP,
     })
@@ -310,7 +316,7 @@ describe('editing a proposal', () => {
 
     const edited = await edit_proposal({
       proposal_id: original.proposal_id,
-      edits: { intro: 'Second thoughts about the wording.' },
+      edits: { intro: 'Bethany, here is the block with the corrected dates.' },
       justification: 'Typo in the opening line.',
       actor: REP,
     })
@@ -339,6 +345,101 @@ describe('editing a proposal', () => {
     const stored = (await getProposal(repriced.data!.proposal_id))!
     expect(stored.prose.intro).toContain('lovely to hear from you again')
     expect(stored.pricing.discount_pct).toBe(16)
+  })
+})
+
+// ============================================================================ the prose guard
+
+describe('words that must never reach a customer', () => {
+  const RESIDUE = 'Second thoughts about the wording.'
+
+  it('refuses the test sentence that reached PRP-2001, and saves nothing', async () => {
+    const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    const edited = await edit_proposal({
+      proposal_id: generated.data!.proposal_id,
+      edits: { intro: RESIDUE },
+      justification: 'Tone.',
+      actor: REP,
+    })
+    expect(edited.ok).toBe(false)
+    expect(edited.error).toContain('test text')
+    expect((await getProposal(generated.data!.proposal_id))!.prose.intro).toBeUndefined()
+  })
+
+  it.each([
+    ['lorem ipsum', { body: 'Lorem ipsum dolor sit amet, consectetur.' }],
+    ['a TODO marker', { body: 'TODO confirm the breakout room before sending.' }],
+    ['a bare "test"', { intro: 'test test' }],
+    ['a placeholder', { intro: 'Hello.' }],
+    ['an oversize paragraph', { body: 'We look forward to hosting you. '.repeat(60) }],
+    ['too many notes', { customer_notes: Array.from({ length: 9 }, (_, i) => `Good to know, item ${i + 1}.`) }],
+  ])('refuses %s', async (_label, edits) => {
+    const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    const edited = await edit_proposal({
+      proposal_id: generated.data!.proposal_id,
+      edits,
+      justification: 'Tone.',
+      actor: REP,
+    })
+    expect(edited.ok).toBe(false)
+    expect(edited.error).toContain('Nothing was saved')
+  })
+
+  it('accepts ordinary customer text that only looks like a marker', async () => {
+    const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    const edited = await edit_proposal({
+      proposal_id: generated.data!.proposal_id,
+      edits: { body: 'Room assignments TBD closer to arrival.', customer_notes: ['Thanks!'] },
+      justification: 'Next steps.',
+      actor: REP,
+    })
+    expect(edited.ok).toBe(true)
+    expect((await getProposal(generated.data!.proposal_id))!.prose.customer_notes).toEqual(['Thanks!'])
+  })
+
+  it('leaves stored words that fail it out of the rendered letter', async () => {
+    const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    const stored = (await getProposal(generated.data!.proposal_id))!
+    stored.prose = { intro: RESIDUE, body: 'We will call on Monday to confirm.' }
+
+    const letter = await materialiseProposal(stored, { force_render: true })
+    expect(letter!.document.intro).toBeNull()
+    expect(letter!.document.body_note).toBe('We will call on Monday to confirm.')
+  })
+
+  it('will not send a proposal whose stored words fail it, however they got there', async () => {
+    const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    const stored = (await getProposal(generated.data!.proposal_id))!
+    // Written straight into the row, the way PRP-2001 carries it in production.
+    stored.prose = { intro: RESIDUE }
+
+    const gate = await canSend(stored)
+    expect(gate.allowed).toBe(false)
+    expect(gate.human_reason).toContain('test text')
+  })
+
+  it('corrects a sent letter in place when the edit only removes the residue', async () => {
+    const generated = await generate_proposal({ inquiry_id: 'INQ-2001' })
+    const sent = (await getProposal(generated.data!.proposal_id))!
+    sent.prose = { intro: RESIDUE }
+    await markSent(sent, 'email', REP, 'b***@harlowvance.com')
+
+    const edited = await edit_proposal({
+      proposal_id: sent.proposal_id,
+      edits: { intro: '' },
+      justification: 'Remove test text from the letter that went out.',
+      actor: REP,
+    })
+
+    expect(edited.ok).toBe(true)
+    expect(edited.data!.opened_new_revision).toBe(false)
+    const after = (await getProposal(sent.proposal_id))!
+    expect(after.status).toBe('sent')
+    expect(after.prose.intro).toBeUndefined()
+    expect(edited.data!.proposal.html).not.toContain('Second thoughts')
+
+    const row = recentAudit().find((e) => e.action === 'proposal.edited')!
+    expect(row.detail.removed_from_sent_letter).toEqual({ intro: RESIDUE })
   })
 })
 

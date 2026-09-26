@@ -5,9 +5,10 @@
 // nothing here calls a language model: if a rule changes, these fail, and if the dataset
 // changes, these fail. That is the point.
 
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { RuleVerdict } from '../../../../shared/types'
-import { getProperty } from '../../../../netlify/functions/_lib/data'
+import { getProperty, listProperties } from '../../../../netlify/functions/_lib/data'
+import { setClock } from '../../../../netlify/functions/group/store'
 import {
   check_availability,
   draft_clarifying_questions,
@@ -18,6 +19,10 @@ import {
   type EvaluationPayload,
 } from '../../../../netlify/functions/group/tools'
 import { PROPERTY_RULES } from '../thresholds'
+
+// Judged as of mid-July 2026: after every inquiry arrived and before any of them travels.
+beforeAll(() => setClock(() => new Date('2026-07-15T12:00:00Z')))
+afterAll(() => setClock(null))
 
 async function evaluate(inquiryId: string): Promise<EvaluationPayload> {
   const result = await evaluate_group_rules({ inquiry_id: inquiryId })
@@ -90,17 +95,9 @@ describe('INQ-2002 Ridgeline Sports Club, SOL-TPA', () => {
     expect(verdict(result, 'GRP-DISCOUNT-CEILING')?.human_reason).toContain('22%')
   })
 
-  // The refusal used to say approval needed "the general manager". There is no GM: `staff_role`
-  // is ('concierge', 'group_sales', 'admin') and `approveProposal` applies no test beyond
-  // group_sales|admin, so the sentence promised an authority nothing enforced. Say what is
-  // actually enforced — an approval happens and is attributable — and keep it that way.
-  // T60: this checked GRP-DISCOUNT-CEILING only, and ten lines above it the rooms-cap case
-  // checked the same inquiry's other flagged verdict for the string "40 rooms" alone. So the
-  // rooms-cap reason kept the phrase and said it TWICE, for months, one verdict away from the
-  // assertion banning it. The reasoning above was about the rule; only its subject was narrow.
-  // It now covers every verdict this inquiry produces, pass and flag alike -- the pass branch of
-  // the rooms cap carried it too, on five other inquiries.
-  it('does not promise an approver role the system does not have, in ANY of its verdicts', async () => {
+  // Every verdict names the approver one way, through describeApprover() in engine.ts. Who
+  // qualifies (an approver role that did not author the proposal) is enforced in store.ts.
+  it('names the approver the same neutral way in every verdict', async () => {
     const result = await evaluate('INQ-2002')
     expect(result.verdicts.length, 'INQ-2002 produced no verdicts to check').toBeGreaterThan(3)
 
@@ -108,7 +105,7 @@ describe('INQ-2002 Ridgeline Sports Club, SOL-TPA', () => {
       const reason = v.human_reason
       expect(reason.toLowerCase(), `${v.rule_id} names a general manager`).not.toContain('general manager')
       // Word boundaries, not a substring: 'judgment' and 'segment' both contain "gm".
-      expect(reason, `${v.rule_id} names a GM`).not.toMatch(/GM/i)
+      expect(reason, `${v.rule_id} names a GM`).not.toMatch(/\bGM\b/i)
     }
 
     // Still has to say a human must sign it off, or the refusal stops being actionable. Both
@@ -205,6 +202,22 @@ describe('INQ-2005 Cascade Regional, SOL-SAC', () => {
     expect(capacity?.human_reason).toContain('300')
     expect(capacity?.human_reason).toContain('140')
     expect(result.decision).toBe('blocked')
+  })
+
+  it('is a physical limit, so it is never priced, and the refusal offers somewhere that fits', async () => {
+    const result = await evaluate('INQ-2005')
+    expect(result.pricing_blocked_by).toContain('GRP-MEETING-CAPACITY')
+
+    const proposal = await generate_proposal({ inquiry_id: 'INQ-2005' })
+    expect(proposal.ok).toBe(false)
+    expect(proposal.error).toContain('300 people')
+    expect(proposal.error).not.toMatch(/\$\s?\d/)
+
+    const alternates = await find_alternates({ inquiry_id: 'INQ-2005' })
+    expect(alternates.data!.alternate_properties.length).toBeGreaterThan(0)
+    for (const alt of alternates.data!.alternate_properties) {
+      expect(alt.max_meeting_capacity).toBeGreaterThanOrEqual(300)
+    }
   })
 
   it('still reports the 22 rooms over the 20-room line, rather than stopping at the first problem', async () => {

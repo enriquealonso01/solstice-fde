@@ -4,7 +4,7 @@
 // GET /api/group/inquiries both answered 200 in production, which meant anyone on the internet
 // could read the inquiry pipeline and invoke group tools.
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import handler from '../../../../netlify/functions/group/index'
 import {
   authorizeStaff,
@@ -16,6 +16,7 @@ import {
   accessTokenFor,
   getProposal,
   resetProposalStore,
+  setClock,
 } from '../../../../netlify/functions/group/store'
 import { generate_proposal } from '../../../../netlify/functions/group/tools'
 import { readFileSync } from 'node:fs'
@@ -25,6 +26,10 @@ const repoRoot = resolve(__dirname, '../../../..')
 
 const SECRET = 'test-webhook-secret-0123456789'
 const ORIGINAL = { ...process.env }
+
+// Before every arrival in the dataset, so the date rules do not rot with the calendar.
+beforeAll(() => setClock(() => new Date('2026-07-15T12:00:00Z')))
+afterAll(() => setClock(null))
 
 // `Context` is a Netlify runtime object none of these routes touch.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -140,8 +145,8 @@ describe('the staff routes refuse an anonymous caller', () => {
     }
   })
 
-  it('mirrors the row level security rule: group sales and admin, never concierge', () => {
-    expect(GROUP_ROLES).toEqual(['group_sales', 'admin'])
+  it('mirrors the row level security rule: group sales, the general manager and admin, never concierge', () => {
+    expect(GROUP_ROLES).toEqual(['group_sales', 'gm', 'admin'])
     expect(GROUP_ROLES).not.toContain('concierge')
   })
 })

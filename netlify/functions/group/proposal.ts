@@ -51,6 +51,7 @@ export interface ProposalProse {
 }
 
 export const EDITABLE_PROSE_FIELDS = ['intro', 'body', 'customer_notes'] as const
+
 export const LOCKED_NUMERIC_FIELDS = [
   'nightly_rate_cents',
   'line_total_cents',
@@ -60,6 +61,72 @@ export const LOCKED_NUMERIC_FIELDS = [
   'line_items',
   'verdicts',
 ] as const
+
+/** What a rep's words must look like before they reach a customer. Checked when they are edited,
+ *  again before anything is sent, and on every render, which leaves out a field that fails. */
+export const PROSE_GUARD = {
+  /** For the opening and next-steps paragraphs: shorter is a placeholder, not a sentence. */
+  min_paragraph_chars: 8,
+  /** Per paragraph or note. */
+  max_chars: 1200,
+  max_notes: 8,
+  /** Test text that has reached, or could reach, a customer. */
+  residue: [
+    /second thoughts about the wording/i,
+    /lorem ipsum/i,
+    /\basdf/i,
+    /\b(TODO|FIXME)\b/,
+    /^\W*(test\W*)+$/i,
+  ],
+}
+
+/** Why one paragraph or note cannot go to a customer, or null when it can. Empty means "use the
+ *  standard wording", which is fine. */
+function partProblem(label: string, value: unknown, paragraph: boolean): string | null {
+  if (value === undefined || value === null) return null
+  if (typeof value !== 'string') return `${label} is not text.`
+  const text = value.trim()
+  if (!text) return null
+  if (paragraph && text.length < PROSE_GUARD.min_paragraph_chars) {
+    return `${label} ("${text}") is too short to be anything but a placeholder.`
+  }
+  if (text.length > PROSE_GUARD.max_chars) {
+    return `${label} is ${text.length} characters, and the most we send in one paragraph is ${PROSE_GUARD.max_chars}.`
+  }
+  if (PROSE_GUARD.residue.some((pattern) => pattern.test(text))) {
+    return `${label} reads like test text ("${text.slice(0, 60)}"), not something to send a customer.`
+  }
+  return null
+}
+
+/** Why these words cannot go to a customer, or null when they can. */
+export function proseProblem(prose: ProposalProse): string | null {
+  const notes: unknown[] = Array.isArray(prose.customer_notes) ? prose.customer_notes : []
+  if (notes.length > PROSE_GUARD.max_notes) {
+    return `There are ${notes.length} notes, and the letter takes at most ${PROSE_GUARD.max_notes}.`
+  }
+  return (
+    partProblem('The opening paragraph', prose.intro, true) ??
+    partProblem('The next-steps paragraph', prose.body, true) ??
+    notes.map((note, i) => partProblem(`Note ${i + 1}`, note, false)).find((problem) => problem !== null) ??
+    null
+  )
+}
+
+/** The prose with every part the guard rejects left out, so the letter falls back to the standard
+ *  wording there. This is what gets rendered, whatever is stored. */
+export function passableProse(prose: ProposalProse): ProposalProse {
+  const passes = (value: unknown, paragraph: boolean) => partProblem('', value, paragraph) === null
+  const out: ProposalProse = {}
+  if (prose.intro !== undefined && passes(prose.intro, true)) out.intro = prose.intro
+  if (prose.body !== undefined && passes(prose.body, true)) out.body = prose.body
+  if (Array.isArray(prose.customer_notes)) {
+    const notes = prose.customer_notes.filter((note) => passes(note, false)).slice(0, PROSE_GUARD.max_notes)
+    // A list the guard emptied falls back to the derived notes; a list the rep emptied stays empty.
+    if (notes.length > 0 || prose.customer_notes.length === 0) out.customer_notes = notes
+  }
+  return out
+}
 
 export interface ProposalDocument {
   proposal_id: string
@@ -111,6 +178,7 @@ export interface BuildDocumentInput {
 const QUOTE_VALID_DAYS = 14
 
 export function buildProposalDocument(input: BuildDocumentInput): ProposalDocument {
+  const prose = passableProse(input.prose ?? {})
   const prepared = input.prepared_on ?? new Date()
   const expires = new Date(prepared.getTime() + QUOTE_VALID_DAYS * 86_400_000)
   return {
@@ -133,9 +201,9 @@ export function buildProposalDocument(input: BuildDocumentInput): ProposalDocume
     subtotal_cents: input.block.subtotal_cents,
     discount_cents: input.block.discount_cents,
     total_cents: input.block.total_cents,
-    customer_notes: input.prose?.customer_notes ?? input.customer_notes ?? [],
-    intro: input.prose?.intro?.trim() || null,
-    body_note: input.prose?.body?.trim() || null,
+    customer_notes: prose.customer_notes ?? input.customer_notes ?? [],
+    intro: prose.intro?.trim() || null,
+    body_note: prose.body?.trim() || null,
     verdicts: input.verdicts,
     required_follow_ups: input.required_follow_ups,
     prepared_on: prepared.toISOString().slice(0, 10),

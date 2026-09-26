@@ -10,14 +10,18 @@
 // one of the handful of things that are not money at all. A future field that quietly holds
 // dollars fails this without anyone having to remember to add an assertion for it.
 
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { formatUsd, priceBlock } from '../pricing'
 import { listProperties } from '../../../../netlify/functions/_lib/data'
 import {
   generate_proposal,
   materialiseProposal,
 } from '../../../../netlify/functions/group/tools'
-import { getProposal, resetProposalStore } from '../../../../netlify/functions/group/store'
+import { getProposal, resetProposalStore, setClock } from '../../../../netlify/functions/group/store'
+
+// Before every arrival in the dataset, so the date rules do not rot with the calendar.
+beforeAll(() => setClock(() => new Date('2026-07-15T12:00:00Z')))
+afterAll(() => setClock(null))
 
 /** Numeric fields on a pricing object or a line that are counts, percentages or versions,
  *  not amounts of money. Anything else numeric must be `*_cents`. */
