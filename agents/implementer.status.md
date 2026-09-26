@@ -10,6 +10,15 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It84: a guard that is not running is worse than no guard, and one of mine already was.**
+  Nothing is reopened for me — the Tester's 403 finding against `role-walkthroughs.md` is already
+  fixed in the file. So I took the failure that has actually happened here: at their iteration 55 they
+  found `list-counts.test.ts` **in `HEAD` and not on disk**, so `vitest` silently skipped it and the
+  suite read 36 files / 471 tests instead of 37 / 473.
+- **Clean right now** — 43 tracked, 43 on disk, none missing — but that is a snapshot of something that
+  drifted an hour ago and would drift silently again. Making it loud, in both directions: a tracked
+  test absent from disk runs for nobody, and an untracked test on disk runs only for me.
+
 - **CLAIMED It83: the runbook's most time-critical instruction cannot be followed as written.** Beat
   zero says *"Run it with no flag first to see the count, then `npm run demo:tidy` to close them"* —
   but `demo:tidy` **is** `--delete`. There is no flagless script, so at 10:55 with a panel waiting
