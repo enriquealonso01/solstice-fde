@@ -12,6 +12,7 @@ import InquiryDetail from '@/pages/admin/InquiryDetail'
 import AdminHome from '@/pages/admin/AdminHome'
 import BackendMap from '@/pages/admin/BackendMap'
 import CostPage from '@/pages/admin/CostPage'
+import SettingsPage from '@/pages/admin/Settings'
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/admin" element={<AdminHome />} />
           <Route path="/admin/backend" element={<BackendMap />} />
           <Route path="/admin/cost" element={<CostPage />} />
+          <Route path="/admin/settings" element={<SettingsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -16,6 +16,14 @@ export interface ToolContext {
   now?: string
   /** Set once `identify_guest` has verified who we are talking to. */
   guest_id?: string
+  /** Service-role client, present only where the caller already holds one. Optional on purpose:
+   *  tools must degrade to environment configuration when no DB is reachable (the unconfigured
+   *  -app path), so an absent client is a valid state, not an error. */
+  /** Minimal shape of the read the transfer-target lookup makes. Kept structural (not the full
+   *  SupabaseClient type) so tests can pass a stub. PostgrestBuilder is a thenable resolving to
+   *  `{ data, error }`, so a Promise of the same shape is assignable in practice; the caller
+   *  awaits through `unknown` to avoid instantiating the full client generics. */
+  db?: { from: (table: string) => { select: (cols: string) => { eq: (col: string, val: string) => PromiseLike<{ data: unknown }> } } }
 }
 
 // ------------------------------------------------------------------- the clock

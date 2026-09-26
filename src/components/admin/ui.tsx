@@ -102,6 +102,14 @@ export const Icons = {
       <path d="m16 17 5-5-5-5m5 5H9" />
     </Icon>
   ),
+  sliders: (p: IconProps) => (
+    <Icon {...p}>
+      <path d="M4 6h10m4 0h2M4 12h4m4 0h8M4 18h12m4 0h0" />
+      <circle cx="16" cy="6" r="2" />
+      <circle cx="10" cy="12" r="2" />
+      <circle cx="18" cy="18" r="2" />
+    </Icon>
+  ),
   search: (p: IconProps) => (
     <Icon {...p}>
       <circle cx="11" cy="11" r="7" />

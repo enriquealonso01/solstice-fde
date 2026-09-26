@@ -193,7 +193,16 @@ export default async function handler(req: Request, _context: Context): Promise<
 
   const { sessionId, isNewSession } = resolveSessionId(str(body.session_id))
   // No guest_id and no `now` from the body, deliberately. See the note at the top of the file.
-  const ctx: ToolContext = { session_id: sessionId, channel: 'chat' }
+  // The service client rides on the context so tools that read configuration (e.g. the
+  // supervisor transfer target in app_settings) can consult the database; it stays optional and
+  // tools fall back to the environment when it is absent (unconfigured-app path). The cast is
+  // deliberate: structurally the client satisfies the narrow read the tools make, and naming
+  // the full SupabaseClient generics here hits TS2589.
+  const ctx: ToolContext = {
+    session_id: sessionId,
+    channel: 'chat',
+    db: getDatabase() as unknown as ToolContext['db'],
+  }
 
   const encoder = new TextEncoder()
   const stream = new ReadableStream<Uint8Array>({
