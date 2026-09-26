@@ -77,7 +77,7 @@ const CONCIERGE_SPECS: ToolSpec[] = [
   {
     name: 'check_late_checkout',
     description:
-      'Decide a late checkout request against Policy 1 and the Policy 6 tier benefits, including same-day availability. Returns whether the time may be promised or only offered.',
+      'Decide a late checkout request against Policy 1 and the Policy 6 tier benefits. Returns whether the time may be promised or only offered; only a tier guarantee is ever promised. A stay that has ended or was cancelled gets nothing.',
     parameters: {
       reservation_id: { type: 'string', description: 'Reservation or confirmation number.', required: true },
       requested_time: { type: 'string', description: 'The clock time the guest asked for, as "h:mm pm" or "HH:MM".' },
@@ -86,7 +86,7 @@ const CONCIERGE_SPECS: ToolSpec[] = [
   {
     name: 'check_upgrade_eligibility',
     description:
-      'Decide an upgrade request against Policy 6 tier benefits and same-day inventory for the next room class. Distinguishes a Platinum guarantee from a Gold availability-based upgrade, and flags the documented policy gap when the guaranteed class is sold out.',
+      'Decide an upgrade request against the Policy 6 tier benefits. Upgrades depend on same-day inventory, so the answer is eligibility, never a promise. A stay that has ended or was cancelled gets nothing.',
     parameters: {
       reservation_id: { type: 'string', description: 'Reservation or confirmation number.', required: true },
     },
@@ -310,7 +310,7 @@ const RUNNING_LABELS: Record<string, string> = {
   get_reservation: 'Reading your reservation',
   get_policy: 'Checking the policy',
   check_late_checkout: 'Checking late checkout',
-  check_upgrade_eligibility: 'Checking upgrade availability',
+  check_upgrade_eligibility: 'Checking upgrade eligibility',
   book_amenity: 'Sending the request to the property',
   check_service_recovery_eligibility: 'Checking the service recovery window',
   check_comp_authority: 'Checking what the front desk can authorise',
@@ -322,6 +322,13 @@ const RUNNING_LABELS: Record<string, string> = {
 
 export function runningLabel(name: string): string {
   return RUNNING_LABELS[name] ?? `Running ${name}`
+}
+
+/** Chip wording for a stay-benefit decision code, e.g. eligible_subject_to_availability. */
+function decisionLabel(decision: unknown): string {
+  if (decision === 'eligible_subject_to_availability') return 'eligible, subject to availability'
+  if (decision === 'stay_ended') return 'stay has ended'
+  return typeof decision === 'string' ? decision.replace(/_/g, ' ') : 'checked'
 }
 
 /** The one-line "done" summary shown in the guest chip and the supervisor trace. */
@@ -346,9 +353,9 @@ export function summarize(name: string, result: ToolResult): string {
       return sections.length > 0 ? `Policy ${sections.map((s) => s.section_id).join(', ')} — ${sections[0].title}` : 'No matching policy'
     }
     case 'check_late_checkout':
-      return `Late checkout ${String(data.requested_time ?? '')}: ${String(data.decision ?? 'checked')}`.trim()
+      return `Late checkout ${String(data.requested_time ?? '')}: ${decisionLabel(data.decision)}`.trim()
     case 'check_upgrade_eligibility':
-      return `Upgrade to ${String(data.target_room_class ?? 'next class')}: ${String(data.decision ?? 'checked')}`
+      return `Upgrade to ${String(data.target_room_class ?? 'next class')}: ${decisionLabel(data.decision)}`
     case 'book_amenity':
       return `${String((data.amenity as Record<string, unknown> | undefined)?.label ?? 'Request')}: ${String(data.status ?? 'requested')}`
     case 'check_service_recovery_eligibility':

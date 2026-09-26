@@ -42,6 +42,24 @@ export function addHours(d: Date, hours: number): Date {
   return new Date(d.getTime() + hours * 3_600_000)
 }
 
+/**
+ * `now` as a calendar date. UTC, because the data carries no property timezone (see the header),
+ * so at a US property the date turns over a few hours before local midnight.
+ */
+export function todayISO(now: Date): string {
+  return now.toISOString().slice(0, 10)
+}
+
+export type StayPhase = 'upcoming' | 'in_house' | 'ended'
+
+/** Where `now` falls against a stay, by `todayISO` date. Checkout day still counts as in house. */
+export function stayPhase(checkInDate: string, checkOutDate: string, now: Date): StayPhase {
+  const today = todayISO(now)
+  if (checkOutDate < today) return 'ended'
+  if (checkInDate > today) return 'upcoming'
+  return 'in_house'
+}
+
 export function isValidDateISO(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(`${value}T00:00:00Z`).getTime())
 }

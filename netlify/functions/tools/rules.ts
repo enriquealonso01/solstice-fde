@@ -32,14 +32,6 @@ export const POLICY_RULES = {
   /** Policy 11 */ lost_and_found_hold_days: 90,
   /** Policy 14 */ incidental_hold_per_night_cents: 5000,
   /** Policy 14 */ cash_deposit_nightly_rate_multiple: 2,
-  /**
-   * Same-day occupancy above which a DISCRETIONARY late checkout (Policy 1, and
-   * the Gold 1PM benefit in Policy 6) is declined. Platinum's 2PM is guaranteed
-   * and is never gated on this number.
-   */
-  discretionary_late_checkout_max_occupancy: 0.9,
-  /** Same-day occupancy above which a discretionary early check-in is declined (Policy 1). */
-  discretionary_early_check_in_max_occupancy: 0.85,
 } as const
 
 // ------------------------------------------------------- Policy 6: tier benefits
@@ -50,7 +42,7 @@ export interface TierBenefit {
   upgrade: UpgradeEntitlement
   /** Latest checkout the tier is entitled to, local time. `null` = no entitlement. */
   late_checkout_local: string | null
-  /** True only where the policy uses the word "guaranteed". */
+  /** Late checkout to the tier time is promised outright, with no availability check. */
   guaranteed: boolean
   human_summary: string
 }
@@ -78,7 +70,7 @@ export const TIER_BENEFITS: Record<LoyaltyTier, TierBenefit> = {
     upgrade: 'next_class_guaranteed',
     late_checkout_local: '14:00',
     guaranteed: true,
-    human_summary: 'Platinum gets a guaranteed upgrade to the next room class against same-day inventory, and a guaranteed 2:00 PM checkout with no blackout dates and no exceptions.',
+    human_summary: 'Platinum is entitled to an upgrade to the next room class based on same-day inventory, offered subject to availability at check-in, and a guaranteed 2:00 PM checkout with no blackout dates and no exceptions.',
   },
 }
 
@@ -101,7 +93,7 @@ export interface RatePlanTerms {
   refund_class: RefundClass
   policy_ref: number | null
   human_summary: string
-  /** What the agent may honestly offer when the guest pushes. */
+  /** What the agent may offer when the guest pushes. */
   recourse: string | null
 }
 
@@ -389,7 +381,7 @@ export const AMENITY_CATALOG: Record<string, AmenityDefinition> = {
     confirmable_by_agent: false,
     inventory_dependent: true,
     policy_refs: [1],
-    note: 'Subject to same-day availability. Requested, never guaranteed.',
+    note: 'Requested, never promised.',
   },
   connecting_rooms: {
     id: 'connecting_rooms',

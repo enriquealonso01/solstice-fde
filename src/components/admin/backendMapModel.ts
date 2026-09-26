@@ -427,7 +427,7 @@ const agent: MapTab = {
       layer: 'tools',
       provider: 'Net-new',
       title: 'availability.ts — sameDayAvailability()',
-      detail: 'The provided exports have no inventory by date. Without this tool the agent would have to invent availability.',
+      detail: 'The provided exports have no inventory by date. Simulated and labelled: only its provenance reaches a tool result, never a figure, so the agent offers upgrades subject to availability and never promises one.',
       why: 'This is the net-new tool the brief asked for, and it exists because the data gap was real, not decorative.',
       status: 'live',
     }),

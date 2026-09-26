@@ -1,27 +1,22 @@
 /**
  * THE NET-NEW SERVICE: same-day availability by property, date and room class.
  *
- * WHY IT EXISTS (stated assumption, repeated in agent/sol.md and the README):
- * Policies 1 and 6 both hang on same-day availability in different words -- Policy 1 says
- * "based on same-day room availability", Policy 6 "based on same-day inventory" --
- * but the provided exports contain no inventory-by-date anywhere. Room COUNTS
- * exist on the properties export; OCCUPANCY on a given night does not. Without
- * this service the agent would have to invent availability every time a guest
- * asks for a late checkout or an upgrade, which is exactly what the brief
- * forbids. So we declare the gap, build a simulated service behind a clean
- * interface, and label every answer it produces as simulated.
+ * Policy 1 says "based on same-day room availability", Policy 6 "based on same-day
+ * inventory", but the provided exports carry room counts and no inventory-by-date. So
+ * this is a declared stand-in behind the interface a PMS would fill, and every snapshot
+ * is labelled `simulated_inventory_service`. Because the figure is simulated, the
+ * stay-benefit tools pass on only its provenance, never the figure (see stayBenefits.ts).
  *
  * Properties of the simulation, on purpose:
  *  - DETERMINISTIC. The same property + date + room class always yields the same
- *    number, so a demo is reproducible and a supervisor sees the same figure the
- *    guest was told.
+ *    number, so a run is reproducible.
  *  - BOUNDED BY REAL DATA. Room counts come from the property record, never from
  *    the simulation.
- *  - OVERRIDABLE AT RUNTIME. `AVAILABILITY_MODE` and `AVAILABILITY_OVERRIDES` let
- *    Enrique force a sold-out house mid-demo without a redeploy.
+ *  - OVERRIDABLE AT RUNTIME. `AVAILABILITY_MODE` and `AVAILABILITY_OVERRIDES` pin the
+ *    snapshot without a redeploy. They change no guest answer, since no tool reads the figure.
  *
- * THE SEAM: replace `sameDayAvailability` with a PMS call (Opera, Cloudbeds,
- * Mews) and nothing else in the tool layer changes.
+ * THE SEAM: replace `sameDayAvailability` with a PMS call (Opera, Cloudbeds, Mews).
+ * A real figure could then drive answers, starting at `availabilityBasis` in stayBenefits.ts.
  */
 import type { Property } from '../../../shared/types'
 import { ROOM_CLASS_LADDER, type RoomClass } from './rules'
@@ -35,7 +30,7 @@ export interface AvailabilitySnapshot {
   total_rooms: number
   rooms_available: number
   occupancy_pct: number
-  /** Always present, always honest. */
+  /** Always present. */
   provenance: 'simulated_inventory_service'
   mode: AvailabilityMode
   assumption: string
@@ -181,27 +176,7 @@ export function sameDayAvailability(property: Property, date: string, roomClass:
   }
 }
 
-/**
- * House-wide occupancy for a date, used by the discretionary late-checkout and
- * early-check-in gates. Returns a fraction in [0, 1].
- */
-export function houseOccupancy(property: Property, date: string): number {
-  const mode = currentMode()
-  if (mode === 'sold_out') return 1
-  if (mode === 'wide_open') return 0.4
-
-  let total = 0
-  let available = 0
-  for (const roomClass of ROOM_CLASS_LADDER) {
-    const snap = sameDayAvailability(property, date, roomClass)
-    total += snap.total_rooms
-    available += snap.rooms_available
-  }
-  if (total <= 0) return 1
-  return Math.min(1, Math.max(0, (total - available) / total))
-}
-
-/** Availability across every class on the ladder, for the upgrade decision. */
+/** Availability across every class on the ladder. */
 export function availabilityByClass(property: Property, date: string): Record<RoomClass, AvailabilitySnapshot> {
   const out = {} as Record<RoomClass, AvailabilitySnapshot>
   for (const roomClass of ROOM_CLASS_LADDER) {
