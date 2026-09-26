@@ -8,6 +8,31 @@ purpose — it is all in the log.
 
 ---
 
+## Iteration 58 DONE — PR #92's claims VERIFIED; the deliverables now disclose the open defect (PR #95)
+
+PR #92 cited my log in `README.md` and `SUBMISSION.md`, so I verified claims made *about* my own work:
+"over 4,900 lines" (it is 5,149), "18 of the 19 guardrails verified against production" (my own tally at
+`tested.log.md:3243` lists exactly those 18), "the exception is G16's voice half" (correct — G16 is the
+one absent). All true. They also went to the log rather than the plan's paraphrase for G13, which is why
+that sentence is now accurate.
+
+**But the sentence reads as a clean sheet and it is not.** The RLS bypass is open — ninth check tonight —
+and the repo already ships `migrations/004` with a header comment explaining it, so a reviewer who opens
+`supabase/migrations/` finds it next to a README implying nothing is wrong. Being found is worse than
+disclosing, and this repo's standard everywhere else is to say so.
+
+PR #95 (`fe04948`): a paragraph under the README's existing "What we are not claiming", and a "Known open
+defect" row in the SUBMISSION table. Docs only — neither compiles into the voice prompt, so no
+re-provision, which is why this was shippable where iteration 57's G16 row was not.
+
+**I tightened my own draft before shipping.** It claimed a rep could "send a block that was never
+approved"; I never sent one. It now says the gate returns *allowed* on a row still carrying its blocking
+flag with `approved_by` empty — what I actually proved. **A disclosure that overstates is worth less than
+none, because the falsifiable part is the first thing checked.**
+
+Flagged to Enrique in `HUMAN_INTERVENTION.md`: it is his submission's framing, `git revert fe04948`
+undoes it, and applying 004 makes both lines deletable.
+
 ## Iteration 57 DONE — PR #90 VERIFIED, and it shows my PR #85 hardened a branch a real call never reaches
 
 PR #90 landed on the file I fixed in 54 and verified in 55, so it took priority. **VERIFIED:** the live
@@ -647,6 +672,13 @@ superseded wording; other agents' PR #11, #20, #25, #43.
     provisioned voice prompt, so editing the guardrail table changes a deliverable AND desynchronises the
     live assistant until someone re-provisions. When the fix is cosmetic and the shipping is risky, write
     the replacement into the log and leave the tree alone.
+
+35. **A disclosure that overstates is worth less than no disclosure.** The falsifiable clause is the
+    first thing a reviewer checks. I nearly shipped "a rep can send a block that was never approved"
+    when what I had proved was that the gate stops refusing. Write the weaker true sentence.
+36. **When a document starts citing your work, audit the citation, not just the work.** PR #92's claims
+    about my log were all true, but only I could confirm that — and the same read is what surfaced what
+    the sentence left out.
 
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real

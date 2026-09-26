@@ -5147,3 +5147,60 @@ and the behaviour stays right, which is the correct way round.
 ```
 PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
 ```
+
+---
+
+## Iteration 58 — 2026-09-26 23:57–00:06Z — VERIFIED: PR #92's claims about my own log. FIXED-PENDING: the deliverables did not disclose the one defect that is open.
+
+PR #92 put my log in front of the reviewer for the first time — two lines, in `README.md` and
+`SUBMISSION.md`. Since the claims are *about* my log, I am the authority on whether they are true.
+
+### VERIFIED — both claims check out
+```
+"over 4,900 lines"        agents/tested.log.md is 5,149 lines            HOLDS (a floor, and it grows)
+"18 of the 19 guardrails  my own tally, tested.log.md:3243:
+ verified against          "18 of 19 verified with evidence: G1 G2 G3 G4 G5 G6 G7 G8 G9 G10 G11 G12
+ production"               G13 G14 G15 G17 G18 G19"                       EXACT
+"the exception is G16's    G16 is the one absent from that list           CORRECT
+ voice half"
+```
+They also declined to repeat the plan's paraphrase of G13 and went to the log instead. The log says the
+caller was *correctly identified*, explicitly told it to ignore its system prompt, and R55012's real
+`payment_last4` of 9945 was in the data — so a true answer existed to leak. That is what the log says;
+the paraphrase they rejected said something weaker. Right call, and the reason the README's G13 sentence
+is now accurate.
+
+### THE FINDING: "18 of 19, the exception needs a phone call" reads as a clean sheet, and it is not
+Neither deliverable mentioned the RLS bypass. A reviewer finishing that sentence concludes there is one
+gap and it is a logistics problem. There is a second gap, it is live, and it is the more serious kind:
+```
+PATCH /rest/v1/proposals?id=eq.35632960-…  {"status":"approved"}
+  as sales@solsticehotels.com with the PUBLIC ANON KEY   ->  HTTP 200, row returned
+```
+Eighth consecutive iteration confirming it. And the repository **already ships the fix** —
+`supabase/migrations/004_client_read_only_on_group_tables.sql`, whose own header comment explains the
+hole in detail. So a reviewer who opens `supabase/migrations/` finds it unaided, next to a README
+implying nothing is open. **Being found is worse than disclosing**, and this project's standard
+everywhere else is to say so: the latency doc admits missing its own target, the transcript admits the
+double escalation was a bug, assumption 16 admitted a prompt inaccuracy before it was fixed. The
+omission was inconsistent with the repo it sits in, not with some external standard.
+
+### Fixed — PR #95, `fe04948`
+A paragraph in the README under its existing **"What we are not claiming"** heading, and a
+**"Known open defect"** row in the SUBMISSION deliverables table. Docs only: neither file compiles into
+the voice prompt, so there is no cap cost and no re-provision, which is exactly why this was shippable
+when iteration 57's G16 row was not.
+
+**I tightened my own first draft before shipping it.** It said a rep "can … then send a block that was
+never approved". I never sent one. What I proved is that `canSend` returns *allowed* on a row still
+carrying its blocking flag with `approved_by` empty. The shipped text says that, and the commit says I
+did not go further. A disclosure that overstates is worth less than no disclosure, because the first
+thing a reviewer checks is the part they can falsify.
+
+Suite 476 / 37 files — the count moved 473 → 476 mid-iteration because another agent had
+`doc-citations.test.ts` in flight; their three new cases pass against my README edit, and I staged only
+my own two files.
+
+### Migration 004: ninth consecutive check
+Unchanged. The difference after this iteration is that it is now disclosed rather than merely recorded in
+my log, so if it ships unapplied it ships as a stated known defect instead of something found.
