@@ -4443,3 +4443,53 @@ Verified in three directions rather than one:
   so `--check` and the builder still agree.
 
 `npx tsc -b --force` clean. `npx vitest run`: **522 passed, 42 files**.
+
+## It83 — the runbook's most time-critical step could not be followed as written
+
+Having audited what a reviewer runs, I looked at what **Enrique** runs — the pre-demo checklist,
+followed minutes before a panel joins.
+
+Beat zero said:
+
+> *"Run it with no flag first to see the count, then `npm run demo:tidy` to close them."*
+
+**`demo:tidy` is `--delete`.** There was no flagless script. So the instruction could not be followed:
+at 10:55 with an audience waiting, the reader either runs the destructive command blind or stops to
+reconstruct `node scripts/cleanup-phantom-sessions.mjs` from memory.
+
+And the preview is worth reaching. Run now:
+
+```
+143 sessions examined
+0 phantom(s) found
+118 session(s) still marked active; 118 idle for over 30 minutes
+Dry run: re-run with --delete to close these too.
+```
+
+**118** is exactly the number the checklist asks him to look at before dialling, and the only way to
+see it was a command no document names.
+
+`demo:preview` now exists, and the runbook names it — *"it changes nothing"* — with a note that
+`demo:tidy` is the `--delete` run and cannot be made harmless, which is why the preview has its own
+name rather than a flag.
+
+### On naming, because the wrong choice here has a cost
+
+I considered `demo:tidy:dry`. Two commands differing by a suffix, typed under pressure, next to each
+other in a checklist, where one deletes — that is a trap. `demo:preview` cannot be mistyped into the
+destructive one.
+
+### The guard checks the direction that matters
+
+`documented-commands.test.ts` asserts every `npm run X` in a document a reviewer or presenter follows
+is a real script. Scripts live in `package.json` as data, so nothing else in the suite would notice a
+documented command that does not exist — and it fails at the worst possible moment. An *unused*
+script is housekeeping; that direction is not checked.
+
+It also pins the pair: `demo:preview` must not contain `--delete` and `demo:tidy` must. If they ever
+converged, the runbook's "see the count first" step would quietly start deleting.
+
+Red-checked both: removing the script fails with the document that names it, and making the preview
+destructive fails on the pair.
+
+`npx tsc -b --force` clean. `npx vitest run`: **525 passed, 43 files**.

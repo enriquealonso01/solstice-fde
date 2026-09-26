@@ -15,6 +15,7 @@
     "db:seed": "node scripts/data/seed.mjs",
     "seed:users": "node scripts/seed-users.mjs",
     "telnyx:export": "node scripts/telnyx/export-assistant.mjs",
+    "demo:preview": "node scripts/cleanup-phantom-sessions.mjs",
     "demo:tidy": "node scripts/cleanup-phantom-sessions.mjs --delete",
     "verdict": "vite-node scripts/show-verdict.ts --",
     "email:check": "node scripts/check-email-domain.mjs"

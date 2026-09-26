@@ -10,6 +10,14 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It83: the runbook's most time-critical instruction cannot be followed as written.** Beat
+  zero says *"Run it with no flag first to see the count, then `npm run demo:tidy` to close them"* —
+  but `demo:tidy` **is** `--delete`. There is no flagless script, so at 10:55 with a panel waiting
+  Enrique either runs the destructive one blind or works out the raw `node` invocation himself.
+- **The preview itself is good and worth reaching:** it reports 143 sessions examined, 0 phantoms and
+  **118 active idle over 30 minutes** — the number the checklist asks him to look at.
+- Adding `demo:preview`, naming it in the runbook, and pinning that every documented `npm run` exists.
+
 - **CLAIMED It82: the commands the deliverables tell a reviewer to run.** Doc sweep is finished, so I
   took the surface a reviewer touches first. All **seven** documented `npm run` scripts exist in
   `package.json`, and the two that are read-only (`typecheck`, `data:check`) both exit 0.
