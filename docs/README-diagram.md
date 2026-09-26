@@ -26,8 +26,23 @@ Every node on the future-state page carries a tag, and the tag is backed by a sh
 - **FUTURE** (dashed border). Designed, argued for, not built. Where it replaces something that exists, the detail line says what that is (`Today: Supabase Storage`).
 
 On the *Today* page the same convention distinguishes LIVE (solid), PENDING (dashed, waiting on an
-account) and BLOCKED (dotted, blocked by something outside the code: the Anthropic key is not
-workspace-scoped, and 10DLC carrier registration cannot clear before submission).
+account) and BLOCKED (dotted, blocked by something outside the code).
+
+**At submission the page carries 24 LIVE nodes, 0 PENDING, and 1 BLOCKED — SMS.** That is
+worth stating because it was not true when the page was drawn and the page was not redrawn. Through
+most of the build the Anthropic key, the phone number, the voice assistant, the transcript webhook
+and email were all marked PENDING or BLOCKED, and each of them came up in turn while the diagram
+kept saying otherwise — a page whose whole job is honest status, quietly understating the build it
+describes. Corrected at iteration 133 against the live systems rather than against the notes: the
+Anthropic API answers on `claude-sonnet-5`, `+1 (305) 786-6217` is active on the account, the
+assistant carries 29,784 instruction characters and 25 tools, six phone calls are in Postgres with
+their transcripts, the sending domain is verified and proposals have been delivered.
+
+SMS is the honest exception, and its reason has been corrected too. It is not that carrier
+registration *could not clear in time* — the brief allows five business days, so the timing was
+never the binding fact. It is that **no brand or campaign was ever registered**, so the clock never
+started. The email path carries the demo, and `docs/architecture.drawio`'s delivery adapter is the
+component that makes swapping them a configuration change.
 
 ## The four answers the brief asks for
 

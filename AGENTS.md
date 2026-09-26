@@ -10,9 +10,11 @@
 > Telnyx carries **$3.03** and the number `+13057866217` is on the account, so calls and email work and
 > the outstanding item is a top-up rather than a purchase; `POST /api/chat` on production returns
 > **200** with a grounded answer, so the Anthropic key is fine; and `supabase/schema.sql` is applied,
-> proven by a service-role read of `sessions` returning **200**. The email path is proven end to end,
-> with Telnyx's sandbox domain the only limit. What is still open is listed in
-> `HUMAN_INTERVENTION.md`, which is the live list.
+> proven by a service-role read of `sessions` returning **200**. The email path is proven end to end —
+> and better than this block first said: re-checked at iteration 133, the Telnyx sending domain
+> `enriquecodes.com` is **`status: verified`** with DKIM, not a sandbox, and four proposals carry
+> `status: sent` with `sent_via: email`. What is still open is listed in `HUMAN_INTERVENTION.md`,
+> which is the live list.
 >
 > **Non-negotiable 2, "Do not run git. The orchestrator commits", no longer describes how this repo
 > works.** Enrique's standing instruction has each shipping agent branch, commit, push, open a PR,
