@@ -10104,3 +10104,91 @@ broken slice by the first run, and two probe-shaped mistakes before that. The pr
 prose cannot.
 
 `npx tsc -b` clean. `npx vitest run` **916 tests / 64 files** green (up 6).
+
+---
+
+## It156 — the third thing the submission email invites a reviewer to try had no test at all
+
+Fifth iteration with an empty board. SUBMISSION.md's email body offers a reviewer three things to try. Two
+are covered — the parking refusal sits on the policy data tests, INQ-2007 is in `inquiries.test.ts`. The
+third:
+
+> On the admin Backend page there is a failure-injection panel. Take the property management system offline
+> and ask the chat for a late checkout: it stops confirming what it can no longer verify, **while policy
+> questions keep working**.
+
+**No test file mentioned `pms_offline` or failure injection.** Zero. It is also the invitation a reviewer
+can act on with no data of their own: two clicks and one sentence, which makes it the likeliest of the three
+to actually be tried.
+
+### Both halves are decided by one table
+
+`runTool` reads `DEPENDENCY_OF[name]`, asks `isOffline`, and on an injected outage returns
+`toolFail(OUTAGE_REASON[dependency] + guidance)` **instead of calling the handler**. So a tool degrades
+exactly when it is in that table under the flag being flipped, and keeps working exactly when it is not:
+
+```
+"stops confirming what it can no longer verify"  ->  check_late_checkout is mapped to pms_offline
+"while policy questions keep working"            ->  get_policy is NOT mapped to pms_offline
+```
+
+Which makes the promise checkable from the wiring, with no database and nothing flipped.
+
+### Why not by mocking, said plainly
+
+The suite has **no `vi.mock` in any of its sixty-four files**. It is hermetic because `vitest.setup.ts`
+strips every credential, so `tryGetDb()` returns null and `readFlags()` reports nothing injected.
+Introducing module mocking for one file an hour before submission would add a failure surface to every
+other file in the run, for a seam that is fifteen reviewed lines.
+
+**So this pins the wiring, not the runtime.** The mapping is the part that rots silently; the `runTool`
+branch is checked at source level — it must still return `toolFail`, still quote `OUTAGE_REASON`, still say
+*"do not guess"*. The beat itself was rehearsed on production at T5 (PR #15). **The Tester never verified it
+because their permission layer refuses flag writes**, which is a large part of why it reached submission day
+uncovered.
+
+### The case that earns the file
+
+The inverse direction. `stayBenefits.ts` is the only tool module that reaches the inventory service, and its
+three handlers are exactly the three mapped to `pms_offline`. So the guard derives the list from the source
+rather than restating it: **any tool whose module calls `sameDayAvailability`, `houseOccupancy` or
+`availabilityByClass` must be mapped to `pms_offline`.** A new inventory-dependent tool either inherits
+degradation or turns the suite red — otherwise it would keep confirming room availability while the panel
+watches the PMS switch sit in the offline position.
+
+Also pinned: every mapped name must be a tool that is actually mounted (a misspelling silently means no
+degradation); the admin endpoint's `VALID` keys, the `FlagKey` union and `OUTAGE_REASON` must be the same
+set (a panel key nothing reads = the switch flips, the reviewer sees it flip, and no tool changes); and no
+outage reason may contain a digit, because an outage message that still quotes a figure is a guess wearing a
+disclaimer.
+
+### Red-check, seven mutations, each naming itself
+
+```
+late checkout dropped from the table       2 failed   (inventory sweep + the named-action case)
+a mapped name misspelled                   2 failed
+policy swept into the PMS outage           1 failed   <- the second half of the promise
+the branch stops saying "do not guess"     1 failed
+the branch stops quoting OUTAGE_REASON     1 failed
+an outage reason quotes a figure           1 failed
+the endpoint accepts an unread key         1 failed
+restored                                   7 passed   three wiring files byte-identical
+```
+
+### Three parser mistakes, all caught by the first case in the file
+
+My `handlerOf()` looked for an inline `new Map(Object.entries({...}))`. The registry does not have one — it
+builds the map from `CONCIERGE_HANDLERS` with a loop plus one explicit `handlers.set`. It parsed **nothing**,
+and three cases failed at once. `OUTAGE_REASON` was imported from `_deps`, which does not re-export it, so
+it arrived `undefined` and the `in` operator threw.
+
+Both were caught immediately because the **first case in the file asserts the tables parsed non-empty**.
+That case exists for exactly this: a source-parsing guard whose parser silently misses is a guard that
+passes over nothing, and it is the failure this suite has found in itself more than any other.
+
+**And one mutation skipped again.** MUT 4's multi-line anchor did not match — CRLF plus `printf '\n'` — and
+the run after it printed `7 passed`, which reads like the guard missing a real defect. Replaced with two
+single-line mutations, both of which fire. *Second iteration in a row that a skipped mutation had to be
+re-done, and both times the tell was reading the line above the result rather than the result.*
+
+`npx tsc -b` clean. `npx vitest run` **923 tests / 65 files** green (up 7).

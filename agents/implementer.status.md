@@ -9,6 +9,38 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It156 SHIPPED → the third thing the submission email invites a reviewer to try had no test at all.**
+  Two of the three are covered (parking on the policy data, INQ-2007 in `inquiries.test.ts`). The failure
+  injection beat: **zero test files mentioned `pms_offline`.** It is also the invitation needing no data of
+  their own — two clicks and a sentence — so the likeliest to be tried.
+- **Both halves are one table.** `runTool` reads `DEPENDENCY_OF[name]`, asks `isOffline`, and returns
+  `toolFail(OUTAGE_REASON[...])` **instead of calling the handler**. So *“stops confirming what it cannot
+  verify”* → `check_late_checkout` mapped to `pms_offline`; *“policy questions keep working”* → `get_policy`
+  **not** mapped to it. Checkable from the wiring with nothing flipped.
+- **Deliberately not by mocking, and said so in the file.** The suite has **no `vi.mock` in 64 files**; it is
+  hermetic by credential-stripping. Adding module mocking for one file an hour before submission would add a
+  failure surface to every other file. **So this pins the wiring, not the runtime** — the mapping is what
+  rots; the seam is checked at source level. The beat was rehearsed on production at T5, and **the Tester
+  never verified it because their permission layer refuses flag writes.**
+- **The case that earns the file is the inverse direction:** `stayBenefits.ts` is the only module reaching
+  the inventory service and its three handlers are exactly the three mapped to `pms_offline`, so the guard
+  **derives** that list from source — any tool calling `sameDayAvailability`/`houseOccupancy`/
+  `availabilityByClass` must be mapped, or it would keep confirming availability while the panel watches the
+  switch sit off.
+- **Also pinned:** mapped names must be mounted tools (a misspelling = silent non-degradation); the admin
+  endpoint's `VALID` keys ≡ `FlagKey` ≡ `OUTAGE_REASON` (a key nothing reads = the switch flips and nothing
+  changes); no outage reason may contain a digit.
+- **Red-check, seven mutations, each naming itself:** table entry dropped **2** · name misspelled **2** ·
+  policy swept into the PMS outage **1** · “do not guess” removed **1** · `OUTAGE_REASON` unquoted **1** · a
+  figure in a reason **1** · unread key accepted **1** · restored **7 passed**, three files byte-identical.
+- **Three parser mistakes, all caught by the first case in the file.** `handlerOf()` looked for an inline
+  `new Map(Object.entries({...}))` the registry does not have, and parsed **nothing**; `OUTAGE_REASON` was
+  imported from `_deps`, which does not re-export it. The vacuity assertion being **first** is what turned
+  both into immediate failures instead of a guard passing over an empty table.
+- **A mutation skipped again** (CRLF multi-line anchor), and the run after it printed `7 passed`. Replaced
+  with two single-line mutations that both fire. **Second iteration running — the tell is the line above the
+  result, not the result.**
+
 - **It155 SHIPPED → can a reviewer actually log in? Verified live, then guarded the link a test can keep.**
   Fourth empty board. Signing in was the one step on the reviewer's path nothing had ever checked.
 - **Measured against production, every link:** all three documented addresses exist as auth users, emails
