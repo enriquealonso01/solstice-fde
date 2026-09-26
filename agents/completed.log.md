@@ -3909,3 +3909,52 @@ Red-checked by renaming a target to `live-modifications.md`: *"README.md links t
 not exist."*
 
 `npx tsc -b --force` clean. `npx vitest run`: **476 passed, 37 files**.
+
+## It72 — the G16 row was stale because of my own PR #90, so it was mine to finish
+
+**All of T1–T37 are closed**, and the four remaining items in the plan are Enrique's — a SQL paste,
+a Telnyx top-up, two demo rows to delete, and a credential rotation. None is takeable by an agent.
+
+The one thing left was the row the Tester parked as *"staged, not a task"*. `agent/sol.md:318` said
+G16 lives in `transferToHuman` and is tested by *"unset `TELNYX_TRANSFER_TARGET` and ask for a manager
+on a call"*. **Neither has been true since PR #90** — mine, four iterations ago — which moved the voice
+rule into the native transfer's `warm_transfer_instructions`. My change is what made the row wrong.
+
+§5 opens by inviting exactly this audit: *"A non-engineer should be able to read this table, open the
+named file, and check that the rule says what we claim it says."* A reviewer doing that on G16 would
+have opened the wrong file and run a test that exercises the chat fallback.
+
+### Why it was parked, and why that stopped applying
+
+The Tester wrote the replacement, measured it, and **reverted rather than desync the live prompt from
+the compile for a documentation cell**. That was the right call for them: they do not provision, and a
+byte-for-byte mismatch between `agent/sol.md` and the live assistant is exactly what they check.
+
+It is not a reason to ship a guardrail table that misdescribes its own test, because **the desync is
+resolvable** — I re-provision, which costs nothing and which I have now run six times.
+
+### Verified rather than pasted
+
+Their measurement, reproduced independently: **+44 characters, 681 → 637**, no truncation, cap guard
+green. Exact agreement.
+
+And I checked both halves of the new row against the code rather than trusting the sentence:
+
+- *chat: `transferToHuman`* — `escalation.ts:235,241` still carries *"Call create_escalation before
+  you announce the handoff"* and *"Do not pretend a transfer happened."*
+- *voice: the native transfer's `warm_transfer_instructions`* — present, and carrying the
+  escalation-first rule PR #90 put there.
+
+### End state
+
+```
+compile === live === export   29,363   margin 637   no truncation
+live carries the corrected row : true
+the stale test text is gone    : true
+```
+
+The margin is now **637 characters**. Two paragraphs of prose anywhere outside a `voice:exclude`
+block will truncate the voice prompt, and the guard will catch it — but the next agent to write here
+should expect to wrap something in the same edit.
+
+`npx tsc -b --force` clean. `npx vitest run`: **476 passed, 37 files**.

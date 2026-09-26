@@ -73,7 +73,7 @@
 
 | # | Enrique's item | Why it is first / what it costs |
 |---|---|---|
-| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr` | **Now disclosed in the README and `SUBMISSION.md`** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md` §13 with **no deliverable edit**. Three lines, in the SQL editor. |
+| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr` | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at `HUMAN_INTERVENTION.md:753`. **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md` §13 with **no deliverable edit**. Three lines, in the SQL editor. |
 | 2 | **Telnyx top-up, $3.09** | One call settles **beat 3**, the live intent check, and **G16's voice half** — the last unverified guardrail. Nobody has made a voice call all day. |
 | 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. **Verified safe three ways:** two deliverables cite `INQ-2011`/`INQ-2010`, the demo runbook names `INQ-2007`/`2009`/`2011`, and **neither row T21 deletes appears in either**. Both confirmed live: `INQ-2012` Vantage Labs `needs_review`, `INQ-2013` Vantage Labs DELETE-ME `auto_approvable`. Exact SQL in `HUMAN_INTERVENTION.md`. |
 | 4 | **T34 — rotate the Telnyx SIP connection** | A credential *username* is in git history at `10b63e8` and `c09f04d`. **Rotate rather than rewrite history** — rewriting invalidates commit ids the deliverables cite, to remove something that authenticates nothing on its own. **Timing: after any rehearsal call, before the email.** |
@@ -1002,6 +1002,70 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 100, 20:10 EST — audited the text my own specs produced. One flaw, already fixed; the rest holds
+
+After iteration 99 — where a sentence I specified was true and left a false impression — I went back
+over the other deliverable text that originated in my task descriptions.
+
+#### T33's disclosure, verified claim by claim
+
+`agent/sol.md`'s *"What 'today' rests on"* paragraph makes four mechanism claims. All four hold:
+
+```
+notify is an inert string array          ✓  stored and interpolated, never sent
+_delivery/ carries proposals and audit   ✓  audit.ts config.ts index.ts telnyx.ts — no escalation path
+no screen lists escalations              ✓  nothing in src/ queries from('escalations')
+the queue view is marked FUTURE          ✓  verified in iteration 80 against architecture.svg
+```
+
+And it does not repeat T35's mistake: it says **"nothing notifies the manager"** without hedging, so
+the impression matches the fact. The spec that produced it asked for the mechanism to be named, not
+for a gap to be acknowledged — which is apparently the difference that matters.
+
+#### The guardrail sentence is now adequately scoped
+
+`README.md:90` reads *"**The guardrail table in `agent/sol.md` is not asserted either.** Eighteen of
+its nineteen rules were driven against the deployed system… The exception is **G16's voice half**."*
+The subject is stated twice as the table and its nineteen rules, and the open defect is disclosed
+**twenty-five lines below** in the same document. **No further change needed** — and I am recording
+that I considered adding a cross-reference and decided it would be belt-and-braces, because the
+correction in iteration 99 makes over-correcting the likelier error now.
+
+#### The concern I brought to this iteration was already handled
+
+The new disclosure says *"One defect is open at the time of writing."* **That sentence becomes wrong
+the moment Enrique does item 1 on his own list** — and nothing I had recorded told him so.
+
+It is covered. `HUMAN_INTERVENTION.md:753`:
+
+> **"If you apply migration 004 before you submit, delete both."** … *"If you disagree with
+> disclosing it, `git revert fe04948` removes both. I would rather you overrule a disclosure you can
+> see than not know it was a choice."*
+
+Docs only, no re-provision, one revert to undo, and the epistemic bound stated: *"My first draft said
+a rep could 'send a block that was never approved'; I never sent one."*
+
+**Second iteration running where I found a plausible gap and found it already closed.** That is what
+this system looks like when it is finished rather than merely quiet.
+
+#### Also closed
+
+**#97** linked the two orphaned documents (T37). The RLS bypass is recorded as re-confirmed against
+production on the **ninth** consecutive check.
+
+#### State — unchanged, and all four are Enrique's
+
+| # | Item | Note |
+|---|---|---|
+| 1 | `drop policy` ×3 | **If applied before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — `HUMAN_INTERVENTION.md:753` |
+| 2 | Telnyx top-up, $3.09 | beat 3, the live intent check, G16's voice half |
+| 3 | T21, two rows | verified safe three ways |
+| 4 | T34 SIP rotation | after any rehearsal call, before the email |
+| — | G16 row | staged; bundle with the next `--refresh`, ship as is if none |
+
+All tasks closed. Inbox empty. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 99, 20:06 EST — my T35 spec would have made the package less honest, and an agent caught it
 
