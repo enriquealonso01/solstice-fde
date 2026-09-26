@@ -1,10 +1,13 @@
 # Master plan: the whole picture
 
-> ## 06:42 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 06:47 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **NOTHING IS OPEN FOR AN AGENT.** T59 shipped at 06:40 and every numbered task in this file is closed.
 > The suite is **898 tests / 62 files**, green. The new file pins the Platinum refusal to the inventory
 > service and **inverts it under `wide_open`**, so the beat cannot quietly stop depending on the data.
 > **What is left is yours: three things to do, three decisions that need no action.**
+> **Telnyx re-measured at 06:45: $3.01, not the $3.03 this file carried since 02:46.** It drifts down about
+> half a cent an hour on the number's rental even with nobody calling — so read it as a ceiling, not a
+> balance that waits for you. **Still fewer than six calls, still no credit line, still top up to $20.**
 > **A reviewer can run the suite from a `git clone` or a **Download ZIP** and it passes** — checked at 06:38:
 > the two gitignored files are asserted absent-from-tracking, never present-on-disk, the environment is
 > stripped, and `shipped-files.test.ts` carries a git-free fallback proved against the git path.
@@ -1292,7 +1295,7 @@ edited every time one closes, and six times it was not.**
 | # | Enrique's item | Why it is first / what it costs |
 |---|---|---|
 | 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr`. **Only you can do this** — it is DDL, PostgREST cannot execute `drop policy`, and the repo has no RPC path; it needs the SQL editor in your browser. | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at **`HUMAN_INTERVENTION.md:817`**, heading ***"The three places that mention it"*** (re-verified 04:26; the SQL to paste is at **609** under ***"### What to run"***, summarised for you at **63**). **Search the quoted headings, not the numbers — they shifted by 13 in the last three hours.**. **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. **Applying it breaks nothing in the repo — I checked all three reasons myself at 05:22, with a different instrument than the agent that wrote them:** the two guards that cover this (`send-gate-bypass.test.ts`, `rls-policies.test.ts`) contain **zero** `fetch(` and zero `createClient` and read the schema from disk, so SQL in the browser cannot turn them red; `schema.sql:183-185` declares only three `for select` policies on `inquiries`/`proposals`/`follow_ups` and **no client write policy**, so the repo is already correct and only the live database disagrees; and a full-tree sweep of **every file, every extension** found the disclosure in exactly the three reader-facing files the list names. |
-| 2 | **Top up Telnyx to at least $20** | **Live from the provider at 02:46: balance $3.03, `credit_limit` 0.00, `available_credit` $3.03.** **There is no credit line — at zero, calls stop dead.** A measured 3-second call cost about **$0.48**, so that is roughly **six calls** of headroom against the project's own pre-send gate of **$20** (`SUBMISSION.md:119`, `demo-runbook.md:15`). **It has been flat at $3.03 for hours because nobody has called** — it only falls when someone does, so the risk is a hard stop mid-demo rather than a slow drain. The number itself is **confirmed active** on the account. → portal.telnyx.com, Billing, about $30. |
+| 2 | **Top up Telnyx to at least $20** | **Live from the provider at 06:45: balance $3.01, `credit_limit` 0.00, `available_credit` $3.01.** **There is no credit line — at zero, calls stop dead.** A measured 3-second call cost about **$0.48**, so that is **fewer than six calls** of headroom against the project's own pre-send gate of **$20** (`SUBMISSION.md:119`, `demo-runbook.md:15`). **Correction, iteration 221: this row said the balance was *“flat… it only falls when someone calls.”* Measured, it is not.** It fell **$3.03 → $3.01 between 02:46 and 06:45 with no voice call since 15:29Z yesterday** — that is the number's rental, about half a cent an hour, not a call. **It is irrelevant before 11:00 (another two cents) and the hard stop is still the real risk**, but the figure is a ceiling that drifts down, so read it as *“under $3.01”* rather than as a balance that waits for you. The number itself is **confirmed active** on the account. → portal.telnyx.com, Billing, about $30. |
 | 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. **Verified safe three ways:** two deliverables cite `INQ-2011`/`INQ-2010`, the demo runbook names `INQ-2007`/`2009`/`2011`, and **neither row T21 deletes appears in either**. Both confirmed live: `INQ-2012` Vantage Labs `needs_review`, `INQ-2013` Vantage Labs DELETE-ME `auto_approvable`. Exact SQL in `HUMAN_INTERVENTION.md`. **An agent *could* do this — the service-role key deletes rows over PostgREST — and chose not to.** `HUMAN_INTERVENTION.md:27` says *"Neither the Tester nor I **will** delete production rows the night before"*: **will**, not **can**. So unlike item 1, **this one is delegable** if you are short of time at 10:00. |
 | 6 | **Your own email address is in this file, and it is the only real address left in the repo.** | The Implementer removed the hiring contact's work address from four tracked files at It124 — right call, and I have no objection. **`enrique@provensolved.com` is still here**, in the email-delivery check, and they left it because it is yours. The guard allowlists that domain with a comment saying it is deliberate, **so removing it breaks nothing**; the same neutral phrasing works. **No recommendation from me — a public repository under your name is a thing you may want your address on.** |
 | 5 | **The interviewers' own brief was published in our public repo — already fixed; only history is left.** | `FDE_Project_Challenge.pdf` is out of the tracked tree, in `.gitignore:19`, and guarded three ways — **verified green at 01:03**, and the file is still on disk because the agents read it as ground truth. What remains is whether to rewrite history to remove it from the one commit that has it. **The recommendation is no**, for the same reason as T34: it invalidates every commit id the deliverables cite, to remove a document from a repository whose reader wrote it. Full entry and the short answer if a reviewer raises it: **`HUMAN_INTERVENTION.md:975`, heading ***"Your call: the interviewers' own brief"***** — and **T47** is what puts it in front of you, because the index at `:63` does not have it. |
@@ -2496,6 +2499,60 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 221, 06:47 EST — the balance is not flat, and I had told him it was
+
+**Nothing is open for an agent.** So I re-measured the live numbers in Enrique's own table, starting with the
+oldest one.
+
+#### The correction
+
+Row 2 said **$3.03, measured at 02:46**, and explained: *"It has been flat at $3.03 for hours because nobody has
+called — it only falls when someone does, so the risk is a hard stop mid-demo rather than a slow drain."*
+
+```
+live at 06:45   balance 3.01   credit_limit 0.00   available_credit 3.01   USD
+last voice activity in the audit log:  2026-09-25T15:29Z  (voice.listen)
+```
+
+**Both halves of that sentence are wrong.** The balance fell **two cents in four hours with no voice call for
+nineteen**. That is the number's rental — about half a cent an hour — not a call. **A balance that only falls
+when someone calls is a thing I asserted from two readings that happened to match**, and a third reading
+contradicted it.
+
+**It changes nothing about the action** — top up to $20 either way, and another two cents before 11:00 is
+irrelevant. **It changes how to read the figure**: it is a ceiling that drifts down, so the row now says *"under
+$3.01"* and *"fewer than six calls"* rather than a balance that waits for you. *The same lesson as the latency
+p90: a number quoted without its behaviour invites the wrong inference.*
+
+#### The cost widget, checked from outside
+
+`/api/cost` returns **HTTP 401 anonymously** — correct, it is staff-only, and it is the same refusal every other
+protected endpoint gives. I did not try to get around it.
+
+What I could check is the failure shape, from both sides: `cost.ts:55`'s `telnyxBalance()` returns `null` when
+the provider does not answer, and `CostPage.tsx:156` renders `data.telnyx ? usd(...) : '—'`. **A dead provider
+shows an em dash on the page, not a broken widget in front of the panel.** The upstream API answers with our key
+right now, so the live read works.
+
+#### Smoke test of the deployed interface
+
+```
+/            HTTP 200   1053B   0.35s
+/admin       HTTP 200   1053B   0.15s      <- the SPA rewrite, router handles it client-side
+/api/chat    HTTP 405   40B                <- POST-only, and it says so rather than 500ing
+```
+
+The landing HTML carries the support number, the mount point and the hashed bundle reference. **405 is the
+detail worth noticing**: a GET on the chat endpoint is refused with the correct method error, which is what a
+reviewer poking at the API gets instead of a stack trace.
+
+#### State
+
+Every numbered task is closed; **nothing is open for an agent**. The suite is green at 898. Enrique's six are
+unchanged, with the `drop policy` paste first and row 2 now carrying a re-measured figure and a corrected
+explanation. Inbox and In progress empty. Tester silent since 20:26 (**10h21m**). No lock held; I took none.
+
+
 ### Iteration 220, 06:42 EST — nothing is open for an agent
 
 **T59 shipped at It151. Every numbered task in this file is now closed.** What remains is Enrique's six, and the
@@ -2554,6 +2611,27 @@ The demo path is verified end to end against production (opening Chen beat, grou
 the group gate is verified across every proposal and 265 audit rows, the brief's deliverable list is checked
 against the PDF's own text, and the suite passes from a clone or a ZIP. **The `drop policy` paste is the only
 item left that nobody else can do for him.**
+
+
+#### And then I did it again, in this edit
+
+My first splice of that banner left **five stale lines above the new text**: *“Three agent tasks are open: T60,
+then two one-line items inside T58, then T59”*, in the same screen where I had just written **NOTHING IS OPEN
+FOR AN AGENT**. Reading the file back caught it. Two more survived from earlier iterations: **T57 described in
+the present tense** an hour after it shipped, and ***“T38–T55 are closed”*** — a **range**, which is the exact
+construction I removed from `▶ OPEN WORK` at iteration 206 and declared cured. A third: *“800+ tests across
+**58 files**”*, where I made the test count a floor and left the file count hard.
+
+**Eighth recurrence, three instances at once, in the block I rewrite every single iteration.**
+
+> **The rule I wrote at 201 was right and I applied it to the wrong screen.** I cured `▶ OPEN WORK` by taking
+> the numbers out and pointing it at the banner — *“the one place I demonstrably do rewrite”* — and then let the
+> banner accumulate per-task narrative, which is the same debt in the place I had just made load-bearing.
+> **Moving a figure to the place you maintain only works if what you move there is a figure, not a story.**
+
+**Fixed the same way, one level up: the banner no longer narrates individual tasks.** Task history lives in the
+dated log below, which has never been wrong in 220 iterations. The first screen now carries only what is open,
+what is Enrique's, and the live numbers — with the test count as a floor and no file count at all.
 
 Inbox and In progress empty. No lock held; I took none.
 

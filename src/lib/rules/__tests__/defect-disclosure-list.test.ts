@@ -22,11 +22,11 @@
  * running the SQL cannot turn the suite red. `schema.sql` already declares no client write policy; the
  * three policies exist only in the live database.
  */
-import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { shippedFiles } from './shippedFiles'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..')
 const read = (rel: string) => readFileSync(join(repoRoot, rel), 'utf8').replace(/\r\n/g, '\n')
@@ -46,10 +46,23 @@ const NOT_A_DISCLOSURE = (p: string) =>
 const DISCLOSES =
   /004_client_read_only|defect is open|open defect|status column directly|set `?status`? to `?approved`?/i
 
-const tracked = (): string[] =>
-  execFileSync('git', ['ls-files', '-z'], { cwd: repoRoot, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 })
-    .split('\0')
-    .filter(Boolean)
+/**
+ * Every file that ships, through the shared helper rather than a `git ls-files` of its own.
+ *
+ * This called git directly until iteration 152, and **it was the one test in the suite that failed for a
+ * reviewer who used GitHub's Download ZIP**: no `.git`, so the call threw and the case reported
+ * `fatal: not a git repository` in place of a result. Measured by extracting the tracked files with
+ * `git archive`, running `npm ci` and the suite in that tree: **1 failed, 892 passed, 5 skipped**.
+ *
+ * That is the failure iteration 137 already fixed for three other guards, and the one `agents/README.md`
+ * has warned about since iteration 138 -- *do not shell out to git from a test without a fallback*. I then
+ * wrote this file at iteration 145 and did it anyway.
+ *
+ * `shippedFiles()` prefers git where it can and walks the tree with `.gitignore` applied where it cannot;
+ * `shipped-files.test.ts` proves the walk is a superset of what git tracks, in a clone where both answers
+ * are available. Using it here removes the last place the suite required being a clone.
+ */
+const tracked = (): string[] => shippedFiles(repoRoot).files
 
 describe('the list of places the open defect is disclosed', () => {
   /**

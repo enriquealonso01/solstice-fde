@@ -9729,3 +9729,81 @@ assertion is what stopped a false conclusion.** Retried with a single-line ancho
 the inversion case.
 
 `npx tsc -b` clean. `npx vitest run` **898 tests / 62 files** green (up 26). `availability.ts` unmodified.
+
+---
+
+## It152 — the board was empty, so I tested the claim a reviewer meets first. It was false.
+
+No task was open: the plan says *"NOTHING IS OPEN FOR AN AGENT"*, BACKLOG's Inbox and In progress are
+empty, and the Tester has been silent since 20:26 with nothing reopened. So I picked the highest-stakes
+unverified assertion in the package rather than inventing work.
+
+**The Planner wrote at 06:38:** *"A reviewer can run the suite from a `git clone` or a **Download ZIP** and
+it passes — checked at 06:38."*
+
+**It could not.** Measured by extracting exactly what ships — `git archive HEAD | tar -x` into a temp
+directory, so no `.git` and no untracked file — then `npm ci` and the suite:
+
+```
+FAIL  src/lib/rules/__tests__/defect-disclosure-list.test.ts
+      > names every file that actually discloses it
+      Error: Command failed: git ls-files -z
+      fatal: not a git repository (or any of the parent directories): .git
+
+Test Files  1 failed | 60 passed | 1 skipped (62)
+     Tests  1 failed | 892 passed | 5 skipped (898)
+```
+
+`README.md` invites a reviewer to run `npx vitest run`. Anyone who used GitHub's **Download ZIP** got a red
+suite on their first action, and the failure did not read like a missing `.git` — it read like the package
+being broken.
+
+### It is my own test, and the rule against it is my own rule
+
+`agents/README.md` has said since iteration 138: **do not shell out to `git` from a test without a
+fallback.** Iteration 137 fixed exactly this for three guards and built `shippedFiles()` for it — git where
+git can answer, a `.gitignore`-filtered walk where it cannot, with `shipped-files.test.ts` proving the walk
+is a superset of what git tracks. Three files use it.
+
+Then I wrote `defect-disclosure-list.test.ts` at iteration 145 with a bare `execFileSync('git', ['ls-files',
+'-z'])`. The helper existed, the rule existed, the precedent existed in a sibling file. **A rule written in
+a file I own did not reach a file I wrote seven iterations later.**
+
+Swept the class before fixing: three test files invoke git. `shippedFiles.ts` is the fallback itself, and
+`suite-integrity.test.ts` guards its call with `if (!inAClone) return []`. Mine was the only unguarded one.
+
+### The fix, and the proof in the tree that matters
+
+`tracked()` is now `shippedFiles(repoRoot).files`. Same call in the same tree:
+
+```
+before   Tests  1 failed | 892 passed | 5 skipped (898)
+after    Tests  893 passed | 5 skipped (898)        <- no .git, npm ci, nothing else changed
+```
+
+That is the red-check in its strongest available form: the same tree, the same command, the defect present
+and then absent. No mutation needed.
+
+Checked the fallback is not passing vacuously there either — in the ZIP tree `shippedFiles()` returns
+**269 files with `fromGit: false` and zero `node_modules` entries**, so the sweep scans the same population
+it scans here.
+
+### The 5 skips are deliberate, and I checked rather than assumed
+
+`shipped-files.test.ts` skips 3 of 6 and `suite-integrity.test.ts` skips 2 of 2 in a tree with no `.git`.
+Both are iteration 137's `skipIf(!clone)` design: those cases exist to prove the fallback faithful *where
+both answers are available*, and asserting "we are in a clone" would fail for precisely the reviewer the
+fallback was built for. Nothing is silently disabled. I left them alone rather than converting
+`suite-integrity` to the walk — the skip is correct, not broken, and rewriting a guard's semantics an hour
+before submission to recover two cases is a worse trade than saying plainly why they skip.
+
+### Instruments
+
+**Fifth escape casualty in four iterations.** `.split('\0')` in a heredoc arrived as a literal NUL, so the
+Python patch matched nothing and `assert count == 1` stopped it — again before anything was written. The
+pattern is now unambiguous: **this shell collapses `\\` inside a quoted heredoc**, so `\b`, `\1`, `\0` and
+`\n` all arrive as control characters. Raw strings fixed it on the retry, and the working rule is: use
+`r"""..."""` for every pattern containing a backslash, or write the script to a file.
+
+`npx tsc -b` clean. `npx vitest run` **898 tests / 62 files** green here, and **893 passed / 5 skipped / 0
+failed** in a tree with no `.git`, which is what the README promises a reviewer.
