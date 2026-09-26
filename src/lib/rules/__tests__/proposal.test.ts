@@ -5,6 +5,7 @@
 
 import { beforeEach, describe, expect, it } from 'vitest'
 import { clearAuditMemory, recentAudit } from '../../../../netlify/functions/_delivery/audit'
+import { getProperty } from '../../../../netlify/functions/_lib/data'
 import {
   renderProposalHtml,
   renderProposalPdf,
@@ -327,7 +328,7 @@ describe('the approval gate', () => {
 describe('the judgment moment, acted on', () => {
   it('prices at the compliant ceiling by default rather than at the number they asked for', async () => {
     const generated = await generate_proposal({ inquiry_id: 'INQ-2009' })
-    expect(generated.data!.discount_pct).toBe(15)
+    expect(generated.data!.discount_pct).toBe(getProperty('SOL-PHX')!.max_discount_auto_approve_pct)
     const pricing = (await getProposal(generated.data!.proposal_id))!.pricing
     expect(pricing.requested_discount_pct).toBe(17)
   })

@@ -34,14 +34,18 @@ is the only component that knows a vendor's field names. Everything above it, in
 in this proof of concept, stays unchanged when a property migrates PMS.
 
 That seam already exists here, and it is narrower than "a directory". The tools call
-`getReservation` and `getPropertyRate`, never a vendor API, and **every read of the provided data on
-the request path goes through one file** — `netlify/functions/_lib/data.ts` holds all seven imports of
-`data/generated/*.json`, and nothing that serves a request touches them directly. Swapping the CSVs
+`getReservation` and `getPropertyRate`, never a vendor API, and **every read of guest, reservation,
+policy and inquiry data on the request path goes through one file** — `netlify/functions/_lib/data.ts`
+holds all six imports of `data/generated/*.json`; the only other module on the request path that reads
+one is the group rule table, which reads the property directory (below). Swapping the CSVs
 for OPERA's Hospitality Integration Platform is a change to that file's implementation, not a
 rewrite. The group pricing path makes the same point in a comment: `getPropertyRate()` is the only
 sanctioned route to a nightly rate.
 
-**One file outside the seam reads the JSON, deliberately.** `scripts/show-verdict.ts` — the rehearsal
+**Two files outside the seam read the JSON, deliberately.** `src/lib/rules/thresholds.ts` derives the
+group rule table from `properties.json`, because it also runs in the browser for the inbox, where
+`data.ts` and its guest records must not ship; after a swap it keeps reading the exported directory
+until it is pointed at the adapter. `scripts/show-verdict.ts` — the rehearsal
 aid the live-modification demo runs — loads `data/generated/*.json` itself, because its whole purpose
 is to print a verdict with **no network and no model** in front of an audience. It is not on the
 request path, and the consequence is worth naming rather than hiding: after a PMS integration it

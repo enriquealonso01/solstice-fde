@@ -88,9 +88,8 @@ export interface RequiredDocumentRule {
   source_note: string
 }
 
-/** Everything the engine knows about one property, as data.
- *  This is the live control surface. Changing the Phoenix discount ceiling from 15 to 12
- *  is a one-line edit to `max_discount_auto_approve_pct` in thresholds.ts. */
+/** Everything the engine knows about one property, as data. Built by thresholds.ts from the
+ *  properties CSV plus the note rules in seasonal.ts. */
 export interface PropertyRuleSet {
   property_code: string
   property_name: string

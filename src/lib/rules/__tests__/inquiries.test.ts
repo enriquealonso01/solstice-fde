@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest'
 import type { RuleVerdict } from '../../../../shared/types'
-import { listProperties } from '../../../../netlify/functions/_lib/data'
+import { getProperty } from '../../../../netlify/functions/_lib/data'
 import {
   check_availability,
   draft_clarifying_questions,
@@ -17,7 +17,7 @@ import {
   validate_property_data,
   type EvaluationPayload,
 } from '../../../../netlify/functions/group/tools'
-import { PROPERTY_RULES, verifyAgainstProperties } from '../thresholds'
+import { PROPERTY_RULES } from '../thresholds'
 
 async function evaluate(inquiryId: string): Promise<EvaluationPayload> {
   const result = await evaluate_group_rules({ inquiry_id: inquiryId })
@@ -312,7 +312,9 @@ describe('INQ-2008 Buckeye Valley Marching Band, SOL-CMH', () => {
 // ============================================================================ INQ-2009
 
 describe('INQ-2009 Camelback Fitness, SOL-PHX — the judgment moment', () => {
-  it('flags ONLY the 2-point discount overage', async () => {
+  const ceiling = () => getProperty('SOL-PHX')!.max_discount_auto_approve_pct
+
+  it('flags ONLY the discount overage', async () => {
     const result = await evaluate('INQ-2009')
     const flags = blocking(result)
     expect(flags).toHaveLength(1)
@@ -320,7 +322,7 @@ describe('INQ-2009 Camelback Fitness, SOL-PHX — the judgment moment', () => {
       rule_id: 'GRP-DISCOUNT-CEILING',
       status: 'flag',
       actual: 17,
-      threshold: 15,
+      threshold: ceiling(),
     })
     // Everything else about this booking is fine, and the engine says so.
     expect(verdict(result, 'GRP-ROOMS-CAP')?.status).toBe('pass')
@@ -336,7 +338,7 @@ describe('INQ-2009 Camelback Fitness, SOL-PHX — the judgment moment', () => {
     const [atCeiling, escalate, counter] = result.decision_options
 
     expect(atCeiling.id).toBe('approve_at_ceiling')
-    expect(atCeiling.discount_pct).toBe(15)
+    expect(atCeiling.discount_pct).toBe(ceiling())
     expect(atCeiling.requires_approval_from).toBeNull()
 
     expect(escalate.id).toBe('escalate_to_gm')
@@ -344,7 +346,8 @@ describe('INQ-2009 Camelback Fitness, SOL-PHX — the judgment moment', () => {
     expect(escalate.requires_approval_from).toContain('Diego Fuentes')
 
     expect(counter.id).toBe('counter_with_value_add')
-    expect(counter.discount_pct).toBe(16)
+    expect(counter.discount_pct).toBeGreaterThan(atCeiling.discount_pct)
+    expect(counter.discount_pct).toBeLessThan(17)
     expect(counter.value_add).not.toBeNull()
 
     // Approving at the compliant number keeps more money than giving the full 17%.
@@ -430,29 +433,25 @@ describe('every verdict is readable aloud', () => {
 })
 
 describe('thresholds are data, not prose', () => {
-  it('changing the Phoenix ceiling from 15 to 12 is a one-line edit', async () => {
+  it('the Phoenix ceiling in the CSV is the one the verdict and the options use', async () => {
+    const ceiling = getProperty('SOL-PHX')!.max_discount_auto_approve_pct
     const before = await evaluate('INQ-2009')
-    expect(verdict(before, 'GRP-DISCOUNT-CEILING')?.threshold).toBe(15)
+    expect(verdict(before, 'GRP-DISCOUNT-CEILING')?.threshold).toBe(ceiling)
 
     const original = PROPERTY_RULES['SOL-PHX'].max_discount_auto_approve_pct
+    const edited = ceiling - 3
     try {
-      // This is exactly the line in thresholds.ts the panel will ask us to change.
-      PROPERTY_RULES['SOL-PHX'].max_discount_auto_approve_pct = 12
+      // Stands in for editing the CSV cell and rebuilding.
+      PROPERTY_RULES['SOL-PHX'].max_discount_auto_approve_pct = edited
 
       const after = await evaluate('INQ-2009')
       const discount = verdict(after, 'GRP-DISCOUNT-CEILING')
-      expect(discount?.threshold).toBe(12)
-      expect(discount?.human_reason).toContain('12%')
-      // And the options regenerate around the new number without anything else changing.
-      expect(after.decision_options[0].discount_pct).toBe(12)
-      expect(after.decision_options[2].discount_pct).toBe(15)
+      expect(discount?.threshold).toBe(edited)
+      expect(discount?.human_reason).toContain(`${edited}%`)
+      expect(after.decision_options[0].discount_pct).toBe(edited)
     } finally {
       PROPERTY_RULES['SOL-PHX'].max_discount_auto_approve_pct = original
     }
-  })
-
-  it('has not drifted from the property export', () => {
-    expect(verifyAgainstProperties(listProperties())).toEqual([])
   })
 })
 

@@ -12,7 +12,6 @@
 
 import type {
   Citation,
-  DateRange,
   Guest,
   GroupInquiry,
   LoyaltyTier,
@@ -28,7 +27,6 @@ import guestsJson from '../../../data/generated/guests.json'
 import reservationsJson from '../../../data/generated/reservations.json'
 import policiesJson from '../../../data/generated/policies.json'
 import inquiriesJson from '../../../data/generated/inquiries.json'
-import rulesJson from '../../../data/generated/rules.json'
 import dataQualityJson from '../../../data/generated/data-quality.json'
 
 // ------------------------------------------------------------------------------- types
@@ -73,62 +71,6 @@ export type PublicInquiry = Omit<InquiryRecord, 'dataset_notes' | 'contact_email
   contact_phone: null
 }
 
-export interface Rule {
-  rule_id: string
-  property_code: string | null
-  kind:
-    | 'discount_ceiling'
-    | 'auto_approve_rooms'
-    | 'meeting_capacity'
-    | 'inventory_capacity'
-    | 'blackout'
-    | 'hard_blackout'
-    | 'lead_time'
-    | 'required_document'
-    | 'routing'
-    | 'advisory'
-  label: string
-  on_violation: 'flag' | 'fail' | null
-  applies_when: {
-    match?: 'any_night'
-    months?: number[]
-    weekdays?: string[]
-    min_rooms?: number
-    max_rooms?: number
-    text_match?: { fields: string[]; any_of: string[] }
-  }
-  constraint: {
-    field: string
-    op: string
-    value: number | string | DateRange[] | Record<string, number>
-    unit: string
-  } | null
-  referral?: {
-    target_description: string
-    target_property_code: string | null
-    resolved: boolean
-    resolution_note: string
-  }
-  negotiable?: boolean
-  pricing_safe?: boolean
-  approximate?: boolean
-  human_reason: string
-  violation_template: string | null
-  recommended_action: string
-  citation: Citation
-  provenance: { source_field: string; extraction: string; source_text: string }
-}
-
-export interface Ruleset {
-  schema_version: number
-  resolution: { discount_ceiling: string; note: string }
-  predicate_semantics: Record<string, string>
-  evaluation_context_fields: string[]
-  counts: { total: number; by_kind: Record<string, number>; parsed_from_notes: number }
-  rules: Rule[]
-  notes_coverage: { property_code: string; clause: string; rule_ids: string[]; parsed: boolean }[]
-}
-
 // JSON imports widen string literals to `string`, so the shared unions (LoyaltyTier,
 // market_type, rate_plan, status) do not survive the import. The generated files are produced
 // by our own build script from a fixed schema, and `assertGeneratedData()` below re-checks
@@ -138,7 +80,6 @@ const guests = guestsJson as unknown as GeneratedGuest[]
 const reservations = reservationsJson as unknown as Reservation[]
 const policies = policiesJson as unknown as PolicySection[]
 const inquiries = inquiriesJson as unknown as InquiryRecord[]
-const ruleset = rulesJson as unknown as Ruleset
 
 const byPropertyCode = new Map(properties.map((p) => [p.property_code, p]))
 const byGuestId = new Map(guests.map((g) => [g.guest_id, g]))
@@ -459,25 +400,6 @@ function snippetFor(section: PolicySection, terms: Set<string>): string {
   return section.body.slice(0, 180).trim()
 }
 
-// -------------------------------------------------------------------------------- rules
-
-export function getRuleset(): Ruleset {
-  return ruleset
-}
-
-export function listRules(): Rule[] {
-  return ruleset.rules
-}
-
-export function getRulesForProperty(propertyCode: string): Rule[] {
-  const code = propertyCode.trim().toUpperCase()
-  return ruleset.rules.filter((r) => r.property_code === code || r.property_code === null)
-}
-
-export function getRule(ruleId: string): Rule | null {
-  return ruleset.rules.find((r) => r.rule_id === ruleId) ?? null
-}
-
 // ---------------------------------------------------------------------------- inquiries
 
 function toPublic(record: InquiryRecord): PublicInquiry {
@@ -593,11 +515,6 @@ export function assertGeneratedData(): string[] {
   for (const i of inquiries) {
     if (i.preferred_property_code && !byPropertyCode.has(i.preferred_property_code)) {
       problems.push(`${i.inquiry_id}: unknown property ${i.preferred_property_code}`)
-    }
-  }
-  for (const rule of ruleset.rules) {
-    if (rule.property_code && !byPropertyCode.has(rule.property_code)) {
-      problems.push(`${rule.rule_id}: unknown property ${rule.property_code}`)
     }
   }
   return problems

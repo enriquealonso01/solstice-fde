@@ -12,13 +12,8 @@ import type { Citation, ToolResult } from '../../../shared/types'
 import { getPropertyRate, loadPolicies, toolFail, toolOk } from './_deps'
 import { normalizeText, optString, policyCitation, propertyCitation, type ToolArgs, type ToolContext } from './helpers'
 import { resolveProperty } from './lookups'
-import {
-
-  PARKING_RULES,
-  POLICY_INDEX,
-  PROPERTY_NOTE_RULES,
-  type PolicyIndexEntry,
-} from './rules'
+import { PARKING_RULES, POLICY_INDEX, type PolicyIndexEntry } from './rules'
+import { describeNoteRules } from '../../../src/lib/rules/seasonal'
 
 // ------------------------------------------------------------------ get_policy
 
@@ -149,8 +144,6 @@ export async function getPropertyInfo(args: ToolArgs, _ctx: ToolContext): Promis
   const deluxe = referenceRate(property.property_code, 'Deluxe King')
   const suite = referenceRate(property.property_code, 'Suite')
 
-  const noteRules = PROPERTY_NOTE_RULES.filter((r) => r.property_code === property.property_code)
-
   const citations: Citation[] = [propertyCitation(property.property_code, property.property_name)]
   if (askedAboutParking) citations.push(policyCitation(12))
 
@@ -192,7 +185,8 @@ export async function getPropertyInfo(args: ToolArgs, _ctx: ToolContext): Promis
         .filter((r) => r.reason !== null),
     },
     data_quality_flags: property.data_quality_flags ?? [],
-    structured_notes: noteRules.map((r) => ({ kind: r.kind, rule: r.human_rule, detail: r.detail })),
+    // The rules in raw_note, from the same constants the group engine enforces.
+    structured_notes: describeNoteRules(property.property_code),
     raw_note: property.notes ?? null,
     ...(askedAboutParking ? { answering: 'parking', refusal: 'no chain-wide parking rate exists' } : {}),
   }
