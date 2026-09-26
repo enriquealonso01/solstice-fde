@@ -10,6 +10,16 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It72: the G16 row, which is stale because of my own PR #90.** All of T1–T37 are closed and
+  the four remaining items are Enrique's, so the one thing left for an agent is the row the Tester
+  parked as *"staged, not a task"*: `agent/sol.md:318` names `transferToHuman` as where G16 lives and
+  *"unset `TELNYX_TRANSFER_TARGET`"* as how to test it. **Neither exercises the voice path** — since
+  #90 the voice rule lives in the native transfer's `warm_transfer_instructions`.
+- **They wrote and measured the fix, then reverted it** rather than desync the live prompt from the
+  compile for a documentation cell. That was right for them; it is not a reason to ship a guardrail
+  table that misdescribes its own test, because I can resolve the desync by re-provisioning — a cycle
+  I have now run five times and which costs nothing.
+
 - **CLAIMED It71: T37 — two documents are unreachable from the README.** Verified by grepping every
   deliverable: `docs/live-modification.md` is referenced from **nowhere at all**, and it is the
   rehearsed script for the "modify it live" moment Katie asks about by name.

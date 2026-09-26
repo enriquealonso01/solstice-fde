@@ -4,52 +4,48 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 98 — 2026-09-25 ~20:02 EST
+## Iteration 100 — 2026-09-25 ~20:10 EST
 
-### Every task T1–T37 is closed. The plan is accurate and correctly ordered.
+### All tasks closed. The plan is accurate and correctly ordered.
 
-Inbox empty. Suite **476 passed, 37 files**. Guardrails 18 of 19.
+Inbox empty. No lock held. Suite 476/37. Guardrails 18 of 19.
 
-### T36's routing argument was confirmed by the agent whose PR it questioned
+### I audited the deliverable text my own specs produced
 
-Tester iteration 57 measured the live assistant: **23 webhooks, `transfer_to_human` not among
-them**, so on a real call the model cannot call it. PR #90's native transfer instructions match
-every phrase of G16's criterion, and the re-export did not undo the SIP redaction.
+After iteration 99 — a sentence I specified that was true and left a false impression — I checked
+the rest.
 
-Their own words about their own work:
+**T33's disclosure holds, claim by claim:**
 
-> *"my PR #85 hardened a branch Telnyx never reaches… **Third instance of fixing code the live path
-> does not execute.**"*
+```
+notify is an inert string array          ✓   _delivery/ carries proposals and audit   ✓
+no screen lists escalations              ✓   the queue view is marked FUTURE          ✓
+```
 
-**That phrase is the most useful thing produced this iteration, and it is theirs.** It belongs beside
-*"a test in the commit is not a test that runs"* and *"merged is not deployed is not working"* — the
-same distinction at three altitudes.
+It says *"nothing notifies the manager"* without hedging, so the impression matches the fact. The
+spec that produced it asked for **the mechanism to be named**, not for a gap to be acknowledged —
+apparently the difference that matters.
 
-### T37 closed, and the guard caught what I warned it would
+**The guardrail sentence is now adequately scoped.** `README.md:90` states its subject twice as the
+table and its nineteen rules, and the open defect is disclosed twenty-five lines below. **I
+considered adding a cross-reference and decided against it** — after yesterday's correction,
+over-correcting is the likelier error now.
 
-`README.md:25-26` carry both orphaned documents; `SUBMISSION.md:51-53` list them; and the count
-sentence reads **"Four things"** against four bullets. That was the exact change I flagged
-`list-counts.test.ts` would catch if forgotten. It was not forgotten.
+### The concern I brought to this iteration was already closed
 
-### The staged G16 row — recorded so a 5,000-line log does not swallow it
+*"One defect is open at the time of writing"* **becomes wrong the moment Enrique does item 1 on his
+list**, and nothing I had recorded said so. It is covered at `HUMAN_INTERVENTION.md:753`: *"If you
+apply migration 004 before you submit, delete both"*, with `git revert fe04948` offered if he
+disagrees with disclosing it at all, and the epistemic bound stated — *"My first draft said a rep
+could 'send a block that was never approved'; I never sent one."*
 
-`agent/sol.md:318` describes a test that does not exercise the path it names. The Tester wrote the
-replacement, **measured it (+44 chars, margin 681 → 637, cap guard green)**, and **reverted rather
-than desynchronise the live voice prompt for a documentation cell.**
+**I added the post-apply step to item 1 in the plan's open-work table**, so it sits beside the SQL
+rather than 750 lines into another file.
 
-**I agree and filed no task.** The work is done; it needs not to be lost. **Whoever next runs
-`--refresh` for any reason should paste it in the same pass** — free once a provision is happening,
-and it closes the one place where a table promising auditability names a check that does not audit.
-
-**If no re-provision happens before 11:00, ship as is.** The row is slightly wrong about the test;
-the guardrail is verified and the behaviour is right.
-
-### Also landed
-
-**#94** — assert the tree before deploying rather than trust `git pull` not to error, closing the
-failure that let a deploy run from a tree that was not `origin/main`.
+**Second iteration running where I found a plausible gap and found it already closed.** That is what
+this system looks like when it is finished rather than merely quiet.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** All four remaining items are Enrique's; this is the only one with a
-live security consequence.
+**The `drop policy` paste** — and if it is applied before submitting, **delete the disclosure
+paragraph in `README.md` and the row in `SUBMISSION.md`**.
