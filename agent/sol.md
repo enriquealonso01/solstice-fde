@@ -271,9 +271,10 @@ live at `GET /api/tools`; the names and shapes come from `shared/toolContracts.t
 
 `netlify/functions/tools/availability.ts` is the tool the sample data did not hand us.
 
-**Why it had to exist.** Policy 1 and Policy 6 both turn on the phrase "subject to same-day
-availability". The provided exports contain room *counts* per property and room class, and
-nothing at all about occupancy on a given night. Without this service, every late checkout and
+**Why it had to exist.** Policy 1 and Policy 6 both turn on same-day availability and use
+different words for it -- Policy 1 makes late check-out "based on same-day room availability",
+Policy 6 makes the Platinum upgrade "based on same-day inventory". The provided exports contain
+room *counts* per property and room class, and nothing at all about occupancy on a given night. Without this service, every late checkout and
 every upgrade answer would have been the model inventing availability, which is the single thing
 the brief forbids. So we named the gap instead of hiding it.
 

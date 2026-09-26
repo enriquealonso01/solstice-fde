@@ -2,7 +2,8 @@
  * THE NET-NEW SERVICE: same-day availability by property, date and room class.
  *
  * WHY IT EXISTS (stated assumption, repeated in agent/sol.md and the README):
- * Policies 1 and 6 both hang on the phrase "subject to same-day availability",
+ * Policies 1 and 6 both hang on same-day availability in different words -- Policy 1 says
+ * "based on same-day room availability", Policy 6 "based on same-day inventory" --
  * but the provided exports contain no inventory-by-date anywhere. Room COUNTS
  * exist on the properties export; OCCUPANCY on a given night does not. Without
  * this service the agent would have to invent availability every time a guest

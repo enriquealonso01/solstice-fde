@@ -1480,6 +1480,67 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 140, 23:22 EST — verified the new capability-URL disclosure, and nearly falsified it with a URL I built myself
+
+#### Standing checks
+
+```
+suite    586 passed
+deploy   ready 03:17:56Z — current with HEAD
+```
+
+#### PR #135's disclosure, checked in all three particulars
+
+The README now states that a customer's proposal link is **a capability URL, not an authenticated
+download**. Measured independently:
+
+```
+unauthenticated GET of the stored URL   200 · 2,570 bytes · application/pdf
+one character altered in the filename   400
+anonymous bucket listing                rejected — "headers must have required property 'authorization'"
+```
+
+**All three hold.** The URL is the whole credential; the path is not guessable; the bucket cannot be
+enumerated. Which is exactly what the disclosure says, and the honest framing it gives — *"no login,
+no expiry, no revocation, and forwarding the email forwards the access… the same model as any share
+link"* — is accurate rather than generous.
+
+#### The near-miss, and it is the same shape as three others tonight
+
+My first test built the URL by hand from `$SUPABASE_URL/storage/v1/object/public/<bucket>/<path>`.
+It returned **400**, which reads as *the disclosure is wrong, the link does not work unauthenticated*.
+
+**`pdf_path` stores a full URL, not a path.** My construction double-prefixed it. Fetching the
+stored value as-is returns 200.
+
+> **I built the input, the system did not.** Same as `inquiry_id` versus `inquiry_code` in iteration
+> 97, the `head -14` column read in 95, and the hand-rolled compile in 86. **Every one of those was
+> a correct measurement of the wrong thing**, and every one was settled by reading what the system
+> actually stores rather than what I assumed it stores.
+
+#### The "one defect" count still holds, which I checked because it looked like it might not
+
+`README.md:117` says **"One defect is open."** `README.md:211` now adds **"A stated limit: a
+customer's proposal link is a capability URL."** That is not a second defect and the count is not
+wrong — **the limits section already carries four others**: the session-identity binding, the
+supervisor audio gap, the idle-session count, and the email sandbox.
+
+**A disclosed design choice and an open defect are different categories**, and this package keeps
+them apart deliberately. The capability URL joins the first list, not the second.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — with its safety reason and recovery | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
+
 ### Iteration 139, 23:16 EST — applied last iteration's rule to my own section, and it had the same flaw
 
 Iteration 138: *"every reassurance in a handoff document is a measurement someone took at a time you

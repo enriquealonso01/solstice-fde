@@ -9,27 +9,27 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It102: both unexercised boundaries hold — and the one real gap was a limit the package
-  never disclosed.**
-- **Tool routes are closed.** `/api/tools` reports `secured: true`; a call to a read-only tool returns
-  **401** with no header **and** with a wrong key; `/api/group/tool` refuses the same way. README's
-  *"25 tools"* matches the export exactly (25); the 12 at `/api/tools` are the guest subset, not a
-  contradiction.
-- **The customer's proposal link cannot be walked.** A storage `list` on the `proposals` bucket returns
-  **zero entries** with the public anon key *and* with a signed-in concierge token; one altered path
-  segment returns **400**, not another customer's PDF.
-- **But the bucket is `public: true` and the URL is the whole credential** — no login, no expiry, no
-  revocation, and forwarding the email forwards the access. Defensible, and the same model as any share
-  link. **No deliverable said it.** This README discloses the session-identity limit, the approval gate,
-  the supervisor audio gap and the idle-session count in that same section, and omitted the one limit
-  that touches an outside party's pricing. Added in the section's own voice, with the measurements.
-- **Guarded**: while `store.ts` calls `getPublicUrl`, the README must carry the disclosure, and the
-  paragraph must keep naming the mechanism, the public bucket, the absent login, the absent expiry and
-  the enumeration evidence. Red-checked three ways, including "the code moves to a signed URL".
-- **The guard caught me twice.** My first pin was the literal path — Supabase builds that inside
-  `getPublicUrl`, so `store.ts` never contains it. Then I "corrected" a citation from 158 to 157 off a
-  `sed` range print and `doc-citations` refused it: **158 is the function, 157 its comment.** The
-  instrument was right and I was not — fourth off-by-one of that kind here.
+- **SHIPPED It103: the fabricated policy quotation I fixed at It93 was in two more places, and one of
+  them was the live phone agent's prompt.**
+- Started by checking that every tool the assistant carries resolves to a route that exists — **all 23
+  webhook tools do.** 11 guest tools at `/api/tools/<name>`, 12 group tools at `/api/group/tool`, plus
+  native `transfer` and `hangup`. The one extra on the route, `transfer_to_human`, is the chat
+  runtime's stand-in for the native transfer; **not** a mismatch.
+- **Then `agent/sol.md:274` turned up the invented phrase** *"subject to same-day availability"* —
+  which occurs **0** times in the policy document — and it **reached the compiled voice prompt**. Also
+  in `netlify/functions/tools/availability.ts:5`, the header of the service the quotation exists to
+  justify.
+- **Why It93 missed both: the copy in `sol.md` wraps across a line break** (`same-day` ends one line,
+  `availability` begins the next), so the line-oriented sweep reported nothing. **Third time this
+  session a line wrap has defeated a check.** The guard now flattens whitespace before searching.
+- **Fixed both to the accurate wording**, re-provisioned and re-exported: `compile === export === live`
+  at **29,151**, margin **849**, fabrication count **0** in the live prompt. Diffed the live prompt
+  against the new compile first — the change was that one sentence and nothing else.
+- **Banned by name**, across every deliverable, the tool source, and the compiled prompt itself.
+  Red-checked by restoring the line-wrapped original: both the file case and the compile case fire.
+- **Reported, not changed:** the `transfer_to_human` row in §4 is accurate for `/api/tools` and for
+  chat, but voice has no such tool. The behaviour it describes is what the native transfer does, and I
+  cannot test a call, so I am not spending margin on a claim about voice I cannot verify.
 
 ## Demo rehearsal coverage — what is actually verified
 
@@ -59,7 +59,7 @@ in `agents/completed.log.md`, not here.
 
 ## Standing state
 
-- `compile === live === export`, **29,006**, margin **994**, and now **platform-independent** — the
+- `compile === live === export`, **29,151**, margin **849**, and **platform-independent** — the
   old 29,411/589 was a CRLF artifact (It96). Re-checked whenever `agent/sol.md` moves.
 - Guards I own, each red-checked by reintroducing the defect it catches: `admin-prose`,
   `voice-prompt-size`, `doc-citations` (counts, links), `list-counts`, `export-redaction`,
