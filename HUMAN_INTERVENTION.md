@@ -60,6 +60,43 @@ tools, the cheat sheet's group-booking claim, the runbook's `INQ-2009` URL, fail
 
 ---
 
+## Update, 2026-09-26 — two decisions the 15:30 list above does not mention
+
+**The block above is unchanged and stays as written.** This is a separate, later block, placed here rather
+than at the end of the file because the list above tells you *"read this block; the rest is history"* — and
+two things were found after 15:30 that are not history. Neither appears in `SUBMISSION.md`'s **Before
+sending** checklist or the runbook's **Before they join** either, so this page is the only place they can
+reach you.
+
+**A. The approval gate can be bypassed from the browser — three lines of SQL.** A signed-in `group_sales`
+rep can PATCH a proposal's `status` to `approved` with the public anon key; `canSend` then stops refusing,
+and `approved_by` stays null, so the gate credits an approver who does not exist.
+
+- The three `drop policy` statements to paste, Supabase SQL editor, project `bcrivjgqrxahgxyiqlpr`:
+  **line 596**. The instructions around them start at **line 592**, *"### What to run"*.
+- The full entry — how it was found, why dropping those policies is safe, what still works afterwards:
+  **line 563**, *"A signed-in sales rep can approve their own flagged proposal, from the browser"*.
+- **If you apply it, delete the three disclosures**: the list is at **line 804**, *"The three places that
+  mention it"*. All three or none — they cross-reference each other.
+- Verified since: the three `*_read` policies in `supabase/schema.sql` are declared separately, so dropping
+  the write policies does **not** take the group sales inbox blank. That property is now pinned by a test.
+
+**B. A Telnyx SIP credential *username* is in git history — a decision, not a task.** Three options are at
+**line 715**, *"Three options, and my recommendation is the first"*.
+
+- **The recommendation is option 1: accept it and rotate after the demo.** The username alone is not usable
+  and the password was never committed. Option 2 rotates now, which changes `TELNYX_SIP_USERNAME`, the SIP
+  URI and the live assistant's transfer target — that is the beat 3 path, hours before the demo.
+- Option 3, rewriting history, is the one to avoid: it would invalidate the commit ids the deliverables
+  cite.
+
+**Two later updates you would otherwise have to find by scrolling**, both further down this file: item 3
+above, `npm run demo:tidy`, now takes `--minutes` — the default leaves everything from the last half hour on
+screen, and once the agent loop is stopped `npm run demo:tidy -- --minutes 2` clears it. And the bare
+pet-question item is **RESOLVED** and needs no decision from you.
+
+---
+
 ## Open
 
 - **Telnyx balance is $3.15, and it is more urgent than the number looks.** A single ~3-second

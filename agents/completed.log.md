@@ -6492,3 +6492,63 @@ measurement.
 
 `npx tsc -b` clean. `npx vitest run` **652 tests / 51 files** green (up 22 — the two new cases run across
 every deliverable).
+
+## It116 — T45: two of Enrique's four decisions reached him nowhere
+
+The first queued task in a while, and the Planner was right that they could not fix it: the routing gap is in
+`HUMAN_INTERVENTION.md`, which the shipping agents append to.
+
+**Verified the matrix before writing a word.** `HUMAN_INTERVENTION.md` opens with a short list dated
+**2026-09-25 15:30** that says *"read this block; the rest is history and evidence."* It contains the Telnyx
+top-up and the two junk inquiries. It does **not** contain the RLS `drop policy` paste (found 17:52, PR #62)
+or the SIP credential rotation (~22:30) — and neither is in `SUBMISSION.md`'s **Before sending** checklist or
+the runbook's **Before they join**. Both were written up properly further down the same file, on a page whose
+own opening tells the reader they need not go that far.
+
+Nobody's mistake: the list was written before either existed, and was never reopened.
+
+### Two of the task's own pointers were already stale
+
+T45 cited five line numbers. Checked against the file:
+
+```
+:559  drop policy statements                      correct
+:678  the rotation options                        correct
+:758  second copy of the SQL                      correct
+:512  "full entry, safety reasoning, recovery"    WRONG -- a sentence about transcripts/honest-handoff.md
+:753  "the three disclosures"                     WRONG -- a blank line
+```
+
+Had I pasted the task's text, Enrique would have followed a pointer to a paragraph about a transcript while
+looking for the RLS recovery steps, at 08:00 on submission morning. The real targets are **563** (the entry),
+**592 / 596** (the heading and the SQL), **715** (the options) and **804** (the three disclosures), each read
+back before being written down.
+
+### And then I did it myself
+
+The update block is 37 lines. Inserting it shifted every line below by 37 — so the numbers I had just
+verified were wrong the moment I saved the file. `526 → 563`, `559 → 596`, `678 → 715`, `767 → 804`. I
+committed the exact failure the task is about while fixing it.
+
+That is why this shipped with a guard rather than a note to be careful. `intervention-routing.test.ts` pins
+two properties:
+
+1. **Every decision of his is reachable from the region above `## Open`** — the RLS paste, the project id,
+   the SIP decision, the top-up, the two inquiries. Not the wording, the reachability.
+2. **Every `line N` pointer in that region lands on the text it claims.** This file has no `doc-citations`
+   cover, and it is where a stale pointer costs most.
+
+Red-checked both. The first restores the old `678`, which now lands on a **different** *"Three options"*
+heading — a near-miss that reads as correct, which is worse than an obvious miss. The second deletes the SIP
+paragraph and is told which decision stopped being reachable.
+
+The guard also caught two flaws in my own writing before it shipped: the block said *"three lines of SQL"*
+without the words `drop policy`, so grepping for it failed; and *"**line 596**, under *"### What to run"*"*
+was true in English but ambiguous as a pointer — 596 is the SQL, 592 is the heading. Both numbers are now
+given separately.
+
+**The 15:30 block is byte-identical** — `git diff` shows no removed lines. The update is a separate dated
+block placed immediately after it, because appending at the end of a 950-line file would have reproduced the
+bug: he would never have seen it.
+
+`npx tsc -b` clean. `npx vitest run` **659 tests / 52 files** green (up 7).
