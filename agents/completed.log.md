@@ -10192,3 +10192,94 @@ single-line mutations, both of which fire. *Second iteration in a row that a ski
 re-done, and both times the tell was reading the line above the result rather than the result.*
 
 `npx tsc -b` clean. `npx vitest run` **923 tests / 65 files** green (up 7).
+
+---
+
+## It157 — swept the class It156 exposed in me, and found one guard judging an empty list
+
+The board was empty for a sixth time, and the Planner had left a note worth acting on: at **07:29 the
+suite was red**, four cases in a file created that minute — mine, mid-flight. They reproduced its regexes
+by hand against the real `registry.ts` to rule the product out, and wrote *"I wrote 'is green' here three
+minutes before it stopped being true."* Confirmed green here first: **923 / 65**.
+
+Three of my parsers in that file had silently matched **nothing**, and only a vacuity assertion placed
+first turned it into a failure rather than a guard passing over an empty table. So: does any other guard
+have that hole?
+
+### The sweep, and it mostly came back clean
+
+Twenty-one test files regex over file contents and assert on the result. **All 21 carry at least one
+numeric floor**, so there is no file with none. `list-counts`'s bans look unfloored but are not the same
+shape — they match *forbidden* patterns, where zero is the correct answer, and it already has its own
+positive control (*"finds counted lists at all, so this cannot pass by matching nothing"*).
+
+I nearly stopped there and reported the class covered. The file-level count is crude, though: one floor in
+a file with two extractions proves nothing about the second.
+
+### One real gap, in the guard with the worst history for exactly this
+
+`admin-prose.test.ts` bans implementation vocabulary on operator screens. It floors the **file** count
+(>10, actually 23) and nothing else — while the thing it judges is a *filtered extraction* of prose:
+394 strings when measured. Its own header records three extractions that were too narrow: one read only
+`label=`/`hint=`/`body=` attributes, one matched quoted strings only, and one *"matched almost nothing
+under V8"*.
+
+Proven rather than argued. Collapse its quoted-string regex to match nothing, and run both versions:
+
+```
+PRE-refactor, extraction matching nothing    Tests  2 passed        <- the ban judged an empty list
+shipped version, same collapse               Tests  1 failed | 3 passed
+                                             x pulls real prose out of them, so the ban below is not
+                                               judging an empty list
+```
+
+**The old guard reported success with nothing to judge.** Same tree, same break, one line of difference.
+
+### What it has now
+
+Three parts instead of one, which is the general shape a ban needs:
+
+1. **A floor on the population** — >250 prose strings, plus >100 of them six words or longer, so the
+   extraction cannot degrade into fragments and still pass.
+2. **A positive control on the matcher** — `jargonIn` must catch *"written to the supabase table"* and
+   *"the endpoint returned an error"*, and must not fire on real operator prose. Every failure this file
+   has had was the matcher missing something, and a word list that silently stops matching looks exactly
+   like clean prose.
+3. **The ban itself**, unchanged, with its original message reused verbatim.
+
+The collection and the matcher are now one shared function each, called by all three cases. Duplicating
+the filter chain into the new cases would have been the worse option — a second copy is a second thing to
+keep true, and an assertion holding its own copy of the answer is the mistake this suite finds in itself
+most often.
+
+Red-check: extraction collapsed → **1 failed** (the floor) · jargon list emptied → **1 failed** (the
+control) · a real term planted in `AdminHome.tsx` → **1 failed** (the ban still works after the refactor)
+· restored → **4 passed**, both files byte-identical.
+
+### Two rules written into `agents/README.md`
+
+**A ban needs a floor on what it banned over, and a positive control.** With the measured instance, because
+"the guard reported 2 passed over an empty list" is more convincing than the principle.
+
+**Get a new test file green before it lands in the shared tree.** One HEAD, three agents: a file broken for
+four minutes while its parsers are fixed is a red suite for whoever runs one in those four minutes, and the
+Planner does constantly. Iteration 156 cost them an investigation and a correction to their own summary.
+Write it in the scratchpad, run it there against real repository paths, copy it in once it passes — same
+file either way.
+
+### Instrument notes
+
+**Two failed patch attempts, both from guessing text instead of reading it.** The first heredoc broke on the
+curly apostrophe in `operator’s`; the second exact-match failed because the file uses an **em dash** in
+`"${text}" — contains` where I had typed a hyphen. Neither wrote anything, both because the patch asserts
+its anchor count first. Fixed by anchoring on **structure** — find the case's opening line, find its closing
+`  })`, splice — and by reusing the file's own `expect` block verbatim rather than retyping it.
+
+**And a nested-quoting failure left the pre-refactor file in place.** Escaping a regex through bash into
+`python -c` mangled the anchor; the `cp` had already run, so the working tree briefly held the old version.
+Restored immediately and verified byte-identical, then moved the whole comparison into a script file with
+the restore in a `finally`. *Second iteration running that a red-check has left a file in the wrong state —
+last time it was `SUBMISSION.md`.* The fix both times was the same: destructive steps belong in a script
+that restores in `finally`, not in a shell pipeline that can die between the write and the restore.
+
+`npx tsc -b` clean. `npx vitest run` **925 tests / 65 files** green (up 2).

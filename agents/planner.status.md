@@ -4,58 +4,52 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 230 — 2026-09-26 07:32 EST
+## Iteration 231 — 2026-09-26 07:35 EST
 
-**The suite is RED: 4 failed, 919 passed (923)** — all four in one file created at **07:29**,
-`src/lib/rules/__tests__/failure-injection.test.ts`, while I was reading the banner I had just rewritten. It156
-is mid-flight; no log entry yet. **Nothing is open for an agent** — this is in-flight work, not a task.
+**Green again: 923 passed / 65 files.** It156 landed at 07:32; the suite was red for about three minutes.
+**Nothing is open for an agent.**
 
-### The product is not implicated, and I checked rather than assumed
+### I got the cause wrong, and how I got it wrong is the point
 
-The four failures share one root — three of them are the file's **own anti-vacuity cases firing**, which is the
-right behaviour for a guard whose input went missing:
+At 07:31 I wrote — in the banner Enrique reads — that the failures meant *"the failure is in how that new test
+reaches the file, not in what it checks"*, on the strength of reproducing its regexes against `registry.ts` and
+parsing 11 handlers.
 
-```
-the handlers map parsed empty: expected 0 to be >= 8
-DEPENDENCY_OF names check_late_checkout, …(7), which no handler is registered under
-no tool was found reaching the inventory service, so this case proved nothing
-Cannot use 'in' operator to search for 'pms_offline' in undefined
-```
+**The real cause, from It156's own entry:** its `handlerOf()` looked for an inline
+`new Map(Object.entries({...}))` — *"The registry does not have one"* — so it parsed nothing; and
+`OUTAGE_REASON` was imported from `_deps`, which does not re-export it, arriving `undefined`.
 
-**The handlers are mounted:** `registry.ts:31-41` declares `CONCIERGE_HANDLERS` with all of them and `:181` sets
-every one. The Chen beat I drove at 06:09 used two of them live.
+**The file reached `registry.ts` perfectly well. The parser was looking for a shape that does not exist.**
 
-**And the regex is not the problem.** I ran the test's own patterns against the real file:
+Why my check said otherwise: **I read the file after it had already been partly fixed.** The failing run was
+07:29:04; I measured at ~07:31 while the Implementer was editing continuously, so the version I parsed already
+used the `CONCIERGE_HANDLERS` pattern. **I diagnosed a past failure with a present artifact and reported it as
+fact.**
 
-```
-block matched: True    entries parsed: 11    [('identify_guest','identifyGuest'), …]
-```
+> **New rule tonight: a file under active edit is not evidence about a run that has already finished.** Capture
+> the artifact at the moment of failure, or say only what the failure output says. My instrument was sound;
+> **the wrong assumption was that the disk still held what the run had read** — *reproducibility is not
+> validity*, one layer down: I reproduced something, just not the thing that failed.
+>
+> The honest output was available and I walked past it: *"four failures in a file created a minute ago; three
+> are its own anti-vacuity cases firing; the product is not implicated."* All true, no diagnosis required.
+> **Corrected in the banner and at the head of the iteration-230 entry.**
 
-The same pattern that parses empty inside the test parses all eleven from disk — so the defect is in how the new
-file *reaches* `registry.ts`, not in what it checks. That is the part the Implementer needs and as far as I can
-take it without touching code.
+### What It156 closed, which is worth more than the red window
 
-### The part that is mine: my rule failed its first application
+`SUBMISSION.md`'s email offers a reviewer three things to try. Two were covered. The third — *"take the PMS
+offline and ask for a late checkout… while policy questions keep working"* — had **no test mentioning
+`pms_offline` at all**, and it is the one a reviewer can act on with no data of their own.
 
-One iteration ago I removed three stale counts from this banner and wrote the rule as a test:
+Both halves are decided by one table, so they are checkable from the wiring with nothing flipped:
+`check_late_checkout` **is** mapped to `pms_offline`, `get_policy` **is not**. And the case that earns the file
+is the inverse: any tool whose module calls `sameDayAvailability`, `houseOccupancy` or `availabilityByClass`
+**must** be mapped to `pms_offline`, derived from source rather than restated. *That closes the loop with T59
+from the other side — T59 proved the net-new tool behaves; this proves nothing can quietly start depending on
+it without degrading with it.*
 
-> *"If a sentence on this screen would be wrong after the next merge, it does not belong on this screen."*
-
-**The replacement sentence I wrote in that same edit was *"`npx vitest run` is green."*** True when written,
-false three minutes later.
-
-> I applied my own test to numbers and not to verdicts. *"898 tests"* and *"is green"* rot for identical
-> reasons. A count at least looks like a measurement; **a verdict reads like a property**, which is exactly why
-> it passed the filter I had just built. **Tenth recurrence, second consecutive iteration, third time the fix
-> and its violation shared an edit.**
-
-**The banner now carries neither a count nor a verdict** — the command, and what happened when I last ran it.
-
-### Also checked
-
-`agent/sol.md` (01:34) and `exports/telnyx-assistant.json` (02:54) are untouched since the 04:52 byte-identical
-check, so the **29,784** triple still holds — the oldest measurement on that screen, which is why I went looking
-at mtimes and found the red suite.
+It also names why this survived to submission day: **the Tester's permission layer refuses flag writes**, so the
+agent who would have found it could not reach the switch.
 
 ### Open
 
@@ -68,10 +62,11 @@ at mtimes and found the red suite.
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
 
-Nothing for an agent. Tester silent since 20:26 (**11h06m**); no open findings. Inbox and In progress empty. No
+Nothing for an agent. Tester silent since 20:26 (**11h09m**); no open findings. Inbox and In progress empty. No
 lock held; I took none. Plan guards re-run: **104 green**.
 
 ### The single most important remaining item
 
-**Watch the suite back to green** — it is one in-flight file and the product is not implicated, but nothing
-ships red. **Then the `drop policy` paste**, still the one action nobody else can take.
+**The `drop policy` paste.** The suite is green, the red window is explained and corrected, and the last
+uncovered thing the submission email invites is now guarded. **The SQL is the one action left that nobody else
+can take.**

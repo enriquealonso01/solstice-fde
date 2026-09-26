@@ -113,6 +113,51 @@ function visibleText(source: string): string[] {
   return out
 }
 
+/**
+ * The strings this test will actually judge, collected once.
+ *
+ * Extracted from the ban at iteration 157 so the floor and the positive control can ask about the same
+ * population the ban asks about. Duplicating the filter chain would have been worse: a second copy is a
+ * second thing to keep true, and an assertion holding its own copy of the answer is the mistake this
+ * suite has found in itself most often.
+ */
+function proseCandidates(): { file: string; text: string }[] {
+  const out: { file: string; text: string }[] = []
+
+  for (const file of sourceFiles()) {
+    if (EXEMPT_FILES.some((name) => file.endsWith(name))) continue
+    const source = readFileSync(join(repoRoot, file), 'utf8')
+    for (const raw of visibleText(source)) {
+      const text = raw.replace(/\s+/g, ' ').trim()
+
+      // Prose, not an identifier, a class list or a key: four or more words with a space.
+      if (text.split(' ').length < 4) continue
+      // TypeScript generics make the JSX pass read `useState<string | null>(null) const x = useRef<` as
+      // if it were prose. Anything that looks like code is not something an operator reads.
+      if (/(^|[ (])(const|let|export|function|return|import|await|use[A-Z])[ (<]/.test(text)) continue
+      if (text.includes('=>') || text.includes('===')) continue
+      // Tailwind class strings are long and space-separated but are not prose.
+      if (/^[a-z0-9:/\[\]\-. ]+$/.test(text) && /(\bbg-|\btext-|\bflex\b|\bgrid\b|\brounded)/.test(text)) continue
+
+      out.push({ file, text })
+    }
+  }
+
+  return out
+}
+
+/**
+ * Word-level rather than a regex, on purpose. The first version of this built its pattern in a template
+ * literal, where `\b` is the BACKSPACE character and not a word boundary, so it compiled to something
+ * that could never match. Splitting into words is both harder to get wrong and exactly the question
+ * being asked.
+ */
+function jargonIn(text: string): string | undefined {
+  const words = new Set(text.toLowerCase().match(/[a-z0-9_]+/g) ?? [])
+  const lower = text.toLowerCase()
+  return JARGON.find((term) => (term.includes(' ') ? lower.includes(term) : words.has(term)))
+}
+
 function sourceFiles(): string[] {
   const files: string[] = []
   for (const dir of SCREEN_DIRS) {
@@ -128,34 +173,46 @@ describe('admin screens speak the operator’s language', () => {
     expect(sourceFiles().length).toBeGreaterThan(10)
   })
 
+  /**
+   * The population, not just the files.
+   *
+   * The case above proves there are screens; it says nothing about whether any TEXT came out of them.
+   * This file's own history is extractions that were too narrow -- one read only `label=`/`hint=`/`body=`
+   * attributes, one matched quoted strings only, and the header above describes a third that matched
+   * "almost nothing under V8". **A ban over an empty extraction passes.** 394 strings reached the jargon
+   * check when this was written, across 23 files.
+   */
+  it('pulls real prose out of them, so the ban below is not judging an empty list', () => {
+    const candidates = proseCandidates()
+    expect(
+      candidates.length,
+      `only ${candidates.length} prose strings were extracted from the admin screens, so the ban below has ` +
+        `almost nothing to judge and would pass whatever the screens say. Either visibleText stopped ` +
+        `matching the way these files are written, or the filters are now rejecting real prose.`,
+    ).toBeGreaterThan(250)
+    // And they must be sentences rather than the fragments an over-eager split leaves behind.
+    expect(
+      candidates.filter((c) => c.text.split(' ').length >= 6).length,
+      'the extraction is returning fragments rather than sentences',
+    ).toBeGreaterThan(100)
+  })
+
+  it('would recognise jargon if it were there, so a green sweep is not a broken matcher', () => {
+    // A positive control. Every failure this file has had was the matcher missing something rather than
+    // the screens being wrong, and a word list that silently stops matching looks exactly like clean prose.
+    expect(jargonIn('This is written to the supabase table with your user id')).toBe('supabase')
+    expect(jargonIn('The endpoint returned an error, so nothing was saved')).toBe('endpoint')
+    // ...and it must not fire on ordinary operator prose.
+    expect(jargonIn('Conversations only. Cannot read group inquiries.')).toBeUndefined()
+  })
+
   it('never shows an implementation term to an operator', () => {
     const offences: string[] = []
 
-    for (const file of sourceFiles()) {
-      if (EXEMPT_FILES.some((name) => file.endsWith(name))) continue
-      const source = readFileSync(join(repoRoot, file), 'utf8')
-      for (const raw of visibleText(source)) {
-        const text = raw.replace(/\s+/g, ' ').trim()
-
-        // Prose, not an identifier, a class list or a key: four or more words with a space.
-        if (text.split(' ').length < 4) continue
-        // TypeScript generics make the JSX pass read `useState<string | null>(null) const x = useRef<` as
-        // if it were prose. Anything that looks like code is not something an operator reads.
-        if (/(^|[ (])(const|let|export|function|return|import|await|use[A-Z])[ (<]/.test(text)) continue
-        if (text.includes('=>') || text.includes('===')) continue
-        // Tailwind class strings are long and space-separated but are not prose.
-        if (/^[a-z0-9:/\[\]\-. ]+$/.test(text) && /(\bbg-|\btext-|\bflex\b|\bgrid\b|\brounded)/.test(text)) continue
-        if (ALLOWED.some((a) => a.text === text)) continue
-
-        // Word-level rather than a regex, on purpose. The first version of this line built its
-        // pattern in a template literal, where `\b` is the BACKSPACE character and not a word
-        // boundary, so it compiled to something that could never match. Splitting into words is
-        // both harder to get wrong and exactly the question being asked.
-        const words = new Set(text.toLowerCase().match(/[a-z0-9_]+/g) ?? [])
-        const lower = text.toLowerCase()
-        const hit = JARGON.find((term) => (term.includes(' ') ? lower.includes(term) : words.has(term)))
-        if (hit) offences.push(`${relative('.', file)}: "${text}" — contains "${hit}"`)
-      }
+    for (const { file, text } of proseCandidates()) {
+      if (ALLOWED.some((a) => a.text === text)) continue
+      const hit = jargonIn(text)
+      if (hit) offences.push(`${relative('.', file)}: "${text}" contains "${hit}"`)
     }
 
     expect(

@@ -291,3 +291,39 @@ a commit that has nothing to do with the guard.
 The same rule in its other form: **if you take a window from `indexOf`, assert that the string you
 anchored on occurs exactly once.** A window is only evidence when there is one place it could be.
 
+## A ban needs a floor on what it banned over, and a positive control
+
+`expect(offenders).toEqual([])` is only evidence if `offenders` came from something. When the list is
+built by extracting text and then filtering it, two things can make it empty: the screens are clean, or
+the extraction stopped working. Those look identical in a passing run.
+
+Measured instance: `admin-prose.test.ts` extracts 394 prose strings from 23 admin screens and bans
+implementation vocabulary in them. Break its quoted-string regex and the **pre-refactor** file reported
+`2 passed` -- the ban judged an empty list. The same break now fails a case that says so.
+
+So a banning guard needs three parts, not one:
+
+1. **A floor on the population.** `expect(candidates.length).toBeGreaterThan(250)` -- and a floor on the
+   *files* is not the same thing as a floor on the *strings pulled out of them*.
+2. **A positive control on the matcher.** Feed it a string it must catch. Every failure that file has had
+   was the matcher missing, and a word list that silently stops matching looks exactly like clean prose.
+3. **The ban itself.**
+
+Collect the population in one shared function rather than duplicating the filter chain into the new
+cases. A second copy is a second thing to keep true, and an assertion holding its own copy of the answer
+is the mistake this suite has found in itself most often.
+
+## Get a new test file green before it lands in the shared tree
+
+Three agents run against one working directory and one HEAD. A test file that is broken for four minutes
+while you fix its parsers is a **red suite** for whoever runs one in those four minutes -- and the Planner
+does, constantly.
+
+It happened at iteration 156: three parser mistakes in a new file, and the Planner found the suite red at
+07:29, reproduced the regexes by hand against the real source to rule out the product, and wrote *"I wrote
+'is green' here three minutes before it stopped being true."* That is a whole iteration of theirs spent on
+a transient state of mine.
+
+Write the file in the scratchpad, run it there against the real repository paths, and copy it in once it
+passes. Costs nothing; it is the same file either way.
+
