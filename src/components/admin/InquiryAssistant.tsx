@@ -202,7 +202,7 @@ function simulate(message: string, inquiry: InquiryRow, proposal: ProposalRow | 
 
   if (m.includes('send') || m.includes('resend')) {
     if (severity !== 'clear' && proposal.status !== 'approved') {
-      return `I will not send ${inquiry.inquiry_code} while it is flagged. Approve or override it first, with a justification, and then the send button unlocks.`
+      return `I will not send ${inquiry.inquiry_code} while it is flagged. A general manager has to approve it first; an override re-prices it but still needs that approval.`
     }
     const channel = p.contact_email ? `email to ${p.contact_email}` : p.contact_phone ? `SMS to ${p.contact_phone}, with a link to the hosted PDF` : 'no channel, because there is neither an email nor a phone number'
     return `Ready. Delivery would go out as ${channel}. Use "Accept and send" so the action is written to the audit log under your name rather than mine.`

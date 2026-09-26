@@ -142,7 +142,11 @@ describe('the inbox Rules chip', () => {
   it('does say ready to price for a complete, priceable inquiry', () => {
     // Without this the whole chip could be a constant "cannot be priced" and every other case
     // above would still pass.
-    expect(rulesChipFor(INQ_2001)).toEqual({ kind: 'ready' })
+    expect(rulesChipFor(INQ_2001, new Date('2026-07-15'))).toEqual({ kind: 'ready' })
+  })
+
+  it('says cannot be priced once the arrival date has passed, as the server does', () => {
+    expect(rulesChipFor(INQ_2001, new Date('2026-09-26'))).toEqual({ kind: 'blocked' })
   })
 
   it('does not claim a refusal that never happened when the engine throws', () => {

@@ -109,7 +109,7 @@ const TOOLS: {
     input_schema: {
       type: 'object',
       properties: {
-        discount_pct: { type: 'number', description: 'Whole percentage points, e.g. 15.' },
+        discount_pct: { type: 'number', description: 'Whole percentage points.' },
       },
     },
     run: (inquiry_id, input) =>
@@ -193,7 +193,7 @@ const TOOLS: {
           pdf_url: proposal.pdf_url,
           sent_via: proposal.sent_via,
           sent_at: proposal.sent_at,
-          approved_by: proposal.approved_by,
+          approved_by: proposal.approver_name ?? proposal.approved_by,
           can_send_now: gate.allowed,
           human_summary: `Proposal ${proposal.proposal_id} is ${proposal.status}, ${formatUsd(proposal.pricing.total_cents)} at ${proposal.pricing.discount_pct}% off. ${gate.human_reason}`,
         },
@@ -369,14 +369,14 @@ const TOOLS: {
       type: 'object',
       properties: { note: { type: 'string' } },
     },
-    run: async (inquiry_id, input) => {
+    run: async (inquiry_id, input, actor) => {
       const proposal = await findProposalByInquiry(inquiry_id)
       if (!proposal) {
         return { ok: false, grounded: false, error: 'There is no proposal on this inquiry yet.' }
       }
       return submit_for_approval({
         proposal_id: proposal.proposal_id,
-        submitted_by: (input.submitted_by as string | undefined) ?? null,
+        submitted_by: actor,
         note: input.note as string | undefined,
       })
     },

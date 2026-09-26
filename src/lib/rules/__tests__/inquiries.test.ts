@@ -7,7 +7,7 @@
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { RuleVerdict } from '../../../../shared/types'
-import { getProperty, listProperties } from '../../../../netlify/functions/_lib/data'
+import { getProperty } from '../../../../netlify/functions/_lib/data'
 import { setClock } from '../../../../netlify/functions/group/store'
 import {
   check_availability,
