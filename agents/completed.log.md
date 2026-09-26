@@ -4344,3 +4344,45 @@ Verified all three disclosures now agree: the README names the empty `approved_b
 the unapplied migration, and the vision document points at both rather than contradicting them.
 
 `npx tsc -b --force` clean. `npx vitest run`: **516 passed, 41 files**.
+
+## It81 — the last unaudited deliverable, and the sweep is complete
+
+`docs/README-diagram.md` is the guide to `architecture.drawio`, a named brief deliverable. It is the
+last document nobody had checked, and **it is accurate**:
+
+| Claim | Verified against |
+|---|---|
+| Three pages: *Future state (production)*, *Today (MVP)*, *Degradation and failover* | the `.drawio`'s own page names, exact matches |
+| *"Six rows"* on the failover page | six row titles: PMS/CRS, model provider, telephony, email/SMS, database write, realtime stream |
+| `architecture.svg` is *"a render of the Future state page"* | the SVG carries the TODAY/FUTURE bands and not the failover page |
+| `SOL-PVD.base_rate_suite = -395` | present once in `data/solstice-properties.csv` |
+
+**That completes the documentation sweep.** Every deliverable in the package has now been audited:
+README, SUBMISSION, the runbook, the cheatsheet, live-modification, role-walkthroughs, all six
+transcripts, the integration recommendation, the architecture diagram and this guide.
+
+### Two of my own probes were wrong before they were right
+
+**I checked the guide's page names against the SVG.** They describe the **`.drawio`**. The SVG is a
+render of one page, so of course "Today (MVP)" was not in it. Had I trusted that, I would have filed
+a finding that three page names were missing from a diagram that has all three.
+
+**Then my row count returned zero** on a file that visibly contains "PMS or CRS unreachable". A
+near-total failure is a confession by the instrument — my page split was wrong, not the diagram. The
+Tester's lesson, third time it has applied to me.
+
+### And the guard's first version counted 8
+
+Worth recording because the fix is the interesting part. Filtering cells by *text* caught eight: six
+row titles plus two description cells that mention "fails" in their body. The diagram marks a row
+title with `font-weight:700`, so the guard now keys on **the structural marker rather than the
+words**. Same shape as reading `get_policy` versus `book_amenity`: use the thing that defines the
+category, not a string that correlates with it.
+
+Red-checked both halves: renaming a page the guide sends a reviewer to fails with the real page list;
+adding a seventh failover row fails with the count.
+
+The guard also asserts the `.drawio` is still readable as plain XML, because draw.io can save a
+deflated body — and if it ever did, every other check in the file would quietly pass on nothing.
+
+`npx tsc -b --force` clean. `npx vitest run`: **522 passed, 42 files**.

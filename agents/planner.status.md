@@ -4,45 +4,52 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 111 — 2026-09-25 ~21:04 EST
+## Iteration 112 — 2026-09-25 ~21:08 EST
 
-### Everything the plan asserts is true. Verified in one pass
+### My tasks were never routed to anyone. That is a design gap, not neglect
+
+Three one-sentence fixes have sat open for several iterations. Last iteration I responded by stating
+the priority more loudly. **Wrong diagnosis, and I asserted it without checking.**
 
 ```
-suite            516 passed       (476 an hour ago; the guards added ~40)
-deploy           current with HEAD
-live refusals    /api/cost 401 · /api/group/inquiries 401 · /api/flags 401
-Telnyx balance   $3.03            unchanged
-INQ-2012/2013    2 rows           still present, T21 not yet run
+plan task numbers cited in the last 14 commits   1
+T38/T39/T40 mentioned in implementer.status.md   0
 ```
 
-**Nothing needed correcting.**
+`agents/README.md:35` contains the protocol's **only** work-selection rule:
 
-### What I changed: I stated the ordering instead of assuming it was read
+> *"before editing, read the other agents' status files and pick something disjoint."*
 
-**T38, T39 and T40 have been open across several iterations** while three guards shipped (#107,
-#110, #111). I have put the priority in the plan explicitly: **those three come before any further
-guard work.**
+**Nothing tells any agent to take work from the plan.** The ownership table lists the plan as
+*"Planner writes, others read"* — a document, not a backlog. T30, T33, T35, T36, T37 were taken
+**voluntarily**. That worked until the Implementer's own auditing outpaced my filing — and **#112,
+which landed while I wrote this, is the same class of defect I have been filing.** They are not
+declining this work; they are finding their own instances of it.
 
-Stating it is the part of my job I had been skipping — *"keep the plan ordered, best-for-the-
-submission first"* is the instruction, and I had been filing tasks in order without ever saying the
-order was a **claim** rather than a convenience.
+### What I got wrong
 
-Reasoning, written into the plan so it can be argued with: all three are **single sentences in
-documents Enrique reads while presenting**; **T38 costs thirty seconds of visible confusion** if
-followed as written, sending him to edit Austin's threshold while the verdict does not move; and a
-guard protects against **the next** regression while these are **current defects on the demo path**.
+I wrote *"T38, T39 and T40 come before any further guard work"* as though I could sequence another
+agent's queue. **I cannot, and the protocol never gave me that.** The note also implied
+mis-prioritisation when the real answer was that nobody had been told my file was a source of work.
 
-**Not a complaint about the guards.** 476 → 516 tests in an hour, every guard written after
-something actually rotted. **The sequencing is what I am asserting, not the value.**
+**Assert a mechanism exists before appealing to it.** I spent an iteration raising my voice in a
+channel that was never wired up.
 
-### Eight guards, and what they say
+### What I did instead
 
-Citations · list counts · README counts · walkthrough quotes · export redaction · committed
-credentials · service-role keys · bare paths. **Every one retrofitted after a real failure.** A
-reviewer reading `src/lib/rules/__tests__/` in order is reading this project's mistakes with a test
-standing over each — a better artefact than a clean suite, and worth saying in the room.
+The three fixes are now at the top of `▶ OPEN WORK` as **exact replacement text, ready to paste** —
+no task, no lock, no plan needed; two files, under two minutes; Enrique can do them himself. Plus
+the tidy line now carries the dry-run command it was missing.
+
+**If nothing routes work to a reader, the work has to cost nothing the moment someone's eye lands
+on it.**
+
+### The record should be clear
+
+Eight guards and a dozen document corrections in three hours, all found by auditing rather than by
+being told. **The coordination gap is mine** — I built a queue inside a file the protocol describes
+as reading material, then read silence as a priority problem.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** Agent work: **T38, T39, T40, before further guards.**
+**The `drop policy` paste.** The three document fixes are paste-ready and need nobody's permission.
