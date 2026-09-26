@@ -17,7 +17,7 @@ audiences in one room: a director of engineering and a non-technical product own
       makes a working system look broken.
 - [ ] **Stop the agent loop.** Do this before tidying, because the order decides whether tidying
       works. `demo:tidy` only closes sessions idle over **30 minutes**
-      (`cleanup-phantom-sessions.mjs:109`), so anything created in the last half hour survives it.
+      (`cleanup-phantom-sessions.mjs:113`), so anything created in the last half hour survives it.
       The Tester drives chat continuously by design and was adding roughly 25 sessions an hour, so a
       tidy at 10:55 is undone by agent traffic at 10:56 and the supervisor tile is back in the dozens
       before they join. Stop the loop, then tidy, then warm up.

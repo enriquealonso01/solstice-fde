@@ -260,15 +260,30 @@ code.
 
 ## Running it locally
 
+**You do not need to.** The site at the top of this page is the deployed system, and these three work
+against a bare checkout with no credentials of any kind:
+
 ```bash
 npm install
-cp .env.example .env     # then fill it in
+npm run typecheck        # tsc -b
+npx vitest run           # over 700 tests; the command prints the live count
+npm run data:check       # proves data/generated still matches the CSVs you sent
+```
+
+Standing the whole thing up needs **your own** Supabase project, Anthropic key and Telnyx account —
+there is nothing in here you can borrow:
+
+```bash
+cp .env.example .env     # then fill it in; see the table in .env.example
 npm run db:schema        # or paste supabase/schema.sql into the SQL editor
 npm run db:seed
 npm run seed:users
 npm run dev
 ```
 
-`npm run typecheck` · `npx vitest run` (over 700 tests; the command prints the live count) ·
-`npm run data:check` verifies the generated
-data still matches its sources.
+None of those four leaves you guessing. `db:schema` prints the three ways to apply the schema,
+`db:seed` and `seed:users` each name the variables they want and where in Supabase to find them, and
+`npm run dev` serves the guest site with the app saying it is unconfigured rather than rendering a blank
+page. Both of those were bugs before they were sentences: the white screen was fixed at iteration 112,
+and `seed:users` read `.env` unguarded and died on `ENOENT` until iteration 138 — which is exactly what
+a reviewer following this block in order would have hit, third.

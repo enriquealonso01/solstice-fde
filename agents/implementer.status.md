@@ -9,6 +9,42 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It138 SHIPPED: "Running it locally" told a reviewer to run three commands they cannot run, and one of
+  them crashed.** Staying on It137's angle — what a reviewer actually *does* rather than what the docs
+  claim — the next thing they do after the suite was the block at `README.md:263`:
+  `npm install` → `cp .env.example .env  # then fill it in` → `npm run db:schema` → `npm run db:seed`
+  → `npm run seed:users` → `npm run dev`.
+  **They cannot fill it in.** No Supabase project, no Anthropic key, no Telnyx account. So three of those
+  six steps cannot work for them, and the block does not say so — a reviewer who follows it in order hits
+  three failures and reasonably concludes the project does not run, while the live site sits there working.
+- **Tested in the reviewer's actual state, not with my `.env`** — only in the scratch copy of the tracked
+  tree, where `.env` is gitignored and therefore absent. `db:seed` against a filled-in `.env` would write
+  to the production database, so that mattered. Measured there:
+  `db:schema` prints the three ways to apply the schema · `db:seed` names the variables and where to get
+  them · **`seed:users` died on an unhandled `ENOENT` with a stack trace and an absolute path** — and its
+  own correct checks were sitting two lines below the crash, because it read `.env` with an unguarded
+  `readFileSync`.
+- **The guard then found three more the grep had missed**, one of which matters: `demo:tidy`
+  (`cleanup-phantom-sessions.mjs`) is in `SUBMISSION.md`'s pre-send checklist and is run minutes before
+  submitting. Also `check-email-domain.mjs`, `export-voice-transcript.mjs`, and
+  `telnyx/export-assistant.mjs` — whose own header says it exists *"so a reviewer can see the actual agent
+  configuration."* All five now use `loadEnv()` from `scripts/data/lib/env.mjs`, which already solved this,
+  and all five refuse with the variable name instead of a trace.
+- **`README.md` now splits the block**: four commands that work on a bare checkout with no credentials
+  (`npm install`, `typecheck`, `npx vitest run`, `data:check` — all verified exit 0 there), then the
+  credential-dependent steps under a sentence saying you need your own Supabase, Anthropic and Telnyx.
+- **Two of my three red-checks passed when they should have failed, and both were the guard's fault this
+  time.** `guarded` tested `src.includes('loadEnv')`, which **the comment explaining `loadEnv` satisfies by
+  itself**; and the early return required a quoted `'.env'` or `process.env.` with a trailing dot, so
+  `cleanup-phantom-sessions.mjs` — whose reader is now `const env = process.env` — **exempted itself**.
+  Both conditions written from one example, which is the fourth instance of that pattern this session and
+  the first where the red-check found it in my own guard rather than in someone's prose. Fixed to match
+  code rather than prose; all three now fire.
+- **`doc-citations` caught the knock-on**: adding lines to `cleanup-phantom-sessions.mjs` moved
+  `docs/demo-runbook.md`'s `:109` citation. Re-pointed at **`:113`, the `const STALE_MINUTES` declaration
+  rather than the comment above it** — a const moves only when the code does.
+- Clone: **822 / 58 files**. Bare checkout, no `.env` and no `.git`: **817 passed, 5 skipped, 0 failed.**
+
 - **It137 SHIPPED: a reviewer who downloaded the ZIP instead of cloning got three failed test files — one
   of them the credential guard.** `README.md` tells a reviewer to run `npx vitest run`
   *"for the live number"*, and It131's floors exist so they can check our counts themselves. **Three tests
