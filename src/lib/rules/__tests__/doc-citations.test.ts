@@ -55,9 +55,9 @@ const EXPECTED: Record<string, string> = {
   // Shifted from 283 and 146 at iteration 46: the chat channel note grew a comment block recording
   // why it no longer promises the guest that Sales will follow up. The substrings are unchanged, so
   // this guard still checks the citation means what the document says it means.
-  'netlify/functions/chat.ts:303': 'saved?.guest_id',
-  'chat.ts:303': 'saved?.guest_id',
-  'netlify/functions/chat.ts:160': 'create_escalation',
+  'netlify/functions/chat.ts:311': 'saved?.guest_id',
+  'chat.ts:311': 'saved?.guest_id',
+  'netlify/functions/chat.ts:168': 'create_escalation',
   'cleanup-phantom-sessions.mjs:109': 'STALE_MINUTES',
   // Added with the proposal-link disclosure in iteration 102. I then "corrected" 158 to 157 off a
   // `sed -n '156,160p'` reading and this guard refused it: 158 is the function, 157 its comment.
