@@ -9,6 +9,36 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It149 SHIPPED → T60: the group-sales screen said “the general manager, the general manager at
+  Solstice Tampa Bayshore”.** `engine.ts:171` hardcoded the phrase and then interpolated a helper that
+  returned it again. Rendered on INQ-2002, the cheat sheet's 40-rooms-in-Tampa beat, directly above the
+  verdict scrubbed of that phrase at T1c.
+- **The plan filed one instance; there were nine.** I evaluated all ten inquiries before touching anything:
+  **four flags with the stutter and five passes** reading *“without going to the general manager”*. Plus a
+  tenth, latent: the lead-time reason, which no inquiry in the dataset can reach.
+- **The phrase was policy-grounded and still wrong.** `property.general_manager` is a real named person in
+  the data and every proposal PDF signs on their behalf; Policy 13 puts group authority with “Sales and the
+  General Manager”. But `staff_role` has no gm tier, so the app cannot prove **that** person approved — only
+  that *someone named* did. One function now returns “a named approver” and every rule calls it. The
+  ceiling's sentence is byte-identical, so the two documents quoting it needed no re-capture.
+- **My first guard would have made me break working code.** It swept every `human_reason` literal and failed
+  on the concierge escalation matrix, which **quotes Policy 15 verbatim** and names those humans in `notify`.
+  Scrubbing those would make the tool misquote its own source. Scoped to group-verdict roots, with the
+  exclusion **asserted** — a case checks the matrix still cites Policy 15. *A guard I would have to break
+  working code to satisfy had the wrong subject.*
+- **Red-checked six ways**, each mutation alone: stutter back **4 failed**, pass branch only **1**, the
+  latent lead-time string **1** (the synthetic case earning its place), demo data **1**, the two flags worded
+  differently while the ban is satisfied **1**, matcher broken **2**; restored **53 passed**, `cmp` identical
+  on three files.
+- **Two instrument notes.** `` in a Python replacement is chr(1), and a multi-line pattern used `
+`
+  against a CRLF file — **both caught by asserting the match count rather than trusting `.replace()`**,
+  twice in one iteration. And my first red-check loop printed **nothing** because vitest wraps its counts in
+  ANSI codes: four mutations ran and restored with no evidence either way. *An empty result is not a pass.*
+- **Removed a decision from Enrique's morning.** `HUMAN_INTERVENTION.md` still asked him to choose (a)/(b)/(c)
+  on this wording, quoting a refusal T1c had already fixed. (b) is now done everywhere; appended at the end
+  so nothing shifted, 17 pointer tests still green.
+
 - **It148 SHIPPED → T58 (`!!`): I wrote "two lines below" and it is three. My own It146 wording, on the
   stage beat.** Fixing T57's comment trap, I told the presenter to search `property_code: 'SOL-PHX',` and
   change the ceiling **"two lines below it"**. From 103 that is **105**,

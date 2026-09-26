@@ -636,7 +636,7 @@ export const MOCK_PROPOSALS: Record<string, ProposalRow> = {
     pricing: priced([line('Deluxe King', 15, 3, 20900)], 15, 17),
     verdicts: [
       { rule_id: 'group.rooms_auto_approve', status: 'pass', actual: 15, threshold: 35, human_reason: '15 rooms is well inside the 35-room auto-approve limit.' },
-      { rule_id: 'group.discount_ceiling', status: 'flag', actual: '17%', threshold: '15%', human_reason: 'The requested 17% is two points over this property’s 15% auto-approve ceiling. Priced at the compliant 15%; going to 17% needs a GM override.' },
+      { rule_id: 'group.discount_ceiling', status: 'flag', actual: '17%', threshold: '15%', human_reason: 'The requested 17% is two points over this property’s 15% auto-approve ceiling. Priced at the compliant 15%; going to 17% needs a named approver to sign it off.' },
       { rule_id: 'group.blackout_dates', status: 'pass', actual: '2026-07-28 → 2026-07-31', threshold: 'Jan 15–19, 2027', human_reason: 'Late July is clear of the published blackout window.' },
       { rule_id: 'group.meeting_capacity', status: 'pass', actual: 40, threshold: 350, human_reason: 'A 40-person quiet room is inside capacity; the request is for a side room, not the ballroom.' },
       { rule_id: 'group.seasonal_rate_window', status: 'pass', actual: 'Jun–Aug off-peak', threshold: 'property note', human_reason: 'Phoenix runs roughly 20% below peak in June–August, which is why the compliant 15% still lands near the stated $175 budget.' },
@@ -655,7 +655,7 @@ export const MOCK_PROPOSALS: Record<string, ProposalRow> = {
     pricing: priced([line('Standard Double', 40, 3, 17900)], 15, 22),
     verdicts: [
       { rule_id: 'group.rooms_auto_approve', status: 'fail', actual: 40, threshold: 35, human_reason: '40 rooms is above Tampa’s 35-room auto-approve threshold, so a human has to sign this block off.' },
-      { rule_id: 'group.discount_ceiling', status: 'fail', actual: '22%', threshold: '15%', human_reason: 'The requested 22% is seven points over the 15% ceiling. Priced at 15%; anything past that is a GM decision.' },
+      { rule_id: 'group.discount_ceiling', status: 'fail', actual: '22%', threshold: '15%', human_reason: 'The requested 22% is seven points over the 15% ceiling. Priced at 15%; anything past that needs a named approver to sign it off.' },
       { rule_id: 'group.blackout_dates', status: 'pass', actual: '2026-10-02 → 2026-10-05', threshold: 'Feb 5–9, 2027', human_reason: 'October is clear of the Tampa blackout window.' },
       { rule_id: 'group.room_grouping_request', status: 'flag', actual: 'same floor requested', threshold: 'not guaranteed', human_reason: 'Same-floor placement cannot be guaranteed at booking. Tampa has a dedicated group check-in lane, which is the honest thing to offer instead.' },
       { rule_id: 'group.contact_channel', status: 'pass', actual: 'email on file', threshold: 'email or phone', human_reason: 'Email captured from the caller during the voice session.' },

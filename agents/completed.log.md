@@ -9402,3 +9402,124 @@ as failure. The file legitimately differs from HEAD this iteration — that is t
 post-fix snapshot is the right instrument, and it reports identical.
 
 `npx tsc -b` clean. `npx vitest run` **860 tests / 60 files** green (up 2).
+
+---
+
+## It149 — T60: the group-sales screen said "the general manager, the general manager at Solstice Tampa Bayshore"
+
+`engine.ts:171` wrote the phrase into the template *and* interpolated `describeApprover(rules)`, which
+returned it again. Rendered, not inferred — `show-verdict.ts INQ-2002`, the cheat sheet's own 40-rooms-in-Tampa
+beat, directly above the sibling verdict that was scrubbed of the same phrase at T1c.
+
+### The plan filed one instance. There were nine.
+
+Before touching anything I evaluated all ten inquiries and printed every verdict reason that named a GM:
+
+```
+hits: 9 of 10 inquiries
+  INQ-2002 GRP-ROOMS-CAP [flag]  ...needs the general manager, the general manager at Solstice Tampa Bayshore, to approve it.
+  INQ-2005 GRP-ROOMS-CAP [flag]  ...the general manager, the general manager at Solstice Sacramento Capitol...
+  INQ-2007 GRP-ROOMS-CAP [flag]  ...Solstice Providence Waterplace...
+  INQ-2008 GRP-ROOMS-CAP [flag]  ...Solstice Columbus Short North...
+  INQ-2001/2003/2006/2009/2010 GRP-ROOMS-CAP [pass]  ...lets us approve without going to the general manager.
+```
+
+**Four flags with the stutter and five passes with the promise.** The plan said "the confirmed on-screen
+instance is INQ-2002" — true of the *stutter*, and the stutter was the part that was easy to see. The
+promise was on nearly every inquiry, including the pass branch nobody reads because nothing is wrong there.
+
+A tenth instance exists that no inquiry reaches: the **lead-time** reason, *"takes the general manager's
+agreement"*. `CHICAGO_LEAD_TIME` is the only lead-time rule and SOL-CHI's one inquiry is 18 rooms against
+over_rooms 25, so it never renders. No live instance is how a string stays wrong.
+
+### What the phrase was actually wrong about
+
+`property.general_manager` **is a real named person** in the shipped data — `shared/types.ts:69`, and every
+proposal PDF signs *"Group Sales, on behalf of Renee Okafor, General Manager"*. Policy 13 really does put
+group authority with *"Sales and the General Manager"*. So the phrase was **policy-grounded**, and I nearly
+talked myself into leaving it on that basis.
+
+The objection T1c raised is narrower and survives all of that: `staff_role` is ('concierge', 'group_sales',
+'admin') and `approveProposal` applies no test beyond group_sales|admin, so the app **cannot prove that
+person approved**. It can prove *someone named* approved. So every verdict now says **"a named approver"**,
+from one function, called by the rooms cap, the ceiling and the lead-time rule alike. The ceiling's sentence
+is byte-identical to before, which is why the two demo documents that quote it verbatim needed no re-capture.
+
+### Where I deliberately did NOT scrub it — and the guard that nearly made me
+
+My first guard swept every `human_reason` literal under src, netlify, shared and scripts. It failed on three
+reasons in the concierge escalation matrix:
+
+```
+netlify/functions/tools/rules.ts:229  "Policy 15: ...goes straight to the General Manager and Regional Security..."
+netlify/functions/tools/rules.ts:274  "Policy 7 and Policy 15: comps over $50 ... need AGM or GM sign-off the same day."
+```
+
+**Those are correct.** They quote the policy document, and they list those humans in `notify`. Scrubbing them
+to keep my own guard green would have made the tool misquote its own source. The defect is not the words
+appearing; it is **a group approval verdict naming a tier the app will not enforce**. The sweep is now scoped
+to the three roots that carry group verdicts, with the exclusion written down *and asserted* — a case checks
+that the escalation matrix still cites Policy 15, so the next person who reads the ban and "fixes" the matrix
+turns the suite red instead.
+
+*A guard I would have had to break working code to satisfy was a guard with the wrong subject.*
+
+### Guarded, four ways
+
+`approver-vocabulary.test.ts`, 12 cases: every verdict of every inquiry; both verdicts of INQ-2002 worded
+*identically* (not merely both clean); the lead-time reason driven synthetically because the dataset cannot
+reach it; and every hand-written reason literal, mocks included. Plus a matcher self-test against the two
+real historical sentences, so a green sweep cannot mean a dead regex.
+
+`inquiries.test.ts` — T60's explicit ask — now covers **every** verdict of INQ-2002 rather than the one
+sentence somebody noticed. Its old assertion also carried a comment about word boundaries above a regex
+(`/GM/i`) that had none; it does now.
+
+Red-check, each mutation alone:
+
+```
+MUT 1  stuttering GM string back on the flag        4 failed
+MUT 2  only the PASS branch reverted                1 failed
+MUT 3  only the lead-time string (no live instance) 1 failed   <- the synthetic case earning its place
+MUT 4  superseded sentence back in the demo data    1 failed
+MUT 5  two flags worded differently, ban satisfied  1 failed
+MUT 6  matcher broken so it can never fire          2 failed
+restored                                            53 passed
+cmp against the fixed snapshots (3 files)           identical
+```
+
+MUT 5 matters: both verdicts could pass a phrase ban while describing the same authority in two different
+sentences, which is how the vocabulary split in the first place.
+
+### Also fixed, same class
+
+- **`send-gate-bypass.test.ts:32-33`** (T60 part 4) — two fixtures hand-writing sentences the engine stopped
+  producing. Nothing was broken by them, which is why they sat there.
+- **`mockData.ts:639,658`** — *"needs a GM override"*, *"anything past that is a GM decision"*. This is the
+  admin screens' **demo data source**, so it renders. Not mentioned in T60; found by the sweep.
+- **`options.ts`** — four strings and a label. Unwired today (no caller, no test), so nothing changed on
+  screen, but it is the escalation-options generator and the thing most likely to be wired next. The
+  caller-supplied `general_manager` name stays: a caller naming a person *is* a named approver. Only the
+  default changed.
+
+### Two instrument notes
+
+**`\1` in a Python string is chr(1).** My replacement pattern for the guard's own regex silently became a
+control character, and `assert count == 1` caught it. Same shape as the CRLF trap it followed: an earlier
+multi-line pattern used `\n` against a CRLF file and matched nothing. **Both were caught by asserting the
+match count rather than trusting `.replace()`** — twice in one iteration, which is the clearest argument yet
+for that rule.
+
+**An empty result is not a pass.** My first red-check loop grepped for `Tests +[0-9]+` and printed nothing at
+all, because vitest wraps the counts in ANSI codes. Four mutations ran and restored with no evidence either
+way, and the transcript would have read like a clean sweep. Re-ran with the codes stripped. *Fifth time an
+unchanged or absent output has been the only signal that an instrument did nothing.*
+
+### One thing removed from Enrique's morning
+
+`HUMAN_INTERVENTION.md` still asked him to choose between (a) leave the GM wording, (b) soften it, (c) add a
+GM role — quoting the *ceiling* refusal that T1c had already fixed. **(b) is now done everywhere**, so the
+decision is moot. Appended at the end of the file (highest plan pointer is :1016 against 1052 lines, so
+nothing shifted; 17 pointer tests still green), including the answer to give if the panel asks who approves.
+
+`npx tsc -b` clean. `npx vitest run` **872 tests / 61 files** green (up 12).

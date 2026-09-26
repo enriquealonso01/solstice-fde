@@ -29,8 +29,8 @@ import type { RuleVerdict } from '../../../../shared/types'
 const PRP_2009_VERDICTS = [
   { rule_id: 'GRP-COMPLETENESS', status: 'pass', actual: 'all required details supplied', threshold: 'arrival date, departure date, exact room count and a way to reach the customer', human_reason: 'The customer gave us everything we need to quote: dates, an exact room count, and a way to reach them.' },
   { rule_id: 'GRP-BLACKOUT', status: 'pass', actual: 'July 28, 2026 to July 31, 2026', threshold: 'January 15, 2027 through January 19, 2027', human_reason: 'These dates are clear of every blackout window at Solstice Phoenix Camelback.' },
-  { rule_id: 'GRP-ROOMS-CAP', status: 'pass', actual: 15, threshold: 35, human_reason: '15 rooms is within the 35 rooms Solstice Phoenix Camelback lets us approve without going to the general manager.' },
-  { rule_id: 'GRP-DISCOUNT-CEILING', status: 'flag', actual: 17, threshold: 15, human_reason: 'The customer asked for 17% off. We can approve up to 15% on our own, so this is 2 points over what we are allowed to give away without the general manager signing it off.' },
+  { rule_id: 'GRP-ROOMS-CAP', status: 'pass', actual: 15, threshold: 35, human_reason: '15 rooms is within the 35 rooms Solstice Phoenix Camelback lets us sign off on our own.' },
+  { rule_id: 'GRP-DISCOUNT-CEILING', status: 'flag', actual: 17, threshold: 15, human_reason: 'The customer asked for 17% off. We can approve up to 15% on our own, so this is 2 points over what we can authorise ourselves, and it needs a named approver to sign it off before it goes out.' },
   { rule_id: 'GRP-MEETING-CAPACITY', status: 'pass', actual: 40, threshold: 350, human_reason: 'Seating 40 people fits comfortably in the 350-person space at Solstice Phoenix Camelback.' },
   { rule_id: 'GRP-INVENTORY', status: 'pass', actual: '15 x Deluxe King', threshold: '45 x Deluxe King in the building', human_reason: 'Solstice Phoenix Camelback has 45 Deluxe King rooms, so a 15-room block fits within the room type they asked for.' },
 ] as unknown as RuleVerdict[]

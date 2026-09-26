@@ -111,11 +111,14 @@ export function counterPct(ceiling: number, requested: number): number {
   return Math.min(Math.max(mid, ceiling), requested)
 }
 
-/** Three options, always in this order: the one the rep can do now, the one that needs the GM,
- *  and the one that splits the difference. */
+/** Three options, always in this order: the one the rep can do now, the one that needs an
+ *  approval, and the one that splits the difference. */
 export function buildDecisionOptions(input: DecisionOptionsInput): DecisionOption[] {
   const { ceiling_pct, requested_pct, rules } = input
-  const gm = input.general_manager ?? `the general manager at ${rules.property_name}`
+  // A caller may name the person: `property.general_manager` is a real named human in the
+  // dataset, and every proposal PDF signs on their behalf. What the app cannot do is ENFORCE
+  // that it was them -- `staff_role` has no gm tier -- so the default says what is enforced.
+  const approver = input.general_manager ?? 'a named approver'
 
   const atCeiling = price(input, ceiling_pct)
   const atRequested = price(input, requested_pct)
@@ -138,13 +141,13 @@ export function buildDecisionOptions(input: DecisionOptionsInput): DecisionOptio
     },
     {
       id: 'escalate_to_gm',
-      label: `Escalate to the GM for the full ${requested_pct}%`,
+      label: `Escalate for approval at the full ${requested_pct}%`,
       discount_pct: requested_pct,
-      requires_approval_from: gm,
+      requires_approval_from: approver,
       total_cents: atRequested.total_cents,
       delta_vs_requested_cents: 0,
       value_add: null,
-      human_reason: `Give them exactly what they asked for, ${requested_pct}%, which brings the block to ${formatUsd(atRequested.total_cents)}. That is ${formatUsd(gapCents)} less than approving at ${ceiling_pct}%, and it is above our own authority, so ${gm} has to approve it. Front-of-house cannot sign this one off. Expect the answer to take a day, which matters if the customer is shopping other hotels this week.`,
+      human_reason: `Give them exactly what they asked for, ${requested_pct}%, which brings the block to ${formatUsd(atRequested.total_cents)}. That is ${formatUsd(gapCents)} less than approving at ${ceiling_pct}%, and it is above our own authority, so ${approver} has to approve it. Front-of-house cannot sign this one off. Expect the answer to take a day, which matters if the customer is shopping other hotels this week.`,
     },
   ]
 
@@ -153,11 +156,11 @@ export function buildDecisionOptions(input: DecisionOptionsInput): DecisionOptio
       id: 'counter_with_value_add',
       label: `Counter at ${counter}% plus a value-add`,
       discount_pct: counter,
-      requires_approval_from: counter > ceiling_pct ? gm : null,
+      requires_approval_from: counter > ceiling_pct ? approver : null,
       total_cents: atCounter.total_cents,
       delta_vs_requested_cents: atCounter.total_cents - atRequested.total_cents,
       value_add: valueAdd,
-      human_reason: `Meet them in the middle at ${counter}%, ${formatUsd(atCounter.total_cents)} for the block, and add ${valueAdd.label}. ${valueAdd.basis} This usually closes without a second conversation, because the customer gets something they actually wanted rather than a smaller number. ${counter > ceiling_pct ? `It still needs ${gm} to sign off the extra point, but it is a far easier ask than the full ${requested_pct}%.` : 'It sits inside our own authority, so we can send it today.'}`,
+      human_reason: `Meet them in the middle at ${counter}%, ${formatUsd(atCounter.total_cents)} for the block, and add ${valueAdd.label}. ${valueAdd.basis} This usually closes without a second conversation, because the customer gets something they actually wanted rather than a smaller number. ${counter > ceiling_pct ? `It still needs ${approver} to sign off the extra point, but it is a far easier ask than the full ${requested_pct}%.` : 'It sits inside our own authority, so we can send it today.'}`,
     })
   }
 

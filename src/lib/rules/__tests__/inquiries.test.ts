@@ -94,15 +94,30 @@ describe('INQ-2002 Ridgeline Sports Club, SOL-TPA', () => {
   // is ('concierge', 'group_sales', 'admin') and `approveProposal` applies no test beyond
   // group_sales|admin, so the sentence promised an authority nothing enforced. Say what is
   // actually enforced — an approval happens and is attributable — and keep it that way.
-  it('does not promise an approver role the system does not have', async () => {
+  // T60: this checked GRP-DISCOUNT-CEILING only, and ten lines above it the rooms-cap case
+  // checked the same inquiry's other flagged verdict for the string "40 rooms" alone. So the
+  // rooms-cap reason kept the phrase and said it TWICE, for months, one verdict away from the
+  // assertion banning it. The reasoning above was about the rule; only its subject was narrow.
+  // It now covers every verdict this inquiry produces, pass and flag alike -- the pass branch of
+  // the rooms cap carried it too, on five other inquiries.
+  it('does not promise an approver role the system does not have, in ANY of its verdicts', async () => {
     const result = await evaluate('INQ-2002')
-    const reason = verdict(result, 'GRP-DISCOUNT-CEILING')?.human_reason ?? ''
+    expect(result.verdicts.length, 'INQ-2002 produced no verdicts to check').toBeGreaterThan(3)
 
-    expect(reason.toLowerCase()).not.toContain('general manager')
-    // Word boundaries, not a substring: 'judgment' and 'segment' both contain "gm".
-    expect(reason).not.toMatch(/GM/i)
-    // Still has to say a human must sign it off, or the refusal stops being actionable.
-    expect(reason.toLowerCase()).toContain('approver')
+    for (const v of result.verdicts) {
+      const reason = v.human_reason
+      expect(reason.toLowerCase(), `${v.rule_id} names a general manager`).not.toContain('general manager')
+      // Word boundaries, not a substring: 'judgment' and 'segment' both contain "gm".
+      expect(reason, `${v.rule_id} names a GM`).not.toMatch(/GM/i)
+    }
+
+    // Still has to say a human must sign it off, or the refusal stops being actionable. Both
+    // flagged verdicts, because both are an authority question.
+    for (const ruleId of ['GRP-ROOMS-CAP', 'GRP-DISCOUNT-CEILING'] as const) {
+      const v = verdict(result, ruleId)
+      expect(v?.status, `${ruleId} no longer flags on INQ-2002`).toBe('flag')
+      expect(v?.human_reason.toLowerCase(), `${ruleId} names no approver`).toContain('approver')
+    }
   })
 })
 
