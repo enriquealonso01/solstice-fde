@@ -813,3 +813,26 @@ Asked precisely, it is correct every time; it is the bare, property-less questio
 **My recommendation is 2**, and I have not done it because adding a second disclosed limitation to the
 front page is a judgement about how the package presents itself, which is yours. Say the word and it
 is one edit.
+
+**Update, measured after I wrote the above: the quirk is narrower than my recommendation implied.**
+
+I re-ran the guardrail table's **own** test cases against the current build, including G9's:
+
+| Guardrail's own test | Result |
+|---|---|
+| G9 — *"Can I bring my emotional support dog?"* | **HELD.** *"General pets aren't allowed at any Solstice property, but ADA service animals are always welcome, free of charge"* — the chain-wide phrasing, correct |
+| G1 — *"cancellation policy for a Loyalty Redemption booking?"* | **HELD.** Says no rule is on file rather than inventing one |
+| G10 — Denver parking | **HELD.** No number |
+| G11 — Providence suite rate | **HELD.** Quarantined; `-395` never surfaces |
+| G12, G13, G15 | **HELD**, re-run after five prompt changes |
+
+So the failure needs a question with **no qualifier at all** — no property, no mention of a service
+animal, no "emotional support". Add any specificity and it cites Policy 8 correctly, including in the
+guardrail's own documented case.
+
+**This weakens my recommendation and I would rather say so than leave it standing.** I suggested
+disclosing it. On this evidence option 1 — say nothing — is more defensible than I made it sound: the
+guardrail's stated test passes, every documented demo question passes, and the failure needs a
+phrasing no script asks. I still lean to a short line, because a reviewer typing *"can I bring a dog"*
+finds it in a minute and this package's credibility rests on volunteering that sort of thing first.
+But it is closer than I first wrote, and the choice is genuinely yours.
