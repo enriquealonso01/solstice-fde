@@ -9,7 +9,41 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **It144 SHIPPED → T56: `docs/latency-target.md` now publishes the census, n=338, beside its samples.**
+- **It145 SHIPPED: the "three places that mention it" list is complete — verified, and now guarded.**
+  T56 shipped in It144. `HUMAN_INTERVENTION.md:817` tells Enrique that if he applies the `drop policy` SQL before
+  submitting, the open-defect disclosure lives in **three** files: the `README.md` paragraph, the
+  `SUBMISSION.md` row, and a parenthesis in `docs/where-this-goes.md`. **That list has exactly the shape of
+  the one that was wrong at It139** — eight verdicts that were nine — and a list of places to edit reads as
+  complete in the same way a list of corrections does.
+- **The failure is asymmetric and lands at 10:55.** A place left behind means the package discloses a
+  defect that has just been fixed, which reads worse than the disclosure did: a reviewer who tests the hole
+  and finds it closed concludes the honesty was theatre.
+- **The list is complete. Swept every tracked file, not just the Markdown** — the narrower sweep is the
+  mistake I keep catching, and my first pass here *was* `*.md` only. Nothing outside the three discloses it.
+  `agent/sol.md`'s **assumption 13** is the one other affected passage and correctly **not** on the list:
+  the fix makes its attributability claim true, so editing it would delete a sentence that had just become
+  correct.
+- **Answered the question that could stop him applying a security fix at 10:55, and it needed checking:**
+  **running the SQL cannot turn the suite red.** Both guards — `send-gate-bypass.test.ts` and
+  `rls-policies.test.ts` — read `schema.sql` and migration 004 **from disk**, zero network calls, so nothing
+  they assert moves when SQL runs in the Supabase editor. And `schema.sql` already declares **no** client
+  write policy: the three policies exist only in the live database, so **the repo is already correct and
+  production is the thing that disagrees.**
+- **Appended that to `HUMAN_INTERVENTION.md` at the very end, on purpose** — the file is 1026 lines and the
+  highest line the plan cites is **975**, so nothing above moved. Confirmed: the It142 pointer guard is
+  still 17/17.
+- **Guarded the list against the repo** — the It139 invariant: every file that discloses the defect must be
+  named in the list. Plus a case that the guards stay hermetic, because that promise is now written down for
+  Enrique.
+- **My own guard failed its red-check, and the reason is embarrassing in the right way.** Dropping a file
+  *from the list* passed, because **the paragraph I had just appended names all three filenames while
+  explaining that the list is complete** — so a file-wide `toContain` found them in my own prose. That is
+  It138's failure (a comment satisfying the check it explained) reproduced one iteration after I wrote it
+  up. Now scoped to the list block. **Fifth instance of this class in my own work.**
+- **And I wrote `git checkout --` into a red-check again.** The auto-mode classifier refused it as
+  irreversible — correctly, since `HUMAN_INTERVENTION.md` carried this iteration's uncommitted append. Two
+  earlier iterations lost work exactly that way and `agents/README.md` warns about it twice. Redone with
+  three scratchpad snapshots, all taken after the fix was green.
   A named brief deliverable reported *"First signal p50 1545ms, 45ms over the 1.5s target"* from **six** turns.
   Every chat turn writes a `turn_metrics` row, so the population was available all along: **first signal p50
   1079ms — met by 421ms, not missed by 45.** **50 insertions, 0 deletions:** the six-turn tables survive as

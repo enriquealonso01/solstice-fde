@@ -1024,3 +1024,29 @@ yours and deliberate, so removing it will not break anything.
 
 **History, same answer as the brief.** All of these remain in earlier commits. Rewriting invalidates the
 commit ids the deliverables cite, and the recommendation is unchanged: leave it.
+
+---
+
+## Checked for you, 2026-09-26 05:20 — applying the `drop policy` SQL breaks nothing in the repo
+
+Appended at the end deliberately: everything above keeps its line numbers, because the master plan cites
+seven of them and a guard resolves those citations.
+
+**Three questions you might reasonably stop to ask at 10:55, answered.**
+
+1. **Will it turn the test suite red?** No. The two guards that cover this — `send-gate-bypass.test.ts`
+   and `rls-policies.test.ts` — read `supabase/schema.sql` and
+   `supabase/migrations/004_client_read_only_on_group_tables.sql` **from disk**. Neither makes a single
+   network call, so nothing they assert can change when you run SQL in the Supabase editor. Verified by
+   counting `fetch(` in both files: zero.
+2. **Is `schema.sql` already right?** Yes, and that is why the suite is green today. It declares **no**
+   client write policy on `proposals`, `inquiries` or `follow_ups`. The three policies exist only in the
+   **live** database, which is what migration 004 removes. Repo and production disagree, and the repo is
+   the correct one.
+3. **Is the "three places that mention it" list above complete?** Yes — swept every tracked file, not just
+   the Markdown. `README.md`, `SUBMISSION.md` and `docs/where-this-goes.md` are the only reader-facing
+   files that disclose it. `agent/sol.md`'s **assumption 13** is the one other place affected, and it
+   needs **no edit**: it claims approvals are attributable, which the fix makes true rather than false.
+   A test now fails if a fourth disclosure appears without being added to that list.
+
+**So the order is: paste the SQL, then delete the three passages. Nothing else, and nothing will break.**

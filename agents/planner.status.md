@@ -4,68 +4,60 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 203 — 2026-09-26 05:00 EST
+## Iteration 205 — 2026-09-26 05:19 EST
 
-**One agent task is open: T56.** Filed this iteration, because a brief deliverable publishes a number that is
-wrong against the data production has been collecting all along — and wrong **in our favour**.
+**One agent task is open: T57.** **T56 shipped at It144 — and it caught an error in the numbers I handed it.**
 
-### A named deliverable measured six turns when the population was one query away
+### I corrected a sampling error by committing a convention error, in the same direction
 
-`docs/latency-target.md` concludes:
-
-> **First token p50 3301ms, inside the 4s target. First signal p50 1545ms, 45ms over the 1.5s target.**
-
-The arithmetic on those six rows is correct; I re-derived both medians. Then I asked production for **every**
-turn it has served — `tool_invocations` where `tool = 'turn_metrics'`, **351 rows**, 2026-09-24T17:30Z →
-2026-09-26T08:45Z, of which **338** are the production configuration exactly (`thinking: disabled`,
-`narration: off`, `claude-sonnet-5`):
+I filed T56 accusing `docs/latency-target.md` of publishing a percentile from six turns that landed on the side
+it wanted with no `n` beside it. I then handed the Implementer a census **first-signal p90 of 1488ms** and wrote,
+in the task and in the banner, that the 1.5s target *"is met."* It144 refused to copy my figures — *"I do not
+copy a figure from a task description"* — recomputed from the 351 rows, and found it wrong. Re-derived here from
+a fresh pull:
 
 ```
-first_event_ms  n=338  p50 1079   p90 1488   p95 1780
-first_token_ms  n=338  p50 2608   p90 4290   p95 5155
-total_ms        n=338  p50 3494   p90 7638   p95 9164
+first_event_ms  n=338  target 1500ms
+  p50  nearest-rank 1079   interpolated 1081   [mine 1079]  agree
+  p90  nearest-rank 1502   interpolated 1492   [mine 1488]  index 304 vs my 303
+  p95  nearest-rank 1792   interpolated 1782   [mine 1780]
+  over target: 34 of 338 = 10.1%
 ```
 
-**The 1.5s first-signal target is met at p50 and at p90.** It is not missed by 45ms. And the population is the
-*harder* test: the doc's table is warm, these 338 include cold starts, and only **6 of 338** exceed 3s.
+**My helper took `a[floor(q*(n-1))]` — index 303 of 338 — where nearest-rank takes 304.** One position, and
+because **10.1% of turns exceed 1500ms the p90 sits exactly on the boundary**, that one position was the whole
+difference between *"met"* and *"2ms over."* Every tail figure I filed was low the same way: first-token p90
+**4321/4299** not 4290, p95 **5276** not 5155, total p90 **7869** not 7638.
 
-Both framings hold, which matters because the doc prints *"none"* for a turn that called no tool: 33 of the 338
-called none and for **all 33** `first_event_ms == first_token_ms`; across the 305 that did call a tool, p50 is
-**1102ms**.
+**Stating `n` is not stating your method.** I named the sample size and not the convention, and the error ran in
+the direction of the conclusion I already wanted — which is the direction errors run when you know what you want
+the answer to be. The p50s were right under either convention (1079ms / 2608ms), and that is the half the
+headline rests on.
 
-**The contradiction was already in the repo.** `doc-citations.test.ts:297` records an iteration-109 measurement
-*"for the record rather than as an assertion"* — first signal 905/1009ms, first token 2589/2246ms. Within 80ms
-and 20ms of the population, nowhere near 1545/3301. **A measurement filed as a note is a measurement nobody
-will act on.**
+### What the deliverable says now, which is better than what I asked for
 
-T56 says what to change, what not to touch (the three published target strings that `doc-citations.test.ts`
-pins, and the Sonnet-vs-Haiku argument, which rests on the violation column, not these medians), and how to
-re-derive every figure.
+*"Met at p50 (1079ms), level at p90"*, both conventions printed, **34 of 338 — 10.1%** beside them; first prose
+token *"over at p90 either way"* — 4321/4299ms, ~300ms past a 4s target, 52 of 338 beyond it. **In our favour on
+the headline, against us on the tail**, which is the shape an honest re-measurement usually has. Read in place at
+`docs/latency-target.md:83-138`; the supersession of the old six-turn conclusion is stated at line 71, so a
+top-down reader meets it before the stale number.
 
-### The 29,784 triple, upgraded from equal-length to byte-identical
+### It declined one instruction and was right to
 
-The banner has claimed since 01:25 that `agent/sol.md`, the committed export and the live phone agent all sit
-at 29,784. Re-checked at **04:52**, comparing **content** this time:
+T56 said the *"45ms over"* sentence should be **gone**. It144 left it standing — the doc supersedes it in the next
+section, and *"deleting an honest superseded admission would contradict the pattern this project has used for
+every other correction."* **50 insertions, 0 deletions.** I accept it, and applied the same rule to myself: the
+T56 section and the iteration-203 entry keep their wrong p90 with a correction block at the head rather than a
+quiet rewrite. The **banner** is the exception, because it is rewritten every iteration and is what Enrique reads
+— it now carries the straddle and says whose error it was.
 
-```
-compileInstructions(agent/sol.md)   29,784   truncated: false   margin 216 of 30,000
-exports/telnyx-assistant.json       29,784   byte-identical: true
-LIVE Telnyx assistant (GET)         29,784   byte-identical: true
-```
+### The error is now guarded in code
 
-**Equal length is not equal content**, and until now the claim rested only on the first. The native-export
-deliverable *is* the live agent, character for character. The Haiku/Sonnet split re-checked across four places;
-no drift.
-
-### The Tester's last open finding is closed in the file
-
-Iteration 60 left FIXED-PENDING: *"the walkthrough's boundary proof shows a redirect, not the 403 it promises."*
-`docs/role-walkthroughs.md:278` now calls the redirect *"the router being tidy, and on its own it proves
-nothing"*, says **"do not stop here"**, and routes the reviewer to the API 403 and the bare 401. Fixed in the
-file, not only in the log.
-
-**T55 closed** — shipped by the Implementer at It142, and I ran it at 04:44 (17 tests green) rather than
-believing the entry.
+`latency-claims.test.ts` — new, **5 tests, run green this iteration** — requires a sample size beside any
+*measured* percentile, keeps the census window and its re-derivable query, and in its last case forbids the
+document from claiming the first-signal target is met at p90: *"picking the convention that clears the target is
+the same error as picking the sample that misses it."* **A guard written against my mistake by the agent that
+caught it.** It deliberately does not pin the measurements.
 
 ### Open
 
@@ -77,12 +69,13 @@ believing the entry.
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
-| T56 | Correct the latency deliverable to the 338-turn population | any agent |
+| T57 | Scope the live-modification guard to the SOL-PHX object | any agent |
 
-Tester silent since 20:26 (**8h34m**). Inbox and In progress empty. No lock held; I took none.
-Guards re-run after my edits: `intervention-routing`, `doc-paths`, `doc-citations`, `list-counts` — **123 green**.
+Tester silent since 20:26 (**8h53m**); its ledger has no open findings. Inbox and In progress empty. No lock
+held; I took none. Guards re-run after my edits — `intervention-routing`, `doc-paths`, `list-counts`,
+`latency-claims`: **109 green**.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — still the only item nobody else could do for him. T56 is the best remaining
-*agent* task: it is a panel-facing number, it is currently pessimistic, and the fix is a query plus a paragraph.
+**The `drop policy` paste** — still the only item nobody else could do for him. **T57** is the only open agent
+task, and it is hardening rather than repair: every pointer in that document is correct today.
