@@ -19,7 +19,7 @@
  * prose in backticks), and guessing which is which produces false positives, which is how a guard
  * teaches people to ignore it. Adding a quote here is a deliberate act, and that is the point.
  */
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
@@ -65,5 +65,51 @@ describe('UI text quoted by the walkthroughs', () => {
       `${doc} tells a reviewer the screen says "${quote}", and ${source} no longer contains that text. ` +
         `Either the UI was reworded and the walkthrough was not, or this case is pinned to the wrong file.`,
     ).toContain(quote)
+  })
+})
+
+/**
+ * Code that a demo document tells someone to type must still be in the file it names.
+ *
+ * `docs/live-modification.md` is the rehearsed answer to the one thing the brief says the panel will
+ * ask — *"modify the system while we watch"* — and it quotes a block from `src/lib/rules/thresholds.ts`
+ * with a `// <- change to 12` marker on the line to edit. PR #97 put that document in the README's
+ * main table, so it is now signposted rather than buried.
+ *
+ * It is currently exact, checked line for line against `thresholds.ts:102-106`. The risk is not that
+ * it is wrong; it is that a rename of `max_discount_auto_approve_pct`, or a reshuffle of that object,
+ * breaks it silently — and the person who finds out is standing in front of the panel with the file
+ * open. That is the worst possible moment for a stale snippet, which is what makes this worth one
+ * pass over one file.
+ *
+ * Pinned as separate fragments rather than one blob so a failure says which line moved, and because
+ * the document indents its copy differently from the source.
+ */
+describe('code the demo documents tell you to type', () => {
+  const doc = 'docs/live-modification.md'
+  const source = 'src/lib/rules/thresholds.ts'
+
+  it.each([
+    "'SOL-PHX': {",
+    "property_code: 'SOL-PHX',",
+    "property_name: 'Solstice Phoenix Camelback',",
+    'group_block_auto_approve_max_rooms: 35,',
+    'max_discount_auto_approve_pct: 15,',
+  ])('%s appears in both the runbook snippet and thresholds.ts', (fragment) => {
+    const docText = readFileSync(join(repoRoot, doc), 'utf8')
+    const sourceText = readFileSync(join(repoRoot, source), 'utf8')
+
+    expect(docText, `${doc} no longer quotes ${JSON.stringify(fragment)}; update or remove this case`).toContain(fragment)
+    expect(
+      sourceText,
+      `${doc} tells the presenter to edit ${JSON.stringify(fragment)} in ${source}, and it is not there. ` +
+        `The live-modification demo would fail with the file open in front of the panel.`,
+    ).toContain(fragment)
+  })
+
+  it('names a file that exists, because the first step is opening it', () => {
+    const docText = readFileSync(join(repoRoot, doc), 'utf8')
+    expect(docText).toContain(source)
+    expect(existsSync(join(repoRoot, source))).toBe(true)
   })
 })

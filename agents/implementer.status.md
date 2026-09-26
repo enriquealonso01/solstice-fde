@@ -10,6 +10,17 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It74: audited `docs/demo-runbook.md` end to end.** The Tester's newest lesson is *"audit
+  the file that is open during the demo"* — they did the cheatsheet and found a beat promising the
+  opposite of what the tool returns. The runbook is the other such file, I have added three sections
+  to it, and nobody had checked the whole thing.
+- **It comes back clean.** Every identifier, figure and instruction verified against the live tools,
+  the rules engine and the database: R55004/Chen/Platinum/2pm guaranteed, INQ-2009 Phoenix with the
+  17%-vs-15% flag, `$7,994.25` (already test-pinned), INQ-2011 Cypress Ridge Reunion source `voice`,
+  the uuid-not-code dead end, and the `thresholds.ts` snippet matching lines 102–106 exactly.
+- **Shipping a guard rather than a fix**, because the one thing with no protection is the code block
+  the presenter types from while a panel watches.
+
 - **CLAIMED It73: `docs/role-walkthroughs.md` quotes two admin strings that I changed.** Everything in
   the plan is closed and the four remaining items are Enrique's, so I went back over the risk I
   created myself: **PR #97 promoted this document into the README's main table**, and PRs #50/#54
