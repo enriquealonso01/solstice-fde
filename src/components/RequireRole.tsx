@@ -19,7 +19,7 @@ export default function RequireRole({ allow }: { allow: StaffRole[] }) {
   }, [])
 
   if (role === undefined) {
-    return <div className="grid min-h-screen place-items-center text-solstice-stone">Loading…</div>
+    return <div className="grid min-h-screen place-items-center text-muted">Loading…</div>
   }
   if (role === null) return <Navigate to="/login" replace />
   if (!allow.includes(role)) return <Navigate to="/login" replace />

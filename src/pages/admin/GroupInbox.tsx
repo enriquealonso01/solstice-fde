@@ -109,8 +109,8 @@ export default function GroupInbox() {
             onClick={() => setFilter(value)}
             className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
               filter === value
-                ? 'bg-solstice-ink text-white'
-                : 'border border-solstice-sand text-solstice-stone hover:bg-solstice-sand/40'
+                ? 'bg-hero text-on-accent'
+                : 'border border-line text-muted hover:bg-line/40'
             }`}
           >
             {label}
@@ -120,7 +120,7 @@ export default function GroupInbox() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search company, contact, property or code"
-          className="ml-auto w-72 rounded-md border border-solstice-sand bg-white px-3 py-1.5 text-sm outline-none transition focus:border-solstice-ember focus:ring-1 focus:ring-solstice-ember"
+          className="ml-auto w-72 rounded-md border border-line bg-card px-3 py-1.5 text-sm outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
         />
       </div>
 
@@ -129,7 +129,7 @@ export default function GroupInbox() {
       </div>
 
       <Panel>
-        <PanelHeader title="Inbox" right={<span className="text-xs font-normal text-solstice-stone">{visible.length} shown</span>} />
+        <PanelHeader title="Inbox" right={<span className="text-xs font-normal text-muted">{visible.length} shown</span>} />
         {inquiries.loading ? (
           <EmptyState title="Loading inquiries…" />
         ) : visible.length === 0 ? (
@@ -138,7 +138,7 @@ export default function GroupInbox() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-solstice-sand text-left text-xs uppercase tracking-wide text-solstice-stone">
+                <tr className="border-b border-line text-left eyebrow">
                   <th className="px-4 py-2 font-medium">Inquiry</th>
                   <th className="px-4 py-2 font-medium">Property</th>
                   <th className="px-4 py-2 font-medium">Dates</th>
@@ -182,47 +182,47 @@ function InboxRow({
   return (
     <tr
       onClick={() => navigate(href)}
-      className="cursor-pointer border-b border-solstice-sand/60 transition last:border-0 hover:bg-solstice-cream/60"
+      className="cursor-pointer border-b border-line/60 transition last:border-0 hover:bg-canvas/60"
     >
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-xs text-solstice-stone">{inquiry.inquiry_code}</span>
+          <span className="font-mono text-xs text-muted">{inquiry.inquiry_code}</span>
           <SourceBadge source={inquiry.source} />
         </div>
-        <div className="mt-0.5 font-medium text-solstice-ink">{p.company_name}</div>
-        <div className="text-xs text-solstice-stone">
+        <div className="mt-0.5 font-medium text-ink">{p.company_name}</div>
+        <div className="text-xs text-muted">
           {p.contact_name}
           {p.contact_email ? ` · ${p.contact_email}` : p.contact_phone ? ` · ${p.contact_phone} (phone only)` : ''}
         </div>
       </td>
-      <td className="px-4 py-3 text-solstice-slate">
+      <td className="px-4 py-3 text-muted">
         <div>{p.property_name}</div>
-        <div className="font-mono text-xs text-solstice-stone">{p.preferred_property_code}</div>
+        <div className="font-mono text-xs text-muted">{p.preferred_property_code}</div>
       </td>
-      <td className="px-4 py-3 text-solstice-slate">
+      <td className="px-4 py-3 text-muted">
         {p.arrival_date ? (
           <>
             <div>{shortDate(p.arrival_date)}</div>
-            <div className="text-xs text-solstice-stone">{p.nights ?? '—'} nights</div>
+            <div className="text-xs text-muted">{p.nights ?? '—'} nights</div>
           </>
         ) : (
-          <span className="text-solstice-stone">not given</span>
+          <span className="text-muted">not given</span>
         )}
       </td>
-      <td className="px-4 py-3 tabular-nums text-solstice-slate">{p.rooms_requested ?? '—'}</td>
-      <td className="px-4 py-3 tabular-nums text-solstice-slate">
+      <td className="px-4 py-3 tabular-nums text-muted">{p.rooms_requested ?? '—'}</td>
+      <td className="px-4 py-3 tabular-nums text-muted">
         {requested === null || requested === undefined ? (
           '—'
         ) : priced !== undefined && priced !== requested ? (
           <span>
-            <span className="text-solstice-stone line-through">{requested}%</span>{' '}
-            <span className="font-medium text-solstice-ink">{priced}%</span>
+            <span className="text-muted line-through">{requested}%</span>{' '}
+            <span className="font-medium text-ink">{priced}%</span>
           </span>
         ) : (
           `${requested}%`
         )}
       </td>
-      <td className="px-4 py-3 tabular-nums text-solstice-slate">
+      <td className="px-4 py-3 tabular-nums text-muted">
         {proposal ? money(proposal.pricing.total_cents) : '—'}
       </td>
       <td className="px-4 py-3">
@@ -244,7 +244,7 @@ function InboxRow({
           renderRulesChip(rulesChipFor(inquiry))
         )}
       </td>
-      <td className="px-4 py-3">{proposal ? <ProposalStatusChip status={proposal.status} /> : <span className="text-xs text-solstice-stone">none yet</span>}</td>
+      <td className="px-4 py-3">{proposal ? <ProposalStatusChip status={proposal.status} /> : <span className="text-xs text-muted">none yet</span>}</td>
       <td className="px-4 py-3 text-right">
         <Link to={href} className="btn-ghost" onClick={(e) => e.stopPropagation()}>
           Open
@@ -258,12 +258,12 @@ function InboxRow({
 function renderRulesChip(chip: RulesChip) {
   switch (chip.kind) {
     case 'missing':
-      return <span className="chip bg-sky-50 text-sky-800">{chip.count} missing</span>
+      return <span className="chip bg-info-soft text-info">{chip.count} missing</span>
     case 'blocked':
-      return <span className="chip bg-rose-50 text-rose-800">cannot be priced</span>
+      return <span className="chip bg-bad-soft text-bad">cannot be priced</span>
     case 'unknown':
-      return <span className="chip bg-amber-50 text-amber-800">needs a look</span>
+      return <span className="chip bg-warn-soft text-warn">needs a look</span>
     case 'ready':
-      return <span className="chip bg-emerald-50 text-emerald-800">ready to price</span>
+      return <span className="chip bg-good-soft text-good">ready to price</span>
   }
 }

@@ -35,10 +35,10 @@ import {
 } from '@/components/admin/mockData'
 
 const ROLE_STYLE: Record<MessageRow['role'], { rail: string; label: string; tone: string }> = {
-  user: { rail: 'border-l-solstice-ink', label: 'Guest', tone: 'text-solstice-ink' },
-  assistant: { rail: 'border-l-solstice-ember', label: 'Sol', tone: 'text-solstice-ink' },
-  system: { rail: 'border-l-solstice-stone', label: 'System', tone: 'italic text-solstice-stone' },
-  supervisor: { rail: 'border-l-solstice-gold', label: 'Supervisor', tone: 'text-solstice-ink' },
+  user: { rail: 'border-l-info', label: 'Guest', tone: 'text-ink' },
+  assistant: { rail: 'border-l-accent', label: 'Sol', tone: 'text-ink' },
+  system: { rail: 'border-l-faint', label: 'System', tone: 'italic text-muted' },
+  supervisor: { rail: 'border-l-warn', label: 'Supervisor', tone: 'text-ink' },
 }
 
 export default function SessionDetail() {
@@ -102,9 +102,9 @@ export default function SessionDetail() {
         <span className="flex flex-wrap items-center gap-2">
           <ChannelChip channel={session.channel} />
           <SessionStatusChip status={status} />
-          <span className="chip bg-solstice-sand/60 capitalize text-solstice-slate">{intentLabel(session.intent, status)}</span>
-          <span className="tabular-nums text-solstice-stone">{elapsed}</span>
-          {session.phone_masked ? <span className="text-solstice-stone">· {session.phone_masked}</span> : null}
+          <span className="chip bg-line/60 capitalize text-muted">{intentLabel(session.intent, status)}</span>
+          <span className="tabular-nums text-muted">{elapsed}</span>
+          {session.phone_masked ? <span className="text-muted">· {session.phone_masked}</span> : null}
         </span>
       }
       actions={
@@ -123,12 +123,12 @@ export default function SessionDetail() {
             title="Transcript"
             right={
               liveNow && status !== 'taken_over' ? (
-                <span className="chip bg-emerald-50 text-emerald-800">
-                  <span className="sol-dot h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="chip bg-good-soft text-good">
+                  <span className="sol-dot h-1.5 w-1.5 rounded-full bg-good" />
                   streaming
                 </span>
               ) : (
-                <span className="text-xs font-normal text-solstice-stone">{transcript.rows.length} turns</span>
+                <span className="text-xs font-normal text-muted">{transcript.rows.length} turns</span>
               )
             }
           />
@@ -141,8 +141,8 @@ export default function SessionDetail() {
                 return (
                   <div key={m.id} className={`sol-rise border-l-2 pl-3 ${style.rail}`}>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-xs font-medium uppercase tracking-wide text-solstice-stone">{style.label}</span>
-                      <span className="text-[11px] tabular-nums text-solstice-stone/70">{clockTime(m.created_at)}</span>
+                      <span className="eyebrow">{style.label}</span>
+                      <span className="text-[11px] tabular-nums text-muted/70">{clockTime(m.created_at)}</span>
                     </div>
                     <p className={`mt-0.5 text-sm leading-relaxed ${style.tone}`}>{m.content}</p>
                     {m.attachment ? <AttachmentChip attachment={m.attachment} /> : null}
@@ -151,7 +151,7 @@ export default function SessionDetail() {
               })
             )}
           </div>
-          <div className="border-t border-solstice-sand px-4 py-2">
+          <div className="border-t border-line px-4 py-2">
             <ErrorNote message={transcript.error} />
           </div>
         </Panel>
@@ -162,9 +162,9 @@ export default function SessionDetail() {
             title="Tool trace"
             right={
               ungrounded > 0 ? (
-                <span className="chip bg-rose-50 text-rose-800">{ungrounded} ungrounded</span>
+                <span className="chip bg-bad-soft text-bad">{ungrounded} ungrounded</span>
               ) : (
-                <span className="text-xs font-normal text-solstice-stone">{trace.rows.length} calls</span>
+                <span className="text-xs font-normal text-muted">{trace.rows.length} calls</span>
               )
             }
           />
@@ -175,15 +175,15 @@ export default function SessionDetail() {
               trace.rows.map((t) => <TraceEntry key={t.id} entry={t} />)
             )}
           </div>
-          <div className="border-t border-solstice-sand px-4 py-2 text-[11px] leading-relaxed text-solstice-stone">
+          <div className="border-t border-line px-4 py-2 text-[11px] leading-relaxed text-muted">
             Arguments are masked in the tool layer before they are written, never in the UI. A
-            <span className="mx-1 font-medium text-rose-700">not grounded</span>
+            <span className="mx-1 font-medium text-bad">not grounded</span>
             result obliges Sol to escalate rather than improvise.
           </div>
         </Panel>
 
         {/* supervisor */}
-        <div className="space-y-4 xl:col-span-3">
+        <div className="space-y-4 xl:col-span-3 xl:sticky xl:top-20 xl:self-start">
           {/* Two channels, two different controls. A chat has no audio to monitor or whisper into,
               so the voice ladder's four rungs would be one working button and three dead ones. */}
           {session.channel === 'chat' ? (
@@ -221,10 +221,10 @@ function AttachmentChip({ attachment }: { attachment: MessageAttachment }) {
       href={attachment.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="mt-1 inline-flex max-w-full items-center gap-1.5 rounded border border-solstice-sand bg-white px-2 py-1 text-xs text-solstice-slate transition hover:border-solstice-stone/40"
+      className="mt-1 inline-flex max-w-full items-center gap-1.5 rounded border border-line bg-card px-2 py-1 text-xs text-muted transition hover:border-faint/60"
     >
-      <span className="truncate font-medium text-solstice-ink">{attachment.filename}</span>
-      <span className="shrink-0 text-solstice-stone">
+      <span className="truncate font-medium text-ink">{attachment.filename}</span>
+      <span className="shrink-0 text-muted">
         {attachment.bytes < 1024 * 1024
           ? `${Math.max(1, Math.round(attachment.bytes / 1024))} KB`
           : `${(attachment.bytes / (1024 * 1024)).toFixed(1)} MB`}
@@ -236,8 +236,8 @@ function AttachmentChip({ attachment }: { attachment: MessageAttachment }) {
 function Fact({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <dt className="shrink-0 text-xs uppercase tracking-wide text-solstice-stone">{label}</dt>
-      <dd className={`min-w-0 truncate text-right text-xs text-solstice-slate ${mono ? 'font-mono' : ''}`} title={value}>
+      <dt className="shrink-0 eyebrow">{label}</dt>
+      <dd className={`min-w-0 truncate text-right text-xs text-muted ${mono ? 'font-mono' : ''}`} title={value}>
         {value}
       </dd>
     </div>
@@ -247,32 +247,32 @@ function Fact({ label, value, mono }: { label: string; value: string; mono?: boo
 function TraceEntry({ entry }: { entry: ToolInvocationRow }) {
   const args = Object.entries(entry.args_masked ?? {})
   return (
-    <div className="sol-rise rounded-md border border-solstice-sand bg-white p-3">
+    <div className="sol-rise rounded-md border border-line bg-card p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <code className="text-sm font-medium text-solstice-ink">{entry.tool}</code>
+        <code className="text-sm font-medium text-ink">{entry.tool}</code>
         <span className="flex items-center gap-1.5">
           <GroundedChip grounded={entry.grounded} />
           {entry.latency_ms !== null ? (
-            <span className="chip bg-solstice-sand/60 tabular-nums text-solstice-slate">{entry.latency_ms} ms</span>
+            <span className="chip bg-line/60 tabular-nums text-muted">{entry.latency_ms} ms</span>
           ) : null}
         </span>
       </div>
 
       {args.length > 0 ? (
-        <dl className="mt-2 space-y-0.5 rounded bg-solstice-cream px-2 py-1.5 font-mono text-[11px] leading-relaxed">
+        <dl className="mt-2 space-y-0.5 rounded bg-canvas px-2 py-1.5 font-mono text-[11px] leading-relaxed">
           {args.map(([k, v]) => (
             <div key={k} className="flex gap-2">
-              <dt className="shrink-0 text-solstice-stone">{k}</dt>
-              <dd className="min-w-0 break-all text-solstice-slate">{formatArg(v)}</dd>
+              <dt className="shrink-0 text-muted">{k}</dt>
+              <dd className="min-w-0 break-all text-muted">{formatArg(v)}</dd>
             </div>
           ))}
         </dl>
       ) : null}
 
       {entry.result_summary ? (
-        <p className="mt-2 text-xs leading-relaxed text-solstice-slate">{entry.result_summary}</p>
+        <p className="mt-2 text-xs leading-relaxed text-muted">{entry.result_summary}</p>
       ) : null}
-      <p className="mt-1 text-[11px] tabular-nums text-solstice-stone/70">{clockTime(entry.created_at)}</p>
+      <p className="mt-1 text-[11px] tabular-nums text-muted/70">{clockTime(entry.created_at)}</p>
     </div>
   )
 }

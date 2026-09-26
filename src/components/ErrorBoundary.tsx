@@ -24,13 +24,13 @@ export default class ErrorBoundary extends Component<{ children: ReactNode }, St
     if (!error) return this.props.children
 
     return (
-      <div className="grid min-h-screen place-items-center bg-solstice-cream p-6">
+      <div className="grid min-h-screen place-items-center bg-canvas p-6">
         <div className="panel max-w-lg p-6">
-          <h1 className="font-display text-2xl text-solstice-ink">Something broke on this screen</h1>
-          <p className="mt-2 text-sm text-solstice-slate">
+          <h1 className="font-display text-2xl text-ink">Something broke on this screen</h1>
+          <p className="mt-2 text-sm text-muted">
             The rest of the application is still running. This is the error, verbatim:
           </p>
-          <pre className="mt-3 overflow-x-auto rounded-md bg-solstice-sand/40 p-3 text-xs text-solstice-ink">
+          <pre className="mt-3 overflow-x-auto rounded-md bg-line/40 p-3 text-xs text-ink">
             {error.message}
           </pre>
           <div className="mt-4 flex gap-2">

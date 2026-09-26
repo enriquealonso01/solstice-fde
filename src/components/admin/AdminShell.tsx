@@ -7,19 +7,21 @@ import { supabase } from '@/lib/supabase'
 import { effectiveRole } from '@/lib/rules/types'
 import type { StaffRole } from '../../../shared/types'
 import { useIdentity } from './useAdminData'
+import { Icons, ThemeToggle } from './ui'
 
 interface NavItem {
   to: string
   label: string
   roles: StaffRole[]
+  icon: (p: { className?: string }) => ReactNode
 }
 
 const NAV: NavItem[] = [
-  { to: '/admin', label: 'Overview', roles: ['admin'] },
-  { to: '/admin/sessions', label: 'Live sessions', roles: ['concierge', 'admin'] },
-  { to: '/admin/inquiries', label: 'Group inbox', roles: ['group_sales', 'gm', 'admin'] },
-  { to: '/admin/backend', label: 'Backend map', roles: ['admin'] },
-  { to: '/admin/cost', label: 'Cost', roles: ['admin'] },
+  { to: '/admin', label: 'Overview', roles: ['admin'], icon: Icons.home },
+  { to: '/admin/sessions', label: 'Live conversations', roles: ['concierge', 'admin'], icon: Icons.chat },
+  { to: '/admin/inquiries', label: 'Group requests', roles: ['group_sales', 'gm', 'admin'], icon: Icons.inbox },
+  { to: '/admin/backend', label: 'How it works', roles: ['admin'], icon: Icons.map },
+  { to: '/admin/cost', label: 'Running costs', roles: ['admin'], icon: Icons.coins },
 ]
 
 const ROLE_LABEL: Record<StaffRole, string> = {
@@ -66,48 +68,52 @@ export default function AdminShell({
     navigate('/login', { replace: true })
   }
 
+  const SignOut = Icons.signOut
+
   return (
-    <div className="min-h-screen bg-solstice-cream">
-      <header className="border-b border-solstice-sand bg-white">
-        <div className="mx-auto flex max-w-[1600px] items-center gap-6 px-6 py-3">
-          <Link to="/" className="font-display text-xl tracking-tight text-solstice-ink">
-            Solstice<span className="text-solstice-ember">.</span>
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-40 border-b border-line bg-canvas/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-page items-center gap-4 px-4 py-3 sm:gap-6 sm:px-6">
+          <Link to="/" className="font-display text-2xl tracking-tight text-ink">
+            Solstice<span className="text-accent">.</span>
           </Link>
-          <nav className="flex items-center gap-1">
+          <nav aria-label="Sections" className="hidden items-center gap-1 md:flex">
             {visible.map((n) => (
               <NavLink
                 key={n.to}
                 to={n.to}
                 end={n.to === '/admin'}
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-1.5 text-sm font-medium transition ${
-                    isActive
-                      ? 'bg-solstice-sand/70 text-solstice-ink'
-                      : 'text-solstice-stone hover:bg-solstice-sand/40 hover:text-solstice-ink'
+                  `flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                    isActive ? 'bg-ink text-hero-text' : 'text-muted hover:bg-line/50 hover:text-ink'
                   }`
                 }
               >
+                <n.icon className="h-4 w-4" />
                 {n.label}
               </NavLink>
             ))}
           </nav>
-          <div className="ml-auto flex items-center gap-3">
-            <div className="text-right leading-tight">
-              <div className="text-sm text-solstice-ink">{email ?? 'Signed out'}</div>
-              <div className="text-xs text-solstice-stone">{role ? ROLE_LABEL[role] : 'no role'}</div>
+          <div className="ml-auto flex items-center gap-2 sm:gap-3">
+            <ThemeToggle />
+            <div className="hidden text-right leading-tight sm:block">
+              <div className="text-sm text-ink">{email ?? 'Signed out'}</div>
+              <div className="text-xs text-faint">{role ? ROLE_LABEL[role] : 'no role'}</div>
             </div>
             <button type="button" className="btn-ghost" onClick={() => void signOut()}>
-              Sign out
+              <SignOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Sign out</span>
+              <span className="sr-only sm:hidden">Sign out</span>
             </button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1600px] px-6 py-6">
-        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <main className="mx-auto max-w-page px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-3xl text-solstice-ink">{title}</h1>
-            {subtitle ? <div className="mt-1 text-sm text-solstice-stone">{subtitle}</div> : null}
+            <h1 className="font-display text-4xl text-ink">{title}</h1>
+            {subtitle ? <div className="mt-1 text-sm text-muted">{subtitle}</div> : null}
           </div>
           {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
         </div>

@@ -16,13 +16,13 @@ import { MAP_TABS } from '@/components/admin/backendMapModel'
 import FailureInjection from '@/components/admin/FailureInjection'
 
 const LEGEND: { layer: MapLayer; label: string; dot: string }[] = [
-  { layer: 'guest', label: 'Guest surface', dot: 'bg-sky-400' },
-  { layer: 'runtime', label: 'Agent runtime', dot: 'bg-solstice-ember' },
-  { layer: 'tools', label: 'Tool layer', dot: 'bg-violet-400' },
-  { layer: 'data', label: 'Data', dot: 'bg-emerald-500' },
-  { layer: 'delivery', label: 'Delivery', dot: 'bg-amber-500' },
-  { layer: 'staff', label: 'Staff surface', dot: 'bg-solstice-gold' },
-  { layer: 'deploy', label: 'Deploy', dot: 'bg-slate-400' },
+  { layer: 'guest', label: 'Guest surface', dot: 'bg-info' },
+  { layer: 'runtime', label: 'Agent runtime', dot: 'bg-accent' },
+  { layer: 'tools', label: 'Tool layer', dot: 'bg-agent' },
+  { layer: 'data', label: 'Data', dot: 'bg-good-soft' },
+  { layer: 'delivery', label: 'Delivery', dot: 'bg-warn-soft0' },
+  { layer: 'staff', label: 'Staff surface', dot: 'bg-accent' },
+  { layer: 'deploy', label: 'Deploy', dot: 'bg-faint' },
 ]
 
 export default function BackendMap() {
@@ -41,7 +41,7 @@ export default function BackendMap() {
 
   return (
     <AdminShell
-      title="Backend"
+      title="How it works"
       subtitle="Every box names the real provider. Every choice with a plausible alternative says why we did not take it."
       actions={
         <button type="button" className="btn-ghost" onClick={() => setTall((v) => !v)}>
@@ -57,8 +57,8 @@ export default function BackendMap() {
             onClick={() => setTabId(t.id)}
             className={`rounded-md px-3.5 py-2 text-sm font-medium transition ${
               t.id === tabId
-                ? 'bg-solstice-ink text-white'
-                : 'border border-solstice-sand bg-white text-solstice-stone hover:bg-solstice-sand/40'
+                ? 'bg-hero text-on-accent'
+                : 'border border-line bg-card text-muted hover:bg-line/40'
             }`}
           >
             {t.label}
@@ -66,7 +66,7 @@ export default function BackendMap() {
         ))}
       </div>
 
-      <p className="mb-3 max-w-4xl text-[15px] leading-relaxed text-solstice-slate">{tab.blurb}</p>
+      <p className="mb-3 max-w-4xl text-[15px] leading-relaxed text-muted">{tab.blurb}</p>
 
       <div
         className="panel overflow-hidden"
@@ -84,7 +84,7 @@ export default function BackendMap() {
           nodesDraggable={false}
           nodesConnectable={false}
           proOptions={{ hideAttribution: false }}
-          className="bg-solstice-cream"
+          className="bg-canvas"
         >
           <Background variant={BackgroundVariant.Dots} gap={22} size={1.5} color="#D8CFC2" />
           <Controls showInteractive={false} />
@@ -92,13 +92,13 @@ export default function BackendMap() {
             pannable
             zoomable
             nodeColor={(node) => MINIMAP_COLOR[(node.data as { layer: MapLayer }).layer] ?? '#6B625A'}
-            maskColor="rgba(247, 243, 236, 0.75)"
-            className="!border !border-solstice-sand"
+            maskColor="rgba(120, 110, 95, 0.2)"
+            className="!border !border-line"
           />
         </ReactFlow>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-solstice-stone">
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted">
         {LEGEND.map((l) => (
           <span key={l.layer} className="inline-flex items-center gap-1.5">
             <span className={`h-2.5 w-2.5 rounded-full ${l.dot}`} />

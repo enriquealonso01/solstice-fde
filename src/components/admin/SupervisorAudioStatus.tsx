@@ -11,10 +11,10 @@ export default function SupervisorAudioStatus() {
   const voice = useSupervisorVoice(true)
 
   const tone = voice.ready
-    ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+    ? 'border-good-ring bg-good-soft text-good'
     : voice.state === 'requesting' || voice.state === 'connecting'
-      ? 'border-solstice-sand bg-white text-solstice-stone'
-      : 'border-rose-200 bg-rose-50 text-rose-900'
+      ? 'border-line bg-card text-muted'
+      : 'border-bad-ring bg-bad-soft text-bad'
 
   return (
     <div className={`flex items-start gap-2.5 rounded-md border px-3 py-2 text-sm ${tone}`}>
@@ -23,7 +23,7 @@ export default function SupervisorAudioStatus() {
       <span
         aria-hidden
         className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-          voice.ready ? 'bg-emerald-500' : voice.state === 'requesting' || voice.state === 'connecting' ? 'sol-dot bg-solstice-stone' : 'bg-rose-500'
+          voice.ready ? 'bg-good-soft' : voice.state === 'requesting' || voice.state === 'connecting' ? 'sol-dot bg-faint' : 'bg-bad-soft'
         }`}
       />
       <span className="min-w-0">

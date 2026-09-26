@@ -73,7 +73,7 @@ export function MessageList({ turns, connection, onRetry }: MessageListProps) {
 function GuestBubble({ text }: { text: string }) {
   return (
     <div className="sol-rise flex justify-end">
-      <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-solstice-ink px-3.5 py-2.5 text-[13px] leading-relaxed text-solstice-cream shadow-sm">
+      <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-hero px-3.5 py-2.5 text-[13px] leading-relaxed text-hero-text shadow-sm">
         {text}
       </p>
     </div>
@@ -91,16 +91,16 @@ function GuestBubble({ text }: { text: string }) {
 function StaffBubble({ turn }: { turn: StaffTurn }) {
   return (
     <div className="sol-rise flex items-start gap-2">
-      <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-solstice-gold/40 bg-solstice-gold/10 text-[10px] font-semibold uppercase text-solstice-ink shadow-sm">
+      <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-accent/40 bg-accent/10 text-[10px] font-semibold uppercase text-ink shadow-sm">
         SH
       </span>
       <div className="min-w-0 max-w-[88%]">
-        <p className="mb-1 text-[10.5px] font-medium uppercase tracking-[0.08em] text-solstice-stone">
+        <p className="mb-1 text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">
           Solstice team
         </p>
-        <div className="rounded-2xl rounded-bl-md border border-solstice-gold/35 bg-solstice-gold/[0.06] px-3.5 py-2.5 shadow-sm">
+        <div className="rounded-2xl rounded-bl-md border border-accent/35 bg-accent/[0.06] px-3.5 py-2.5 shadow-sm">
           {turn.text ? (
-            <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-solstice-slate">
+            <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-muted">
               {turn.text}
             </p>
           ) : null}
@@ -120,17 +120,17 @@ function AttachmentLink({ attachment }: { attachment: TurnAttachment }) {
       // handle on this window.
       rel="noopener noreferrer"
       download={attachment.filename}
-      className="mt-2 flex items-center gap-2 rounded-lg border border-solstice-sand bg-white px-2.5 py-2 transition hover:border-solstice-stone/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-solstice-ember/40"
+      className="mt-2 flex items-center gap-2 rounded-lg border border-line bg-card px-2.5 py-2 transition hover:border-faint/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
     >
       <span
         aria-hidden="true"
-        className="grid h-7 w-7 shrink-0 place-items-center rounded bg-solstice-cream text-[9px] font-semibold uppercase text-solstice-stone"
+        className="grid h-7 w-7 shrink-0 place-items-center rounded bg-canvas text-[9px] font-semibold uppercase text-muted"
       >
         {fileTag(attachment.filename)}
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-[12.5px] font-medium text-solstice-ink">{attachment.filename}</span>
-        <span className="block text-[11px] text-solstice-stone">{humanBytes(attachment.bytes)}</span>
+        <span className="block truncate text-[12.5px] font-medium text-ink">{attachment.filename}</span>
+        <span className="block text-[11px] text-muted">{humanBytes(attachment.bytes)}</span>
       </span>
     </a>
   )
@@ -159,7 +159,7 @@ function AgentBubble({ turn, onRetry }: { turn: AgentTurn; onRetry: () => void }
 
   return (
     <div className="sol-rise flex items-start gap-2">
-      <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-solstice-sand bg-white text-solstice-ink shadow-sm">
+      <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-line bg-card text-ink shadow-sm">
         <SolMark className="h-3.5 w-3.5" />
       </span>
 
@@ -167,17 +167,17 @@ function AgentBubble({ turn, onRetry }: { turn: AgentTurn; onRetry: () => void }
         <ToolTrace tools={turn.tools} />
 
         {hasText ? (
-          <div className="rounded-2xl rounded-bl-md border border-solstice-sand bg-white px-3.5 py-2.5 shadow-sm">
+          <div className="rounded-2xl rounded-bl-md border border-line bg-card px-3.5 py-2.5 shadow-sm">
             {streaming ? (
               <p
                 aria-hidden="true"
-                className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-solstice-slate"
+                className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-muted"
               >
                 {turn.text}
                 <Caret />
               </p>
             ) : (
-              <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-solstice-slate">
+              <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-muted">
                 {turn.text}
               </p>
             )}
@@ -196,7 +196,7 @@ function AgentBubble({ turn, onRetry }: { turn: AgentTurn; onRetry: () => void }
 function Caret() {
   return (
     <span
-      className="ml-0.5 inline-block h-[0.95em] w-[2px] translate-y-[2px] rounded-full bg-solstice-ember/70 align-baseline"
+      className="ml-0.5 inline-block h-[0.95em] w-[2px] translate-y-[2px] rounded-full bg-accent/70 align-baseline"
       aria-hidden="true"
     />
   )
@@ -218,28 +218,28 @@ function TypingDots() {
   return (
     <span
       ref={hostRef}
-      className="inline-flex items-center gap-1 rounded-2xl rounded-bl-md border border-solstice-sand bg-white px-3.5 py-3 shadow-sm"
+      className="inline-flex items-center gap-1 rounded-2xl rounded-bl-md border border-line bg-card px-3.5 py-3 shadow-sm"
     >
       <span className="sr-only">Sol is working on it</span>
-      <span className="sol-dot h-1.5 w-1.5 rounded-full bg-solstice-stone" />
-      <span className="sol-dot h-1.5 w-1.5 rounded-full bg-solstice-stone" />
-      <span className="sol-dot h-1.5 w-1.5 rounded-full bg-solstice-stone" />
+      <span className="sol-dot h-1.5 w-1.5 rounded-full bg-faint" />
+      <span className="sol-dot h-1.5 w-1.5 rounded-full bg-faint" />
+      <span className="sol-dot h-1.5 w-1.5 rounded-full bg-faint" />
     </span>
   )
 }
 
 function FailureCard({ message, onRetry }: { message?: string; onRetry: () => void }) {
   return (
-    <div className="flex items-start gap-2 rounded-2xl rounded-bl-md border border-solstice-ember/30 bg-solstice-ember/[0.06] px-3.5 py-2.5">
-      <AlertIcon className="mt-0.5 h-4 w-4 shrink-0 text-solstice-ember" />
+    <div className="flex items-start gap-2 rounded-2xl rounded-bl-md border border-accent/30 bg-accent/[0.06] px-3.5 py-2.5">
+      <AlertIcon className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
       <div className="min-w-0">
-        <p className="text-[13px] leading-relaxed text-solstice-slate">
+        <p className="text-[13px] leading-relaxed text-muted">
           {message ?? 'Sol could not complete that reply.'}
         </p>
         <button
           type="button"
           onClick={onRetry}
-          className="mt-1.5 rounded-md text-[12px] font-medium text-solstice-ember underline underline-offset-2 transition hover:text-solstice-ember/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-solstice-ember/40"
+          className="mt-1.5 rounded-md text-[12px] font-medium text-accent underline underline-offset-2 transition hover:text-accent/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           Try again
         </button>
@@ -250,7 +250,7 @@ function FailureCard({ message, onRetry }: { message?: string; onRetry: () => vo
 
 function StatusLine({ children }: { children: ReactNode }) {
   return (
-    <p className="mt-3 text-center text-[11px] text-solstice-stone/80" role="status">
+    <p className="mt-3 text-center text-[11px] text-muted/80" role="status">
       {children}
     </p>
   )

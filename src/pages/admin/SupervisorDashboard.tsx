@@ -2,15 +2,17 @@
 // Subscribed to postgres_changes on `sessions`, so a call or chat that starts on the
 // guest half of the split screen appears here inside about a second.
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import AdminShell from '@/components/admin/AdminShell'
 import SupervisorAudioStatus from '@/components/admin/SupervisorAudioStatus'
 import {
   AccessNotice,
   ChannelChip,
+  Chip,
   EmptyState,
   ErrorNote,
+  HeroQuote,
   Metric,
   Panel,
   PanelHeader,
@@ -31,6 +33,7 @@ import {
 } from '@/components/admin/mockData'
 import {
   deriveSessionTags,
+  TAG_DOT_CLASS,
   sessionMatchesTags,
   TAG_CHIP_CLASS,
   TAG_LABELS,
@@ -53,6 +56,14 @@ const TAG_FILTERS: Array<{ key: 'all' | SessionTag; label: string }> = [
   { key: 'handled', label: TAG_LABELS.handled },
   { key: 'finished', label: TAG_LABELS.finished },
 ]
+
+/** "Good afternoon." by the visitor's clock — the period is painted in the accent by the caller. */
+function greeting(): string {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 18) return 'Good afternoon'
+  return 'Good evening'
+}
 
 export default function SupervisorDashboard() {
   const { rows, source, loading, error, access } = useSessions()
@@ -144,6 +155,14 @@ export default function SupervisorDashboard() {
       subtitle="Every call and chat Sol is handling right now, streaming from Supabase Realtime."
       actions={<SourceChip source={source} />}
     >
+      <div className="mb-6">
+        <p className="eyebrow mb-1">{greeting()}</p>
+        <p className="font-display text-4xl text-ink sm:text-5xl">
+          {live.length === 0 ? 'All quiet.' : `${live.length} ${live.length === 1 ? 'conversation' : 'conversations'} going.`}
+          <span className="text-accent">.</span>
+        </p>
+      </div>
+
       <div className="mb-4">
         <SupervisorAudioStatus />
       </div>
@@ -170,6 +189,14 @@ export default function SupervisorDashboard() {
         />
       </div>
 
+      <div className="mb-6">
+        <HeroQuote attribution="Why this board exists">
+          {escalations.rows.filter((e) => e.status === 'open').length === 0
+            ? 'Every conversation has a human answer within reach — and right now, nobody is waiting for one.'
+            : `${escalations.rows.filter((e) => e.status === 'open').length} ${escalations.rows.filter((e) => e.status === 'open').length === 1 ? 'guest asks' : 'guests ask'} for a person. That queue comes first.`}
+        </HeroQuote>
+      </div>
+
       {/* One click to a triage queue. The tag filter drives the live grid AND the archive below. */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         {TAG_FILTERS.map(({ key, label }) => (
@@ -178,26 +205,26 @@ export default function SupervisorDashboard() {
             type="button"
             onClick={() => setTagFilter(key)}
             aria-pressed={tagFilter === key}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
               tagFilter === key
-                ? 'bg-solstice-ink text-white'
-                : 'border border-solstice-sand text-solstice-stone hover:bg-solstice-sand/40'
+                ? 'bg-hero text-hero-text'
+                : 'border border-line text-muted hover:bg-line/40'
             }`}
           >
             {label}
             <span className="ml-1.5 tabular-nums opacity-70">{tagCounts[key]}</span>
           </button>
         ))}
-        <span className="mx-2 h-5 w-px bg-solstice-sand" aria-hidden="true" />
+        <span className="mx-2 h-5 w-px bg-line" aria-hidden="true" />
         {(['all', 'voice', 'chat'] as ChannelFilter[]).map((f) => (
           <button
             key={f}
             type="button"
             onClick={() => setChannelFilter(f)}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
               channelFilter === f
-                ? 'bg-solstice-ink text-white'
-                : 'border border-solstice-sand text-solstice-stone hover:bg-solstice-sand/40'
+                ? 'bg-hero text-hero-text'
+                : 'border border-line text-muted hover:bg-line/40'
             }`}
           >
             {f === 'all' ? 'All channels' : f === 'voice' ? 'Voice' : 'Chat'}
@@ -222,8 +249,10 @@ export default function SupervisorDashboard() {
         </Panel>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {live.map((s) => (
-            <SessionCard key={s.id} session={s} tags={tagsBySession.get(s.id) ?? []} now={now} />
+          {live.map((s, i) => (
+            <div key={s.id} className="sol-stagger" style={{ '--stagger': i } as CSSProperties}>
+              <SessionCard session={s} tags={tagsBySession.get(s.id) ?? []} now={now} />
+            </div>
           ))}
         </div>
       )}
@@ -233,16 +262,16 @@ export default function SupervisorDashboard() {
           title="Archive"
           right={
             <span className="flex items-center gap-3">
-              <label className="flex cursor-pointer items-center gap-1.5 text-xs font-normal text-solstice-stone">
+              <label className="flex cursor-pointer items-center gap-1.5 text-xs font-normal text-muted">
                 <input
                   type="checkbox"
                   checked={hideUnidentified}
                   onChange={(e) => setHideUnidentified(e.target.checked)}
-                  className="accent-solstice-ink"
+                  className="accent-accent"
                 />
                 Hide unidentified
               </label>
-              <span className="text-xs font-normal text-solstice-stone">{visibleArchived.length} ended</span>
+              <span className="text-xs font-normal text-muted">{visibleArchived.length} ended</span>
             </span>
           }
         />
@@ -263,7 +292,7 @@ export default function SupervisorDashboard() {
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-solstice-sand text-left text-xs uppercase tracking-wide text-solstice-stone">
+              <tr className="border-b border-line text-left eyebrow">
                 <th className="px-4 py-2 font-medium">Guest</th>
                 <th className="px-4 py-2 font-medium">Channel</th>
                 <th className="px-4 py-2 font-medium">Intent</th>
@@ -275,19 +304,19 @@ export default function SupervisorDashboard() {
             </thead>
             <tbody>
               {visibleArchived.map((s) => (
-                <tr key={s.id} className="border-b border-solstice-sand/60 last:border-0">
-                  <td className="px-4 py-2.5 text-solstice-ink">{s.guest_label ?? 'Unidentified'}</td>
+                <tr key={s.id} className="border-b border-line/60 last:border-0">
+                  <td className="px-4 py-2.5 text-ink">{s.guest_label ?? 'Unidentified'}</td>
                   <td className="px-4 py-2.5">
                     <ChannelChip channel={s.channel} />
                   </td>
-                  <td className="px-4 py-2.5 capitalize text-solstice-stone">{intentLabel(s.intent, s.status)}</td>
+                  <td className="px-4 py-2.5 capitalize text-muted">{intentLabel(s.intent, s.status)}</td>
                   <td className="px-4 py-2.5">
                     <SessionTagChips tags={tagsBySession.get(s.id) ?? []} />
                   </td>
-                  <td className="px-4 py-2.5 text-solstice-stone">
+                  <td className="px-4 py-2.5 text-muted">
                     {shortDate(s.started_at)} · {clockTime(s.started_at)}
                   </td>
-                  <td className="px-4 py-2.5 tabular-nums text-solstice-stone">
+                  <td className="px-4 py-2.5 tabular-nums text-muted">
                     {s.ended_at ? duration(s.started_at, new Date(s.ended_at).getTime()) : '—'}
                   </td>
                   <td className="px-4 py-2.5 text-right">
@@ -319,6 +348,7 @@ function SessionTagChips({ tags }: { tags: SessionTag[] }) {
         .filter((t) => tags.includes(t))
         .map((t) => (
           <span key={t} className={`chip ${TAG_CHIP_CLASS[t]}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${TAG_DOT_CLASS[t]}`} aria-hidden="true" />
             {TAG_LABELS[t]}
           </span>
         ))}
@@ -330,16 +360,16 @@ function SessionCard({ session, tags, now }: { session: SessionRow; tags: Sessio
   return (
     <Link
       to={`/admin/sessions/${session.id}`}
-      className="panel block p-4 transition hover:border-solstice-stone/40 hover:shadow-md"
+      className="panel block p-4 transition hover:border-faint/60 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="truncate font-display text-xl text-solstice-ink">{session.guest_label ?? 'Unidentified guest'}</div>
-          <div className="mt-0.5 truncate text-xs text-solstice-stone">
+          <div className="truncate font-display text-xl text-ink">{session.guest_label ?? 'Unidentified guest'}</div>
+          <div className="mt-0.5 truncate text-xs text-muted">
             {session.phone_masked ?? (session.guest_id ? `Guest ${session.guest_id}` : 'No identity yet')}
           </div>
         </div>
-        <span className="shrink-0 font-display text-2xl tabular-nums text-solstice-slate">
+        <span className="shrink-0 font-display text-2xl tabular-nums text-muted">
           {duration(session.started_at, sessionClockEnd(session, now))}
         </span>
       </div>
@@ -347,7 +377,7 @@ function SessionCard({ session, tags, now }: { session: SessionRow; tags: Sessio
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         <ChannelChip channel={session.channel} />
         <SessionStatusChip status={session.status} />
-        <span className="chip bg-solstice-sand/60 capitalize text-solstice-slate">{intentLabel(session.intent, session.status)}</span>
+        <span className="chip bg-line/60 capitalize text-muted">{intentLabel(session.intent, session.status)}</span>
       </div>
 
       <div className="mt-2">
@@ -355,12 +385,12 @@ function SessionCard({ session, tags, now }: { session: SessionRow; tags: Sessio
       </div>
 
       {!isLive(session) ? null : session.status === 'taken_over' ? (
-        <div className="mt-3 text-xs text-solstice-ink">
+        <div className="mt-3 text-xs text-ink">
           A supervisor is {session.channel === 'voice' ? 'on this call' : 'answering this chat'}.
         </div>
       ) : tags.includes('attention') ? null : (
-        <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-700">
-          <span className="sol-dot h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        <div className="mt-3 flex items-center gap-1.5 text-xs text-good">
+          <span className="sol-dot h-1.5 w-1.5 rounded-full bg-good" />
           Sol is handling this
         </div>
       )}

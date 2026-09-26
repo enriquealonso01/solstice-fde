@@ -52,15 +52,15 @@ export interface SupervisorResponse {
 }
 
 const AUDIO_CHIP: Record<string, { label: string; cls: string }> = {
-  registered: { label: 'audio ready', cls: 'bg-emerald-50 text-emerald-800' },
-  ringing: { label: 'connecting audio', cls: 'bg-amber-50 text-amber-900' },
-  live: { label: 'audio live', cls: 'bg-emerald-600 text-white' },
-  requesting: { label: 'getting credentials', cls: 'bg-solstice-sand/60 text-solstice-stone' },
-  connecting: { label: 'registering', cls: 'bg-solstice-sand/60 text-solstice-stone' },
-  forbidden: { label: 'not permitted', cls: 'bg-rose-50 text-rose-800' },
-  unavailable: { label: 'audio unavailable', cls: 'bg-rose-50 text-rose-800' },
-  unsupported: { label: 'browser unsupported', cls: 'bg-rose-50 text-rose-800' },
-  error: { label: 'audio failed', cls: 'bg-rose-50 text-rose-800' },
+  registered: { label: 'audio ready', cls: 'bg-good-soft text-good' },
+  ringing: { label: 'connecting audio', cls: 'bg-warn-soft text-warn' },
+  live: { label: 'audio live', cls: 'bg-good text-on-accent' },
+  requesting: { label: 'getting credentials', cls: 'bg-line/60 text-muted' },
+  connecting: { label: 'registering', cls: 'bg-line/60 text-muted' },
+  forbidden: { label: 'not permitted', cls: 'bg-bad-soft text-bad' },
+  unavailable: { label: 'audio unavailable', cls: 'bg-bad-soft text-bad' },
+  unsupported: { label: 'browser unsupported', cls: 'bg-bad-soft text-bad' },
+  error: { label: 'audio failed', cls: 'bg-bad-soft text-bad' },
 }
 
 export default function SupervisorLadder({
@@ -135,7 +135,7 @@ export default function SupervisorLadder({
         {isVoice && isLive ? (
           <span className="flex items-center gap-2">
             {audioChip ? <span className={`chip ${audioChip.cls}`}>{audioChip.label}</span> : null}
-            <span className="text-xs font-normal text-solstice-stone">
+            <span className="text-xs font-normal text-muted">
               {activeIndex < 0 ? 'Not engaged' : `Rung ${activeIndex + 1} of ${RUNGS.length}`}
             </span>
           </span>
@@ -144,16 +144,16 @@ export default function SupervisorLadder({
 
       <div className="p-4">
         {!isVoice ? (
-          <p className="rounded-md border border-solstice-sand bg-solstice-cream px-3 py-2 text-sm text-solstice-stone">
+          <p className="rounded-md border border-line bg-canvas px-3 py-2 text-sm text-muted">
             The ladder is voice-only. This is a chat session, so there is no audio leg to monitor,
             whisper into or barge. Use the transcript to follow it.
           </p>
         ) : !isLive ? (
-          <p className="rounded-md border border-solstice-sand bg-solstice-cream px-3 py-2 text-sm text-solstice-stone">
+          <p className="rounded-md border border-line bg-canvas px-3 py-2 text-sm text-muted">
             This call has ended. The ladder is disabled; the transcript and tool trace below are the archive.
           </p>
         ) : !voice.ready ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+          <div className="rounded-md border border-warn-ring bg-warn-soft px-3 py-2.5 text-sm text-warn">
             <p className="font-medium">Supervisor audio is not registered.</p>
             <p className="mt-0.5 text-xs leading-relaxed">{voice.unavailableReason}</p>
             <p className="mt-1.5 text-xs leading-relaxed">
@@ -182,34 +182,34 @@ export default function SupervisorLadder({
                 onClick={() => onRungClick(rung.action)}
                 className={`flex items-start gap-3 rounded-md border px-3 py-2.5 text-left transition disabled:cursor-not-allowed ${
                   isActive
-                    ? 'border-solstice-ember bg-solstice-ember/10'
+                    ? 'border-accent bg-accent/10'
                     : isPast
-                      ? 'border-solstice-sand bg-solstice-sand/30'
-                      : 'border-solstice-sand bg-white hover:bg-solstice-sand/30'
+                      ? 'border-line bg-line/30'
+                      : 'border-line bg-card hover:bg-line/30'
                 } ${disabled && !isActive ? 'opacity-60' : ''}`}
               >
                 <span
                   className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-semibold ${
                     isActive
-                      ? 'bg-solstice-ember text-white'
+                      ? 'bg-accent text-on-accent'
                       : isPast
-                        ? 'bg-solstice-stone text-white'
-                        : 'bg-solstice-sand text-solstice-stone'
+                        ? 'bg-faint text-on-accent'
+                        : 'bg-line text-muted'
                   }`}
                 >
                   {i + 1}
                 </span>
                 <span className="min-w-0">
                   <span className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-solstice-ink">{rung.label}</span>
+                    <span className="text-sm font-medium text-ink">{rung.label}</span>
                     {isActive ? (
-                      <span className="chip bg-solstice-ember text-white">
+                      <span className="chip bg-accent text-on-accent">
                         {rung.action === 'takeover' ? 'In control' : 'Active'}
                       </span>
                     ) : null}
-                    {pending === rung.action ? <span className="text-xs text-solstice-stone">working…</span> : null}
+                    {pending === rung.action ? <span className="text-xs text-muted">working…</span> : null}
                   </span>
-                  <span className="mt-0.5 block text-xs leading-relaxed text-solstice-stone">{rung.effect}</span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-muted">{rung.effect}</span>
                 </span>
               </button>
             )
@@ -217,26 +217,26 @@ export default function SupervisorLadder({
         </div>
 
         {locked ? (
-          <p className="mt-3 rounded-md border border-solstice-gold/50 bg-solstice-gold/10 px-3 py-2 text-xs text-solstice-ink">
+          <p className="mt-3 rounded-md border border-accent/50 bg-accent/10 px-3 py-2 text-xs text-ink">
             Sol has stepped aside. The guest is still connected and is now speaking to you.
           </p>
         ) : null}
 
         {voice.ready && voice.error ? (
-          <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <p className="mt-3 rounded-md border border-warn-ring bg-warn-soft px-3 py-2 text-xs text-warn">
             {voice.error}
           </p>
         ) : null}
 
         {simulated ? (
-          <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <p className="mt-3 rounded-md border border-warn-ring bg-warn-soft px-3 py-2 text-xs text-warn">
             Simulated: <code>POST /api/voice/supervisor</code> is not responding yet, so the rung
             advanced in the UI only. No Telnyx leg was created.
           </p>
         ) : null}
 
         {error ? (
-          <p className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">{error}</p>
+          <p className="mt-3 rounded-xl border border-bad-ring bg-bad-soft px-3 py-2 text-xs text-bad">{error}</p>
         ) : null}
       </div>
     </div>

@@ -38,10 +38,18 @@ export const TAG_LABELS: Record<SessionTag, string> = {
 
 /** Tailwind classes stay with the tag so every surface renders the same colour for the same state. */
 export const TAG_CHIP_CLASS: Record<SessionTag, string> = {
-  attention: 'bg-rose-50 text-rose-800',
-  requested: 'bg-amber-50 text-amber-900',
-  handled: 'bg-emerald-50 text-emerald-800',
-  finished: 'bg-solstice-sand/60 text-solstice-slate',
+  attention: 'bg-bad-soft text-bad',
+  requested: 'bg-warn-soft text-warn',
+  handled: 'bg-good-soft text-good',
+  finished: 'bg-line/60 text-muted',
+}
+
+/** The matching dot color, so a chip always shows the dot AND the label. */
+export const TAG_DOT_CLASS: Record<SessionTag, string> = {
+  attention: 'bg-bad',
+  requested: 'bg-warn',
+  handled: 'bg-good',
+  finished: 'bg-faint',
 }
 
 /**

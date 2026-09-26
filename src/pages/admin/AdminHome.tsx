@@ -36,7 +36,7 @@ const ROLES: { value: StaffRole; label: string; scope: string }[] = [
   { value: 'concierge', label: 'Concierge supervisor', scope: 'Conversations only. Cannot read group inquiries.' },
   { value: 'group_sales', label: 'Group sales', scope: 'Group inquiries only. Cannot read guest conversations.' },
   { value: 'gm', label: 'General manager', scope: 'Group inquiries, and the only role that can approve a block outside the property limits.' },
-  { value: 'admin', label: 'Super admin', scope: 'Both surfaces, invites, and the backend map.' },
+  { value: 'admin', label: 'Super admin', scope: 'Both surfaces, invites, and the system map.' },
 ]
 
 /** The staff_role column cannot hold 'gm' until migration 006 runs; until then the gm login gets
@@ -95,7 +95,7 @@ export default function AdminHome() {
         <>
           <SourceChip source={sessions.source === 'live' && inquiries.source === 'live' ? 'live' : 'demo'} />
           <Link to="/admin/backend" className="btn-primary">
-            Backend map
+            How it works
           </Link>
         </>
       }
@@ -117,7 +117,7 @@ export default function AdminHome() {
           <PanelHeader
             title="Concierge · live now"
             right={
-              <Link to="/admin/sessions" className="text-xs font-normal text-solstice-ember hover:underline">
+              <Link to="/admin/sessions" className="text-xs font-normal text-accent hover:underline">
                 Open dashboard
               </Link>
             }
@@ -125,19 +125,19 @@ export default function AdminHome() {
           {liveSessions.length === 0 ? (
             <EmptyState title="Nothing live" body="Calls and chats appear here the moment they start." />
           ) : (
-            <ul className="divide-y divide-solstice-sand">
+            <ul className="divide-y divide-line">
               {liveSessions.slice(0, 5).map((s) => (
                 <li key={s.id}>
-                  <Link to={`/admin/sessions/${s.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-solstice-cream/70">
+                  <Link to={`/admin/sessions/${s.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-canvas/70">
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium text-solstice-ink">
+                      <span className="block truncate text-sm font-medium text-ink">
                         {s.guest_label ?? 'Unidentified guest'}
                       </span>
-                      <span className="block truncate text-xs capitalize text-solstice-stone">{intentLabel(s.intent, s.status)}</span>
+                      <span className="block truncate text-xs capitalize text-muted">{intentLabel(s.intent, s.status)}</span>
                     </span>
                     <ChannelChip channel={s.channel} />
                     <SessionStatusChip status={s.status} />
-                    <span className="w-14 shrink-0 text-right text-sm tabular-nums text-solstice-stone">
+                    <span className="w-14 shrink-0 text-right text-sm tabular-nums text-muted">
                       {duration(s.started_at, now)}
                     </span>
                   </Link>
@@ -152,7 +152,7 @@ export default function AdminHome() {
           <PanelHeader
             title="Group sales · needs a decision"
             right={
-              <Link to="/admin/inquiries" className="text-xs font-normal text-solstice-ember hover:underline">
+              <Link to="/admin/inquiries" className="text-xs font-normal text-accent hover:underline">
                 Open inbox
               </Link>
             }
@@ -160,13 +160,13 @@ export default function AdminHome() {
           {attention.length === 0 ? (
             <EmptyState title="Nothing waiting on a human" body="Every open inquiry is inside the rules." />
           ) : (
-            <ul className="divide-y divide-solstice-sand">
+            <ul className="divide-y divide-line">
               {attention.slice(0, 5).map(({ inq, proposal }) => (
                 <li key={inq.id}>
-                  <Link to={`/admin/inquiries/${inq.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-solstice-cream/70">
+                  <Link to={`/admin/inquiries/${inq.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-canvas/70">
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium text-solstice-ink">{inq.payload.company_name}</span>
-                      <span className="block truncate text-xs text-solstice-stone">
+                      <span className="block truncate text-sm font-medium text-ink">{inq.payload.company_name}</span>
+                      <span className="block truncate text-xs text-muted">
                         {inq.inquiry_code} · {inq.payload.property_name} · {inq.payload.rooms_requested ?? '—'} rooms
                       </span>
                     </span>
@@ -174,12 +174,12 @@ export default function AdminHome() {
                       <>
                         <SeverityChip severity={verdictSeverity(proposal.verdicts)} />
                         <ProposalStatusChip status={proposal.status} />
-                        <span className="w-24 shrink-0 text-right text-sm tabular-nums text-solstice-stone">
+                        <span className="w-24 shrink-0 text-right text-sm tabular-nums text-muted">
                           {money(proposal.pricing.total_cents)}
                         </span>
                       </>
                     ) : (
-                      <span className="chip bg-sky-50 text-sky-800">{inq.missing_fields.length} missing</span>
+                      <span className="chip bg-info-soft text-info">{inq.missing_fields.length} missing</span>
                     )}
                   </Link>
                 </li>
@@ -198,14 +198,14 @@ export default function AdminHome() {
           {audit.rows.length === 0 ? (
             <EmptyState title="No activity yet" />
           ) : (
-            <ul className="divide-y divide-solstice-sand text-sm">
+            <ul className="divide-y divide-line text-sm">
               {audit.rows.map((a) => (
                 <li key={a.id} className="px-4 py-2.5">
-                  <div className="text-solstice-ink">
+                  <div className="text-ink">
                     <span className="font-medium">{a.actor_label ?? a.actor ?? 'staff member'}</span> ·{' '}
                     {a.action.replace(/[._]/g, ' ')}
                   </div>
-                  <div className="text-xs text-solstice-stone">
+                  <div className="text-xs text-muted">
                     {a.subject} · {shortDate(a.created_at)}
                   </div>
                 </li>
@@ -283,27 +283,27 @@ function Members({ members }: { members: ReturnType<typeof useMembers> }) {
     <Panel>
       <PanelHeader
         title="Members and access"
-        right={<span className="text-xs font-normal text-solstice-stone">{members.rows.length} accounts · {invites.rows.length} invites</span>}
+        right={<span className="text-xs font-normal text-muted">{members.rows.length} accounts · {invites.rows.length} invites</span>}
       />
 
-      <form onSubmit={(e) => void invite(e)} className="flex flex-wrap items-end gap-2 border-b border-solstice-sand p-4">
+      <form onSubmit={(e) => void invite(e)} className="flex flex-wrap items-end gap-2 border-b border-line p-4">
         <label className="min-w-[14rem] flex-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-solstice-stone">Invite by email</span>
+          <span className="eyebrow">Invite by email</span>
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@solsticehotels.com"
-            className="mt-1.5 w-full rounded-md border border-solstice-sand bg-white px-3 py-2 text-sm outline-none transition focus:border-solstice-ember focus:ring-1 focus:ring-solstice-ember"
+            className="mt-1.5 w-full rounded-md border border-line bg-card px-3 py-2 text-sm outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
           />
         </label>
         <label>
-          <span className="text-xs font-medium uppercase tracking-wide text-solstice-stone">Grant role</span>
+          <span className="eyebrow">Grant role</span>
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as StaffRole)}
-            className="mt-1.5 rounded-md border border-solstice-sand bg-white px-3 py-2 text-sm outline-none transition focus:border-solstice-ember focus:ring-1 focus:ring-solstice-ember"
+            className="mt-1.5 rounded-md border border-line bg-card px-3 py-2 text-sm outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
           >
             <RoleOptions />
           </select>
@@ -311,8 +311,8 @@ function Members({ members }: { members: ReturnType<typeof useMembers> }) {
         <button type="submit" className="btn-primary" disabled={busy}>
           Send invite
         </button>
-        <p className="w-full text-xs text-solstice-stone">{ROLES.find((r) => r.value === role)?.scope}</p>
-        {note ? <p className="w-full text-xs text-solstice-slate">{note}</p> : null}
+        <p className="w-full text-xs text-muted">{ROLES.find((r) => r.value === role)?.scope}</p>
+        {note ? <p className="w-full text-xs text-muted">{note}</p> : null}
         <div className="w-full">
           <ErrorNote message={members.error} />
         </div>
@@ -320,7 +320,7 @@ function Members({ members }: { members: ReturnType<typeof useMembers> }) {
 
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-solstice-sand text-left text-xs uppercase tracking-wide text-solstice-stone">
+          <tr className="border-b border-line text-left eyebrow">
             <th className="px-4 py-2 font-medium">Member</th>
             <th className="px-4 py-2 font-medium">Role</th>
             <th className="px-4 py-2 font-medium">Added</th>
@@ -328,31 +328,31 @@ function Members({ members }: { members: ReturnType<typeof useMembers> }) {
         </thead>
         <tbody>
           {members.rows.map((m) => (
-            <tr key={m.id} className="border-b border-solstice-sand/60 last:border-0">
+            <tr key={m.id} className="border-b border-line/60 last:border-0">
               <td className="px-4 py-2.5">
-                <div className="text-solstice-ink">{m.full_name ?? m.email}</div>
-                <div className="text-xs text-solstice-stone">{m.email}</div>
+                <div className="text-ink">{m.full_name ?? m.email}</div>
+                <div className="text-xs text-muted">{m.email}</div>
               </td>
               <td className="px-4 py-2.5">
                 <select
                   value={roleOverride[m.id] ?? m.role}
                   onChange={(e) => void changeRole(m.id, roleOverride[m.id] ?? m.role, e.target.value as StaffRole)}
-                  className="rounded-md border border-solstice-sand bg-white px-2 py-1 text-sm outline-none focus:border-solstice-ember"
+                  className="rounded-md border border-line bg-card px-2 py-1 text-sm outline-none focus:border-accent"
                 >
                   <RoleOptions />
                 </select>
               </td>
-              <td className="px-4 py-2.5 text-solstice-stone">{shortDate(m.created_at)}</td>
+              <td className="px-4 py-2.5 text-muted">{shortDate(m.created_at)}</td>
             </tr>
           ))}
           {invites.rows.map((i) => (
-            <tr key={i.id} className="border-b border-solstice-sand/60 bg-solstice-cream/50 last:border-0">
+            <tr key={i.id} className="border-b border-line/60 bg-canvas/50 last:border-0">
               <td className="px-4 py-2.5">
-                <div className="text-solstice-slate">{i.email}</div>
-                <div className="text-xs text-solstice-stone">invite {i.status}</div>
+                <div className="text-muted">{i.email}</div>
+                <div className="text-xs text-muted">invite {i.status}</div>
               </td>
-              <td className="px-4 py-2.5 capitalize text-solstice-stone">{i.granted_role.replace('_', ' ')}</td>
-              <td className="px-4 py-2.5 text-solstice-stone">{shortDate(i.created_at)}</td>
+              <td className="px-4 py-2.5 capitalize text-muted">{i.granted_role.replace('_', ' ')}</td>
+              <td className="px-4 py-2.5 text-muted">{shortDate(i.created_at)}</td>
             </tr>
           ))}
         </tbody>

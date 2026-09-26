@@ -64,48 +64,48 @@ export default function Login() {
   }
 
   if (checking) {
-    return <div className="grid min-h-screen place-items-center text-solstice-stone">Loading…</div>
+    return <div className="grid min-h-screen place-items-center text-muted">Loading…</div>
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-solstice-cream px-6 py-12">
+    <div className="grid min-h-screen place-items-center bg-canvas px-6 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <Link to="/" className="font-display text-4xl tracking-tight text-solstice-ink">
-            Solstice<span className="text-solstice-ember">.</span>
+          <Link to="/" className="font-display text-4xl tracking-tight text-ink">
+            Solstice<span className="text-accent">.</span>
           </Link>
-          <p className="mt-2 text-sm text-solstice-stone">Staff access</p>
+          <p className="mt-2 text-sm text-muted">Staff access</p>
         </div>
 
         <form onSubmit={(e) => void onSubmit(e)} className="panel p-6">
           <label className="block">
-            <span className="text-xs font-medium uppercase tracking-wide text-solstice-stone">Email</span>
+            <span className="eyebrow">Email</span>
             <input
               type="email"
               autoComplete="username"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1.5 w-full rounded-md border border-solstice-sand bg-white px-3 py-2 text-sm text-solstice-ink outline-none transition focus:border-solstice-ember focus:ring-1 focus:ring-solstice-ember"
+              className="mt-1.5 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
               placeholder="you@solsticehotels.com"
             />
           </label>
 
           <label className="mt-4 block">
-            <span className="text-xs font-medium uppercase tracking-wide text-solstice-stone">Password</span>
+            <span className="eyebrow">Password</span>
             <input
               type="password"
               autoComplete="current-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1.5 w-full rounded-md border border-solstice-sand bg-white px-3 py-2 text-sm text-solstice-ink outline-none transition focus:border-solstice-ember focus:ring-1 focus:ring-solstice-ember"
+              className="mt-1.5 w-full rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"
               placeholder="••••••••"
             />
           </label>
 
           {error ? (
-            <p role="alert" className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+            <p role="alert" className="mt-4 rounded-xl border border-bad-ring bg-bad-soft px-3 py-2 text-sm text-bad">
               {error}
             </p>
           ) : null}
@@ -114,14 +114,14 @@ export default function Login() {
             {busy ? 'Signing in…' : 'Sign in'}
           </button>
 
-          <p className="mt-4 text-center text-xs leading-relaxed text-solstice-stone">
-            Access is scoped by role in the database. Concierge supervisors see conversations,
-            group sales sees inquiries, and neither can read the other.
+          <p className="mt-4 text-center text-xs leading-relaxed text-muted">
+            Every person signs in here — concierge supervisors, group sales, managers. Each sees
+            only the parts of the hotel that are theirs to answer.
           </p>
         </form>
 
         <p className="mt-6 text-center text-sm">
-          <Link to="/" className="text-solstice-stone underline-offset-4 hover:text-solstice-ink hover:underline">
+          <Link to="/" className="text-muted underline-offset-4 hover:text-ink hover:underline">
             Back to the hotel site
           </Link>
         </p>
