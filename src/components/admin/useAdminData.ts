@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { SESSION_FETCH_LIMIT as SESSION_FETCH_LIMIT_VALUE } from './fetchLimits'
 import type { StaffRole } from '../../../shared/types'
 import {
   MOCK_AUDIT,
@@ -214,35 +215,16 @@ export function useIdentity(): Identity {
 const bySessionStart = (a: SessionRow, b: SessionRow) =>
   new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
 
-/**
- * How many session rows the supervisor grid fetches.
- *
- * This was 100, and on 2026-09-26 that emptied the Archive. Nothing closes a chat session on the
- * web -- there is no hangup event the way there is on a call -- so `active` rows accumulate with
- * every test conversation anyone runs. The table held 180 sessions: 155 active, 23 ended, 2 taken
- * over. The newest 100 by `started_at` were *all* active, so the page fetched 100 rows, found no
- * `ended` row among them, and rendered "Archived 0" and the empty state "No ended sessions yet"
- * while 23 ended conversations sat in the database.
- *
- * The screen was not lying about the rows it had; it was drawing a conclusion from a window it
- * never said it had applied. The Archive is a beat in `docs/demo-runbook.md`.
- *
- * `npm run demo:tidy` is the operational cure and stays the cure -- it closes anything idle for 30
- * minutes -- but the Archive should not be one skipped command away from reading as empty. So the
- * window is wide enough to hold the whole demo dataset several times over, and when it *is* full
- * the page says so instead of quietly showing a slice.
- */
-export const SESSION_FETCH_LIMIT = 500
-
-/** True when the grid is showing a window rather than everything, so it can say so. */
-export const sessionViewIsTruncated = (fetched: number) => fetched >= SESSION_FETCH_LIMIT
+// The window and its truncation predicate live in a leaf module so a Node test can read them
+// without importing this file, which pulls in the Supabase browser client. See fetchLimits.ts.
+export { SESSION_FETCH_LIMIT, sessionViewIsTruncated } from './fetchLimits'
 
 export function useSessions(): Loaded<SessionRow> {
   const [state, setState] = useState<Loaded<SessionRow>>(EMPTY)
   useEffect(() => {
     let alive = true
     void readOrMock<SessionRow>(
-      () => supabase.from('sessions').select('*').order('started_at', { ascending: false }).limit(SESSION_FETCH_LIMIT),
+      () => supabase.from('sessions').select('*').order('started_at', { ascending: false }).limit(SESSION_FETCH_LIMIT_VALUE),
       MOCK_SESSIONS,
     ).then((r) => {
       if (alive) setState({ ...r, rows: [...r.rows].sort(bySessionStart), loading: false })

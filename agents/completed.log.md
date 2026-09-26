@@ -6170,3 +6170,68 @@ and flattens whitespace, and its comment says why.
 
 `npx tsc -b` clean. `npx vitest run` **619 tests / 50 files** green (up 6). No prompt change, so no
 re-provision: compile === export === live still 29,655, margin 345.
+
+## It112 — a reviewer cloning the repo got a red suite, and neither failure was visible from here
+
+Submission is this morning, so the highest-value thing left is not another guard — it is the first five
+minutes a reviewer spends. Nobody had ever run them. Every green suite in this log was run in **this**
+working tree: CRLF line endings, with `.env`, `DEMO_LOGINS.md` and `node_modules` sitting in it.
+
+So I did what they will do. Cloned the public repo with `core.autocrlf=false` and `core.eol=lf`, which is
+what a Linux or mac checkout looks like, then `npm ci`, `npm run typecheck`, `npx vitest run`:
+
+```
+npm ci            exit 0
+npm run typecheck exit 0
+npx vitest run    Test Files  2 failed | 48 passed (50)
+                  Tests       2 failed | 613 passed (615)
+```
+
+**The package's headline claim is a green suite, and the first command a reviewer runs did not deliver
+it.** Two failures, different causes, both invisible locally.
+
+### 1. `doc-paths` — the guard was right and only ever passed here by accident
+
+> `README.md names paths that do not exist: DEMO_LOGINS.md. A reviewer reading this is being pointed at
+> the repository's structure; a path that is not there is a dead end.`
+
+`README.md` and `SUBMISSION.md` both point at `DEMO_LOGINS.md`, which `npm run seed:users` writes and
+`.gitignore` excludes deliberately — it holds a working password for the demo admin account and the
+repository is public. Iteration 99 added a guard to keep it out. In my tree the file exists, so
+`existsSync` said yes and the test passed. For everyone else it is a dead end, exactly as the message
+says.
+
+Fixed with an exemption that has to **earn itself twice**: `.gitignore` must name the path, **and** the
+document naming it must say so within the surrounding sentence. A bare allowlist entry would have let the
+next genuine dead end hide behind the same rule.
+
+### 2. `supervisor-archive` — my own test, failing to load at all
+
+> `Error: supabaseUrl is required.` at `src/lib/supabase.ts:4` via `useAdminData.ts:2`
+
+Iteration 95's test imported `SESSION_FETCH_LIMIT` from `useAdminData`, which imports the Supabase
+browser client, which calls `createClient(import.meta.env.VITE_SUPABASE_URL, …)` at module scope.
+`vite.config.ts` fills that from `.env` — which a reviewer does not have — so the client throws and the
+whole file collects zero tests.
+
+**And I had explicitly checked this at the time.** Iteration 95 ran a throwaway probe importing
+`useAdminData` under vitest and it passed. It passed *because* my `.env` was there. The probe tested my
+machine, not the property I thought it tested. The two values now live in a leaf `fetchLimits.ts` with no
+browser imports, re-exported from `useAdminData` so nothing else moved.
+
+### Two mistakes of my own on the way
+
+**I was one edit from repeating iteration 106.** My first exemption accepted only the word *"gitignored"*,
+and with the file absent SUBMISSION passed while README still failed — because README says *"which is
+deliberately not committed"*, which is if anything clearer. The reflex was to reword the README to match
+my regex. **Widen the predicate, not the document**, and the comment now says so with the iteration-106
+reference.
+
+**Eighth escape incident.** `.split(/\r?\n/)` written through a heredoc landed as a regex broken across
+three lines; `tsc` caught it with *"Unterminated regular expression literal"*. Replaced with
+`split('\n')`, since `trim()` on the next line removes any carriage return — no escape needed, which is
+the version that cannot be mangled.
+
+`npx tsc -b` clean. `npx vitest run` **619 tests / 50 files** green here, and verified with
+`DEMO_LOGINS.md` moved out of the way so the absent-file path is exercised rather than assumed. The
+fresh-clone re-run is the deploy verification for this iteration.

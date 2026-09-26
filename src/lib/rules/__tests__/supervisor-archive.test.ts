@@ -21,7 +21,10 @@
  * `SESSION_FETCH_LIMIT` back to 100 and the first case fails with the screen it produced.
  */
 import { describe, expect, it } from 'vitest'
-import { SESSION_FETCH_LIMIT, sessionViewIsTruncated } from '../../../components/admin/useAdminData'
+// Imported from the leaf module, not from useAdminData: that file loads the Supabase browser client
+// at module scope, which throws without VITE_SUPABASE_URL -- so this suite collected fine here and
+// not at all in a fresh clone. Iteration 112.
+import { SESSION_FETCH_LIMIT, sessionViewIsTruncated } from '../../../components/admin/fetchLimits'
 
 type Row = { id: string; status: 'active' | 'ended' | 'taken_over'; started_at: string }
 

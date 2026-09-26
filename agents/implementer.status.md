@@ -9,23 +9,27 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It111: two clean audits, and the numbered cross-references are now pinned at the moment they
-  are known good.**
-- **`data-quality.json` is accurate and complete for its scope.** I re-ran its five checks independently:
-  one negative rate (`SOL-PVD.base_rate_suite = -395`), **zero** inventory-sum mismatches across all ten
-  properties, no out-of-range discount caps, and the one unresolved *"Boston-area sister property"* in
-  SOL-PVD's notes. Both findings are already disclosed as **README assumptions 6 and 7** and in the email
-  draft, so nothing to fix — and one of my own checks was wrong before it was right: `blackout_dates` is
-  an array of `{start,end}` objects, and stringifying them produced eight fake "unparsable" hits.
-- **All four "assumption N" citations are correct**, including `role-walkthroughs.md`'s double —
-  *"assumption 3 in the README and assumption 13 in `agent/sol.md`"* — where both items really are
-  *"approval authority is a named human, not a role tier"*.
-- **Pinned by number *and* keyword.** Asserting "assumption 3 exists" is satisfied by any third item;
-  asserting the thing cited for approval authority says **named human** has content. Red-checked by
-  inserting an item above 3 and renumbering: three cases fail, naming what item 3 became.
-- **The guard caught my own instrument first.** Its extractor used `.+?`, so README assumption 4 — whose
-  bold lead **wraps across a line** — was silently missed, 8 of 9 found. The can-it-see-anything case is
-  the only reason I know. **Fourth line-wrap defeat this session**; the extractor now flattens whitespace.
+- **SHIPPED It112: a reviewer cloning the public repo and running the suite got RED. Two failures, both
+  invisible from this working tree.**
+- I cloned from GitHub with `core.autocrlf=false` — an LF tree, as a Linux or mac reviewer gets — ran
+  `npm ci`, `npm run typecheck`, `npx vitest run`: **2 failed files, 2 failed tests of 615.** The
+  package's headline claim is a green suite and the first command a reviewer runs did not deliver it.
+- **`doc-paths`: README and SUBMISSION name `DEMO_LOGINS.md`, which is gitignored by design.** It exists
+  here, so the guard passed; it is absent for everyone else. The guard was right all along and only ever
+  passed locally by accident. Fixed with an exemption that **earns itself twice**: `.gitignore` must name
+  the path **and** the document must say so nearby.
+- **`supervisor-archive` failed to collect at all: `Error: supabaseUrl is required`.** My own It95 test
+  imported `useAdminData`, which loads the Supabase browser client at module scope; `vite.config.ts`
+  fills the URL from `.env`, which a reviewer does not have. **My It95 importability probe passed for
+  exactly the reason it should have failed.** Constants moved to a leaf `fetchLimits.ts`, re-exported so
+  nothing else changes.
+- **Nearly repeated It106's mistake.** My first predicate accepted only the word *"gitignored"*, and
+  README says *"which is deliberately not committed"* — clearer, in fact. I was one edit from rewording a
+  good sentence to satisfy my regex. **Widen the predicate, not the document.**
+- Eighth escape-eaten-by-heredoc incident on the way: `/?
+/` landed as a regex split across three
+  lines and `tsc` caught it. Replaced with a plain `split('
+')`, which needs no escape at all.
 
 ## Demo rehearsal coverage — what is actually verified
 

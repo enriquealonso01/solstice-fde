@@ -4,44 +4,48 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 150 — 2026-09-26 ~00:08 EST
+## Iteration 151 — 2026-09-26 ~00:12 EST
 
-### A default tidy leaves exactly the sessions made in the last half hour
+### Chased the session count against the 500 window. The pieces already cover it
 
-The runbook already said stop the loop before tidying. **#143 measured the other half:** 251
-sessions, 228 active, only 179 idle over thirty minutes — **a default tidy leaves 49 cards reading
-live**, on the first screen beat 3 opens. `--minutes 2` took it to **0**.
-
-The default stays 30, and the reasoning is the good part: *"thirty minutes is the honest answer for
-a guest who closed a tab, and two minutes is an operator asserting there are no real guests."*
-
-**Verified now — and the number has already moved:**
+`#127` set `SESSION_FETCH_LIMIT = 500` when there were 180 sessions. There are now **253**.
 
 ```
-total 252 · active 227 · idle>30min 203 · idle>2min 226
-a default tidy right now leaves 24 reading live
+created in the last hour   67        created in the hour before   8
+hours until 11:00         10.8
 ```
 
-49 at their measurement, 24 at mine, because the loop has been quieter.
+**At 67/hour that projects to ~976 — nearly double the window.** But the hour before saw **eight**.
+That is a spike from the agents' own measurement work (#142's scenarios run twice, #143's tidy
+measurements, the voice calls), not a trend.
 
-> **The residual is exactly "sessions created in the last thirty minutes."** That is the durable
-> statement: **stop the loop half an hour before tidying and the default suffices; stop it at 10:55
-> and tidy at 10:56 and it does not.** The flag exists for the second case — the one the runbook
-> describes.
+> **I am not projecting 976.** One hour at 67 and the previous at 8 is not a rate, it is two
+> numbers. **Extrapolating the higher would be the same error as a p95 from twenty samples** — the
+> one the Tester caught themselves making two hours ago.
 
-**Recorded, not filed.** The runbook is settled and already says to stop the loop first. **The rule
-is what I would want in my head at 10:55; the number is what was true when someone typed it.**
+### The pieces cover it, checked not assumed
 
-### Documented in all three places
+```
+useAdminData.ts:238  sessionViewIsTruncated(fetched) => fetched >= SESSION_FETCH_LIMIT
+cleanup-phantom-sessions.mjs:129  { status: 'ended', ended_at: s.lastAt }
+```
 
-`demo-runbook.md` ✓ · `SUBMISSION.md` ✓ · `HUMAN_INTERVENTION.md` ✓ — the **fourth** fix tonight
-that had to land in more than one document, after the pet question's four, the RLS disclosure's
-three, and the latency targets' two.
+**The tidy turns `active` into `ended`**, so after `demo:tidy -- --minutes 2` the rows crowding the
+window are ended ones and the Archive is **full**, not empty. **#127 fixed the window, #143 made the
+tidy able to finish, and the combination holds at any count** — neither would alone. Past 500 the
+grid **says** it is truncated rather than silently slicing.
 
-### Cross-document latency is clean
+### The line worth quoting
 
-One figure quoted outside `latency-target.md` (`demo-runbook.md:57`, the ≤300ms p95), and #142
-pinned that pair to move together. **Target holds** — 270ms pooled over 80 calls; voice p95 135ms.
+> *"`ended_at` is the last thing that actually happened, not 'now': **a transcript that claims a
+> conversation ran until the cleanup script ran would be a lie in the archive.**"*
+
+A bulk maintenance script refusing a convenient timestamp because the archive is evidence.
+
+### Nothing to file
+
+Real in principle, mitigated in practice, mitigation already mandatory. **One sentence for Enrique:
+the session count will be large and that is fine — stop the loop, then `demo:tidy -- --minutes 2`.**
 
 ### The single most important remaining item
 

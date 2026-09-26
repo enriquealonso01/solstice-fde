@@ -49,6 +49,39 @@ const NOT_ON_DISK = new Set([
 ])
 
 /**
+ * A path that is deliberately not in the repository is not a dead end -- but only when the document
+ * says so.
+ *
+ * `README.md` and `SUBMISSION.md` both point at `DEMO_LOGINS.md`, which `npm run seed:users` writes and
+ * `.gitignore` excludes on purpose: it holds a working password for the demo admin account and the
+ * repository is public. In this working tree the file exists, so this test passed. **Cloned fresh, as a
+ * reviewer does, it failed** -- found at iteration 112 by running the suite in an LF clone of the public
+ * repo rather than here.
+ *
+ * So the exemption has to earn itself twice: `.gitignore` must name the path, and the document naming it
+ * must say so nearby -- `gitignored` or `not committed` -- so no genuine dead end can hide behind this
+ * rule. Both files already do
+ * : SUBMISSION.md says *"gitignored, on Enrique's machine"*, README.md says *"which is deliberately
+ * not committed"*. The first version of this predicate accepted only the word `gitignored`, so it
+ * would have had me reword a perfectly clear README sentence to satisfy a regex -- the same
+ * tail-wagging-the-dog mistake as iteration 106. Widen the predicate, not the document.
+ */
+const GITIGNORED = new Set(
+  readFileSync(join(repoRoot, '.gitignore'), 'utf8')
+    .split('\n')  // trim() below removes a carriage return, so no escape is needed here
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith('#')),
+)
+
+function deliberatelyAbsent(candidate: string, docText: string): boolean {
+  if (!GITIGNORED.has(candidate)) return false
+  const flat = docText.replace(/\s+/g, ' ')
+  const at = flat.indexOf(candidate)
+  if (at === -1) return false
+  return /gitignored|not committed|not in this repository|never in this repository/i.test(flat.slice(at, at + 160))
+}
+
+/**
  * A reference resolves if it names something real from any angle a reader would try: from the repo
  * root, from beside the document, or as an unambiguous suffix of exactly one path in the tree.
  *
@@ -99,6 +132,7 @@ describe('paths named in the deliverables', () => {
       .filter((c) => PATHISH.test(c))
       .filter((c) => !c.includes('*') && !c.includes('<'))
       .filter((c) => !NOT_ON_DISK.has(c))
+      .filter((c) => !deliberatelyAbsent(c, text))
       .filter((c) => !resolves(c, doc))
 
     expect(
