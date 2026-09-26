@@ -368,8 +368,16 @@ function writeJson(name, payload) {
   const file = resolve(generatedDir, name)
   const text = `${JSON.stringify(payload, null, 2)}\n`
   if (CHECK_ONLY) {
-    const current = existsSync(file) ? readFileSync(file, 'utf8') : ''
-    if (current !== text) {
+    // Compared with carriage returns folded out, for the same reason the source hash is.
+    //
+    // The comparison is byte-for-byte against `JSON.stringify(...) + newline`, which is always LF.
+    // git hands these files to a Windows checkout as CRLF, so --check reported STALE for every
+    // generated file it had touched -- a fact about the checkout, not the data. Iteration 112 fixed
+    // the hash half of this and missed the comparison half: the very next `git checkout` rewrote
+    // manifest.json as CRLF and the check went red again, in the tree that had just passed.
+    const fold = (t) => t.split('\r\n').join('\n')
+    const current = existsSync(file) ? fold(readFileSync(file, 'utf8')) : ''
+    if (current !== fold(text)) {
       console.error(`STALE: ${name} differs from the source data. Run: node scripts/data/build.mjs`)
       process.exitCode = 1
     } else {

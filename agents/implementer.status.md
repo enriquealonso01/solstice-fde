@@ -37,6 +37,12 @@ in `agents/completed.log.md`, not here.
 - Hash now folds carriage returns out before digesting. Three of the four hashes moved; only
   `manifest.json` changed on rebuild. **Still a real fingerprint:** changing one rate digit in the CSV
   takes both `properties.json` and `manifest.json` to STALE, checked.
+- **And that fix was only half of it.** After the merge, `data:check` went STALE **in my own tree** — the
+  checkout had rewritten `manifest.json` as CRLF, and `--check` compares byte-for-byte against a string
+  that is always LF. It had passed for weeks only because an earlier rebuild left all nine files LF and
+  git had not touched them since. **In a fresh Windows clone all nine would be STALE**, and I had tested
+  only a Linux-shaped clone. Both sides of the comparison now fold; verified in this CRLF tree, and it
+  still catches a hand-edited count.
 
 ## Demo rehearsal coverage — what is actually verified
 
