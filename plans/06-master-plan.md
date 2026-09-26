@@ -115,6 +115,15 @@
 > > balance), so fall back to the **text** chat bubble, which runs on Anthropic and does not touch
 > > Telnyx.
 >
+> **To check whether these are done, use a whitespace-normalised match, not `grep`.** Every one of
+> these phrases can wrap across a line break — T41's does, at `README.md:133-134` — and a
+> line-oriented `grep` then reports the phrase as absent, which reads as *fixed*. This caught me in
+> iteration 122:
+>
+> ```bash
+> python -c "import io,re,sys; t=re.sub(r'\s+',' ',io.open(sys.argv[1],encoding='utf-8').read()); print(sys.argv[2] in t)" README.md "subject to same-day availability"
+> ```
+>
 > *And one more line in the same file, the tidy item, which says "run it with no flag" without ever
 > giving the command: the dry run is `node scripts/cleanup-phantom-sessions.mjs`; `npm run
 > demo:tidy` is the same script with `--delete`.*
@@ -1345,6 +1354,78 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 122, 21:58 EST — the status check I have run every iteration reported a fix that had not happened
+
+#### What happened
+
+I have tracked the five open document fixes with `grep -c` for several iterations. This iteration it
+reported **T41 as closed**. I was about to record it.
+
+`README.md:133-134`:
+
+```
+1. **No inventory-by-date exists in the exports.** Policies 1 and 6 both hinge on "subject to
+   same-day availability", so netlify/functions/tools/availability.ts is the net-new service:
+```
+
+**The phrase wraps across a line break.** Earlier iterations matched on `"subject to"`, which sits
+on one line. This iteration I tightened the pattern to `"subject to same-day"` — **and a
+line-oriented `grep` cannot match across the newline, so it returned 0, which reads as *fixed*.**
+
+Re-checked with whitespace-normalised matching:
+
+```
+T38  still present: True     T39  still present: True     T40  still present: True
+T41  still present: True     T42  still present: True
+```
+
+**All five are open. None has been touched.**
+
+#### Why this one is worse than the others
+
+Every previous miss in this log was a check of somebody else's claim. **This was my own monitoring**
+— the thing I use each iteration to decide what to tell Enrique is still outstanding. And the
+failure mode is the dangerous direction: **a tightened pattern silently converts "not found" into
+"fixed."** A looser pattern would have failed safe.
+
+**I changed the pattern between iterations and never verified the new pattern still matched a string
+I knew was present.** That is the one test a monitoring change always needs, and it costs one
+command.
+
+**Fixed durably:** the paste-ready block now carries a whitespace-normalised check, so anyone
+verifying these — including Enrique at 10:55 — gets an answer that a line break cannot corrupt.
+
+#### The floors are holding, which vindicates a decision I argued against
+
+`README.md:101` says *"over 230 files, more than 140 of them TypeScript, and over 400 tests across
+more than 30 test files."* Measured now:
+
+```
+tracked files  249     (floor: over 230)     ✓
+.ts/.tsx       158     (floor: more than 140) ✓
+tests          516 at last run                ✓
+test files      37                            ✓
+```
+
+**The repository has grown by 13 files and 12 TypeScript files since those floors were set and not
+one of them has rotted.** My T31 told the Implementer to *keep* the exact figures — *"changing
+accurate figures to floors buys nothing"* — and PR #77 overruled me, because the exact numbers had
+expired inside the hour. **Four hours later the floors are still true.** That was their call and it
+was right.
+
+#### State — unchanged
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T38, T39, T40, T41, T42** — all five open, all paste-ready | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 121, 21:52 EST — verified the email's credential path end to end, and the pet finding narrows
 

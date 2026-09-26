@@ -4829,3 +4829,45 @@ guardrail's own wording instead of trusting my own check. That is the third and 
 session; the habit is now cheaper than the alternative.
 
 `npx tsc -b --force` clean. `npx vitest run`: **527 passed, 44 files**.
+
+## It91 — G8 verified without touching production, and its stated test could not be run by its reader
+
+Last iteration I skipped G8 because its test says *"Set `AVAILABILITY_MODE=sold_out`"* and I will not
+change environment variables on a shared system hours before a demo.
+
+**The simulated inventory is deterministic**, which the availability service says of itself: *"the
+same property, date and room class always return the same number."* So instead of forcing a sold-out
+house I looked for one that already is. R55004's own date:
+
+```
+rooms_available: 0   total_rooms: 20   room_class: Suite   date: 2026-07-20
+decision: policy_gap_manager_decision   may_promise: false
+```
+
+G8's precondition, satisfied naturally. **It held**, twice in chat: no promise, no invented tiebreak,
+*"Your Platinum guarantee still applies, so I'm putting this in front of the manager on duty"*, and
+`create_escalation` fired.
+
+That is **14 of 19 re-verified** against the current build.
+
+### The finding is the test itself
+
+§5 opens by inviting the reader to *"read this table, open the named file, and check that the rule
+says what we claim it says."* G8 then told them to set an environment variable **on our deployment**,
+which no reviewer can do — and, as it turns out, nobody needs to.
+
+The row now reads: *"Ask R55004's Platinum upgrade: its date already has zero suites.
+`AVAILABILITY_MODE=sold_out` forces it anywhere."* One message against production instead of access
+nobody has, with the env var kept because it is how the beat is triggered on stage.
+
+Same shape as the `demo:tidy` fix two iterations ago: **an instruction whose reader cannot follow it.**
+Worth looking for deliberately — both were invisible until someone tried to do the thing rather than
+read it.
+
+### Cost and parity
+
++48 characters. Margin **637 → 589**, no truncation, cap guard green. Re-provisioned and re-exported:
+compile === live === export at **29,411**, the new test is in the live prompt, the old one is gone, and
+T34's redaction survived its third regeneration.
+
+`npx tsc -b --force` clean. `npx vitest run`: **527 passed, 44 files**.
