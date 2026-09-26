@@ -45,13 +45,14 @@ describe('intentLabel', () => {
     expect(intentLabel('group_booking')).toBe('group booking')
   })
 
-  // Fixing the write only helps sessions recorded after it shipped. 116 of 120 rows already
-  // existed with no intent, and 85 of those never ran classify_intent at all — so the badge was
-  // claiming work in progress that never started and never would. On a finished conversation that
-  // is simply false, and after demo:tidy closes the stale ones it is false on most of the board.
+  // Fixing the write only helps sessions recorded after it shipped. 394 of 435 rows have no intent,
+  // and most never ran classify_intent at all — so the badge was claiming work in progress that
+  // never started and never would. An ended, unclassified conversation now says so neutrally
+  // ("unclassified"); it must never imply a live classifier. (Wording was "not classified" until
+  // the supervisor-tags change standardised on "unclassified", 2026-09-26.)
   it('does not claim to be classifying a conversation that has ended', () => {
-    expect(intentLabel(null, 'ended')).toBe('not classified')
-    expect(intentLabel(null, 'taken_over')).toBe('not classified')
+    expect(intentLabel(null, 'ended')).toBe('unclassified')
+    expect(intentLabel(null, 'taken_over')).toBe('unclassified')
   })
 
   it('still says classifying while the conversation is genuinely live', () => {

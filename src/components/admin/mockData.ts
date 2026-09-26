@@ -29,6 +29,16 @@ export interface SessionRow {
   ended_at: string | null
 }
 
+/** Mirrors `escalations` in supabase/schema.sql. Only the fields the admin UI reads. */
+export interface EscalationRow {
+  id: string
+  session_id: string | null
+  category: string
+  severity: string | null
+  status: string
+  created_at: string
+}
+
 export interface MessageAttachment {
   filename: string
   content_type: string
@@ -845,13 +855,15 @@ export function duration(fromIso: string, toMs: number): string {
  * `classifying…` asserts work in progress, and that is only true while the conversation is live.
  * On a finished one it claims something that will never happen — and most sessions that carry no
  * intent never ran `classify_intent` at all, so there is nothing in flight to wait for. Pass the
- * status and an ended, unclassified conversation says what it is instead of pretending to be busy.
+ * status and an ended, unclassified conversation says what it is — a neutral "Unclassified" —
+ * instead of pretending to be busy. Old rows whose classification never ran must never imply a
+ * live process; the intent fix shipped 2026-09-26 only helps rows written after it.
  *
- * Callers without a status keep the old behaviour, which is correct for a row that is live.
+ * Callers without a status keep the live behaviour, which is correct for a row that is active.
  */
 export function intentLabel(intent: string | null, status?: string | null): string {
   if (intent) return intent.replace(/_/g, ' ')
-  return status && status !== 'active' ? 'not classified' : 'classifying…'
+  return status && status !== 'active' ? 'unclassified' : 'classifying…'
 }
 
 /** Worst verdict wins. Drives the inbox badge and the send lock. */
