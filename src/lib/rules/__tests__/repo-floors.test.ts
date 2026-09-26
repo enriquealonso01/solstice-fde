@@ -169,3 +169,103 @@ describe('the counts README.md states about this repository', () => {
     expect(tight, `floors below the measured value: ${JSON.stringify(tight)}`).toEqual([])
   })
 })
+
+/**
+ * The one count in that paragraph that is NOT in FLOORS above, and why it cannot be.
+ *
+ * README.md states **"over 700 tests"** three times -- in the result paragraph, beside the suite
+ * description, and in the command block -- and it is the number a reviewer is most likely to check,
+ * because the README tells them to: *"`npx vitest run` for the live number"*. It is also the only
+ * claim in that paragraph with no floor above.
+ *
+ * **It cannot be floored the way the others are, and the measurement says so.** A test count is not a
+ * property of the files; it is the result of running them, and a suite cannot run itself to count.
+ * Counting declaration sites statically gives a LOWER bound, because 23 `it.each` sites expand to many
+ * tests at runtime: measured at iteration 153, **629 sites against 898 actual tests**. A guard built on
+ * that number would fail the README's true claim of 700. Writing one would mean lowering an honest floor
+ * to satisfy a guard -- the same trap as the group-approval sweep that wanted three Policy 15 citations
+ * scrubbed.
+ *
+ * So this guards the half that is checkable, which is the half that actually rots: the claim must stay a
+ * FLOOR rather than becoming an exact figure, the three copies must agree, and the command that produces
+ * the live number must stay beside it. Nothing checked any of that before: the approximation ban above
+ * reads one paragraph and only bans "about"/"roughly", so `898 tests` in any of the three would pass it
+ * today and be wrong by the next merge.
+ */
+describe("the README's test count, which is a floor that cannot be measured from inside", () => {
+  const CLAIM = /(over|more than|at least|about|roughly|around|some|exactly|~)?\s*([0-9][0-9,]*)\+?\s+tests\b/gi
+
+  const claims = () =>
+    [...readme.matchAll(CLAIM)].map((m) => ({
+      qualifier: (m[1] ?? '').toLowerCase().trim(),
+      count: Number(m[2].replace(/,/g, '')),
+      text: m[0].replace(/\s+/g, ' ').trim(),
+      at: m.index ?? 0,
+    }))
+
+  /** Declaration sites in the shipped test files. A lower bound: `it.each` counts once and yields many. */
+  const staticLowerBound = () => {
+    const DECL = /(?:^|[\s;{(])(?:it|test)(?:\.each|\.skipIf|\.skip|\.only|\.concurrent|\.todo|\.fails)?\s*(?:\(|`)/g
+    return tracked
+      .filter((f) => /\.test\.tsx?$/.test(f))
+      .reduce((sum, f) => sum + [...readFileSync(join(repoRoot, f), 'utf8').matchAll(DECL)].length, 0)
+  }
+
+  it('finds the claims it means to check, so a reworded README cannot make this vacuous', () => {
+    const found = claims()
+    expect(
+      found.length,
+      `README.md states a test count ${found.length} time(s); it said "over 700 tests" in three places at ` +
+        `iteration 153. If the wording changed, re-point this case rather than deleting it -- the reason it ` +
+        `exists is that the three copies drift apart when only one is edited.`,
+    ).toBeGreaterThanOrEqual(3)
+  })
+
+  it('states it as a floor every time, never as an exact number', () => {
+    const bare = claims().filter((c) => !['over', 'more than', 'at least'].includes(c.qualifier))
+    expect(
+      bare.map((c) => c.text),
+      `README.md gives a test count without a floor word: ${bare.map((c) => c.text).join(', ')}. An exact ` +
+        `count is wrong the next time anyone adds a test, and this suite gains tests most hours. "over N" ` +
+        `only becomes truer. The command beside it gives the live figure.`,
+    ).toEqual([])
+  })
+
+  it('keeps the three copies on the same number', () => {
+    const counts = [...new Set(claims().map((c) => c.count))]
+    expect(
+      counts,
+      `README.md claims ${counts.join(' and ')} tests in different places. Someone edited one of the three ` +
+        `and not the others, so the file now contradicts itself in front of a reviewer.`,
+    ).toHaveLength(1)
+  })
+
+  it('does not understate below what can be counted without running anything', () => {
+    // One-directional and sound: if a static lower bound already beats the claim, the claim is needless
+    // understatement. It can never confirm the claim -- that is the point of the comment above.
+    const claimed = claims()[0]?.count ?? 0
+    const bound = staticLowerBound()
+    expect(bound, 'no test declaration sites found, so this bound proves nothing').toBeGreaterThan(200)
+    expect(
+      claimed,
+      `README.md claims over ${claimed} tests and ${bound} declaration sites are visible without running ` +
+        `anything -- and each of the ${
+          tracked.filter((f) => /\.test\.tsx?$/.test(f)).length
+        } test files can expand further at runtime. The claim undersells work that is already on disk.`,
+    ).toBeGreaterThanOrEqual(bound)
+  })
+
+  it('keeps the command that produces the live number beside the claim', () => {
+    // The floor is only honest because the reader is told how to get the real figure. Two of the three
+    // copies carry the command; requiring both keeps the invitation attached to the number.
+    const withCommand = claims().filter((c) => {
+      const window = readme.slice(Math.max(0, c.at - 120), c.at + 160)
+      return /npx vitest run/.test(window)
+    })
+    expect(
+      withCommand.length,
+      `only ${withCommand.length} of the test-count claims in README.md sit near "npx vitest run". A floor ` +
+        `with no way to get the live number is just a vague number.`,
+    ).toBeGreaterThanOrEqual(2)
+  })
+})

@@ -9807,3 +9807,102 @@ pattern is now unambiguous: **this shell collapses `\\` inside a quoted heredoc*
 
 `npx tsc -b` clean. `npx vitest run` **898 tests / 62 files** green here, and **893 passed / 5 skipped / 0
 failed** in a tree with no `.git`, which is what the README promises a reviewer.
+
+---
+
+## It153 — the board was empty again, so I audited what a reviewer clicks and what they check
+
+Nothing was open: the plan says *"NOTHING IS OPEN FOR AN AGENT"*, BACKLOG's Inbox and In progress are
+empty, the Tester has been silent since 20:26. Every `!!` in the plan is historical prose. So, following
+It152's precedent, I went after reader-facing claims nothing verifies.
+
+### Clean: every link a reviewer can click
+
+Enumerated every markdown link and bare URL across `README.md`, `SUBMISSION.md`, `AGENTS.md` and all ten
+`docs/*.md`:
+
+```
+18 relative links   0 broken
+ 0 anchors          (none used, so nothing to resolve)
+ 6 external URLs    all live, checked unauthenticated
+```
+
+The one that matters is `https://github.com/enriquealonso01/solstice-fde` in SUBMISSION.md — **200 to an
+anonymous visitor**, so the repository a reviewer is handed is genuinely public rather than merely
+reachable by me. `/api/chat` answers 405 to a GET and `/api/group/proposals` 401 with no token, which are
+the documented behaviours rather than faults.
+
+Nothing to fix. Worth the ten minutes: a dead link in the first file a reviewer opens is the cheapest
+possible way to look careless.
+
+### The gap: the one README number the floor guard skips
+
+`repo-floors.test.ts` exists for a specific reason, in its own words — *the figures are floors, the README
+prints the command behind each one, and this file runs those commands* — so a reviewer can **check** the
+README rather than take it. It floors eight claims: tracked files, TypeScript files, test files, lines of
+source, deliverable-doc lines, coordination lines, total lines, tester-log lines.
+
+It does not floor **the test count**, which README states three times (lines 107, 202, 269) and which is
+the number a reviewer is most likely to check, because the README tells them to: *"`npx vitest run` for the
+live number"*.
+
+### It cannot be floored, and the measurement is why
+
+A test count is not a property of the files. It is the result of running them, and a suite cannot run
+itself to count. Counting declaration sites statically gives a **lower** bound, because `it.each` expands
+at runtime — 23 such sites here. Measured:
+
+```
+static declaration sites   629
+actual tests               898   (903 after this change)
+```
+
+**A static guard would fail the README's true claim of "over 700".** Building one would mean lowering an
+honest floor to satisfy a guard — the same trap as It149's sweep that wanted three Policy 15 citations
+scrubbed. So I did not build it, and wrote the measurement into the file so the next person does not try.
+
+### What I guarded instead: the half that actually rots
+
+Five cases, and the failure mode each one has is concrete:
+
+- **The claim must stay a floor.** Nothing stopped `903 tests` from replacing `over 700 tests` — the
+  existing approximation ban reads one paragraph and only rejects *about/roughly/around/some*. An exact
+  count is wrong at the next merge, and this suite gains tests most hours.
+- **The three copies must agree.** Editing one and not the others leaves the README contradicting itself in
+  front of a reviewer. Two of the three are 60 lines apart in different sections.
+- **The claim must not undersell what is already countable.** One-directional and sound: if a static lower
+  bound beats the claim, the claim is needless understatement. It can never *confirm* the claim, which is
+  the point of the comment above it. Headroom today is 71 sites, so this will eventually ask for the floor
+  to be raised — deliberately, with a message saying why.
+- **The command must stay beside the claim.** A floor is only honest because the reader is told how to get
+  the real figure. Two of the three copies carry `npx vitest run`; both must keep it.
+- **Anti-vacuity**: at least three claims must be found, so a reworded README cannot leave this checking
+  nothing.
+
+Red-check, each mutation applied to the fixed snapshot alone, and each case names itself:
+
+```
+one copy says a different number        1 failed   keeps the three copies on the same number
+one copy becomes an exact count        2 failed   floor word + agreement
+one copy becomes an approximation      1 failed   states it as a floor every time
+floor lowered to "over 400"            1 failed   does not understate below a static count
+the live-number command removed        1 failed   keeps the command beside the claim
+the claim removed entirely             4 failed   anti-vacuity + three others
+restored                              23 passed   README byte-identical to the snapshot
+```
+
+The fourth line is the one I would have doubted: lowering the floor to 400 fires **only** the
+understatement case, which is how I know that check does independent work rather than riding along.
+
+### One instrument note, and it is the rule from last iteration paying off immediately
+
+My first attempt to enumerate the README's test-count claims used `grep -oE ".{28}\b..."` for context and
+returned **two** of the three. The missing one is at line 202, which begins *"suite of over 700 tests"* —
+fewer than 28 characters precede it on its line, so the fixed-width prefix could not match. **A
+measurement artifact that looked exactly like a finding**: two claims instead of three would have had me
+write a guard expecting two.
+
+Caught it by re-measuring without the prefix rather than by reasoning about the number, which is It152's
+rule — **print the population before printing the verdict** — applied one iteration after writing it down.
+
+`npx tsc -b` clean. `npx vitest run` **903 tests / 62 files** green (up 5).
