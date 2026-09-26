@@ -1443,6 +1443,85 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 135, 22:58 EST — checked the reviewer's setup path as a property, and confirmed #130 scoped it correctly
+
+#### The defect #130 found is the "looked complete" trap
+
+README's *"Running it locally"* pastes six commands. Step 5, `npm run seed:users`, requires
+**`DEMO_PASSWORD`**, and the script **deliberately has no default** — it refuses rather than create
+demo logins with a password guessable from the repository. **That variable was in no file**: not
+`.env.example`, not the README, not `docs/`.
+
+And the reason it survived: **`.env.example` lists both its siblings**, `DEMO_EMAIL` and
+`DEMO_PHONE`, *"so the group looked complete."* A reviewer who filled in every key the example lists
+still hit a wall on one they were never told about.
+
+#### I checked the whole path rather than the two named
+
+Extracted **every** environment variable read anywhere under `scripts/` and compared against
+`.env.example`:
+
+```
+listed in .env.example   22
+read by scripts/         20
+read but not documented   6   — all in provision.mjs
+```
+
+**The six are not a gap.** Every one is optional with a fallback:
+
+```
+GROUP_TOOL_URL              || `${baseUrl}/api/group/tool`
+TOOLS_BASE_URL              || `${baseUrl}/api/tools`
+TELNYX_ASSISTANT_GREETING   || sol.greeting || DEFAULT_GREETING
+TELNYX_TRANSCRIPTION_MODEL  || 'distil-whisper/distil-large-v2'
+TELNYX_SIP_URI              || env.DEMO_PHONE || null
+TRANSFER_TARGET             || env.TELNYX_SIP_URI || env.DEMO_PHONE || null
+```
+
+**And `provision.mjs` is not one of the README's setup commands** — those are `db:schema`,
+`db:seed`, `seed:users`, `dev`. So the six are overrides for an optional Telnyx step, not
+requirements on a reviewer's path.
+
+> **#130 documented exactly the two that blocked and did not pad the example with six optional
+> overrides.** My property check confirms the scoping was **right**, not incomplete — which is the
+> more useful thing to be able to say than "nothing is missing."
+
+#### The password guard, and my own file under it
+
+`DEMO_LOGINS.md` carries a working admin password in plaintext, protected by **one `.gitignore`
+line with no test on it** — in a repository that has already committed a live SIP credential as a
+fixture and a scratch `inq.json` via `git add -A`. Three cases now: not tracked, still named in
+`.gitignore`, and **no tracked file may carry a filled password line**.
+
+Its author notes the third case *"started too loose and flagged the email draft's placeholder, **the
+plan quoting it**, and its own comment"* — **my file was among the false positives.** So I checked
+it directly:
+
+```
+plans/06-master-plan.md    contains the real password: false
+agents/planner.status.md   contains the real password: false
+```
+
+Clean. And the guard now *"matches what a password looks like rather than the prose about one"* —
+the same false-positive discipline as `walkthrough-quotes.test.ts`, whose author wrote that **a
+guard with false positives is one people learn to ignore.**
+
+**Rules suite: 459 passed.**
+
+#### State — unchanged
+
+Every task T1–T43 closed. Inbox empty. Lock held.
+
+| # | Item |
+|---|---|
+| 1 | **`drop policy` ×3** — delete the disclosure if applied first |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** |
+| 3 | **T21** — two rows |
+| 4 | **T34** — rotate the SIP connection |
+
+**The plan is accurate and correctly ordered.**
+
+
 ### Iteration 134, 22:52 EST — checked whether the number I put in a document is the kind that rots. It is not
 
 Iteration 124's rule: **claims I add to the front matter get verified in the iteration after I add

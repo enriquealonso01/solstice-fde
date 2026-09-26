@@ -5373,3 +5373,83 @@ nothing.
 
 `npx tsc -b` clean. `npx vitest run` **568 tests / 47 files** green (up 3). No prompt change, so no
 re-provision: compile === export === live still 29,006, margin 994.
+
+## It100 — hunted a second approval-gate hole, found none, and found why the pending SQL is safe
+
+No task open. The hypothesis was worth testing: `netlify/functions/flags.ts` rejects a non-admin POST
+with 403 and its own comment says *"row level security is the thing enforcing admin-only writes"* —
+the identical design the package's open item is about, where `prop_write` lets a browser PATCH
+`proposals` with the public anon key and walk past `canSend` entirely. If `demo_flags` had the same
+shape, anyone holding the anon key could flip failure injection on production and make a working
+system look broken in front of the panel.
+
+**The function's own boundary holds**, and the role check runs before the body is even read:
+
+```
+POST /api/flags  unauthenticated   -> 401  "Sign in to view system switches."
+POST /api/flags  as supervisor@    -> 403  "Only an administrator can change system switches."
+GET  /api/flags  as supervisor@    -> 200  can_change=false  any_active=false
+GET  /api/flags  as admin@         -> 200  can_change=true
+```
+
+**And the database layer holds too.** `supabase/migrations/003_demo_flags.sql` declares
+`flags_write ... for all using (my_role() = 'admin') with check (my_role() = 'admin')` and
+`flags_read ... using (auth.uid() is not null)`. Declared is not applied, so I proved it live and
+read-only: an anon `select` on `demo_flags` returns `[]` where a signed-in one returns all three rows.
+The read policy is enforced, which means 003 was applied, which means the write policy from the same
+file is in place. `my_role()` is a clean `select role from profiles where id = auth.uid()`, so it is
+NULL for anon rather than anything permissive.
+
+### The probe that would have made me file a false finding
+
+My first test was a PATCH filtered to a row that does not exist — no mutation whatever the answer —
+and `demo_flags` returned **200**. That reads like "the write was permitted." So I ran it as a control
+across eight tables:
+
+```
+demo_flags 200 []   proposals 200 []   inquiries 200 []   follow_ups 200 []
+sessions   200 []   audit_log 200 []   profiles  200 []   escalations 200 []
+```
+
+`audit_log` and `profiles` are certainly not anon-writable. Postgres applies RLS on UPDATE as a row
+filter rather than an error, so a statement matching nothing always succeeds. **The probe is
+worthless**, and it had already produced a headline. Second near-miss in two iterations; the control
+experiment is what stopped it, and it cost one command.
+
+### What the sweep did find, which is worth more than the hole would have been
+
+Reading every declared policy to settle the question surfaced something about **Enrique's item 1**. He
+pastes three lines by hand:
+
+```sql
+drop policy if exists prop_write on proposals;
+drop policy if exists inq_write  on inquiries;
+drop policy if exists fup_write  on follow_ups;
+```
+
+**Dropping a `FOR ALL` policy also drops the read it was granting.** That is safe here only because
+`supabase/schema.sql:183-185` declares `inq_read`, `prop_read` and `fup_read` separately — and those
+three look redundant while a `FOR ALL` policy exists, which is exactly the kind of line someone
+removes while tidying. Migration 004 knows this: it restates all three reads in a `do $$ ... end $$`
+block. **The three lines Enrique has in hand do not carry that block.** So the paste is safe today,
+and nothing was asserting the property it depends on. If it were ever false, the failure would appear
+as beat 4's group sales inbox reading empty, in the SQL editor, minutes before a demo.
+
+`rls-policies.test.ts` pins three properties of the declared set:
+
+1. No write policy may skip `my_role()` or `auth.uid()` — the general form of the disclosed bug, so a
+   `for all using (true)` cannot arrive quietly.
+2. Each of `proposals`, `inquiries` and `follow_ups` must keep a `for select` policy **declared
+   outside migration 004**.
+3. `audit_log` stays append-only — insert and select, no update, no delete, no `FOR ALL` — which is
+   the property `InquiryDetail.tsx` promises with *"Overrides are readable forever."*
+
+**Red-checking caught case 2 passing while broken.** The first version counted policies from every
+file, so migration 004's own restatement satisfied it and deleting `prop_read` from `schema.sql`
+stayed green — a guard that could only fail if the fix file were also deleted, which is the opposite
+of the point. It is now blind to that file and the comment says why. Cases 1 and 3 red-checked by
+adding `for all using (true)` and by giving `audit_log` an update policy.
+
+`npx tsc -b` clean. `npx vitest run` **574 tests / 48 files** green (up 6). No prompt change, no
+re-provision, and nothing in the database was written: every probe was a read, a rejection, or a
+statement that matched no rows.
