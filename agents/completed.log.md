@@ -8029,3 +8029,96 @@ seconds** while vitest pre-bundled it; every run after is normal and the whole s
 recording so the next agent who sees one slow run does not go looking for a hang.
 
 `npx tsc -b` clean. `npx vitest run` **796 tests / 57 files** green (up 13).
+
+---
+
+## It135 — T52: the one place the diagram overstated, and it was the security claim
+
+T52 was open and unclaimed. It is the mirror image of the last two iterations. It133 found six wrong
+status markings on `docs/architecture.drawio`'s Today page and It134 found twenty on the in-app map —
+**twenty-six, every one an understatement.** T52 is the same page's one overstatement, and of all the
+things to get wrong in the flattering direction it picked the security of a customer's document.
+
+> **LIVE Storage** — Generated proposal PDFs, handed out as ***time-limited signed URLs***.
+
+### Measured before rewording
+
+The whole point of the last several iterations is that a restated claim is a claim nobody checked, so I
+fetched a real `pdf_path` out of `proposals` and requested it with nothing attached:
+
+```
+GET https://<project>.supabase.co/storage/v1/object/public/proposals/PRP-2011/<32 chars>/<file>.pdf
+  status        200
+  bytes         2570
+  content-type  application/pdf
+  token= in URL      no
+  /sign/ in path     no
+  /object/public/    yes
+  path secret        32 chars
+```
+
+And `netlify/functions/group/store.ts:642` calls **`getPublicUrl`**, not `createSignedUrl`. So there is
+no signature to verify and nothing to expire. It is a **capability URL**: the link is the credential,
+and that credential never stops working.
+
+"Signed and time-limited" is materially stronger than "unguessable and permanent". It implies expiry
+and revocation, and the system has neither. Forwarding the email forwards the access, for good.
+
+### The reason it was worth stopping for
+
+`README.md` already says it correctly, and says it as a stated limit rather than burying it:
+
+> **A stated limit: a customer's proposal link is a capability URL, not an authenticated download.** …
+> the link *is* the credential, so forwarding the email forwards the access, and there is no expiry and
+> no revocation.
+
+So the package **volunteered the weakness in one deliverable and claimed the stronger mechanism in
+another.** A reviewer reading both has to decide which to believe about a security property, and the
+honest one loses if they happen to read the diagram second. The README's framing is the right one, so
+the Today node now uses it: *"capability URLs: a 32-character unguessable path in a public bucket, so
+the link is the credential. Not an authenticated download, and no expiry or revocation. Signed URLs are
+the future-state answer."* One line, **1 insertion and 1 deletion**.
+
+**The Future-state node is untouched, deliberately.** It says *"Amazon S3 with time-limited signed URLs
+for proposal PDFs. **Today: Supabase Storage.**"* — correct, marked FUTURE, and explicitly contrasting
+itself with today. That contrast is what makes this a borrowed phrase rather than a misunderstanding:
+the diagram already knew the difference on the page next door. The edit was scoped to the Today page's
+XML slice so a stray match could not reach it, and a post-condition asserts the Future sentence
+survived.
+
+### The guard bans the claim, not the phrase
+
+Banning `signed URL` outright would be wrong: signed URLs are the recommendation, and one day someone
+should implement them. So the new case reads `store.ts` first. While the code calls `getPublicUrl`, the
+Today page may not say *signed* or *time-limited*; if `createSignedUrl` ever appears, the branch flips
+and the wording is permitted. A guard that would block the real improvement is a guard that gets
+deleted.
+
+Two more cases: the Today page must name the capability-URL model in the README's own words, and
+**`README.md` must keep stating the limit** — because the disagreement between the two was the finding,
+and it could just as easily be repaired from the wrong end by quietly upgrading the README. And one
+protecting the Future node, so "fixing" the failure by deleting the recommendation does not work.
+
+Red-checked three ways: restoring the original overclaim fails 2, deleting the FUTURE contrast fails 1,
+and rewording the README's limit to "signed download link" fails 1.
+
+### A process mistake, and the thing that caught it
+
+My first red-check pass used `git checkout -- docs/architecture.drawio` to undo each mutation. That
+restores the file to **HEAD**, not to how I left it — and my T52 fix was uncommitted working-tree work,
+so the first `checkout` threw it away and the next two mutations ran against the unfixed file.
+
+The tell was the **restored** line coming back `2 failed | 14 passed` where it should have read 16
+passed, and `git status` showing `docs/architecture.drawio` no longer modified. That is only a tell
+because the red-check procedure ends with a restore-and-rerun; if I had stopped after the last mutation
+I would have committed a guard with no fix behind it and three green-looking mutation lines above it in
+this log.
+
+`agents/README.md` already warns against `git checkout -- <their file>` for another agent's work, and
+already says to copy to the scratchpad before touching anything with git. I was applying that rule to
+other agents' files and not to my own, because `git checkout` is shorter than a `cp`. It now says so
+explicitly, with this incident named: **`git checkout` cannot tell your work from the mutation.** Redid
+the entire red-check with scratchpad backups; all three fire, restored is green, and the diagram diff is
+the intended 1/1.
+
+`npx tsc -b` clean. `npx vitest run` **799 tests / 57 files** green (up 3).

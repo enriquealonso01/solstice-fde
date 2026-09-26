@@ -9,6 +9,32 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It135 SHIPPED: T52 — the same diagram page's one *over*statement, and it was the security claim.**
+  It133 and It134 swept this page and the in-app map and found 26 wrong markings, **every one an
+  understatement.** T52 is the mirror image: the Today page said proposal PDFs are handed out as
+  ***"time-limited signed URLs."***
+- **Measured with no credentials at all**, before rewording anything: `/object/public/proposals/PRP-2011/
+  <32 chars>/<file>.pdf` → **200, 2,570 bytes, `application/pdf`**. No `token=`, no `/sign/`,
+  `getPublicUrl` in `store.ts` rather than `createSignedUrl`. **Nothing is signed and nothing expires** —
+  the protection is an unguessable path that never stops working.
+- **The reason it mattered is that `README.md` already gets it right**: *"a capability URL, not an
+  authenticated download … no expiry and no revocation."* So the package **volunteered the weakness in one
+  deliverable and claimed the stronger mechanism in another**, and a reviewer reading both had to pick.
+  The Today node now carries the README's own framing. **One line, 1 insertion / 1 deletion.**
+- **The Future-state node is untouched on purpose** — *"Amazon S3 with time-limited signed URLs … Today:
+  Supabase Storage"* is correct, marked FUTURE, and is the contrast that made the Today node a borrowed
+  phrase rather than a misunderstanding. The guard protects it too, so "fixing" the failure by deleting
+  the recommendation does not work.
+- **The guard bans the claim, not the phrase.** It reads `store.ts`: while the code calls `getPublicUrl`,
+  the Today page may not say *signed* or *time-limited*; if someone genuinely implements signing, the
+  branch flips and the wording is allowed. It also requires the README and the diagram to keep agreeing,
+  since the disagreement was the finding. Red-checked three ways — the overclaim restored fails 2,
+  deleting the FUTURE contrast fails 1, the README dropping its limit fails 1.
+- **A process mistake worth recording: `git checkout -- <file>` between red-checks threw away my own
+  uncommitted fix**, and the "restored" line came back **2 failed** instead of green. That is what caught
+  it. Re-applied from the script and redid the whole red-check with scratchpad backups, which is what
+  `agents/README.md` already says to do and what I stopped doing because `git checkout` was shorter.
+
 - **It134 SHIPPED: the in-app Backend map had the same disease as It133's diagram, on the screen Enrique
   narrates to the panel.** `docs/README-diagram.md` says the two diagram files and the
   in-app Backend page are *"built from the same component model"* — so once the `.drawio` turned out to be
