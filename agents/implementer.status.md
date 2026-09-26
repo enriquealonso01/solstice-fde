@@ -9,23 +9,26 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It119: `AGENTS.md` is the first file at the top of a public repo and nothing had ever checked
-  it. Three of its statements were false.**
-- **Its "Known blockers" section still asserted, in the present tense:** Telnyx **$0.00** so *"no number can
-  be bought and no call or email can be sent"*; the Anthropic key *"currently 400s"*; the Supabase schema
-  *"may not be applied yet"*. Measured this morning: **$3.03** with `+13057866217` on the account,
-  `POST /api/chat` → **200**, and a service-role read of `sessions` → **200**. A reviewer reading a
-  root-level file that says the model key does not work concludes something untrue about the system.
-- **Non-negotiable 2 — *"Do not run git. The orchestrator commits"* — is contradicted by the commit log
-  and by `agents/README.md`**, which documents the branch/PR/merge/deploy sequence every agent now runs. A
-  stated non-negotiable that the history disproves takes seconds to spot.
-- **Left the original intact and prepended a dated superseding block**, the same append-only reasoning as
-  `HUMAN_INTERVENTION.md`'s 15:30 list: it is honest history and worth reading as history. `git diff` shows
-  **29 insertions, 0 deletions**.
-- **One hypothesis of mine was wrong, and checking cost nothing:** I expected the four `plans/00`–`03`
-  references to be dead. All four exist. That is the part of the file that was fine.
-- **Guarded**: the plan references must resolve, the resolved-blocker text may not stand without the dated
-  correction, and while *"Do not run git"* remains the correction must point at `agents/README.md`.
+- **SHIPPED It120: T46 — `.env.example` shipped `SOL_THINKING=` blank, and blank is the configuration we
+  rejected.**
+- **Every link verified, including the one T46 could not check.** `chat.ts` reads anything other than
+  `'disabled'` as **adaptive**, so blank is not neutral; `docs/latency-target.md` says production runs
+  `disabled`; and I confirmed that against the **Netlify environment itself** — `SOL_THINKING = disabled` —
+  and the local `.env`. So a reviewer following our own step 2 ran the build we rejected.
+- **The stakes are a guardrail, not a knob.** Adaptive is the setting where *"Sol created a real escalation
+  and then failed to tell the guest it had done so"* — the exact behaviour
+  `transcripts/honest-handoff.md` is offered as proof of, and the first transcript we tell them to read.
+- **The comment was the worse half, and `chat.ts` carried the same error.** Both called it a *"latency
+  dial"*, which invites leaving it blank to go faster. Both now say it is behavioural and name the doc.
+- **Two guard cases, after the first attempt passed while broken.** My original check took 400 characters
+  either side of the variable; red-checking it by restoring the old one-line comment left it **green**,
+  because the shorter comment moved the offsets. Rewritten: a whole-file ban for `.env.example`, and for
+  `chat.ts` an assertion anchored on the `const THINKING` declaration — because `chat.ts` legitimately calls
+  effort and token budget *"the latency dials"* 200 lines later, and a file-wide ban failed on correct prose.
+- **My comment edit shifted two `chat.ts` citations by 8 lines and `doc-citations` caught it** — fourth time
+  that guard has corrected me. `303 → 311`, `160 → 168`, and because one sits outside `voice:exclude` the
+  live prompt differed by two digits, so I re-provisioned after diffing: the change **is** those two digits.
+  `compile === export === live` at 29,655, margin 345.
 
 ## Demo rehearsal coverage — what is actually verified
 

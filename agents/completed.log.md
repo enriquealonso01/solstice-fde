@@ -6742,3 +6742,62 @@ Red-checked: stripping the correction fires cases 2 and 3 with the three stale c
 reference fires case 1.
 
 `npx tsc -b` clean. `npx vitest run` **670 tests / 52 files** green (up 3).
+
+## It120 — T46: the file we tell a reviewer to copy shipped the configuration we rejected
+
+`README.md` step 2 is `cp .env.example .env # then fill it in`. That file shipped:
+
+```
+# Latency dial: 'disabled' turns off extended thinking on the chat brain.
+SOL_THINKING=
+```
+
+**Blank is not neutral.** `chat.ts` reads `process.env.SOL_THINKING === 'disabled' ? disabled : adaptive`, so
+an empty value is **adaptive** — and `docs/latency-target.md`, under *"What we traded, deliberately"*, records
+adaptive as the configuration where *"Sol created a real escalation and then failed to tell the guest it had
+done so."* That is the exact behaviour `transcripts/honest-handoff.md` exists to prove we do not have, and it
+is the first transcript the package tells a reviewer to read.
+
+**Verified the link T46 could not.** It asserted that production runs `disabled`; I checked the Netlify
+environment rather than the document that describes it:
+
+```
+netlify env:list      SOL_THINKING = disabled
+.env (local)          SOL_THINKING=disabled
+.env.example          SOL_THINKING=            <- adaptive, the rejected build
+```
+
+So a reviewer following our own setup instructions ran a different agent from the one we tested, and the
+difference is a guardrail rather than a second of latency.
+
+**The comment was the more misleading half, and the code carried the same error.** *"Latency dial"* is what
+the flag looked like when it was added, and the latency document overturns it: the reason for `disabled` is
+behaviour, and the **cost** is first-token latency. `chat.ts`'s own comment said *"which is the latency dial we
+can move live if the room is unforgiving about the pause"* — so anyone reading the code would re-derive the
+wrong story. Both now say what the setting is for and name the document.
+
+### The guard passed while broken, and the fix for that had its own trap
+
+My first case took 400 characters either side of the first `SOL_THINKING` and asked whether *"latency dial"*
+appeared in them. Red-checking it by restoring the original one-line comment left it **green**: the shorter
+comment moved the offsets and the phrase fell outside the window. A case that passes because of where a string
+happens to sit is precisely what this directory exists to prevent.
+
+So I made it read the whole file — and that failed on `chat.ts` **correctly**: line 359 says *"token budget,
+are the latency dials"*, about effort and token budget, which genuinely are latency dials. A file-wide ban
+would have been a guard that fires on accurate prose, which teaches people to ignore it.
+
+The shipped version is two cases: a whole-file ban for `.env.example`, where the phrase has no other use, and
+for `chat.ts` an assertion anchored on the `const THINKING` declaration — the comment immediately above it
+must give the behavioural reason. Both red-checked by restoring the original text of each file.
+
+### And my comment edit broke two citations
+
+Expanding the `chat.ts` comment by eight lines moved `chat.ts:303 → 311` and `chat.ts:160 → 168`, cited in
+`README.md` and twice in `agent/sol.md`. `doc-citations` caught it — **the fourth time that guard has
+corrected one of my own edits**. One of the two sits outside a `voice:exclude` block, so the live prompt
+differed from the compile by two digits; I diffed before touching the assistant, confirmed the change was
+exactly `chat.ts:303` → `chat.ts:311`, and re-provisioned. `compile === export === live` at **29,655**, margin
+**345**, assistant id unchanged, 11 API calls, no telephony spend.
+
+`npx tsc -b` clean. `npx vitest run` **674 tests / 52 files** green (up 7).

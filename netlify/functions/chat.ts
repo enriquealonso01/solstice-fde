@@ -59,9 +59,17 @@ const MAX_TOKENS = Number.parseInt(process.env.SOL_MAX_TOKENS ?? '4096', 10)
  *  with SOL_EFFORT if the panel wants to see the tradeoff live. */
 const EFFORT = (process.env.SOL_EFFORT ?? 'low') as 'low' | 'medium' | 'high' | 'xhigh' | 'max'
 /**
- * Adaptive thinking costs roughly a second before the first token and buys better tool choice.
- * It is on by default and SOL_THINKING=disabled turns it off, which is the latency dial we can
- * move live if the room is unforgiving about the pause.
+ * Adaptive thinking is the library default, and SOL_THINKING=disabled turns it off.
+ *
+ * Production ships `disabled`, and NOT as a latency dial -- which is how this comment and
+ * .env.example both described it until iteration 120. Disabling is *slower* to first token; it is the
+ * only configuration that produced zero behavioural violations across the four adversarial scenarios,
+ * and with adaptive on Sol created a real escalation and then failed to tell the guest it had done so.
+ * docs/latency-target.md, "What we traded, deliberately", has the measurements.
+ *
+ * Blank is not neutral: anything other than the string 'disabled' lands on adaptive, so an unset
+ * variable is the configuration we rejected -- which is why .env.example now ships the value rather
+ * than an empty key.
  */
 const THINKING: Anthropic.ThinkingConfigParam =
   process.env.SOL_THINKING === 'disabled' ? { type: 'disabled' } : { type: 'adaptive' }
