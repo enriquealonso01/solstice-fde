@@ -6235,3 +6235,43 @@ the version that cannot be mangled.
 `npx tsc -b` clean. `npx vitest run` **619 tests / 50 files** green here, and verified with
 `DEMO_LOGINS.md` moved out of the way so the absent-file path is exercised rather than assumed. The
 fresh-clone re-run is the deploy verification for this iteration.
+
+### It112 postscript — the clone found a third failure, and the suite could never have caught it
+
+After shipping the two test fixes I re-cloned `main` and ran the reviewer's sequence again. `npm ci`,
+`typecheck` and `vitest` were all green, and then:
+
+```
+npm run data:check
+STALE: manifest.json differs from the source data. Run: node scripts/data/build.mjs
+```
+
+`data:check` is the provenance proof. The plan's `IF THEY ASK` answer 1 says *"`npm run data:check` proves
+those files match the CSVs you sent"*, and the README says the same. **It failed on their machine and
+passed on mine**, and no test in the suite compares the two, because the suite only ever runs in one
+checkout at a time.
+
+`manifest.json` records a `sha256` of each source file, taken over the **raw bytes**:
+
+```js
+createHash('sha256').update(readFileSync(path)).digest('hex')
+```
+
+None of the four inputs is pinned in `.gitattributes`, so a Windows clone gets CRLF and a Linux clone LF.
+The manifest was therefore a fact about the machine that built it, not about the data. Same class as
+iteration 96's compile hash, one layer over, and it would have greeted every reviewer who followed our own
+instructions.
+
+The hash now folds carriage returns out before digesting, so it fingerprints the content rather than the
+checkout. Three of the four hashes moved and only `manifest.json` changed on rebuild — the generated JSON
+was already identical either way, because the CSV parser normalises.
+
+**It is still a real fingerprint, which is the thing worth checking rather than assuming.** Changing a
+single rate digit in `data/solstice-properties.csv` takes both `properties.json` and `manifest.json` to
+STALE. Normalising the line endings did not weaken it; it removed the one variable that had nothing to do
+with the data.
+
+**And a ninth escape incident, inside the bullet describing the eighth.** The carriage-return-newline
+pattern went through a heredoc twice: once into the `doc-paths` regex, where `tsc` caught it, and once into
+`agents/implementer.status.md` while I was writing the note about the first. Both are now written in forms
+that cannot be mangled — a plain newline split, and prose.
