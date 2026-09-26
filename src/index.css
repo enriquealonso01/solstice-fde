@@ -19,7 +19,7 @@
     --canvas: 244 241 234; /* #f4f1ea */
     --card: 255 253 248; /* #fffdf8 */
     --ink: 27 25 22; /* #1b1916 */
-    --muted: 87 82 74; /* #57524a */
+    --muted: 77 72 64; /* #4d4840 */
     --faint: 130 123 113; /* #827b71 */
     --line: 228 221 208; /* #e4ddd0 */
     --on-accent: 255 253 248;
@@ -164,6 +164,9 @@
   /* Shared chrome so every page reads as one product. */
   .panel {
     @apply rounded-2xl border border-line bg-card shadow-[0_1px_2px_rgb(28_20_10/0.04),0_8px_24px_-12px_rgb(28_20_10/0.08)];
+  }
+  [data-theme='dark'] .panel {
+    border-color: rgb(var(--line) / 0.5); /* = --faint: inputs and cards read as fields on a projector */
   }
   .panel-hover {
     @apply panel transition-shadow duration-200 hover:shadow-[0_1px_2px_rgb(28_20_10/0.04),0_16px_36px_-14px_rgb(28_20_10/0.16)];
