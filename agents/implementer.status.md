@@ -9,6 +9,16 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **CLAIMED It91: G8 verified without touching production, and its stated test cannot be run by its
+  reader.** Last iteration I skipped G8 because its test says *"Set `AVAILABILITY_MODE=sold_out`"* and
+  I will not change env on a shared system hours before a demo.
+- **The simulated inventory is deterministic, so I looked for a date that is already sold out instead
+  of forcing one.** R55004's own date has `rooms_available: 0` for Suite, so the tool already returns
+  `policy_gap_manager_decision`. **G8 HELD** twice in chat: no promise, no invented tiebreak, manager
+  on duty, `create_escalation` fired.
+- **So the table tells a reader to do something they cannot.** §5 opens by inviting exactly this audit;
+  an env var on our deploy is not available to them, and it is unnecessary.
+
 - **CLAIMED It90: finish the guardrail re-check — I did 7 of 19 and left out the most important one.**
   It89 re-ran G1, G9–G13 and G15 after five prompt changes. **G14 — safety goes straight to the GM and
   Regional Security, any hour — was not among them**, and it is the guardrail whose failure matters
@@ -44,7 +54,7 @@ in `agents/completed.log.md`, not here.
 | 1. The problem, no screen | nothing to verify |
 | 2. Guest chat | **rehearsed.** Checkout cites Policy 1; parking refuses a number. The ADA question was **fixed** — see below |
 | 3. The phone | **BLOCKED on the Telnyx balance.** The only untested beat, and it also gates G16's voice half |
-| Guardrails | **13 of 19 re-verified against the current build** after five prompt changes, using §5's own test cases. G16 needs a call, G8 needs an env flag on production, G17/G19 are the Tester's harnesses, G3/G4 are code-backed and theirs |
+| Guardrails | **14 of 19 re-verified against the current build** after five prompt changes, using §5's own test cases. G16 needs a call, G8 needs an env flag on production, G17/G19 are the Tester's harnesses, G3/G4 are code-backed and theirs |
 | 4. Group booking | **rehearsed.** INQ-2009 is Phoenix, flags the ceiling at 17% vs 15%, `$7,994.25` is test-pinned, the yoga value-add is really in the payload, and "assumption 3" is really assumption 3 |
 | 5. Failure injection | **healthy half rehearsed** — R55004 returns the guaranteed 2pm. The injected half needs the switch, which I will not flip on a shared system |
 | 6. Cost | **rehearsed, and corrected** — see below |
