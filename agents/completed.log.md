@@ -8927,3 +8927,114 @@ than leave it for whoever runs the last `demo:tidy`. It is six hours before that
 the thirty-minute floor and will be swept by the default.
 
 `npx tsc -b` clean. `npx vitest run` **842 tests / 58 files** green (up 4). No Telnyx spend.
+
+---
+
+## It144 — T56: the latency deliverable had a census available and published a median of six
+
+T56 was open. `docs/latency-target.md` is a named brief deliverable, and its re-measurement section
+concluded:
+
+> **First token p50 3301ms, inside the 4s target. First signal p50 1545ms, 45ms over the 1.5s target.**
+
+From six turns. Every chat turn writes a `turn_metrics` row to `tool_invocations` with
+`first_event_ms`, `first_token_ms` and `total_ms` on it, so the population was there the whole time.
+
+### Recomputed, not restated — and one figure changed the headline
+
+The lesson of It140, where a number I published turned out to be the `limit` I had typed, is that I do not
+copy a figure from a task description. So I pulled all 351 rows and computed the percentiles myself.
+
+```
+n=351 fetched   window 2026-09-24T17:30:11Z -> 2026-09-26T08:45:40Z
+production config (thinking=disabled, narration=off): 338      all claude-sonnet-5
+```
+
+My p50s match T56 exactly: first signal **1079ms**, first token **2608ms**. **Its p90 does not.** T56
+recommends publishing *"met at p50 (1079ms) and p90 (1488ms)"*, and 1488ms is neither percentile
+convention:
+
+```
+first signal (n=338, target 1500ms)
+  p50   nearest-rank  1079    interpolated  1081    both under
+  p90   nearest-rank  1502    interpolated  1492    STRADDLES the target
+  p95   nearest-rank  1792    interpolated  1782    both over
+  over target: 34 of 338 = 10.1%
+```
+
+**Because 10.1% of turns exceed 1500ms, the p90 sits exactly on the boundary** — nearest-rank puts it 2ms
+over, linear interpolation 8ms under. Publishing 1488 as evidence the target is met would have been the
+same error as publishing 1545 as evidence it is missed: choosing a convention to land on the side you
+want, with no `n` or method stated. So the doc says **"met at p50, level at p90"** and prints both
+conventions with the 10.1% beside them.
+
+First prose token is less ambiguous and less flattering:
+
+```
+first prose token (n=338, target 4000ms)
+  p50   2608 / 2610   both under        p90   4321 / 4299   both OVER
+  over target: 52 of 338 = 15.4%
+```
+
+So the honest summary is not *"the target is met"* but **the median is met with room and the p90 is not** —
+first signal level on the line, first token about 300ms past. That is a correction in our favour on the
+headline and against us on the tail, which is the shape an honest re-measurement usually has.
+
+### What I did not do, and why
+
+T56's check-when-done says the *"45ms over the 1.5s target"* conclusion should be **gone**. I left it.
+
+The doc already supersedes it two sections later — *"the confession above, that we miss it by 45ms,
+describes a build that no longer exists. It is left standing because it was true when written and the
+reasoning behind it is the part worth keeping."* Deleting an honest superseded admission would contradict
+the pattern this project has used for every other correction: prepend or append, leave the original
+readable, 0 deletions. **50 insertions, 0 deletions** here, and the six-turn tables keep their dates.
+
+What was actually missing was the census, so that is what I added — including the query, so a reviewer
+re-derives instead of trusting:
+
+```sql
+select args_masked->>'first_event_ms', args_masked->>'first_token_ms', args_masked->>'total_ms'
+from tool_invocations
+where tool = 'turn_metrics'
+  and args_masked->>'thinking'  = 'disabled'
+  and args_masked->>'narration' = 'off';
+```
+
+Both framings are published, because the six-turn table prints *"none"* for a turn that called no tool:
+**33 of the 338 called none, and for all 33 `first_event_ms` equals `first_token_ms`** — with no chip to
+render, the first signal *is* the first word. Restricted to the 305 that did call a tool, p50 1102ms and
+p95 1806ms. Both framings beat 1545ms, so the correction does not rest on picking one.
+
+The three published targets — 300ms, 1.5s, 4s — are untouched. `doc-citations.test.ts` pins those strings
+and the runbook quotes the 300ms one; the guard pins **commitments**, which is exactly why correcting a
+measured median is free and softening a target would not be.
+
+### Guarded the cause rather than the numbers
+
+Both of this document's errors have the same shape. A p95 of 950ms from **20** calls once said the voice
+target was missed by 650ms — the doc already carries that confession, *"a tail statistic from twenty
+samples is the worst of twenty, not a p95"*. And a p50 from **six** turns said the signal target was missed
+by 45ms. One error cost us nothing and one undersold the build; both were a percentile with no `n` beside
+it.
+
+So `latency-claims.test.ts` requires that a section reporting a **measured** percentile states its sample
+size, and separately that the census, its window and its query are still there. It deliberately does not
+pin the measurements: those are supposed to move when something is re-measured, and a guard that froze
+them would make honesty fail.
+
+**My first version of that rule was over-broad.** It matched the bare word `p50` and flagged three sections
+that only state *targets* — *"p50 ≤ 800ms"*, *"p95 ≤ 300ms"*, *"the ≤300ms p95 published above"*. A
+commitment has no sample size by definition. The pattern now needs a figure attached and excludes `≤`,
+which is the fourth time this session I have written a condition from the example in front of me rather
+than from the rule.
+
+**And then a mutation missed.** MUT 2 — making the doc claim the first-signal target is met at p90 — came
+back green. The guard was fine; my replacement string used `\n` against a **CRLF** file, so it was a no-op.
+`cat -A` showed the line endings and a CRLF-safe regex fired immediately. Third time this session the probe
+was at fault rather than the guard, and the way to tell them apart is still to find out *why* it passed.
+
+Red-checked four ways in the end: stripping the census `n` fails 1, claiming met-at-p90 fails 1, smoothing
+the straddle away fails 1, and breaking the query a reviewer would re-derive with fails 1.
+
+`npx tsc -b` clean. `npx vitest run` **847 tests / 59 files** green (up 5).

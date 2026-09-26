@@ -80,6 +80,56 @@ explanation, not a fluke.
 **The voice-side commitment holds, and this one is properly sampled.** `POST /api/tools/get_policy`,
 60 warm calls: **p50 102ms, p90 122ms, p95 135ms, max 164ms, and nothing over 300ms.**
 
+### Every turn the system has served — n=338, not six
+
+Each section above samples six turns, and says so. This one does not sample. Production writes a
+`turn_metrics` row for every chat turn, so the population is available and there is no reason to publish a
+median of six beside it. Measured at **2026-09-26 08:55Z** over the window
+**2026-09-24T17:30:11Z → 2026-09-26T08:45:40Z**:
+
+| | p50 | p90 | p95 | max | over target |
+|---|---|---|---|---|---|
+| **First signal** (target ≤ 1500ms) | **1079ms** | **1502ms** | 1792ms | 8017ms | **34 of 338 — 10.1%** |
+| **First prose token** (target ≤ 4000ms) | **2608ms** | 4321ms | 5276ms | 10589ms | **52 of 338 — 15.4%** |
+| Turn total (no target) | 3494ms | 7869ms | 9269ms | 19348ms | — |
+
+**What this changes, and what it does not.**
+
+- **First signal is met at the median with room, not missed by 45ms.** 1079ms against 1500ms is 421ms of
+  margin, over 338 turns rather than six.
+- **At p90 it sits on the line, and which side depends on a convention.** Nearest-rank gives **1502ms**,
+  linear interpolation **1492ms** — 10ms apart, straddling the target, because 10.1% of turns exceed 1500ms
+  so the p90 lands exactly at the boundary. We are not picking the flattering one: **met at p50, level at
+  p90.**
+- **First prose token is over at p90 either way** — 4321ms nearest-rank, 4299ms interpolated, about 300ms
+  past a 4s target, with 52 turns of 338 beyond it. The p50 is comfortable and the p90 is not.
+- **These 338 are the harder test, not the easier one.** The six-turn tables were warm; this window includes
+  every cold start the system has had. Even so, only **6 of 338** turns took over 3s to first signal.
+
+**Two framings of "first signal", because the tables above print "none" for one turn.** 33 of the 338 turns
+called no tool, and for **all 33** `first_event_ms` equals `first_token_ms` — with nothing to put a chip on,
+the first signal *is* the first word. Restricted to the 305 turns that did call a tool, first signal is
+**p50 1102ms, p95 1806ms**. Both framings beat the 1545ms this document used to report, so the correction
+does not depend on choosing one.
+
+**Re-derive it rather than trust it.** Every row is in `tool_invocations`:
+
+```sql
+select args_masked->>'first_event_ms', args_masked->>'first_token_ms', args_masked->>'total_ms'
+from tool_invocations
+where tool = 'turn_metrics'
+  and args_masked->>'thinking'  = 'disabled'   -- the production setting
+  and args_masked->>'narration' = 'off';
+```
+
+That filter is the production configuration exactly, and all 338 rows are `claude-sonnet-5`. The other 13 of
+the 351 `turn_metrics` rows predate those two fields; including them moves the first-signal p50 by 13ms.
+
+**Why this section exists at all.** The note directly above — a p95 of 950ms from twenty calls that the
+larger sample contradicted — is the same mistake pointing the other way. A median of six turns said we
+missed the signal target by 45ms; the population says we make it by 421ms. **Both errors came from
+publishing a percentile with no `n` beside it**, which is why every figure in this table carries one.
+
 A note on how that number was nearly reported wrongly. A first run of 20 calls gave a p95 of **950ms**
 — a single cold instance, which at n=20 *is* the p95 by construction. Written up from that sample it
 would have said the published target is missed by 650ms, in a deliverable a reviewer can test in one

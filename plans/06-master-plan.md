@@ -1,12 +1,14 @@
 # Master plan: the whole picture
 
-> ## 04:44 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> **Nothing is open for an agent.** T55 shipped at It142 and I ran it myself at 04:44: the seven line
-> pointers into `HUMAN_INTERVENTION.md` that route you are **machine-guarded now** — the suite fails if that
-> file moves them. Six of them had rotted by +13 last iteration, including the one under item 1.
-> *T38–T55 are closed.* `sol.md`, the committed export and the live phone agent
-> all sit at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **800+ tests across 58 files**,
-> which is a floor and not a count, because it goes up every hour.
+> ## 04:57 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **One agent task is open: T56** — `docs/latency-target.md` publishes *“first signal p50 1545ms, 45ms over
+> the 1.5s target”* from **six** turns. Across the **338** turns production has actually logged, p50 is
+> **1079ms** and p90 **1488ms**. **The target is met and the deliverable undersells us.**
+> *T38–T55 are closed*, T55 shipped at It142 and I ran it myself — the seven line pointers into
+> `HUMAN_INTERVENTION.md` that route you are **machine-guarded now**; the suite fails if that file moves them.
+> `sol.md`, the committed export and the live phone agent all sit at **29,784** and are **byte-identical**,
+> re-verified at **04:52**, and `npx vitest run` is green — **800+ tests across 58 files**, which is a floor
+> and not a count, because it goes up every hour.
 >
 > **⏱ You are submitting early by choice, and that is worth knowing if something breaks at 10:00.** The
 > brief says *"You'll have **5 business days** from receipt to submit."* Received **Thursday 2026-09-24**,
@@ -548,7 +550,7 @@ the `.drawio` as plain XML and is green; `docs/README-diagram.md` still describe
 *(Incidental, worth knowing: the two `taken_over` rows are the **supervisor ladder having been exercised**, which
 is what It125's D5 correction asserted. This is the data behind that claim.)*
 
-### T55. `intervention-routing.test.ts` resolves line pointers in one file's opening region. Six of mine into its body had rotted.
+### T55 — SHIPPED (It142), and I ran it myself at 04:44: 17 tests green. `intervention-routing.test.ts` resolves line pointers in one file's opening region. Six of mine into its body had rotted.
 
 *Extend the guard that already exists. **It would have caught the pointer under Enrique's number-one item**,
 which spent three hours aiming at the wrong line.*
@@ -615,6 +617,77 @@ three hours."* **A shifted number now degrades to a search rather than to wrong 
 
 **Check when done:** the new assertion resolves every pointer in the plan's open region; the verification log is
 exempt; decrementing one pointer by 13 turns it red; `npx vitest run` green.
+
+### T56. `docs/latency-target.md` reports six turns and concedes a miss the other 338 do not support
+
+*The latency target is a named brief deliverable. Its headline sentence says we missed the 1.5s first-signal
+target by 45ms. **Across every turn the system has ever served, we do not miss it** — p50 1079ms, p90 1488ms.
+This is a correction in our favour, and it replaces a sample with a census.*
+
+#### What happened
+
+The section *"Re-measured against production on 2026-09-25"* reports six fresh turns and concludes:
+
+> **First token p50 3301ms, inside the 4s target. First signal p50 1545ms, 45ms over the 1.5s target.**
+
+The arithmetic on those six is right — I re-derived both medians from the table. **The sample is the problem.**
+Production writes every turn's timings to `tool_invocations` as a `turn_metrics` row, and that table holds **351
+turns** spanning `2026-09-24T17:30Z` → `2026-09-26T08:45Z`. Measured at 04:55:
+
+| | the doc, n=6 | live population, n=338 |
+|---|---|---|
+| First signal p50 | 1545ms — *"45ms over"* | **1079ms** |
+| First signal p90 | — | **1488ms** |
+| First signal p95 | — | 1780ms |
+| First prose token p50 | 3301ms | **2608ms** |
+| First prose token p90 | — | 4290ms |
+| First prose token p95 | — | 5155ms |
+| Turn total p50 / p95 | — | 3494ms / 9164ms |
+
+**n=338 is the production configuration exactly** — `thinking: disabled`, `narration: off`, `claude-sonnet-5` on
+all of them. The other 13 of the 351 are early rows carrying neither field, and dropping them moves p50 by 13ms.
+
+**The population is the harder test, not the easier one.** The doc says its table is warm; these 338 include cold
+starts, and still only **6 of 338** exceed 3s to first signal.
+
+#### Two definitions to keep straight
+
+The doc prints *"none"* in the first-signal column for a turn that called no tool, so state which framing a
+number belongs to:
+
+- **33** of the 338 turns called no tool, and for **all 33** `first_event_ms == first_token_ms`: the first signal
+  is the first word.
+- Restricted to the **305** turns that did call a tool, first signal p50 is **1102ms**, p95 **1792ms**.
+
+**Both framings beat 1545ms**, so the correction does not depend on which one you pick.
+
+#### The contradiction was already in the repo
+
+`src/lib/rules/__tests__/doc-citations.test.ts:297` records, *"for the record rather than as an assertion"*, a
+measurement from iteration 109: *"chat first-signal p50 905ms then 1009ms over two passes of six turns… first
+prose token 2589ms then 2246ms."* **Those sit within 80ms and 20ms of the population figures** and nowhere near
+the doc's 1545/3301. A second independent measurement had already disagreed with the published sentence, in a
+comment, where nothing reads it.
+
+#### What to change
+
+1. **Keep the six-turn table.** It is honest history and its spread — 870ms to 5040ms — is real.
+2. **Add the population beside it, with the query**, so a reviewer re-derives rather than trusts:
+   `tool_invocations` where `tool = 'turn_metrics'`, percentiles over `args_masked->>'first_event_ms'` and
+   `'first_token_ms'`, filtered to `thinking = 'disabled'` and `narration = 'off'`.
+3. **Fix the conclusion sentence.** First signal: target met at **p50 (1079ms) and p90 (1488ms)**. First token:
+   met at **p50 (2608ms)**; p90 is **4290ms**, which is **290ms over** — say that, do not round it inside.
+4. **Put `n` and the window next to every percentile.** A percentile without an `n` is the thing this task exists
+   to fix.
+5. **Do not touch the published targets** — `300ms`, `1.5s`/`1500ms`, `4s`/`4000ms`. `doc-citations.test.ts:303`
+   pins those three strings and `docs/demo-runbook.md` quotes the 300ms one. The guard pins the *commitments*, not
+   the measurements, so correcting the measured p50s is free; softening a target is not.
+6. **Leave the Sonnet-vs-Haiku argument alone.** It rests on the behavioural-violation column (0 of 4 vs 2 of 4),
+   not on these medians, and it still holds.
+
+**Check when done:** the doc publishes the population p50/p90 with `n=338` and the measurement window; the
+six-turn table survives with its date; the *"45ms over the 1.5s target"* conclusion is gone; the three target
+strings are unchanged; `npx vitest run` green.
 
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
@@ -1961,6 +2034,78 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 203, 04:57 EST — a brief deliverable concedes a miss that 338 turns do not support
+
+Two checks this iteration, one of which found a published number that is wrong in our favour. **T56 filed.**
+
+#### The latency deliverable measured six turns when the whole population was one query away
+
+`docs/latency-target.md` concludes its re-measured section with:
+
+> **First token p50 3301ms, inside the 4s target. First signal p50 1545ms, 45ms over the 1.5s target.**
+
+I re-derived both medians from the six rows above it — the arithmetic is correct. Then I asked production for
+**every** turn it has ever served: `tool_invocations` where `tool = 'turn_metrics'`, **351 rows**,
+`2026-09-24T17:30Z` → `2026-09-26T08:45Z`, of which **338** carry the production configuration exactly
+(`thinking: disabled`, `narration: off`, `claude-sonnet-5`).
+
+```
+first_event_ms  n=338  p50 1079   p90 1488   p95 1780   max 8017
+first_token_ms  n=338  p50 2608   p90 4290   p95 5155   max 10589
+total_ms        n=338  p50 3494   p90 7638   p95 9164   max 19348
+```
+
+**The 1.5s first-signal target is met at p50 and at p90.** It is not missed by 45ms. First token is 2608ms at
+p50, not 3301ms.
+
+> **And the population is the harder test.** The doc's table says its figures are warm; these 338 include cold
+> starts, and only **6 of 338** exceed 3s to first signal. The correction is not an artefact of a friendlier
+> sample — it is what happens when you stop sampling.
+
+Both framings of "first signal" hold, which matters because the doc prints *"none"* in that column for a turn
+that called no tool: **33** of the 338 called none, and for **all 33** `first_event_ms == first_token_ms`;
+restricted to the **305** that did call a tool, p50 is **1102ms**, p95 **1792ms**.
+
+#### The contradiction was already in the repo, in a comment
+
+`doc-citations.test.ts:297` records, in its own words *"for the record rather than as an assertion"*, an
+iteration-109 measurement: *"chat first-signal p50 905ms then 1009ms… first prose token 2589ms then 2246ms."*
+**Within 80ms and 20ms of the population figures, and nowhere near 1545/3301.** A second independent
+measurement had already disagreed with the published sentence — parked in a comment, where nothing reads it.
+
+> **The rule: a measurement filed as a note is a measurement nobody will act on.** It was right, it was ours, it
+> was four hours of work away from the document it contradicted, and it sat there because it was recorded rather
+> than reconciled. The same instinct that writes *"remember to update this"* instead of removing the figure.
+
+#### The 29,784 triple, re-verified and upgraded from equal-length to byte-identical
+
+The banner has claimed since 01:25 that `agent/sol.md`, the committed export and the live phone agent all sit at
+29,784 characters. Re-checked at **04:52**, and this time compared content rather than counts:
+
+```
+compileInstructions(agent/sol.md)   29,784   truncated: false   margin 216 of 30,000
+exports/telnyx-assistant.json       29,784   byte-identical to the fresh compile: true
+LIVE Telnyx assistant (GET)         29,784   byte-identical to the fresh compile: true
+model anthropic/claude-haiku-4-5    voice Azure.en-US-Ava:DragonHDLatestNeural
+```
+
+**Equal length is not equal content**, and until now the claim only rested on the first. The "native platform
+export" deliverable is the live agent, character for character.
+
+*(The Haiku/Sonnet split is documented and consistent — voice Haiku 4.5, chat `claude-sonnet-5`, with
+`latency-target.md` arguing for keeping Sonnet on chat. Re-checked across `README.md:48`, the export, the live
+assistant and `agent/sol.md:460`. No drift.)*
+
+#### The Tester's last open finding is closed in the file
+
+The Tester's iteration 60 left FIXED-PENDING: *"the walkthrough's boundary proof shows a redirect, not the 403 it
+promises."* `docs/role-walkthroughs.md:278` now names the redirect as *"the router being tidy, and on its own it
+proves nothing — a redirect is still the UI deciding"*, says **"do not stop here"**, and sends the reviewer to the
+API for the 403 and the bare 401. Fixed as claimed, in the file, not just in the log.
+
+**The Tester has been silent since 20:26 (8h31m).** Inbox and In progress empty; no lock held; I took none.
+
 
 ### Iteration 202, 04:44 EST — the last unguarded document is the one Enrique reads out loud
 

@@ -4,53 +4,68 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 202 — 2026-09-26 04:47 EST
+## Iteration 203 — 2026-09-26 05:00 EST
 
-**The plan is accurate and correctly ordered.** **Nothing is open for an agent.**
+**One agent task is open: T56.** Filed this iteration, because a brief deliverable publishes a number that is
+wrong against the data production has been collecting all along — and wrong **in our favour**.
 
-### The last unguarded document is the one he reads out loud
+### A named deliverable measured six turns when the population was one query away
 
-`docs/demo-cheatsheet.md` — 41 lines, the only document read **during** the demo. Fully swept at It164,
-changed at **01:52** (T50's Chen warning), so its beats were assertions again. Re-swept this iteration.
+`docs/latency-target.md` concludes:
 
-**The group beat, driven with the card's own words.** At It182 I verified G15 with *"30 rooms in Tampa for
-three nights in October"* — **which is not what the card tells Enrique to say.** Sent the card's verbatim
-line, *"I need 40 rooms in Tampa in October at 22% off."*, to production:
+> **First token p50 3301ms, inside the 4s target. First signal p50 1545ms, 45ms over the 1.5s target.**
 
-> *"A group block like that is priced by Sales, not by me, so I can't quote or confirm a discount here. Can
-> you give me an email address so a manager can get this in front of the right people?"*
+The arithmetic on those six rows is correct; I re-derived both medians. Then I asked production for **every**
+turn it has served — `tool_invocations` where `tool = 'turn_metrics'`, **351 rows**, 2026-09-24T17:30Z →
+2026-09-26T08:45Z, of which **338** are the production configuration exactly (`thinking: disabled`,
+`narration: off`, `claude-sonnet-5`):
 
-No number, no discount, one question, and it is the email. And the card's trace claim is now **measured**
-from two places in the same session: one row in `tool_invocations` (`classify_intent` → `Intent:
-group_booking`) and `tool_calls: 1` in that turn's own `turn_metrics` (total 3647ms, first token 2692ms).
+```
+first_event_ms  n=338  p50 1079   p90 1488   p95 1780
+first_token_ms  n=338  p50 2608   p90 4290   p95 5155
+total_ms        n=338  p50 3494   p90 7638   p95 9164
+```
 
-**All five policy citations correct**, checked against the numbered headings in the file the interviewers
-sent: **3** Advance Purchase Rate · **5** Service Recovery Window · **7** Comp and Service Recovery
-Authority · **8** Pets and Service Animals · **12** Parking and Valet.
+**The 1.5s first-signal target is met at p50 and at p90.** It is not missed by 45ms. And the population is the
+*harder* test: the doc's table is warm, these 338 include cold starts, and only **6 of 338** exceed 3s.
 
-> I first tried to read them through the deployed tool and got `Unauthorized` on two guessed auth headers.
-> **Guessing a header is the same error as guessing an argument name** (the G6 near-miss). The numbers are
-> ground truth in `data/`, and the file the brief handed us is a shorter path than the endpoint that reads it.
+Both framings hold, which matters because the doc prints *"none"* for a turn that called no tool: 33 of the 338
+called none and for **all 33** `first_event_ms == first_token_ms`; across the 305 that did call a tool, p50 is
+**1102ms**.
 
-### T55 verified, not believed
+**The contradiction was already in the repo.** `doc-citations.test.ts:297` records an iteration-109 measurement
+*"for the record rather than as an assertion"* — first signal 905/1009ms, first token 2589/2246ms. Within 80ms
+and 20ms of the population, nowhere near 1545/3301. **A measurement filed as a note is a measurement nobody
+will act on.**
 
-Shipped by the Implementer at **It142**. I ran it: `intervention-routing.test.ts`, **17 tests green**. It
-anchors the region with `/^## 0\. Verification log/m` rather than `indexOf` — the string appears earlier,
-inside T55's own description — and carries its own anti-vacuity case.
+T56 says what to change, what not to touch (the three published target strings that `doc-citations.test.ts`
+pins, and the Sonnet-vs-Haiku argument, which rests on the violation column, not these medians), and how to
+re-derive every figure.
 
-**The seven pointers that route Enrique are machine-guarded now.** Six had rotted by +13 last iteration,
-including the one under item 1, and nothing caught it for three hours. `HUMAN_INTERVENTION.md` was appended
-to again at **04:38**; all seven still resolve (27, 63, 609, 632, 728, 817, 975) — and that is no longer
-something I have to remember to check.
+### The 29,784 triple, upgraded from equal-length to byte-identical
 
-**Not "closed" by the working agreement.** The Tester has been silent since **20:26 (8h21m)**. One agent
-shipped T55 and one agent verified it, and neither was the Tester. Shipped, green, independently checked —
-saying which of the three it is rather than rounding up.
+The banner has claimed since 01:25 that `agent/sol.md`, the committed export and the live phone agent all sit
+at 29,784. Re-checked at **04:52**, comparing **content** this time:
 
-### Corrected in the banner
+```
+compileInstructions(agent/sol.md)   29,784   truncated: false   margin 216 of 30,000
+exports/telnyx-assistant.json       29,784   byte-identical: true
+LIVE Telnyx assistant (GET)         29,784   byte-identical: true
+```
 
-It read *"809 tests / 58 files at 03:48"*; the Implementer's It142 run says **838**. Replaced with a floor,
-not a count — the same move as every durable fix tonight. It also still advertised **T55 as open**.
+**Equal length is not equal content**, and until now the claim rested only on the first. The native-export
+deliverable *is* the live agent, character for character. The Haiku/Sonnet split re-checked across four places;
+no drift.
+
+### The Tester's last open finding is closed in the file
+
+Iteration 60 left FIXED-PENDING: *"the walkthrough's boundary proof shows a redirect, not the 403 it promises."*
+`docs/role-walkthroughs.md:278` now calls the redirect *"the router being tidy, and on its own it proves
+nothing"*, says **"do not stop here"**, and routes the reviewer to the API 403 and the bare 401. Fixed in the
+file, not only in the log.
+
+**T55 closed** — shipped by the Implementer at It142, and I ran it at 04:44 (17 tests green) rather than
+believing the entry.
 
 ### Open
 
@@ -62,9 +77,12 @@ not a count — the same move as every durable fix tonight. It also still advert
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T56 | Correct the latency deliverable to the 338-turn population | any agent |
 
-Inbox and In progress empty. No lock held; I did not take one.
+Tester silent since 20:26 (**8h34m**). Inbox and In progress empty. No lock held; I took none.
+Guards re-run after my edits: `intervention-routing`, `doc-paths`, `doc-citations`, `list-counts` — **123 green**.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — the only item nobody else could do for him.
+**The `drop policy` paste** — still the only item nobody else could do for him. T56 is the best remaining
+*agent* task: it is a panel-facing number, it is currently pessimistic, and the fix is a query plus a paragraph.
