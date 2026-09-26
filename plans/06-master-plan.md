@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 06:47 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 07:01 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **NOTHING IS OPEN FOR AN AGENT.** T59 shipped at 06:40 and every numbered task in this file is closed.
 > The suite is **898 tests / 62 files**, green. The new file pins the Platinum refusal to the inventory
 > service and **inverts it under `wide_open`**, so the beat cannot quietly stop depending on the data.
@@ -8,9 +8,20 @@
 > **Telnyx re-measured at 06:45: $3.01, not the $3.03 this file carried since 02:46.** It drifts down about
 > half a cent an hour on the number's rental even with nobody calling — so read it as a ceiling, not a
 > balance that waits for you. **Still fewer than six calls, still no credit line, still top up to $20.**
-> **A reviewer can run the suite from a `git clone` or a **Download ZIP** and it passes** — checked at 06:38:
-> the two gitignored files are asserted absent-from-tracking, never present-on-disk, the environment is
-> stripped, and `shipped-files.test.ts` carries a git-free fallback proved against the git path.
+> **A reviewer can run the suite from a `git clone` or a Download ZIP and it passes** — **measured at 06:50**
+> by extracting the shipped tree with no `.git`, running `npm ci`, and running it: **893 passed, 5 deliberate
+> skips.** *I claimed this at 06:38 and it was **false when I wrote it**: one guard still shelled out to
+> `git ls-files` with no fallback and went red on exactly that reviewer. It152 found it by running the thing
+> I had only read about, and fixed it. **I verified a claim about running the suite without running it.***
+> **All three commands the README hands a reviewer pass, run at 06:56:** `npm run typecheck` exit 0,
+> `npm run data:check` *“OK - 9 generated files match their sources”*, `npx vitest run` **898**.
+> **And the sending domain is live:** `enriquecodes.com` **VERIFIED** — DKIM, DMARC, SPF, ownership all OK,
+> and `TELNYX_EMAIL_FROM` is on it, so the proposal email path works this morning.
+> **The supervisor grid holds 288 sessions marked active at 07:00** — mostly mine, from verifying beats.
+> The runbook already has this right: *“stop the loop, then tidy, then warm up”*, **minutes before they join**.
+> I tested the guard the way a typo would: `--minutes 0` is **refused**, `--minutes 2` reaches all 288.
+> *If you mistype it and see a `libuv` assertion after the error line, the refusal still worked — iteration
+> 224 in the log.*
 > **Measured at 06:09: the Chen suite refusal — your opening beat — is that function's output.**
 > Driven end to end on production: 2PM guarantee confirmed outright, suite refused, escalated to the AGM.
 > **Better stage line than the card's:** the tool's decision is literally `policy_gap_manager_decision`, and
@@ -2499,6 +2510,180 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 224, 07:01 EST — ran the pre-flight command he will type at 10:55, including the way he might mistype it
+
+**Nothing is open for an agent.** Continuing to run rather than read, I took the one pre-demo command nobody had
+executed tonight: `npm run demo:preview`, the read-only half of `demo:tidy`. I confirmed it takes `--delete` to
+delete anything and did not pass it.
+
+#### What the supervisor screen currently holds
+
+```
+313 sessions examined
+0 phantom(s) found: attributed to our own number, zero messages
+288 session(s) still marked active; 287 idle for over 30 minutes
+```
+
+**288 sessions would show as live on the concierge supervisor grid right now**, and a good share of them are
+mine — every chat I drove tonight to verify a beat opened one. *Measured at 07:00 and rising; it is a reading,
+not a target.*
+
+**This is anticipated, not a gap.** `docs/demo-runbook.md:23` says *"Stop the loop, then tidy, then warm up"*
+and `:37` says `demo:tidy` goes **"minutes before they join, not the night before"**, with the reason stated
+exactly right: *"rehearsing is itself what fills the supervisor dashboard with stale 'live' conversations, and
+tidying early simply gets undone by your own last rehearsal."* `HUMAN_INTERVENTION.md:972` carries the same
+sequence. **My verification work is part of what fills it, and the sequence already accounts for that.**
+
+#### The flag guard, tested the way a typo would test it
+
+The runbook claims the `--minutes` flag *"refuses anything under 1"*. That matters: `--minutes 0` on the delete
+run would close the live demo session along with the stale ones. Run against the **preview**, so nothing could be
+deleted either way:
+
+```
+--minutes 0   Error: --minutes needs a number of minutes, 1 or more. Got: 0
+--minutes 2   288 session(s) still marked active; 288 idle for over 2 minutes
+```
+
+**The guard is real**, and `--minutes 2` does reach all 288, so the documented sequence finishes the job.
+
+#### One cosmetic thing to know rather than fix
+
+After that error message, Node prints its own exit assertion:
+
+```
+Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), file src\win\async.c, line 76
+```
+
+That is libuv on **Node v24.13.1 / Windows** complaining as the process tears down after the throw — it appears
+**after** the validation has already done its job, and the message above it is correct and readable.
+
+> **Considered and deliberately not filed.** The fix is two lines — print and `process.exit(1)` instead of
+> throwing — but it touches the script Enrique runs minutes before the panel joins, and the failure it would
+> tidy is a scary-looking dump *after* a correct refusal, not a wrong outcome. **Hours before a demo, knowing
+> about it beats patching the tool you are about to depend on.** If someone does pick it up, both flags must be
+> re-run, because the guard is the thing that must keep working.
+
+*Recorded here so that if he mistypes it at 10:55 and sees a libuv assertion, he knows the refusal worked.*
+
+#### State
+
+Every numbered task closed; nothing open for an agent. Enrique's six unchanged, `drop policy` first. Inbox and
+In progress empty. Tester silent since 20:26 (**10h35m**). No lock held; I took none.
+
+
+### Iteration 223, 06:57 EST — ran the three commands the README hands a reviewer, and one live dependency
+
+**Nothing is open for an agent.** Taking last iteration's lesson literally — *when a claim is about what happens
+if someone runs something, run it* — I ran everything `README.md:268-270` tells a reviewer to run, rather than
+reading about it.
+
+```
+npm run typecheck     tsc -b --pretty false        exit 0, silent
+npm run data:check    build.mjs --check            exit 0
+                      "OK - 9 generated files match their sources: properties.json, guests.json,
+                       reservations.json, policies.json, policy-document.json, inquiries.json,
+                       data-quality.json, rules.json, manifest.json"
+npx vitest run        898 passed / 62 files        (and 893 + 5 skips in a no-git tree, It152)
+```
+
+**All three of a reviewer's first commands pass**, and the third now passes from a ZIP as well as a clone.
+
+#### The live dependency nobody had checked today
+
+`npm run email:check` is a GET against `/v2/email_domains` — I checked it takes `--send` to send anything and
+did not pass it.
+
+```
+enriquecodes.com — status: VERIFIED
+  OK       DKIM signature    telnyx1._domainkey.enriquecodes.com
+  OK       DMARC             _dmarc.enriquecodes.com
+  OK       ownership proof / SPF
+  MISSING  inbound MX        <- expected: the domain sends, it does not receive
+```
+
+`TELNYX_EMAIL_FROM` is on that same domain, so the proposal-send path will work this morning.
+**`docs/architecture.drawio` claims "custom domain verified" and that claim is now confirmed live**, on the day
+it matters, rather than on the day it was written.
+
+#### A distinction worth keeping from yesterday's mistake
+
+The README's own ZIP sentence is *"if you downloaded this as a ZIP, `npx vitest run` **still checks every
+floor** — the test falls back to walking the tree."* **That was true throughout**, including while
+`defect-disclosure-list.test.ts` was going red: `repo-floors.test.ts` uses the fallback and passed.
+
+**My banner claim was broader than the README's — "the suite passes" rather than "the floors still check" — and
+the extra scope is exactly where it was false.** The README author wrote a claim they had measured and did not
+round it up. I rounded up a claim I had not measured at all.
+
+*Also checked while there: the README says "over 700 tests" in two places. The live number is 898, so the floor
+holds — that is the floor discipline working rather than a figure to fix.*
+
+#### State
+
+Every numbered task closed; nothing open for an agent. Enrique's six unchanged, `drop policy` first. Inbox and
+In progress empty. Tester silent since 20:26 (**10h31m**). No lock held; I took none.
+
+
+### Iteration 222, 06:52 EST — I verified a claim about running the suite without running it
+
+**It152 tested the sentence I put in the banner at 06:38 and it was false.** I wrote: *"A reviewer can run the
+suite from a `git clone` or a **Download ZIP** and it passes — checked at 06:38."* Measured properly — the
+shipped tree extracted with no `.git`, `npm ci`, then the suite:
+
+```
+FAIL  defect-disclosure-list.test.ts > names every file that actually discloses it
+      Error: Command failed: git ls-files -z
+      fatal: not a git repository
+
+Tests  1 failed | 892 passed | 5 skipped (898)
+```
+
+**Anyone using GitHub's Download ZIP got a red suite on their first action**, on a package whose README invites
+them to run it — and the failure did not read as a missing `.git`, it read as the package being broken.
+
+#### The part that is mine, and it is worse than being wrong
+
+**I had the evidence in hand eight iterations earlier.** At iteration 214 I looked straight at that file and
+wrote in my own log that it *"runs `git ls-files` via `execFileSync`"* — I noted it because I wondered whether
+running it conflicted with my own no-git constraint. Then at iteration 219 I asked exactly the right question,
+*"could the suite be red for someone who cloned or downloaded?"*, and answered it **by reading
+`shipped-files.test.ts`'s header** — the guard written at iteration 137 for the *previous* instance of this
+defect — and concluded the question was "answered in two directions by guards that run on every suite pass."
+
+> **My own rule from that iteration was *"search the package for the answer before filing the question."* I
+> followed it and stopped one step too early. A documented answer is not a measured one.** The package
+> contained a *description* of the property I wanted; the property itself had been broken since iteration 145
+> by a test written after the description.
+>
+> And the instrument was obvious: **the claim was about running the suite somewhere, and the check was to run
+> it there.** I reasoned about it instead. That is the six-turn latency sample again, in a different costume.
+
+#### What It152 did that I should have
+
+Extracted exactly what ships, installed, ran. Then swept the class rather than fixing the instance — three test
+files invoke git; `shippedFiles.ts` is the fallback itself and `suite-integrity.test.ts` guards its call with
+`if (!inAClone) return []`. **The one I had looked at was the only unguarded one.** The fix routes it through
+the existing helper, and the red-check is the strongest shape available: *"the same tree, the same command, the
+defect present and then absent"* — 1 failed → 893 passed, nothing else changed.
+
+It also checked the fallback was not passing vacuously in that tree: **269 files, `fromGit: false`, zero
+`node_modules` entries.** And it left the 5 skips alone with a reason — they are iteration 137's `skipIf(!clone)`
+cases, which exist to prove the fallback faithful *where both answers are available*, and *"rewriting a guard's
+semantics an hour before submission to recover two cases is a worse trade than saying plainly why they skip."*
+
+#### Verified here
+
+`defect-disclosure-list.test.ts:65` now reads `shippedFiles(repoRoot).files`; the suite is **898 green** in this
+tree. **The banner sentence is corrected and now carries both the measurement and the fact that I had asserted
+it falsely.**
+
+#### State
+
+Nothing is open for an agent. Enrique's six are unchanged. Inbox and In progress empty. Tester silent since
+20:26 (**10h26m**). No lock held; I took none.
+
+
 ### Iteration 221, 06:47 EST — the balance is not flat, and I had told him it was
 
 **Nothing is open for an agent.** So I re-measured the live numbers in Enrique's own table, starting with the
@@ -2637,6 +2822,12 @@ Inbox and In progress empty. No lock held; I took none.
 
 
 ### Iteration 219, 06:38 EST — went looking for a red suite on a fresh clone; it was already solved twice
+
+> **CORRECTED at iteration 222: the conclusion below is wrong.** The suite did **not** pass from a
+> Download ZIP. `defect-disclosure-list.test.ts` shelled out to `git ls-files` with no fallback and went
+> red for exactly the reviewer this entry says was covered. I reached that conclusion by reading the guard
+> written for the *previous* instance instead of running the suite in a tree without `.git`. Fixed by It152;
+> details in the iteration-222 entry above.
 
 **The plan is accurate and correctly ordered. T59 is the only open agent task, and nothing new is filed.**
 
