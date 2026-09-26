@@ -9,30 +9,23 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It96: the compiled voice prompt depended on whose machine compiled it — and every margin
-  figure this project has recorded was wrong because of it.**
-- Started from a stale sentence: `agent/sol.md` said the compile *"is 1.4KB from a hard 30,000-char
-  cap"*. Chasing the real number found the cause. `*.md` is not pinned in `.gitattributes`, so
-  `sol.md` is CRLF here and LF on a reviewer's machine, and `compileInstructions` collapsed blank
-  lines with a bare-newline pattern that **matches nothing in CRLF text** — then measured the result
-  against the cap.
-- **Same commit, two artifacts:** 29,411 characters here, **29,006** on an LF checkout — 400 carriage
-  returns plus 5 blank-line runs that should have collapsed. So the **589** margin in this file and
-  the **681** in the plan's banner were both phantom. The real head-room is **994**.
-- **And the export could not have been reproduced by a reviewer.**
-  `exports/telnyx-assistant.json` is what the live assistant returned, so compiling the source on
-  their machine gave a different artifact than the export it is supposed to demonstrate.
-- **Fixed in `compileInstructions`** — normalise line endings before anything collapses or measures
-  them. `--refresh` then re-provisioned and `export-assistant.mjs` re-pulled from live:
-  **compile === export === live at 29,006, margin 994, zero carriage returns**, and now identical on
-  any platform. The prompt *content* never changed: the pre-fix diff was five blank lines.
-- **Guarded**: CRLF and LF inputs must compile to identical bytes, no `
-` in the output, blank-line
-  runs must actually collapse; and the head-room claim in `sol.md` is now a **bucket** pinned to the
-  measured margin, with the KB form banned because that is the form that rotted. Red-checked by
-  removing the normalisation and by putting "1.4KB" back.
-- Found by accident — a Python edit rewrote the file to LF and the compile dropped 405 characters with
-  no content change. **Fifth time this session an unexplained number was the only signal.**
+- **SHIPPED It97: T43 — the runbook staked the beat on an exact split in the sentence that dares the
+  audience to check it.** `docs/demo-runbook.md:215` said *"about 148 chat sessions to 9 calls"*.
+- **Measured before rewording:** 181 sessions, **172 chat to 9 voice** — wrong by 24, and wrong in the
+  direction that does not matter to the argument (the split is *more* lopsided than claimed, which is
+  what the beat needs). The number was the only broken part.
+- **Replaced with a floor, not a fresh pair:** *"fewer than one call in every fifteen sessions"*. A
+  chat session is created whenever anyone opens the widget — the Tester adds ~25 an hour — while a
+  call costs money, so an exact pair was stale within hours and would be stale again by 11:00. The
+  floor stays true as chat grows. Projection advice untouched.
+- **Swept for siblings and found none.** Every other number near a live quantity in the deliverables
+  is either historical (`how-this-was-built.md`'s 24 401s, `latency-target.md`'s 24-call run), a
+  rate already hedged (runbook line 21), fiction (the 140-property group) or code-pinned (the $45/$50
+  authority row). **T43 was the last hostage.**
+- **Guarded the form, since a hermetic suite cannot check a live figure:** the runbook must carry a
+  ratio, and no deliverable may state an exact chat-sessions-to-calls pair. Red-checked by putting the
+  old clause back — both cases fail on the exact text that shipped.
+- Third live-quantity claim in three iterations: the Archive (#127), the compile margin (#128), this.
 
 ## Demo rehearsal coverage — what is actually verified
 

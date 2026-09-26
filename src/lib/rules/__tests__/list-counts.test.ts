@@ -94,3 +94,46 @@ describe('counted lists in the deliverable', () => {
     expect(problems, `Counted lists that do not match their count:\n\n${problems.join('\n')}\n`).toEqual([])
   })
 })
+
+/**
+ * A document must not stake a claim on an exact count of something that changes while you present.
+ *
+ * `docs/demo-runbook.md` told the presenter our traffic is *"about 148 chat sessions to 9 calls"*, in
+ * the sentence that goes on to warn **"a sceptic who reads the split while you claim telephony
+ * dominates has caught you."** Measured at iteration 97 the split was **172 to 9**: wrong by 24 in
+ * the one place the document invites the audience to check the number.
+ *
+ * The asymmetry is the whole point. A chat session is created whenever anyone opens the widget — the
+ * Tester alone adds roughly 25 an hour — while a call costs money, so the voice side barely moves.
+ * An exact pair was therefore wrong within hours of being written and would have been wrong again by
+ * the time it was read aloud. This is the third live-quantity claim in three iterations: the
+ * supervisor Archive (PR #127), the voice compile margin (PR #128), and this.
+ *
+ * A test cannot check the live figure — the suite is hermetic and must stay that way. What it can do
+ * is refuse the *form*. A floor or a ratio stays true as chat grows; two exact counts cannot. That is
+ * the same move PR #77 made for the README's file counts, which have since survived thirteen new
+ * files without rotting.
+ */
+describe('claims about quantities that change while nobody is looking', () => {
+  const runbook = 'docs/demo-runbook.md'
+  const text = () => readFileSync(join(repoRoot, runbook), 'utf8')
+
+  it('states the chat-to-voice split as a bound, not as two counts', () => {
+    expect(
+      text(),
+      `${runbook} should express the split as a floor or ratio. An exact pair goes stale between ` +
+        `writing it and reading it out, in the sentence that dares the audience to check it.`,
+    ).toMatch(/one call in every \w+ sessions/)
+  })
+
+  it.each(DOCS)('%s states no exact chat-to-call pair', (doc) => {
+    const full = join(repoRoot, doc)
+    if (!existsSync(full)) return
+    expect(
+      readFileSync(full, 'utf8'),
+      `${doc} pins an exact chat-session-to-call count. Chat sessions accumulate whenever anyone ` +
+        `opens the widget and calls do not, so that pair is wrong by the time it is read. Use a ` +
+        `floor -- "fewer than one call in every fifteen sessions" -- which stays true as chat grows.`,
+    ).not.toMatch(/\d+\s*chat\s*sessions?\s*to\s*\d+\s*calls?/i)
+  })
+})

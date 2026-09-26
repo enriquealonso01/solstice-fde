@@ -5181,3 +5181,60 @@ differently depending on the checkout"*; put *"1.4KB"* back and case 4 fails.
 
 **Flagged, not edited:** the plan's banner still says the margin is 681 (29,319 of 30,000). Both
 numbers are the CRLF artifact. That file is the Planner's.
+
+## It97 — T43: the beat that warns about a sceptic was itself the thing to check
+
+`docs/demo-runbook.md:215` told the presenter our traffic is *"about 148 chat sessions to 9 calls"* —
+and the next sentence reads **"a sceptic who reads the split while you claim telephony dominates has
+caught you."** So the one figure the document invites the audience to verify was wrong.
+
+**Measured before touching the sentence:**
+
+```
+sessions total 181   { chat: 172, voice: 9 }
+1 call per 19.1 chat sessions   ->   1 in every 20.1 sessions is a call
+```
+
+**172 to 9, not 148 to 9.** The argument is untouched and slightly stronger: the split is *more*
+lopsided toward chat than the sentence claimed, which is exactly what the beat needs. Only the number
+was broken.
+
+**Fixed with a floor rather than a fresh pair**, which is the Planner's reasoning and it is right. The
+two sides are asymmetric: a chat session is created whenever anyone opens the widget — the runbook
+itself says the Tester adds roughly 25 an hour — while a call costs money, so the voice count barely
+moves. An exact pair was stale within hours of being written and would have been stale again by the
+time it was read aloud. The sentence now says *"fewer than one call in every fifteen sessions"*, which
+holds as chat grows and has margin: at 1 in 20.1 it would take chat falling to 135 to break it, and
+chat only rises. Projection advice unchanged.
+
+**Swept for the siblings rather than fixing this one and leaving them**, because this is the third
+live-quantity claim in three iterations — the supervisor Archive (#127), the voice compile margin
+(#128), and this. Every other number near a live quantity in the deliverables came back clean:
+
+- `docs/how-this-was-built.md:47` — *"24 silent 401s into 11 working calls"*: a historical account of
+  a past debugging session, correctly past tense.
+- `docs/latency-target.md:119` — *"1.31s (24-call run)"*: a past measurement quoted with its sample
+  size, which is the honest form.
+- `docs/demo-runbook.md:21` — *"roughly 25 sessions an hour"*: a hedged rate, not a count, and it is
+  the very mechanism that makes exact counts rot.
+- `docs/integration-recommendation.md:10` — *"a 140-property upper-midscale group"*: the fictional
+  market context.
+- `docs/demo-cheatsheet.md:12` — the $45 / $50 / $55 authority thresholds: code-derived and already
+  test-pinned.
+
+**T43 was the last hostage.** That is worth recording as a negative result: the class is now closed
+rather than sampled.
+
+**Guarded the form, because the suite is hermetic and must stay that way** — it cannot look up the
+live split, and a test that did would be a test that fails when Supabase is slow. Two cases in
+`list-counts.test.ts`, which already owns count claims in the deliverables:
+
+1. The runbook must carry a bounded form (`one call in every <word> sessions`), so deleting the
+   sentence cannot quietly satisfy the ban.
+2. No deliverable may state an exact chat-sessions-to-calls pair, with the message explaining the
+   asymmetry rather than just forbidding the shape.
+
+Red-checked by restoring the old clause verbatim: both cases fail on the exact text that shipped.
+
+`npx tsc -b` clean. `npx vitest run` **558 tests / 46 files** green (up 12). No prompt change, so no
+re-provision: compile === export === live still 29,006, margin 994.
