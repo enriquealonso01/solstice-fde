@@ -47,6 +47,7 @@ import {
   ok,
   policyCitation,
   propertyCitation,
+  saveInquiryContact,
   ungrounded,
 } from './_deps'
 import { endSentence } from '../../../shared/text'
@@ -1209,6 +1210,7 @@ async function persistInquiry(inquiry: GroupInquiry, meetingSpaceNeeded: boolean
       { onConflict: 'inquiry_code' },
     )
     if (error) throw new Error(error.message)
+    await saveInquiryContact(inquiry.inquiry_id)
     return true
   } catch (err) {
     await auditLog('inquiry.persist_failed', `inquiry:${inquiry.inquiry_id}`, {

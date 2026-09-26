@@ -96,14 +96,14 @@ const SCRIPTS: Script[] = [
       {
         kind: 'tool',
         name: 'check_late_checkout',
-        summary: 'checking today’s house availability',
+        summary: 'checking your late checkout',
         runMs: 880,
         citations: [POLICY(6, 'Loyalty tier benefits at check-in'), POLICY(1, 'Check-in and check-out times')],
       },
       {
         kind: 'say',
         text:
-          'Good news. You are Gold, so late check-out to 1:00 PM is yours whenever the house allows it, and Denver is showing room for it on your departure date. I have noted 1:00 PM on the reservation. If you need to go past that I would have to ask the front desk team on the day, because beyond 1:00 PM is their call, not mine.',
+          "You are Gold, so you're eligible for late check-out to 1:00 PM. It depends on availability on the day, and the front desk confirms it. Anything past 1:00 PM is their call, not mine.",
       },
     ],
   },
@@ -136,7 +136,7 @@ const SCRIPTS: Script[] = [
       {
         kind: 'say',
         text:
-          'I can get this moving. Denver has the rooms for those dates, but your dates land on a ski-season weekend, and Denver caps group discounts at 8% on those. You asked for 12%, and that is above what I am allowed to approve, so I am not going to pretend otherwise. I have logged this as inquiry INQ-3041 and routed it to group sales with everything you gave me. They can approve the 12% if they think it is right, and you will hear back the same business day.',
+          'I can get this moving. Your dates land on a ski-season weekend, and Denver caps group discounts at 8% on those. You asked for 12%, and that is above what I am allowed to approve, so I am not going to pretend otherwise. I have logged this as inquiry INQ-3041 and routed it to group sales with everything you gave me. They can approve the 12% if they think it is right, and you will hear back the same business day.',
       },
     ],
   },

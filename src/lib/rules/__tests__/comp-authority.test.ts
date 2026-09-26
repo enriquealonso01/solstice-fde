@@ -42,8 +42,11 @@ describe('check_comp_authority', () => {
     expect(await decide({ comp_night: true })).toMatchObject({ escalation_required: true, may_promise: false })
   })
 
-  it('refuses an unknown reservation instead of deciding for it', async () => {
-    const result = await checkCompAuthority({ reservation_id: 'R99999', amount: 10 }, ctx)
-    expect(result.ok).toBe(false)
+  it('attaches no unproven reservation, and treats an unknown one exactly like a real one', async () => {
+    const unknown = await checkCompAuthority({ reservation_id: 'R99999', amount: 10 }, ctx)
+    const real = await checkCompAuthority({ reservation_id: 'R55006', amount: 10 }, ctx)
+    expect(unknown.ok).toBe(true)
+    expect((unknown.citations ?? []).map((c) => c.ref)).toEqual(['policy:7'])
+    expect(JSON.stringify(unknown)).toBe(JSON.stringify(real))
   })
 })

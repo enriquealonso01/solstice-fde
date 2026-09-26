@@ -86,6 +86,8 @@ export async function createEscalation(args: ToolArgs, ctx: ToolContext): Promis
   if (foreign) return toolFail(foreign)
   // Never refused for want of verification; it attaches only records this conversation has proven.
   const reservation = await attachableReservation(args, ctx)
+  // Kept for the manager on the stored packet only, marked unverified; never looked up.
+  const claimed = reservation ? undefined : (optString(args, 'reservation_id') ?? optString(args, 'confirmation_number'))
   const guest = ctx.guest_id ? await findGuestById(ctx.guest_id) : null
 
   const citations: Citation[] = [policyCitation(15)]
@@ -129,7 +131,11 @@ export async function createEscalation(args: ToolArgs, ctx: ToolContext): Promis
         packet.escalation_id = existingId
         const { error } = await db
           .from('escalations')
-          .update({ severity: route.severity, summary, packet })
+          .update({
+            severity: route.severity,
+            summary,
+            packet: claimed ? { ...packet, claimed_reservation_id_unverified: claimed } : packet,
+          })
           .eq('id', existingId)
         if (error) persistenceError = error.message
         else {
@@ -144,7 +150,7 @@ export async function createEscalation(args: ToolArgs, ctx: ToolContext): Promis
             category,
             severity: route.severity,
             summary,
-            packet,
+            packet: claimed ? { ...packet, claimed_reservation_id_unverified: claimed } : packet,
             status: 'open',
           })
           .select('id')

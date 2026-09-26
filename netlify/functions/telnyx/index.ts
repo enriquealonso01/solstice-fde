@@ -414,7 +414,7 @@ async function ensureGuestSession(
   const existing = await findSessionByCallControlId(sb, callControlId)
   if (existing) return existing
 
-  const guest = await identifyCallerByPhone(sb, from)
+  const guest = identifyCallerByPhone(from)
   const label = guest
     ? guest.loyalty_tier
       ? `${guest.label} (${guest.loyalty_tier})`
@@ -424,7 +424,8 @@ async function ensureGuestSession(
   const session = await insertSession(sb, {
     channel: 'voice',
     call_control_id: callControlId,
-    guest_id: guest?.guest_id ?? null,
+    // Caller ID only labels the call; identify_guest is what sets the verified guest.
+    guest_id: null,
     guest_label: label,
     phone_masked: maskPhone(from),
     status: 'active',

@@ -1,4 +1,4 @@
-// Voice-path reads and writes against `sessions`, `messages`, `tool_invocations` and `guests`.
+// Voice-path reads and writes against `sessions`, `messages` and `tool_invocations`.
 //
 // This file holds ONLY what is specific to a phone call. The Supabase client, missing-table
 // detection, trace writes and every PII masking function come from netlify/functions/_lib/,
@@ -7,20 +7,9 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createHash } from 'node:crypto'
+import { getGuestByPhone, type GuestLookup } from '../../_lib/data'
 import { describeDbError, isMissingTable } from '../../_lib/db'
 import { maskPhone } from '../../_lib/mask'
-
-/**
- * Digits-only normaliser for matching a caller ID against the guest export.
- * NOT a masking function: it exists because the export stores `312-555-0148` while Telnyx sends
- * `+13125550148`, and the two only compare on their last ten digits. The masked form that gets
- * stored or logged always comes from the shared maskPhone.
- */
-export function phoneDigits(raw: string | null | undefined): string | null {
-  if (!raw) return null
-  const digits = raw.replace(/\D/g, '')
-  return digits.length >= 10 ? digits.slice(-10) : null
-}
 
 /**
  * Deterministic UUIDv5-shaped id from stable parts.
@@ -277,49 +266,26 @@ export interface GuestMatch {
 }
 
 /**
- * Caller ID -> guest. The provided export stores phones as "312-555-0148", so we try the exact
- * dashed form first (indexable, cheap) and fall back to a bounded scan that normalises to digits.
- * Only the masked phone ever leaves this function.
+ * Caller ID -> guest, for the call's label only: caller ID is not proof of identity. Matched on the
+ * peppered phone hash, so no phone number is stored or compared in the clear. Only the masked phone
+ * ever leaves this function.
  */
-export async function identifyCallerByPhone(
-  db: SupabaseClient,
-  fromE164: string | null | undefined,
-): Promise<GuestMatch | null> {
-  const digits = phoneDigits(fromE164)
-  if (!digits) return null
-  const dashed = `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
-
-  const exact = await db.from('guests').select('guest_id, data').eq('data->>phone', dashed).limit(1)
-  if (exact.error) {
-    if (isMissingTable(exact.error)) return null
-    console.warn(describeDbError(exact.error, 'identifyCallerByPhone (exact)'))
+export function identifyCallerByPhone(fromE164: string | null | undefined): GuestMatch | null {
+  let hit: GuestLookup
+  try {
+    hit = getGuestByPhone(fromE164)
+  } catch {
+    // No LOOKUP_PEPPER: the call goes on as an unknown caller.
+    return null
   }
-  const hit = exact.data?.[0] as { guest_id: string; data: Record<string, unknown> } | undefined
-  if (hit) return toGuestMatch(hit, fromE164)
-
-  const scan = await db.from('guests').select('guest_id, data').limit(1000)
-  if (scan.error || !scan.data) return null
-  for (const row of scan.data as Array<{ guest_id: string; data: Record<string, unknown> }>) {
-    if (phoneDigits(String(row.data?.phone ?? '')) === digits) return toGuestMatch(row, fromE164)
-  }
-  return null
-}
-
-function toGuestMatch(
-  row: { guest_id: string; data: Record<string, unknown> },
-  fromE164: string | null | undefined,
-): GuestMatch {
-  const first = String(row.data?.first_name ?? '').trim()
-  const last = String(row.data?.last_name ?? '').trim()
-  const name = [first, last].filter(Boolean).join(' ')
-  const tier = row.data?.loyalty_tier ? String(row.data.loyalty_tier) : null
+  if (hit.status !== 'found' || hit.matched_on !== 'phone') return null
+  const { guest } = hit
+  const name = [guest.first_name, guest.last_name].filter(Boolean).join(' ')
   return {
-    guest_id: row.guest_id,
-    // The guest row may already carry a masked phone; the shared maskPhone is idempotent, so
-    // passing either form through it is safe.
-    label: name.length > 0 ? name : row.guest_id,
+    guest_id: guest.guest_id,
+    label: name.length > 0 ? name : guest.guest_id,
     phone_masked: maskPhone(fromE164),
-    loyalty_tier: tier && tier !== 'None' ? tier : null,
+    loyalty_tier: guest.loyalty_tier && guest.loyalty_tier !== 'None' ? guest.loyalty_tier : null,
   }
 }
 

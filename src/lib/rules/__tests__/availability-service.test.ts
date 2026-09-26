@@ -277,35 +277,41 @@ describe('every snapshot says where it came from', () => {
 
 /**
  * The figure is simulated, so no tool result may carry it or change with it. Every stay below is
- * upcoming on the pinned clock: R55004 Platinum (SOL-DEN, Deluxe King, 2026-07-20), R55015 Platinum
- * (SOL-AUS, Deluxe King, 2026-09-05) and R55022 Gold (SOL-AUS, Deluxe King, 2027-03-12).
+ * upcoming on the pinned clock: R55004 Platinum (G10004, SOL-DEN, Deluxe King, 2026-07-20), R55015
+ * Platinum (G10004, SOL-AUS, Deluxe King, 2026-09-05) and R55022 Gold (G10021, SOL-AUS, Deluxe King,
+ * 2027-03-12). Each is read as its own verified guest.
  */
 describe('the simulated figure never becomes a promise', () => {
-  const ctx: ToolContext = { channel: 'chat', session_id: 'test-availability', now: '2026-07-01T12:00:00Z' }
+  const ctx = (guestId: string): ToolContext => ({
+    channel: 'chat',
+    session_id: 'test-availability',
+    now: '2026-07-01T12:00:00Z',
+    guest_id: guestId,
+  })
   const MODES = ['simulated', 'sold_out', 'wide_open']
 
   it.each(MODES)('offers the Platinum upgrade as eligible, never promised, under AVAILABILITY_MODE=%s', async (mode) => {
     process.env.AVAILABILITY_MODE = mode
-    const data = (await checkUpgradeEligibility({ reservation_id: 'R55004' }, ctx)).data as Record<string, unknown>
+    const data = (await checkUpgradeEligibility({ reservation_id: 'R55004' }, ctx('G10004'))).data as Record<string, unknown>
     expect(data.tier).toBe('Platinum')
     expect(data.target_room_class).toBe('Suite')
     expect(data.decision).toBe('eligible_subject_to_availability')
     expect(data.may_promise).toBe(false)
   })
 
-  const cases: Array<[string, (args: ToolArgs, ctx: ToolContext) => Promise<ToolResult>, ToolArgs]> = [
-    ['check_upgrade_eligibility R55004', checkUpgradeEligibility, { reservation_id: 'R55004' }],
-    ['check_upgrade_eligibility R55015', checkUpgradeEligibility, { reservation_id: 'R55015' }],
-    ['check_upgrade_eligibility R55022', checkUpgradeEligibility, { reservation_id: 'R55022' }],
-    ['check_late_checkout R55022', checkLateCheckout, { reservation_id: 'R55022', requested_time: '1pm' }],
-    ['book_amenity R55022', bookAmenity, { reservation_id: 'R55022', amenity: 'connecting rooms' }],
+  const cases: Array<[string, (args: ToolArgs, ctx: ToolContext) => Promise<ToolResult>, ToolArgs, string]> = [
+    ['check_upgrade_eligibility R55004', checkUpgradeEligibility, { reservation_id: 'R55004' }, 'G10004'],
+    ['check_upgrade_eligibility R55015', checkUpgradeEligibility, { reservation_id: 'R55015' }, 'G10004'],
+    ['check_upgrade_eligibility R55022', checkUpgradeEligibility, { reservation_id: 'R55022' }, 'G10021'],
+    ['check_late_checkout R55022', checkLateCheckout, { reservation_id: 'R55022', requested_time: '1pm' }, 'G10021'],
+    ['book_amenity R55022', bookAmenity, { reservation_id: 'R55022', amenity: 'connecting rooms' }, 'G10021'],
   ]
 
-  it.each(cases)('%s returns the same result under every mode, labelled simulated, with no figure', async (_name, tool, args) => {
+  it.each(cases)('%s returns the same result under every mode, labelled simulated, with no figure', async (_name, tool, args, guestId) => {
     const seen = new Set<string>()
     for (const mode of MODES) {
       process.env.AVAILABILITY_MODE = mode
-      const data = { ...((await tool(args, ctx)).data as Record<string, unknown>) }
+      const data = { ...((await tool(args, ctx(guestId))).data as Record<string, unknown>) }
       delete data.reference // a fresh id on every amenity request
       seen.add(JSON.stringify(data))
     }

@@ -243,14 +243,6 @@ export function getGuestByEmail(email: string | null | undefined): GuestLookup {
     : { status: 'not_found', reason: 'That email does not match any guest profile.' }
 }
 
-/** Name search. `Michael Smith` matches two unrelated guests (G10009, G10010) on purpose:
- *  the caller always returns every hit and lets the agent disambiguate. */
-export function findGuestsByName(name: string): GeneratedGuest[] {
-  const query = name.trim().toLowerCase()
-  if (query === '') return []
-  return guests.filter((g) => `${g.first_name} ${g.last_name}`.toLowerCase().includes(query))
-}
-
 export function getReservation(reservationId: string | null | undefined): Reservation | null {
   if (!reservationId) return null
   return byReservationId.get(reservationId.trim().toUpperCase()) ?? null

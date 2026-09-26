@@ -5,13 +5,15 @@
  * hangs on same-day inventory is offered as eligible, subject to availability, because the only
  * inventory source is simulated. A cancelled or checked-out stay gets nothing and no inventory lookup.
  *
- * Reservations used (data/generated/reservations.json):
+ * Reservations used (data/generated/reservations.json), each read as its own verified guest:
  *   R55015  G10004 Michael Chen, Platinum, SOL-AUS, Deluxe King, 2026-09-05 to 09-07
  *   R55022  G10021 Wei Zhang, Gold, SOL-AUS, Deluxe King, 2027-03-12 to 03-15 (the only future stay)
  *   R55003  G10003, Gold, SOL-AUS, Deluxe King, 2026-07-18 to 07-21
  *   R55005  G10005, SOL-NSH, 2026-06-06 to 06-08, Cancelled
+ *   R55012  G10012 Robert Kalinski, and R55006 G10006, for the ownership refusals
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ToolResult } from '../../../../shared/types'
 import * as inventory from '../../../../netlify/functions/tools/availability'
 import { stayPhase, type ToolArgs, type ToolContext } from '../../../../netlify/functions/tools/helpers'
 import { bookAmenity, checkLateCheckout, checkUpgradeEligibility } from '../../../../netlify/functions/tools/stayBenefits'
@@ -34,7 +36,11 @@ afterEach(() => {
 
 type Tool = (args: ToolArgs, ctx: ToolContext) => ReturnType<typeof checkLateCheckout>
 
-async function run(tool: Tool, args: ToolArgs, now: string, guestId?: string) {
+/** Who holds each reservation used here: the verified guest a call on it runs as. */
+const HOLDER: Record<string, string> = { R55003: 'G10003', R55005: 'G10005', R55015: 'G10004', R55022: 'G10021' }
+
+async function run(tool: Tool, args: ToolArgs, now: string) {
+  const guestId = HOLDER[String(args.reservation_id)] ?? (typeof args.guest_id === 'string' ? args.guest_id : undefined)
   const result = await tool(args, { channel: 'chat', session_id: 'test-stay-benefits', now, guest_id: guestId })
   expect(result.ok, `tool failed: ${result.error}`).toBe(true)
   return { grounded: result.grounded, data: result.data as Record<string, unknown> }
@@ -63,16 +69,11 @@ describe('R55015 (Platinum) upgrade before check-in', () => {
     expect(JSON.stringify(data)).not.toMatch(/rooms_available|total_rooms|occupancy/)
   })
 
-  it("carries G10004's staff note that the suite upgrade is not guaranteed, from R55004, once verified", async () => {
-    const { data } = await run(checkUpgradeEligibility, { reservation_id: 'R55015' }, BEFORE_R55015, 'G10004')
+  it("carries G10004's staff note that the suite upgrade is not guaranteed, from R55004", async () => {
+    const { data } = await run(checkUpgradeEligibility, { reservation_id: 'R55015' }, BEFORE_R55015)
     const directives = data.staff_directives as string[]
     expect(directives.some((d) => d.startsWith('R55004:') && /Suite upgrade is NOT guaranteed/.test(d))).toBe(true)
     expect(data.staff_directives_are_internal).toBe(true)
-  })
-
-  it("keeps the guest's other stays' notes out until the caller is verified as that guest", async () => {
-    const { data } = await run(checkUpgradeEligibility, { reservation_id: 'R55015' }, BEFORE_R55015)
-    expect(data.staff_directives).toEqual(['R55015: Second, unrelated trip for the same guest as R55004.'])
   })
 })
 
@@ -87,7 +88,7 @@ describe('a stay that has checked out', () => {
   it.each(tools)('%s refuses it, grounded, with no inventory lookup', async (_name, tool, args) => {
     const lookup = vi.spyOn(inventory, 'sameDayAvailability')
 
-    const { grounded, data } = await run(tool, args, AFTER_R55015, 'G10004')
+    const { grounded, data } = await run(tool, args, AFTER_R55015)
 
     expect(grounded).toBe(true)
     expect(data.decision).toBe('stay_ended')
@@ -217,5 +218,45 @@ describe('inventory-dependent amenity requests', () => {
     expect((data.availability as Record<string, unknown>).provenance).toBe('simulated_inventory_service')
     expect(String(data.human_reason)).toMatch(/subject to same-day availability; the front desk confirms on arrival/)
     expect(String(data.human_reason)).not.toMatch(PROMISE_WORDS)
+  })
+})
+
+describe('a stay is read only for the guest verified on the conversation', () => {
+  const NOW = '2026-09-26T12:00:00Z'
+  const unverified: ToolContext = { channel: 'chat', now: NOW }
+  const asKalinski: ToolContext = { channel: 'chat', now: NOW, guest_id: 'G10012' } // holds R55012
+  const tools: Array<[string, Tool, ToolArgs]> = [
+    ['check_late_checkout', checkLateCheckout, { requested_time: '2pm' }],
+    ['check_upgrade_eligibility', checkUpgradeEligibility, {}],
+    ['book_amenity', bookAmenity, { amenity: 'crib' }],
+  ]
+
+  const refusedWithNoData = (result: ToolResult) => {
+    expect(result.ok).toBe(false)
+    expect(result.data).toBeUndefined()
+  }
+
+  it.each(tools)('%s refuses an unverified conversation handed a reservation id', async (_name, tool, args) => {
+    refusedWithNoData(await tool({ ...args, reservation_id: 'R55012' }, unverified))
+  })
+
+  it.each(tools)("%s refuses another guest's reservation", async (_name, tool, args) => {
+    refusedWithNoData(await tool({ ...args, reservation_id: 'R55006' }, asKalinski))
+  })
+
+  it.each(tools)('%s refuses a guest_id that is not the verified guest', async (_name, tool, args) => {
+    refusedWithNoData(await tool({ ...args, guest_id: 'G10006' }, asKalinski))
+  })
+
+  it.each(tools)('%s refuses a real booking exactly as it refuses one that does not exist', async (_name, tool, args) => {
+    const real = await tool({ ...args, reservation_id: 'R55012' }, unverified)
+    const missing = await tool({ ...args, reservation_id: 'R55099' }, unverified)
+    expect(JSON.stringify(real)).toBe(JSON.stringify(missing))
+  })
+
+  it.each(tools)("%s still answers the verified guest's own booking", async (_name, tool, args) => {
+    const result = await tool({ ...args, reservation_id: 'R55012' }, asKalinski)
+    expect(result.ok, result.error).toBe(true)
+    expect((result.data as Record<string, unknown>).reservation_id).toBe('R55012')
   })
 })
