@@ -9,25 +9,26 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It99: the three documented logins work, and the password that unlocks them was protected
-  by one unasserted line.**
-- **Verified what nobody had:** all three accounts in `SUBMISSION.md:22-24` sign in against production
-  and land on the documented role — `supervisor@` → `concierge` (Dana Reyes), `sales@` →
-  `group_sales` (Marcus Feld), `admin@` → `admin`. The rehearsal had only ever shown `/admin` and
-  `/login` return **200**, which is the page, not a session. Reported role and name only; the password
-  never left the process.
-- **Two more claims checked, both clean:** the emails and role labels in `SUBMISSION.md` match what
-  `seed-users.mjs` creates, and `DEMO_LOGINS.md` exists, is ignored and has **0** commits in history.
-- **The hardening:** that file's second line is `Password for all three: <live value>` for the account
-  that sees every screen, in a **public** repo, and the entire protection was one `.gitignore` line
-  with no test on it. This repo has lost that bet twice — the SIP credential committed as a fixture
-  (Tester It51) and `inq.json` via `git add -A`.
-- **Three cases added to `no-committed-credentials.test.ts`**: the card must not be tracked,
-  `.gitignore` must still name it, and no tracked file may carry a *filled* password line.
-- **The third case caught my own first attempt at it.** A loose pattern flagged three innocent files —
-  the email draft's `<paste from DEMO_LOGINS.md>`, the plan quoting it, and my own comment. Tightened to
-  what a password looks like; red-check A then matched the real card with its real value, which proves
-  it detects the thing and not the prose about it.
+- **SHIPPED It100: the failure-injection switch is NOT a second approval-gate hole — and the SQL
+  Enrique is about to paste is safe, for a reason nothing was asserting.**
+- **`/api/flags` holds at both layers.** Function: **401** unauthenticated, **403** as `supervisor@`,
+  GET fine for both with an honest `can_change`. Database: `demo_flags` RLS is `my_role() = 'admin'`
+  for writes and signed-in for reads — and it is **live**, not merely declared: an anon `select`
+  returns `[]` where a signed-in one returns three rows.
+- **The methodological catch: my first probe was worthless.** A PATCH filtered to a non-existent row
+  returns **200 `[]`** on *every* table here, including `audit_log` and `profiles`, which nothing may
+  write. RLS filters rows on update rather than erroring. I had the makings of "anyone with the anon
+  key can flip failure injection on production" and the control experiment killed it.
+- **What the sweep did find:** the three `drop policy` lines Enrique pastes are safe **only because
+  `schema.sql:183-185` declares `inq_read`, `prop_read` and `fup_read` separately.** Dropping a
+  `FOR ALL` policy drops the read it was granting. Those three look redundant while `FOR ALL` exists,
+  and migration 004 restates them in a `do`-block that **the pasted three lines do not carry** — so a
+  tidy-up would turn beat 4's inbox blank in the SQL editor minutes before the demo.
+- **`rls-policies.test.ts`**: no write policy may skip `my_role()`/`auth.uid()`; the three group tables
+  must each keep a select policy **declared outside migration 004**; `audit_log` stays append-only.
+- **Red-checking caught the guard passing while broken.** The first version counted 004's own
+  restatement, so deleting `prop_read` from `schema.sql` stayed green. It is now blind to that file,
+  and the comment says why.
 
 ## Demo rehearsal coverage — what is actually verified
 
