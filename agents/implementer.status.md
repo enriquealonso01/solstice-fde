@@ -9,24 +9,20 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It107: ran all five cheatsheet fixture rows against production. Four match. The $45 minibar
-  row says the opposite of what happens — for the second time.**
-- **What the row claimed:** *"$45 is inside the $50 per-stay front-desk authority, so Sol actions it
-  without a manager and says why."* **What happens:** `check_comp_authority`, then
-  `create_escalation`, and *"I'm getting the property's AGM to review that $45 charge — I can't adjust
-  the folio myself."*
-- **The agent is right and the row was wrong, and the reason is better than the row.** R55006's
-  `internal_notes` in the **data the brief supplied** read *"Do not adjust folio directly — escalate to
-  property AGM for review"*, and the tool passes it through as a staff directive. So a per-reservation
-  operational instruction **overrides a generic threshold** — the interviewers' own data doing the
-  overriding, which is a stronger thing to say aloud than "it just does it".
-- **Measured before rewriting, so the row's "measured" clause stays true:** $45 → `front_desk`
-  `escalation_required:false` · $50 → `front_desk` · $55 → `agm` · $45+$25 → `agm` with Policy 7's
-  arithmetic printed. The aggregation half survives: **same destination, different reason.**
-- **The Tester caught this row once already** (their iteration 59, *"the $45 minibar beat does the
-  opposite of what the line promises"*). It came back, which is what earns it a guard rather than a third
-  correction: while the note says escalate, no document may claim the charge is actioned without a
-  manager. Red-checked from both sides — restore the old claim, and remove the directive from the data.
+- **SHIPPED It108: beat 4's numbers are right, and now all three of them are in the runbook.**
+- **No defect.** `price_block` on INQ-2009's own shape (SOL-PHX, 15 Deluxe King, 2026-07-28 to 07-31):
+  **15% → $7,994.25 · 16% → $7,900.20 · 17% → $7,806.15**. The one figure the runbook printed was the
+  right one, and `show-verdict.ts`'s $7,806.15 is the 17% option, not a contradiction. The lower
+  discount costing more is the sanity check that both attributions are the right way round.
+- **What was missing was the point of the beat.** It printed *"approve at 15% for $7,994.25, escalate
+  for a sign-off at 17%, or counter at 16%"* — two of the three options priceless. The beat exists to
+  make the approval gate concrete, and the concrete thing is the **$188.10** between approving today
+  and escalating for the signature. It now reads all three and states the spread.
+- **Pinned to `priceBlock`, not to my transcription of it.** `group-beat-prices.test.ts` recomputes each
+  figure, requires the runbook to carry it, requires the spread, and asserts a bigger discount cannot
+  cost more — that last one catches a typo that happens to match a wrong implementation.
+- Red-checked both ways: drop a figure from the runbook and it names it; bump `base_rate_deluxe` by
+  $1.00 and all three fail with the new totals. `data:check` green afterwards.
 
 ## Demo rehearsal coverage — what is actually verified
 

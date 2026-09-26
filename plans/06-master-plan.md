@@ -40,8 +40,11 @@
 > Recovery note at `HUMAN_INTERVENTION.md:580`.
 >
 > **Apply it and change nothing else, or apply nothing and weaken §13**, which is the package's
-> best answer on authority. **If you apply it before submitting, delete the disclosure paragraph in
-> `README.md` and the row in `SUBMISSION.md`** — instructions at `HUMAN_INTERVENTION.md:753`.
+> best answer on authority. **If you apply it before submitting, the defect is disclosed in THREE places, not two** —
+> `README.md`'s *"One defect is open at the time of writing"* paragraph, `SUBMISSION.md:39`'s
+> **Known open defect** row, and a parenthesis in `docs/where-this-goes.md`. The full list and
+> wording are at `HUMAN_INTERVENTION.md:753`. *(My banner named only the first two until iteration
+> 146.)*
 >
 > ### 2–4, then the five fixes
 >
@@ -1505,6 +1508,68 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 146, 23:50 EST — a fixed defect leaves stale documents behind, and my banner undercounted where one of them lives
+
+#### Suite 604, deploy current
+
+```
+604 passed · deploy ready 03:44:28Z, current with HEAD
+```
+
+#### PR #139 names a direction of rot worth having a name for
+
+The runbook and cheatsheet still told Enrique a bare *"Can I bring my dog?"* lands one time in four
+and may answer *"pet policy can vary by property"*. **True at iteration 88, false since #138**:
+4 of 4 on a draft and twice more on production.
+
+> *"That is the rare direction of doc rot — **claiming a flaw we no longer have** — in the two files
+> he reads while presenting, so he would hedge about a question that works."*
+
+**That is the fourth document the pet fix touched**: the suggested email (#120), the prompt (#138),
+the demo notes (#139), and **my own `IF THEY ASK` answer 7** (iteration 145).
+
+> **A disclosed defect creates as many stale documents as the places that disclosed it, and fixing
+> it makes every one of them wrong in the flattering direction.** Flattering rot is the harder kind
+> to catch, because nothing about it feels like an error when you read it.
+
+#### So I checked the disclosure that still matters, and found my own undercount
+
+The RLS hole is the one defect still open, and it is disclosed in **three** places. The cleanup
+instruction at `HUMAN_INTERVENTION.md:753` names all three precisely:
+
+```
+1. README.md            the "One defect is open at the time of writing" paragraph
+2. SUBMISSION.md:39     the "Known open defect" row
+3. docs/where-this-goes.md   the parenthesis
+```
+
+**My banner named only the first two.** So if Enrique pastes the SQL and follows my file, he leaves
+a third document describing a hole he has just closed — and `where-this-goes.md` is the vision
+document, where a stale defect reads worst. **Corrected.**
+
+#### And my search for those sites was wrong in the way I keep naming
+
+I swept for the README's phrasings — *"signed-in sales rep"*, *"One defect is open"* — and
+**SUBMISSION.md uses its own**: *"a signed-in rep"*, in a table row with no such sentence. My
+patterns found two of three and I nearly reported the instruction as overcounting.
+
+> **Predicted enumeration, again**: I searched for how the first document said it and assumed the
+> second would say it the same way. The instruction was right and my check was not. **Reading
+> `SUBMISSION.md:39` directly took one command.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — with its safety reason, recovery, **and all three disclosure sites** | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. Lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 145, 23:44 EST — my own panel answer was two hours behind the fix it describes
 
