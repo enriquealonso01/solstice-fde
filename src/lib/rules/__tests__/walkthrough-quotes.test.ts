@@ -386,3 +386,78 @@ describe('the disputed-charge row against the reservation it names', () => {
     expect(sheet.toLowerCase()).toContain('escalate to property agm')
   })
 })
+
+/**
+ * The one guest with two reservations must be flagged wherever the demo uses him.
+ *
+ * `G10004`, Michael Chen, is the **only** guest in the supplied data with more than one reservation — Denver
+ * 20–23 July (`R55004`) and Austin 5–7 September (`R55015`) — and he is the guest the cheat sheet's showpiece
+ * beat uses. `identify_guest` returns both and marks the nearer one, Austin, as `most_relevant_reservation_id`.
+ *
+ * On the **upgrade** question the two stays give opposite answers, measured against production at iteration
+ * 126:
+ *
+ *     check_upgrade_eligibility {"guest_id":"G10004"}        may_promise TRUE   Austin has suite inventory
+ *     check_upgrade_eligibility {"reservation_id":"R55004"}  may_promise FALSE  Denver has none, escalates
+ *
+ * So the refusal the cheat sheet calls *"the better moment of the two"* becomes a confirmation if the wrong
+ * stay resolves. It is not broken today — Sol uses the confirmation number a guest gives, verified on two live
+ * runs — but nothing written down made it correct, and two runs is evidence rather than reliability.
+ *
+ * A prompt clause was considered and **declined**: the margin is 216 characters and a usable clause is ~130,
+ * which is the wrong trade nine hours before a demo. The fix is that the presenter is told, so this pins the
+ * telling: while the data has a guest with two reservations, the cheat sheet must name the second one.
+ */
+describe('the guest with two reservations', () => {
+  const GUEST = 'G10004'
+
+  function reservationsFor(guest: string): string[] {
+    const raw = readFileSync(join(repoRoot, 'data/generated/reservations.json'), 'utf8')
+    const rows = JSON.parse(raw) as { reservation_id?: string; guest_id?: string }[]
+    return (Array.isArray(rows) ? rows : []).filter((r) => r.guest_id === guest).map((r) => r.reservation_id ?? '')
+  }
+
+  it('is still the only guest with more than one, or this case needs rewriting', () => {
+    const raw = readFileSync(join(repoRoot, 'data/generated/reservations.json'), 'utf8')
+    const rows = JSON.parse(raw) as { guest_id?: string }[]
+    const counts = new Map<string, number>()
+    for (const r of rows) counts.set(r.guest_id ?? '', (counts.get(r.guest_id ?? '') ?? 0) + 1)
+    const multi = [...counts].filter(([, n]) => n > 1).map(([g]) => g)
+    expect(
+      multi,
+      `The set of guests with two reservations has changed. The cheat sheet warns about ${GUEST} by name; ` +
+        `any other such guest needs the same warning wherever the demo uses them.`,
+    ).toEqual([GUEST])
+  })
+
+  it('has both of its reservations named in the cheat sheet', () => {
+    const sheet = readFileSync(join(repoRoot, 'docs/demo-cheatsheet.md'), 'utf8')
+    for (const id of reservationsFor(GUEST)) {
+      expect(
+        sheet,
+        `docs/demo-cheatsheet.md does not mention ${id}. ${GUEST} has two stays that answer the upgrade ` +
+          `question oppositely, so the presenter has to be told to give the confirmation number.`,
+      ).toContain(id)
+    }
+  })
+
+  it('tells the presenter why the number matters, not just that there are two', () => {
+    const sheet = readFileSync(join(repoRoot, 'docs/demo-cheatsheet.md'), 'utf8').replace(/\s+/g, ' ')
+    expect(sheet).toMatch(/[Aa]lways give the confirmation number/)
+  })
+
+  it('explains the second reservation where the transcripts cite it', () => {
+    // Two committed captures cite R55015 for a guest the cheat sheet calls "Denver". Neither is wrong --
+    // a late checkout is a tier guarantee either way -- but unexplained it reads as a mismatch.
+    const readme = readFileSync(join(repoRoot, 'transcripts/README.md'), 'utf8').replace(/\s+/g, ' ')
+    const cites = ['platinum-late-checkout.md', 'voice-call.md']
+      .map((f) => readFileSync(join(repoRoot, 'transcripts', f), 'utf8'))
+      .some((t) => t.includes('R55015'))
+    if (!cites) return
+    expect(
+      readme,
+      `A capture cites R55015 while the cheat sheet calls this guest "Denver". transcripts/README.md has to ` +
+        `say why, or a reviewer who notices has found something unexplained in a named deliverable.`,
+    ).toContain('R55015')
+  })
+})

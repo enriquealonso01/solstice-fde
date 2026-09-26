@@ -7073,3 +7073,67 @@ one thing the file is good for — showing what the team believed at a fixed poi
 which is exactly the kind of artifact `docs/how-this-was-built.md` is built out of.
 
 `npx tsc -b` clean. `npx vitest run` **684 tests / 52 files** green (up 3).
+
+## It126 — T50: the showpiece refusal is one missing confirmation number from being a confirmation
+
+**Verified the claim before writing a word**, because it is the kind that is either serious or nothing.
+`G10004`, Michael Chen, is the **only** guest of 24 with two reservations, and he is the guest the cheat
+sheet's best beat uses:
+
+```
+R55004  SOL-DEN  20-23 Jul   Platinum   <- the beat
+R55015  SOL-AUS  5-7  Sep    Platinum   <- nearer to now, so identify_guest marks it most relevant
+```
+
+Against production:
+
+```
+check_upgrade_eligibility {"guest_id":"G10004"}        may_promise TRUE    "Suite inventory exists"
+check_upgrade_eligibility {"reservation_id":"R55004"}  may_promise FALSE   "no Suite inventory", escalates
+```
+
+**Opposite answers on the beat the cheat sheet calls *"the better moment of the two"***, and the refusal is
+the G8 guardrail in action.
+
+**It is not broken today.** Sol uses the confirmation number the guest gives; the Planner drove it twice and
+both runs said Denver, sold out, manager on duty. But `most_relevant_reservation_id` appears nowhere in
+`agent/sol.md`, the payload hands the model a field literally named *most relevant* pointing at the other
+stay, and the right branch rests on its judgement. Two runs is evidence, not reliability.
+
+**Shipped (a) and (b). Declined (c), and I agree with the reasoning rather than just complying.** A prompt
+clause is the real fix and costs ~130 characters against **216** of margin — nine hours before the demo, on a
+file whose own banner warns that two edits of that size truncate the live prompt. Spending 60% of the
+head-room to reduce an unmeasured risk is the wrong trade; the presenter being told costs nothing.
+`agent/sol.md` is untouched and the compile is still **29,784**.
+
+The cheat sheet row now names both stays, says **always give the confirmation number**, and carries the two
+measurements. `transcripts/README.md` turns the two `R55015` citations — in `platinum-late-checkout.md` and
+`voice-call.md` — from an unexplained oddity into a point: a late checkout is a **tier** guarantee, so both
+stays answer the same, which is why those captures are correct; it is the *upgrade* question where they
+diverge.
+
+Guarded four ways: `G10004` must still be the only such guest (or the case demands a rewrite), both
+reservation ids must appear in the cheat sheet, the *"always give the confirmation number"* instruction must
+be there, and while a capture cites `R55015` the transcripts README must explain it. Red-checked by removing
+each half.
+
+### On T50's header, which names my own edit
+
+T50 was filed at 01:36 and was missing from the plan at 01:43; the Planner restored it and said another agent
+wrote to the file in the same minute — my iteration-124 privacy redaction — and that they would not guess
+which write dropped it.
+
+I checked. My commit shows **174 insertions, 5 deletions**, and the five are four banner lines the Planner
+themselves had replaced plus the one address I redacted. **No section was removed by my commit.**
+
+**That does not clear me, and I am not going to present it as if it does.** I read their entire file, replaced
+one string in memory, and wrote the whole thing back. Anything they wrote between my read and my write is
+gone — and a lost update of *uncommitted* work leaves no trace in any diff, because it never reached the
+index. The diff can only exonerate me of deleting committed text, which is not what happened here. I cannot
+rule it out.
+
+`agents/README.md` now forbids the pattern outright: never read-modify-write another agent's live file;
+compare and swap, fail loudly, and say in the log that you touched it. The window is not zero even then,
+which is the reason the rule starts with "do not".
+
+`npx tsc -b` clean. `npx vitest run` **688 tests / 52 files** green (up 4).
