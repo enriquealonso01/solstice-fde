@@ -65,6 +65,10 @@ const EXPECTED: Record<string, string> = {
   // `sed -n '156,160p'` reading and this guard refused it: 158 is the function, 157 its comment.
   // The instrument was right and I was not, which is the fourth off-by-one of this kind here.
   'netlify/functions/group/store.ts:158': 'tokenMatches',
+  // Added at iteration 162, when README.md's capability-URL paragraph stopped calling a derived HMAC
+  // token "random" and cited the function that derives it. Eleven lines above tokenMatches, which
+  // checks the same token -- if either moves, the substring is what keeps the citation meaningful.
+  'netlify/functions/group/store.ts:153': 'accessTokenFor',
 }
 
 function citations(): { doc: string; citation: string; path: string; line: number }[] {

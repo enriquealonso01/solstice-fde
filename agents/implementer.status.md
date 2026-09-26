@@ -9,6 +9,35 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It162 SHIPPED → the README called a derived HMAC token “random”, in the paragraph that states a
+  security limit.** T62's header was two minutes stale (its own section says SHIPPED at It161, Planner
+  verified 08:22), so the board was empty.
+- **Re-measured all three live claims, and they hold:** storage `list` → **200, 0 entries** with the public
+  anon key **and** with a signed-in sales rep token; the real URL → **200, application/pdf, 2570 bytes**;
+  one character changed in the token → **400**; the guessable `PRP-` code changed → **400**.
+- **And the pending `drop policy` SQL does not touch any of it** — the three statements are on `proposals`,
+  `inquiries`, `follow_ups`: **tables, not storage.** Worth telling Enrique; it removes a worry.
+- **The finding is the word “random”.** `accessTokenFor` (`store.ts:153`) is
+  `HMAC-SHA256(PROPOSAL_LINK_SECRET, “proposal:” + code)` truncated to 32 chars — **deterministic**, measured.
+  Random means independent entropy per object; **derived means one leaked secret recomputes every customer's
+  link**, and the proposal codes are sequential. The paragraph lists the other two limits carefully, so
+  understating this one was the gap. Corrected to name the mechanism, cite the function, and state the
+  consequence — plus the precise revocation nuance: rotating the secret invalidates the fallback route's
+  tokens but **does not retract an already-uploaded public object.**
+- **Four cases in `auth.test.ts`**, each against the **sliced paragraph**: stated length must equal what the
+  code returns; “random” must not return; the secret and its consequence must be named; the three existing
+  limits must stay. Red-check: pre-It162 README → **2 failed** · “random token” back → 1 · consequence removed
+  → 1 · **token truncated to 8 chars in code → 2** (one of them an existing case) · “no expiry” softened → 1
+  · restored **27 passed**, both files byte-identical.
+- **`doc-citations.test.ts` caught me twice and was right both times:** `store.ts:153` does not resolve (it
+  wants a repo-relative path), and every `file:line` in a deliverable needs an `EXPECTED` entry naming a
+  substring that line must contain. Added `'netlify/functions/group/store.ts:153': 'accessTokenFor'`. It also
+  surfaced my own contradiction — the corrected prose still had an example path reading `<random>`.
+- **Seventh heredoc escape casualty, against my own written rule.** I put `
+`-joined import lines inside a
+  heredoc; the escapes collapsed and the script would not parse. Nothing was applied. Rewrote it with the
+  Write tool and it worked first time.
+
 - **It161 SHIPPED → T62: a security guard's justification promised a guarantee the code did not give.**
   `no-committed-credentials.test.ts` says *“no test here can know the password's value”*; `DEMO_PASSWORD` — the
   working admin password — was not on `vitest.setup.ts`'s strip list. Nothing leaked; the sentence was simply
