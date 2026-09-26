@@ -4,46 +4,58 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 228 — 2026-09-26 07:21 EST
+## Iteration 230 — 2026-09-26 07:32 EST
 
-**The plan is accurate and correctly ordered. Nothing is open for an agent. No new tasks.**
+**The suite is RED: 4 failed, 919 passed (923)** — all four in one file created at **07:29**,
+`src/lib/rules/__tests__/failure-injection.test.ts`, while I was reading the banner I had just rewritten. It156
+is mid-flight; no log entry yet. **Nothing is open for an agent** — this is in-flight work, not a task.
 
-I swept `docs/demo-runbook.md` — the document he reads *during* the demo, 307 lines, last touched **07:18**
-(It155 is mid-flight; this is the current text). I had checked fragments before and never its numbers.
+### The product is not implicated, and I checked rather than assumed
 
-### The three prices he says out loud, to the cent
-
-Runbook §4 scripts: *"approve at **15% for $7,994.25** today, escalate for a sign-off at **17%, $7,806.15**, or
-counter at **16%, $7,900.20**"* — noted as *"verified against `priceBlock` at iteration 108"*, a hundred
-iterations ago.
-
-I did not reconstruct the pricing inputs — that is the shape that produced the `audit_log.target` and
-`check_comp_authority` mistakes earlier tonight. **I took one figure from a live run and closed the arithmetic
-around it.**
+The four failures share one root — three of them are the file's **own anti-vacuity cases firing**, which is the
+right behaviour for a guard whose input went missing:
 
 ```
-show-verdict.ts INQ-2009  ->  "at the discount the customer asked for (17%): $7806.15"
-
-implied gross = 7806.15 / 0.83 = 9405.00 exactly
-  15% off -> 7994.25   runbook 7994.25   MATCH
-  16% off -> 7900.20   runbook 7900.20   MATCH
-  17% off -> 7806.15   runbook 7806.15   MATCH (the anchor)
-9405.00 / (15 rooms x 3 nights) = 209.00 per room-night, exactly
-counterPct(15, 17) = 16, matching the script's counter point
+the handlers map parsed empty: expected 0 to be >= 8
+DEPENDENCY_OF names check_late_checkout, …(7), which no handler is registered under
+no tool was found reaching the inventory service, so this case proved nothing
+Cannot use 'in' operator to search for 'pms_offline' in undefined
 ```
 
-**All three correct, and the implied nightly rate lands on a round $209.00** — a wrong figure anywhere would
-have left the arithmetic ragged instead of closing.
+**The handlers are mounted:** `registry.ts:31-41` declares `CONCIERGE_HANDLERS` with all of them and `:181` sets
+every one. The Chen beat I drove at 06:09 used two of them live.
 
-> **Method worth keeping: when a set of numbers shares a derivation, check the derivation, not each number.**
-> One measured anchor plus arithmetic verified three figures with nothing assembled from memory.
+**And the regex is not the problem.** I ran the test's own patterns against the real file:
 
-### Also confirmed in the same pass
+```
+block matched: True    entries parsed: 11    [('identify_guest','identifyGuest'), …]
+```
 
-- **`/admin/inquiries/INQ-2009` really does not work**, as the runbook warns — the table carries both `id`
-  (uuid) and `inquiry_code`, and INQ-2009's row id is `c9661623-…`. *"Click it from the inbox list"* is the
-  right instruction, and it is the kind of thing that eats thirty seconds if discovered live.
-- The support number in §3, **+1 (305) 786-6217**, matches the landing page HTML and the live Telnyx assistant.
+The same pattern that parses empty inside the test parses all eleven from disk — so the defect is in how the new
+file *reaches* `registry.ts`, not in what it checks. That is the part the Implementer needs and as far as I can
+take it without touching code.
+
+### The part that is mine: my rule failed its first application
+
+One iteration ago I removed three stale counts from this banner and wrote the rule as a test:
+
+> *"If a sentence on this screen would be wrong after the next merge, it does not belong on this screen."*
+
+**The replacement sentence I wrote in that same edit was *"`npx vitest run` is green."*** True when written,
+false three minutes later.
+
+> I applied my own test to numbers and not to verdicts. *"898 tests"* and *"is green"* rot for identical
+> reasons. A count at least looks like a measurement; **a verdict reads like a property**, which is exactly why
+> it passed the filter I had just built. **Tenth recurrence, second consecutive iteration, third time the fix
+> and its violation shared an edit.**
+
+**The banner now carries neither a count nor a verdict** — the command, and what happened when I last ran it.
+
+### Also checked
+
+`agent/sol.md` (01:34) and `exports/telnyx-assistant.json` (02:54) are untouched since the 04:52 byte-identical
+check, so the **29,784** triple still holds — the oldest measurement on that screen, which is why I went looking
+at mtimes and found the red suite.
 
 ### Open
 
@@ -56,10 +68,10 @@ have left the arithmetic ragged instead of closing.
 | 5 | **Brief PDF** — absent from the public tree. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
 
-Nothing for an agent. Tester silent since 20:26 (**10h55m**); no open findings. Inbox and In progress empty. No
+Nothing for an agent. Tester silent since 20:26 (**11h06m**); no open findings. Inbox and In progress empty. No
 lock held; I took none. Plan guards re-run: **104 green**.
 
 ### The single most important remaining item
 
-**The `drop policy` paste.** The runbook's spoken figures are now verified against a live run, not a
-hundred-iteration-old check. **The SQL is the one action left that nobody else can take.**
+**Watch the suite back to green** — it is one in-flight file and the product is not implicated, but nothing
+ships red. **Then the `drop policy` paste**, still the one action nobody else can take.
