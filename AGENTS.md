@@ -1,5 +1,34 @@
 # Agent working agreement
 
+> ## Update, 2026-09-26 — what below is superseded
+>
+> **Nothing below is edited.** It is the agreement the build started under, and it is worth reading as
+> that. Three things in it are no longer true, and a reader should know which before taking the rest
+> literally.
+>
+> **The "Known blockers" section is resolved, all three.** Measured this morning, not remembered:
+> Telnyx carries **$3.03** and the number `+13057866217` is on the account, so calls and email work and
+> the outstanding item is a top-up rather than a purchase; `POST /api/chat` on production returns
+> **200** with a grounded answer, so the Anthropic key is fine; and `supabase/schema.sql` is applied,
+> proven by a service-role read of `sessions` returning **200**. The email path is proven end to end,
+> with Telnyx's sandbox domain the only limit. What is still open is listed in
+> `HUMAN_INTERVENTION.md`, which is the live list.
+>
+> **Non-negotiable 2, "Do not run git. The orchestrator commits", no longer describes how this repo
+> works.** Enrique's standing instruction has each shipping agent branch, commit, push, open a PR,
+> squash-merge and deploy, holding `agents/.lock` for the whole sequence. That protocol — including
+> what to do when the lock is held, when your own `rmdir` fails, and when another agent writes to their
+> files mid-ship — is documented in **`agents/README.md`**. Read that, not this, for how to ship.
+>
+> **Non-negotiable 3's shared-shell list has moved.** `src/lib/supabase.ts` and `package.json` have both
+> been changed deliberately since — the first so the app survives an unconfigured `.env` rather than
+> rendering a white screen, the second to add the `demo:preview` script. The spirit of the rule stands;
+> the file list is a snapshot.
+>
+> Everything else — the grounding rule, the PII rule, rules-as-data, integer cents, the two planted
+> data traps and the seasonal caps — is current and was verified this session.
+
+
 Read `plans/00-requirements.md` and `plans/01-build-plan.md` before writing code.
 `plans/02-voice-realtime.md` and `plans/03-messaging.md` carry the verified Telnyx API details.
 
