@@ -33,6 +33,23 @@ const DOCS = [
   'docs/integration-recommendation.md',
   'docs/where-this-goes.md',
   'docs/how-this-was-built.md',
+  // Added at iteration 106. The deliverables were covered; the files the *agents* read, and the one
+  // Enrique reads before he submits, were not -- and that is where the next miscount landed. Mine:
+  // "Three items remain his" followed by four, in completed.log.md, written an hour after I shipped
+  // a guard for this exact class.
+  'agents/README.md',
+  'agents/implementer.status.md',
+  // NOT HUMAN_INTERVENTION.md, though it is the file Enrique actually reads. Every entry there is
+  // nested under a top-level bullet, so a counted list's items are indented and so is the sentence
+  // that ends them -- and bulletsAfter() treats an indented non-bullet line as a continuation, then
+  // runs on into the next entry's bullet. Adding the file produced one false positive on a list that
+  // is correctly counted, and I spent two edits reformatting the document to satisfy the test before
+  // reading the test. That is the tail wagging the dog: this rule only fires on a shape it can judge,
+  // and a document written entirely in nested bullets is not that shape.
+  // NOT agents/completed.log.md. It is append-only narrative that deliberately quotes the wrong
+  // text it fixed -- "148 chat sessions to 9 calls" appears there as history, and the ban below
+  // fired on it the moment I added the file. Guarding a log that records old mistakes verbatim
+  // either fails forever or stops it recording them, and the second is the worse outcome.
 ]
 
 const NUMBER: Record<string, number> = {
@@ -126,7 +143,10 @@ describe('claims about quantities that change while nobody is looking', () => {
     ).toMatch(/one call in every \w+ sessions/)
   })
 
-  it.each(DOCS)('%s states no exact chat-to-call pair', (doc) => {
+  // Deliverables only: the coordination files quote the old pair as history on purpose.
+  const DELIVERABLES = DOCS.filter((d) => !d.startsWith('agents/') && d !== 'HUMAN_INTERVENTION.md')
+
+  it.each(DELIVERABLES)('%s states no exact chat-to-call pair', (doc) => {
     const full = join(repoRoot, doc)
     if (!existsSync(full)) return
     expect(

@@ -154,11 +154,13 @@ tools, the cheat sheet's group-booking claim, the runbook's `INQ-2009` URL, fail
   Facts: `solPrompt.ts:69` tells the model to call `create_inquiry`; `GET /api/tools` returns 12
   and does not include it; voice has it, which is why INQ-2011 exists.
   Three options, all keeping the fallback:
-  **(a)** register `create_inquiry` on chat — smallest code change, the tool already works on
-  voice, and it would make the prompt true and let a guest open a group inquiry from the web;
-  **(b)** amend `solPrompt.ts:69` so the model is not told to call a tool it does not have — but
-  that file feeds the voice runtime too, where the tool *does* exist;
-  **(c)** leave it, and let the escalation carry the request.
+
+  - **(a)** register `create_inquiry` on chat — smallest code change, the tool already works on
+    voice, and it would make the prompt true and let a guest open a group inquiry from the web;
+  - **(b)** amend `solPrompt.ts:69` so the model is not told to call a tool it does not have — but
+    that file feeds the voice runtime too, where the tool *does* exist;
+  - **(c)** leave it, and let the escalation carry the request.
+
   **My recommendation is (c) for tonight.** (a) is a code change to a public unauthenticated
   endpoint hours before submission, and it may be excluded from chat deliberately — an anonymous
   caller able to write rows into the sales inbox is a spam surface. (b) risks degrading the voice

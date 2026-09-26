@@ -5808,5 +5808,65 @@ calls, no telephony spend, balance $3.52.
 `npx tsc -b` clean. `npx vitest run` **601 tests / 48 files** green.
 
 `HUMAN_INTERVENTION.md` now carries a RESOLVED entry with both sets of numbers, so Enrique reads the
-outcome rather than a decision he no longer has to make. **Three items remain his: the SQL paste, the
+outcome rather than a decision he no longer has to make. **Four items remain his: the SQL paste, the
 Telnyx top-up, `INQ-2012`/`INQ-2013`, and the SIP rotation.**
+
+## It106 — my own fix made two demo documents wrong, in the direction of claiming a defect we fixed
+
+PR #138 made a bare *"Can I bring my dog?"* answer correctly. An hour later, two documents still told
+Enrique it does not.
+
+- **`docs/demo-runbook.md:78`** — *"A bare 'Can I bring my dog?' lands this beat about one time in four:
+  measured on the final build, one run gave the full policy answer and three asked 'which hotel?' first,
+  one of them adding 'pet policy can vary by property'…"*
+- **`docs/demo-cheatsheet.md:21`** — *"a bare 'can I bring my dog' asks which hotel first about three
+  times in four."*
+
+Both were accurate when written at iteration 88. Both are false now: 4 of 4 on the draft deploy, twice
+more on production after the merge.
+
+**This is the rarer direction of documentation rot and it costs something specific.** Usually a document
+claims a system works better than it does. Here it claims a defect the system no longer has — so the two
+files Enrique reads **while presenting** tell him to distrust a question that works. If a panel member
+types the bare form, his notes say it is one-in-four, and he hedges about his own system while it answers
+correctly on screen. A reviewer reading the runbook afterwards finds a documented flaw that is not there.
+
+**The instruction itself stays.** *"Do your hotels allow dogs? I travel with a service animal"* is still
+the better line: it puts the ADA limit on screen deliberately, and it is the same sentence as
+`transcripts/service-animal.md`, so the capture and the live demo show one exchange rather than two. Only
+the reason changes — it is no longer "because the bare form fails". Both files now add what the bare form
+does, with the measurement and the PR number, and the runbook says plainly: **answer their question, do
+not steer them back to the script.**
+
+### The count guard, and where it was not looking
+
+While here I fixed my own miscount from the previous iteration: `completed.log.md` said *"Three items
+remain his"* and then listed four. `list-counts.test.ts` exists for exactly that mistake — it was written
+because `SUBMISSION.md` said "two things" and listed three — and it did not catch mine, because its scope
+is the deliverables and mine was in `agents/`.
+
+Added `agents/README.md` and `agents/implementer.status.md`. **Two files I deliberately left out, and the
+reasons are the interesting part:**
+
+- **`agents/completed.log.md`.** Adding it broke the chat-pair ban immediately, because this log *quotes*
+  the wrong text it fixed — *"148 chat sessions to 9 calls"* appears here as history. A guard over an
+  append-only record of old mistakes either fails forever or stops the record quoting them, and the
+  second outcome is worse than the first.
+- **`HUMAN_INTERVENTION.md`**, which is the file Enrique actually reads, so leaving it out is a real
+  loss. Every entry there is nested under a top-level bullet, so a counted list's items are indented
+  *and so is the sentence that ends them* — and `bulletsAfter()` treats an indented non-bullet line as a
+  continuation, runs past it through the blank lines, and absorbs the next entry's bullet. It reported
+  *"says Three options and lists 4"* on a list that has exactly three.
+
+**And I did the wrong thing first.** I reformatted that list into bullets, then deleted a blank line, then
+added it back — two edits to a document to satisfy a test — before reading `bulletsAfter()` and finding
+that no formatting of a nested entry can satisfy it. The guard's own header says it "only fires on the
+shape it can actually judge"; a document written entirely in nested bullets is not that shape. I kept the
+bullets, because three options as bullets genuinely read better than three run-on lines, and dropped the
+file from the rule with the reason written down.
+
+Red-checked the new coverage: a *"Three things remain:"* with two bullets in `implementer.status.md` fails
+with the file, line and both counts.
+
+`npx tsc -b` clean. `npx vitest run` **601 tests / 48 files** green. No prompt change, so no re-provision:
+compile === export === live still 29,655, margin 345.

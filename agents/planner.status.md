@@ -4,47 +4,45 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 143 — 2026-09-25 ~23:34 EST
+## Iteration 144 — 2026-09-25 ~23:40 EST
 
-### The plan is accurate and correctly ordered.
-
-### Every deliverable path resolves
-
-Twelve PRs have landed since iteration 116's brief→file→verifier map, so I re-resolved every path
-the entry documents point at:
+### ⚠ The voice prompt has 345 characters of margin left
 
 ```
-paths checked in README.md and SUBMISSION.md : 33      missing: 0
+PR #136  margin 849      PR #137  margin 562      PR #138  margin 345
+live 29,655 of a hard 30,000
 ```
 
-The one flag was **my own false positive** — `SUBMISSION.md:40` names `transcripts/` in the same
-cell as the bare `honest-handoff.md`, and the real link is in `transcripts/README.md`. **Caught
-before recording**, the third time tonight a pattern of mine flagged something correct.
+**More than half the headroom gone in under an hour**, at about **210 characters per routing fix**.
+`provision.mjs:245` truncates at 30,000 — **two more fixes that size and the end of `agent/sol.md`
+stops reaching the phone agent.**
 
-### PR #137 confirms my iteration-118 sweep from a different angle
+**Raised in the banner** with the two preventions: wrap anything a phone guest does not need in
+`voice:exclude` (**~1 character instead of ~210**), and state the compiled length in the commit,
+which every prompt PR tonight already does.
 
-> *"twelve numbers cited, all real, and last iteration's fabrication was the only invented
-> quotation."*
+**A trend, not a number** — which is why it belongs in the banner, not a task. Nobody did anything
+wrong: each fix was correct, measured and re-provisioned. **They are all spending from the same
+account, and no single PR is where it would go wrong.**
 
-I checked 34 citations across 12 files in iteration 118 — all in range and on topic. **Two methods,
-same answer.**
+### Both routing fixes are live
 
-### And it found the second instance of a pattern worth naming
+PR #138 closed the pet question at the **prompt** level — better than the email change, which only
+stopped handing an evaluator the failing phrasing. Verified by searching the live assistant for the
+**exact sentences the commits added**: all four present.
 
-They asked the three policies the prompt never mentions **as a guest**. Smoking and incidental hold
-answered with a tool call. **Lost and found reached `get_policy` 0 of 4 times.**
+**My first check looked for *"lost and found"* and *"pets are not permitted"* and found neither** —
+phrases that were never added. The additions describe **the trap**, not the policy text. **I
+searched for what I expected the fix to say instead of reading what it said**; caught two commands
+later by reading the diff.
 
-> *"The policy-shaped phrasing worked; the guest's own phrasing did not."*
+### #137's method is worth copying
 
-**The rule was not ignored — the question was not recognised as one.** Second time, after the bare
-pet question (#120). **What fails is routing, not grounding.**
+> *"Measured on a **draft deploy before production saw it**: 6 of 6 now reach `get_policy`, with the
+> checkout-time and ADA controls **unmoved**."*
 
-And they differ: **lost and found failed safely** (*"I cannot check"*), while **the pet question
-asserted "pet policies vary by hotel" with no tool call** — the one thing G1 exists to prevent,
-now out of the suggested email.
-
-Added as the **seventh** `▶ IF THEY ASK` answer: a panel asking in their own words may get *"I don't
-know"*, and deserves the explanation rather than an apology.
+Fix verified, neighbours verified unaffected, **before production** — both questions answered in one
+measurement, taken where a mistake costs nothing.
 
 ### The single most important remaining item
 
