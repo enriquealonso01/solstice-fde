@@ -9,27 +9,28 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It103: the fabricated policy quotation I fixed at It93 was in two more places, and one of
-  them was the live phone agent's prompt.**
-- Started by checking that every tool the assistant carries resolves to a route that exists — **all 23
-  webhook tools do.** 11 guest tools at `/api/tools/<name>`, 12 group tools at `/api/group/tool`, plus
-  native `transfer` and `hangup`. The one extra on the route, `transfer_to_human`, is the chat
-  runtime's stand-in for the native transfer; **not** a mismatch.
-- **Then `agent/sol.md:274` turned up the invented phrase** *"subject to same-day availability"* —
-  which occurs **0** times in the policy document — and it **reached the compiled voice prompt**. Also
-  in `netlify/functions/tools/availability.ts:5`, the header of the service the quotation exists to
-  justify.
-- **Why It93 missed both: the copy in `sol.md` wraps across a line break** (`same-day` ends one line,
-  `availability` begins the next), so the line-oriented sweep reported nothing. **Third time this
-  session a line wrap has defeated a check.** The guard now flattens whitespace before searching.
-- **Fixed both to the accurate wording**, re-provisioned and re-exported: `compile === export === live`
-  at **29,151**, margin **849**, fabrication count **0** in the live prompt. Diffed the live prompt
-  against the new compile first — the change was that one sentence and nothing else.
-- **Banned by name**, across every deliverable, the tool source, and the compiled prompt itself.
-  Red-checked by restoring the line-wrapped original: both the file case and the compile case fire.
-- **Reported, not changed:** the `transfer_to_human` row in §4 is accurate for `/api/tools` and for
-  chat, but voice has no such tool. The behaviour it describes is what the native transfer does, and I
-  cannot test a call, so I am not spending margin on a claim about voice I cannot verify.
+- **SHIPPED It104: audited every policy claim in the prompt. Two passes clean, and the third found a
+  real answer Sol was refusing to give.**
+- **Pass (a) — inverted It93's sweep.** Ten quoted spans in `agent/sol.md` read like policy language;
+  **two are the real quotes** I installed last iteration and the other eight are guest utterances, tool
+  strings or Policy 15's own escalation trigger. **The fabrication was the only one.**
+- **Pass (b) — every `Policy N` reference.** All twelve cited numbers exist and match their titles.
+  Three policies are never named in the prompt: **10 smoking, 11 lost and found, 14 incidental hold** —
+  all fifteen are in `policies.json`, so `get_policy` can still serve them.
+- **So I asked all three as a guest would.** 10 and 14 answered correctly with a tool call. **11 did
+  not.** *"I left my laptop charger in the room"* reached `get_policy` **0 of 4 times**; Sol said *"I
+  don't have visibility into lost and found from here"* and pointed at the property, never stating the
+  policy that exists — 90 days then donated, guest pays shipping, **no reimbursement and no exception
+  process**. Asking *"what is your lost and found policy?"* worked fine. The guest's own phrasing was
+  the failing case.
+- **The prompt already says never answer a policy question from memory; it was not recognising this as
+  one.** So the clause names the confusion rather than repeating the rule, and keeps the honest half —
+  it still says it cannot check whether an item was found.
+- **Measured on a draft deploy before touching production: 6 of 6 reach `get_policy`**, with both
+  controls (checkout time, the ADA question) unchanged. The ring case now gives Policy 11's firm answer
+  instead of deflecting, which is the candour the package claims.
+- Re-provisioned after diffing: the change is those three lines and nothing else.
+  `compile === export === live` at **29,438**, margin **562**.
 
 ## Demo rehearsal coverage — what is actually verified
 
@@ -59,7 +60,7 @@ in `agents/completed.log.md`, not here.
 
 ## Standing state
 
-- `compile === live === export`, **29,151**, margin **849**, and **platform-independent** — the
+- `compile === live === export`, **29,438**, margin **562**, and **platform-independent** — the
   old 29,411/589 was a CRLF artifact (It96). Re-checked whenever `agent/sol.md` moves.
 - Guards I own, each red-checked by reintroducing the defect it catches: `admin-prose`,
   `voice-prompt-size`, `doc-citations` (counts, links), `list-counts`, `export-redaction`,

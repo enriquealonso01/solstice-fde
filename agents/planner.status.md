@@ -4,38 +4,46 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 140 — 2026-09-25 ~23:22 EST
+## Iteration 142 — 2026-09-25 ~23:30 EST
 
-### The plan is accurate and correctly ordered. Suite 586, deploy current with HEAD.
+### Re-ran the conclusion my broken method produced. It holds
 
-### Verified PR #135's capability-URL disclosure in all three particulars
+Last iteration: **finding a flawed method obliges you to re-run what it already told you.** That was
+an obligation I incurred, so this discharges it on the most consequential thing I concluded with the
+line-based `grep` that PR #136 exposed.
+
+**The claim:** iterations 88–89 swept for committed credentials with `git grep -F` — line-based, and
+blind to a value split across a break — and concluded *"this SIP username is the only credential
+ever committed."* **Enrique's T34 rotation decision rests on that sentence.**
+
+**Re-run with whitespace removed entirely** (not normalised — removed, so any wrap still matches):
 
 ```
-unauthenticated GET of the stored URL   200 · 2,570 bytes · application/pdf
-one character altered in the filename   400
-anonymous bucket listing                rejected — authorization required
+secrets checked 23 · tracked files 252 · hits 32 across 7 distinct variables
 ```
 
-**All three hold.** The URL is the whole credential, the path is not guessable, the bucket cannot be
-enumerated — exactly what the README now says, with an honest framing (*"no login, no expiry, no
-revocation, and forwarding the email forwards the access"*) rather than a generous one.
+The seven are **exactly the seven from iteration 89**: `PUBLIC_BASE_URL`, `TELNYX_PHONE_NUMBER`,
+`TELNYX_ASSISTANT_MODEL`, `TELNYX_ASSISTANT_VOICE`, and three resource ids. **Not one secret** — no
+API keys, no service-role key, no `TELNYX_SIP_PASSWORD`, `TOOL_WEBHOOK_SECRET`,
+`PROPOSAL_LINK_SECRET`, `DEMO_PASSWORD`, `TELNYX_SIP_USERNAME`.
 
-### The near-miss, same shape as three others tonight
+**The conclusion survives the stronger method. T34 remains a decision about one credential.**
 
-My first test **built the URL by hand** and got **400** — which reads as *the disclosure is wrong*.
-**`pdf_path` stores a full URL, not a path**, so my construction double-prefixed it. The stored
-value as-is returns 200.
+### Why re-running a passing check was worth an iteration
 
-> **I built the input; the system did not.** Same as `inquiry_id` vs `inquiry_code` (It97), the
-> `head -14` column read (It95), the hand-rolled compile (It86). **Correct measurements of the wrong
-> thing**, each settled by reading what the system actually stores.
+The method failed in a way that produces **false negatives**, and it had already returned a
+negative. **That is exactly why it needed re-running: a flawed instrument reporting "nothing found"
+is indistinguishable from a sound one until you use a better instrument.**
 
-### The "one defect" count still holds
+> It cost one command. **Had it found something, it would have been a live credential in a public
+> repository, eleven hours before the link goes out.** The asymmetry is the argument, and it does
+> not depend on the outcome.
 
-`README:117` says **one defect**; `README:211` adds **a stated limit**. Not a second defect — the
-limits section already carries four others (session-identity binding, supervisor audio, idle-session
-count, email sandbox). **A disclosed design choice and an open defect are different categories**, and
-this package keeps them apart deliberately.
+### Not re-run, and recorded rather than hidden
+
+The same method produced iteration 79's UUID sweep and 118's policy-citation check. **Both lower
+stakes** — a wrapped UUID breaks a link a reader can still find; a wrapped `Policy 15` still reads
+correctly. **Neither is a credential.**
 
 ### The single most important remaining item
 

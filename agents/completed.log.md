@@ -5681,3 +5681,72 @@ does not expose. I am not spending prompt margin on a claim about call behaviour
 placing a paid call, so it is recorded here for the Planner rather than guessed at.
 
 `npx tsc -b` clean. `npx vitest run` **601 tests / 48 files** green (up 15).
+
+## It104 — audited the prompt's policy claims, and found an answer Sol was refusing to give
+
+It103 found one invented policy quotation *in the live prompt*. One is a reason to check the rest:
+`agent/sol.md` is what the agent runs on, so a wrong policy number or an invented phrase is something a
+guest gets **told**, not something a reader merely reads.
+
+**Pass (a) — invert iteration 93's sweep.** That one looked for quoted spans that *do* appear in the
+policy document, which is why it missed a fabrication. This one lists every quoted span in `sol.md` that
+reads like policy language and asks whether it exists at all, whitespace flattened. Ten candidates: the
+**two real quotes** installed last iteration, and eight that are guest utterances, a provenance label, a
+tool-trace fragment, prompt instructions, or Policy 15's own escalation trigger quoted correctly.
+**The fabrication was the only one.**
+
+**Pass (b) — every `Policy N` reference.** All twelve numbers cited exist, and each matches the title of
+the section it is used for. Three of the fifteen are never named in the prompt — **10 smoking, 11 lost
+and found, 14 ID verification and incidental hold** — but all fifteen are in `data/generated/policies.json`,
+so `get_policy` can serve them regardless. That is not a gap on its own.
+
+**So I asked all three the way a guest would.** Two were fine — smoking answered with the 100%
+smoke-free rule and the cleaning fee, the incidental hold with "$50 per night, released after checkout",
+both with a `get_policy` call. **Policy 11 was not.**
+
+```
+"I left my laptop charger in the room after checking out. What happens to it?"   get_policy: 0 of 4
+  -> "I don't have visibility into lost and found from here. Please contact the property directly..."
+
+"What is your lost and found policy?"                                            get_policy: worked
+  -> "We hold found items for 90 days, then donate them... you'd cover the shipping cost..."
+```
+
+The guest's own phrasing was the failing case, and the policy-shaped phrasing worked. Sol read *"I left
+my charger"* as a request to look up an item — which it genuinely cannot do — and stopped there, never
+telling the guest what actually happens to left-behind items: held 90 days then donated, shipping at the
+guest's cost, **no reimbursement even for jewellery or electronics, and no exception process**. That last
+part is exactly the kind of firm, unwelcome fact this package is proud of stating plainly, and Sol was
+withholding it while sounding helpful.
+
+Not a hallucination and not unsafe — a false *"I can't"*, which is a quieter failure and still wrong
+against the package's own claim that a policy question gets a cited answer.
+
+**The prompt already forbids answering from memory** (*"Never answer a policy question from memory, even
+one you are sure of: call get_policy and cite it"*). The rule was not being ignored; the question was not
+being recognised as a policy question. So the fix names the confusion in three lines rather than
+restating the rule, and keeps the honest half intact — it still says it cannot check whether the item was
+found.
+
+**Measured on a draft deploy before production saw it.** `netlify deploy --build` without `--prod` gives
+a URL whose functions read the new `sol.md`, so the change could be tested on the real runtime without
+the demo ever serving it:
+
+```
+lost item, natural phrasing   get_policy  90 days, donated, shipping on you, no reimbursement
+lost item, jacket             get_policy  same, plus "I can't check directly whether it's been found"
+ring in the safe, reimburse?  get_policy  "No... no exception process for that"   (was: deflection)
+CONTROL what time is checkout get_policy  11:00 AM, offers to check a later time
+CONTROL the ADA question      get_policy  pets not allowed, service animals welcome, no documentation
+                                          6 of 6 on the lost-item cases, controls unmoved
+```
+
+Then re-provisioned, having diffed the live prompt against the new compile first: the change is those
+three lines and nothing else. `compile === export === live` at **29,438**, margin **562** — still under a
+thousand, so the bucketed head-room claim and its guard still hold. 11 API calls, no telephony spend.
+
+`npx tsc -b` clean. `npx vitest run` **601 tests / 48 files** green.
+
+**No new guard.** This is a behaviour that only a live model call can measure, and a test that called
+production would fail whenever the network did. The measurement belongs in this log, where the ADA
+finding's numbers also live.
