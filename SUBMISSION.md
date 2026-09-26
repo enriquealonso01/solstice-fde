@@ -116,7 +116,10 @@ Two things are built but not live, and claiming otherwise would be the worst pos
 - [ ] `npx vitest run` is green
 - [ ] **Production is actually serving your latest commit.** Merging is not deploying, and a deploy
       can fail silently: one errored at 18:45 on 2026-09-25 and left `main` ahead of production
-      until a retry two minutes later. Nobody was notified. Run this last, after any final change:
+      until a retry two minutes later. Nobody was notified. Run this last, after any final change.
+      **On this machine `npx netlify` uses the globally installed CLI and takes about two seconds —
+      measured, not assumed. `netlify-cli` is deliberately not a project dependency, so on a machine
+      without it the first run installs it first, which is minutes rather than seconds.**
 
       ```bash
       set -a; . ./.env; set +a

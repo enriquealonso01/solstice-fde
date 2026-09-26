@@ -9,30 +9,21 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It117: the interviewers' own hiring brief was published in our public repository.**
-  `FDE_Project_Challenge.pdf` was tracked, not ignored, in a repo I confirmed is **PUBLIC** at It98.
-- **Not a credential — a question of whose document it is.** Nothing authenticates with it. But it is their
-  private interview challenge, published under our name where a future candidate could find it, and what a
-  reviewer concludes from that is about how this team handles **someone else's** confidential material.
-- **Untracked and ignored; still on disk**, because the plan reads it as ground truth. Guarded three ways —
-  it must not be tracked, `.gitignore` must name it, and **no PDF may be tracked at all** — nothing here
-  needs to ship one, since proposals are generated at runtime.
-- **History is Enrique's call, and I recommended leaving it.** One commit still contains it. A rewrite
-  invalidates every commit id the deliverables cite — the README's day-one window and counts, the plan's PR
-  references, `10b63e8` and `c09f04d`. Same shape and same answer as the SIP credential.
-- **What I could not do, stated as such.** I tried to read the PDF to check our deliverables against its own
-  list; my extractor pulled embedded font data instead of page text. The Planner has read it and mapped the
-  brief's requirements to files, so that mapping exists — I have recorded that I did **not** independently
-  re-verify it rather than implying I had.
-- **A guard I wrote caught my own prose, for the third time.** *"Guarded three ways:"* followed by two
-  bullets — the three were inline and the bullets belonged to other points. The guard is right that a colon
-  after a count word promises an enumeration; the colon became a dash. Shipped as a follow-up because the
-  first PR had already merged.
-- **And untracking it deleted it from disk.** `git rm --cached` keeps the working copy, but the branch commits
-  the deletion and `checkout main` then applies it — so the file the Planner reads as ground truth was gone,
-  removed by me while I was writing that it must stay. Restored from `b9145b7`, 94,544 bytes, byte-identical.
-  **The `test -f` in my own deploy verification was the only thing that could have caught it**: the suite was
-  green and every guard I had just written asserts the file is absent from *git*, which it was.
+- **SHIPPED It118: T44 — `npx netlify` in the last pre-send step, with the install cost disclosed. But the
+  task's premise did not hold for the person who runs it, and measuring changed the wording.**
+- **Verified both halves.** `netlify-cli` really is absent from `package.json` (20 deps), so on a machine
+  without it `npx` downloads first — minutes, in the one command whose job is to say *"safe to send"*.
+- **But it is installed globally here:** `netlify-cli@26.0.2`, on `PATH`. Measured rather than assumed —
+  `npx netlify --version` returns in **1.8s** against the global binary's 1.3s, so `npx` resolves it from
+  `PATH` and downloads nothing.
+- **So T44's proposed wording, *"give it a few minutes the first time"*, would have warned Enrique about a
+  wait he will not have** — and a warning about a non-event teaches him to distrust the check. The clause now
+  says both: about two seconds here, minutes on a machine without the CLI.
+- **Did not add the dependency**, and said why: it is a large install, and `npm ci` is the first thing a
+  reviewer runs — It112 measured that path clean and I am not slowing it hours before submission.
+- **Swept the class:** `npx netlify` is the **only** documented command whose tool is not a project
+  dependency. `npx vitest` and `npx vite-node` resolve out of `node_modules`. Pinned: any documented `npx`
+  tool must be a dependency **or** the document must say the first run installs it. Red-checked both ways.
 
 ## Demo rehearsal coverage — what is actually verified
 

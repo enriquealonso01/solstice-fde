@@ -68,3 +68,65 @@ describe('npm commands named in the deliverables', () => {
     expect(scripts['demo:tidy']).toContain('--delete')
   })
 })
+
+/**
+ * A documented `npx <tool>` whose tool is not a project dependency has to say so.
+ *
+ * `SUBMISSION.md`'s last pre-send step runs `npx netlify api listSiteDeploys` to prove production is serving
+ * the latest commit. `netlify-cli` is not in `package.json` — deliberately, because it is a large install and
+ * adding it would slow the `npm ci` a reviewer runs first. So on a machine without the CLI, `npx` fetches it
+ * before doing anything: minutes, in the one command whose job is to say *"safe to send."*
+ *
+ * Filed as T44 on the assumption that Enrique would hit that wait. **Measured instead:** `netlify-cli@26.0.2`
+ * is installed globally here and `npx netlify --version` returns in **1.8s** against the global binary's
+ * 1.3s, so `npx` resolves it from `PATH` and downloads nothing. The wait is real for a reviewer and not for
+ * him — and telling him to expect minutes would have been a warning about a non-event.
+ *
+ * So the clause covers both, and this test keeps the pairing honest: every `npx` tool named in a deliverable
+ * is either a project dependency, or the document says the first run installs it. The other two documented
+ * ones, `npx vitest` and `npx vite-node`, resolve out of `node_modules`.
+ */
+describe('documented npx commands', () => {
+  const DOCS = ['README.md', 'SUBMISSION.md', 'docs/demo-runbook.md', 'docs/live-modification.md']
+
+  /** `npx <tool>` -> the package that provides it, where the names differ. */
+  const PROVIDER: Record<string, string> = { 'vite-node': 'vite', tsc: 'typescript' }
+
+  function projectDeps(): Set<string> {
+    const pkg = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'))
+    return new Set(Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }))
+  }
+
+  it('finds npx commands to judge, so this cannot pass by matching nothing', () => {
+    let found = 0
+    for (const doc of DOCS) {
+      if (!existsSync(join(repoRoot, doc))) continue
+      found += [...readFileSync(join(repoRoot, doc), 'utf8').matchAll(/npx ([a-z0-9@/-]+)/g)].length
+    }
+    expect(found).toBeGreaterThanOrEqual(3)
+  })
+
+  it.each(DOCS)('%s discloses the install cost of any npx tool it does not depend on', (doc) => {
+    const full = join(repoRoot, doc)
+    if (!existsSync(full)) return
+    const text = readFileSync(full, 'utf8')
+    const flat = text.replace(/\s+/g, ' ')
+    const deps = projectDeps()
+
+    const undisclosed: string[] = []
+    for (const m of new Set([...text.matchAll(/npx ([a-z0-9@/-]+)/g)].map((x) => x[1]))) {
+      const pkg = PROVIDER[m] ?? m
+      if (deps.has(pkg)) continue
+      // Not a dependency: the document has to warn that the first run installs it.
+      const warns = /first run installs|installs the .{0,20}CLI|installs it first/i.test(flat)
+      if (!warns) undisclosed.push(m)
+    }
+
+    expect(
+      undisclosed,
+      `${doc} tells the reader to run "npx ${undisclosed.join(', npx ')}", and that tool is not in ` +
+        `package.json, so the first run downloads it. Say so where the command is introduced, or add the ` +
+        `dependency. Unannounced, a multi-minute install reads as a hang.`,
+    ).toEqual([])
+  })
+})
