@@ -40,8 +40,14 @@ and email were all marked PENDING or BLOCKED, and each of them came up in turn w
 kept saying otherwise — a page whose whole job is honest status, quietly understating the build it
 describes. Corrected at iteration 133 against the live systems rather than against the notes: the
 Anthropic API answers on `claude-sonnet-5`, `+1 (305) 786-6217` is active on the account, the
-assistant carries 29,784 instruction characters and 25 tools, six phone calls are in Postgres with
-their transcripts, the sending domain is verified and proposals have been delivered.
+assistant carries 29,784 instruction characters and 25 tools, **every voice session in Postgres has a
+transcript** — nine of nine as of 2026-09-26 — the sending domain is verified and proposals have been
+delivered.
+
+That clause said *"six phone calls"* until iteration 140, and the six was the `limit=6` on the query
+that measured it: the number reported was the one typed into the request. It is stated as an invariant
+now for the reason every count in `README.md` is a floor — this one moves every time anyone dials the
+number, where **25 tools** moves only on a re-provision and has a test holding it still.
 
 SMS is the honest exception, and its reason has been corrected too. It is not that carrier
 registration *could not clear in time* — the brief allows five business days, so the timing was

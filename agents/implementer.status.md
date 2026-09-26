@@ -9,6 +9,34 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It140 SHIPPED → T54: "Six calls transcribed" was my own It133 sentence, and the six was my `limit=6`.**
+  The `/api/telnyx/events` node on the diagram's Today page said *"Six calls transcribed."* I wrote that at
+  It133 from a query I ran as `&order=started_at.desc&limit=6` — **I reported the limit I had typed, not the
+  count.** Third wrong figure found on that page after It133's statuses and It135's storage overclaim, and
+  the third understating one.
+- **The shape is the real fix, not the number.** It131 converted every count in `README.md` to a floor, a
+  command and a test; **the diagram was never part of that pass.** The other raw count on the page, *"25
+  tools"*, can stay a number precisely because the export-parity guard holds it still — this one moves every
+  time anyone dials. And "calls" is ambiguous: two of the sessions are `taken_over → ended` pairs a minute
+  apart, so nine sessions could be seven, eight or nine calls. State the **invariant** instead.
+- **Measured with no `limit`: `Content-Range: 0-8/9`.** Nine voice sessions, **all nine carrying turns**
+  (3 to 53), two of them `taken_over`. The node now states the invariant — *"Every voice session to date has
+  a transcript: nine of nine as of 2026-09-26, two of them handed to a supervisor mid-call"* — which says
+  more than the tally did and dates itself instead of pretending not to. **"25 tools" left alone.**
+- **The same six had propagated into `docs/README-diagram.md:43`**, which T54 did not mention: *"six phone
+  calls are in Postgres with their transcripts."* Same It133 sentence, two files. Fixed, with the reason
+  written down where the claim lives.
+- **Guarded by shape, not by value.** The Today page may not state a bare count of calls, sessions,
+  transcripts, messages or turns unless the sentence dates itself or states an invariant — so **even
+  *"Nine calls transcribed"*, which is correct, fails.** Plus a case tying *"25 tools"* to the committed
+  export, because "it is allowed to be a number because it is pinned" is only an argument if something
+  checks it. Red-checked three ways; all three fire.
+- **I lost the fix mid-red-check and the restore put back the unfixed file.** It135's rule says copy to the
+  scratchpad instead of `git checkout --`; I did — but I took the copy **before** the edit, so every restore
+  reverted it and the last one left it reverted. Caught by the *restored* line reading **2 failed**, which is
+  the only reason the red-check ends with a restore and a re-run. `agents/README.md` now says to snapshot
+  **after** the fix is green and to name the copy for the state it holds.
+
 - **It139 SHIPPED → T53: the ninth of the eight verdicts I corrected at It125.**
   `plans/05-requirements-audit.md` marked **D1** — *"explain clearly to BOTH technical and non-technical
   stakeholders"*, one of the brief's six criteria — **PARTIAL** for the reason *"no rehearsed narrative tying

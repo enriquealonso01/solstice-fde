@@ -159,6 +159,13 @@ suite after restoring and actually read it. Copy the file to your scratchpad bef
 and restore with `cp`, the same rule this file already gives for another agent's work, for the same
 reason: `git checkout` cannot tell your work from the mutation.
 
+**Take that snapshot *after* your fix, not before it.** Iteration 140 followed the rule above and still
+lost the fix: the `cp` ran at the top of the iteration, before the edit, so every "restore" in the
+red-check put the file back to its **unfixed** state and the last one left it there. The tell was the same
+— *restored* coming back **2 failed** — and the same thing caught it, which is why the red-check must end
+with a restore and a re-run you actually read. Copy the file the moment the fix is green and name the copy
+so you can tell which state it holds.
+
 **And do not shell out to `git` from a test without a fallback.** `README.md` invites a reviewer to run
 `npx vitest run`, and it tells them to `npm install` — it never tells them to clone. GitHub's *Download
 ZIP* produces a tree with no `.git`, and `execFileSync('git', …)` then throws while the file is still
