@@ -9,6 +9,34 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It161 SHIPPED → T62: a security guard's justification promised a guarantee the code did not give.**
+  `no-committed-credentials.test.ts` says *“no test here can know the password's value”*; `DEMO_PASSWORD` — the
+  working admin password — was not on `vitest.setup.ts`'s strip list. Nothing leaked; the sentence was simply
+  not true.
+- **Swept wider than the task asked, and it mattered.** T62 checked `src/`, `netlify/`, `shared/`; I added
+  `scripts/` with comments stripped. **Two tests import `scripts/telnyx/provision.mjs`**, which reads
+  `TELNYX_SIP_PASSWORD` — safe, because the read is inside `stepSipConnection()` (never called) off a
+  **passed-in `env` object**, not `process.env`. Checked before changing anything rather than found by a red
+  suite. `TELNYX_TELEPHONY_CREDENTIAL_ID` stays out with the reason in the file.
+- **Five cases in `setup-env.test.ts`** (which already owns `.env.example`): every credential-shaped key a
+  reviewer fills in must be in `STRIPPED` or in an `EXEMPT` map **with a stated reason** (empty today, kept as
+  a mechanism). Scoped to `.env.example`, not `.env` — reading the gitignored one is It152's bug.
+- **Then the fourth mutation failed nothing, and my own guard was the problem.** Neutering the strip loop left
+  every case green, including the two claiming to be *“the mechanism that makes that true”*. Measured in a
+  `.scratch-it161/` directory (which It160 had just taught `.gitignore` about): **vite does not load `.env`
+  into `process.env`** — variables that are *never* stripped read `undefined` too. **My cases passed for a
+  reason they did not state**, twenty minutes after writing about that exact failure mode.
+- **Rewritten to separate the two claims:** the **property** at runtime (no credential-shaped var readable,
+  true for either reason) and the **mechanism** at source level, because a loop deleting keys nothing set is
+  invisible from inside the run. The loop is not redundant — `SUBMISSION.md`'s pre-send check opens with
+  `set -a; . ./.env`.
+- **Red-check:** the pre-iteration setup file → **1 failed** (the defect T62 filed, so it would have been
+  caught when `DEMO_PASSWORD` entered `.env.example`) · `DEMO_PASSWORD` removed → 1 · a new credential not
+  added to the list → 1 · **strip loop neutered → 1** (was **0** before the fix) · restored **21 passed**, two
+  files byte-identical.
+- **The sentence now stands as written**, and the new block says which two independent facts make it true
+  rather than leaving a reader to infer the stronger one.
+
 - **It160 SHIPPED → T61: the one-line `.gitignore` fix — and the line did not work.** First real task on the
   board in seven iterations. All three parts the plan asked for, plus a fourth the first two uncovered.
 - **The risk is worse than “`git add -A` ships it”.** `vite.config.ts` has no vitest `include`, and I read the

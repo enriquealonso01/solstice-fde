@@ -10547,3 +10547,87 @@ keep the exact string in code. Caught by `tsc -b` immediately, which is the righ
 was restored from the snapshot rather than patched forward.
 
 `npx tsc -b` clean. `npx vitest run` **940 tests / 66 files** green (up 4). No scratch directory on disk.
+
+---
+
+## It161 — T62: a security guard's justification promised a guarantee the code did not give
+
+`no-committed-credentials.test.ts` explains why its checks are shape-based rather than value-based:
+
+> *"`vitest.setup.ts` strips credentials from the environment, so no test here can know the password's
+> value."*
+
+`DEMO_PASSWORD` — the working admin password `DEMO_LOGINS.md` holds — was not on the strip list. Nothing
+read it, nothing leaked, hermeticity was never at risk. What was wrong is the sentence built on top, inside
+the one file whose job is to be trusted about credentials. *A justification holding a copy of a guarantee
+the code does not give* — the "assertion holding its own copy of the answer" family, one level up.
+
+### Measured wider than the task asked, and it mattered
+
+T62 said the three candidates are unreferenced "under `src/`, `netlify/` or `shared/`". I swept `scripts/`
+too, with comments stripped so a mention in prose would not count as a read:
+
+```
+DEMO_PASSWORD                    scripts/seed-users.mjs         (a standalone script, never inside vitest)
+NETLIFY_AUTH_TOKEN               nothing at all
+TELNYX_SIP_PASSWORD              scripts/telnyx/provision.mjs   <- and TWO TESTS IMPORT THAT MODULE
+TELNYX_TELEPHONY_CREDENTIAL_ID   netlify/functions/voice/credentials.ts
+```
+
+`voice-prompt-size.test.ts` and `walkthrough-quotes.test.ts` both import `provision.mjs` for
+`compileInstructions`, so stripping `TELNYX_SIP_PASSWORD` could have broken them. It cannot: the read is
+inside `stepSipConnection()`, which neither test calls, and it reads a **passed-in `env` object** rather
+than `process.env`. Checked before changing anything rather than discovered by a red suite.
+
+`TELNYX_TELEPHONY_CREDENTIAL_ID` stays out, with the reason in the file: it is read at call time by a
+function, it is an identifier rather than a secret, and no claim depends on a test being unable to see it.
+
+### The guard, and then the guard was wrong
+
+Five cases in `setup-env.test.ts`, which already owns `.env.example`: every credential-shaped key a
+reviewer is told to fill in must be in `STRIPPED` or in an `EXEMPT` map with a stated reason (empty today,
+kept as a mechanism so the next person writes the reason down instead of quietly dropping a name).
+
+Scoped to `.env.example`, not `.env` — the tracked file the README says to copy. Reading `.env` would fail
+for anyone reviewing a clone or a ZIP, which is the bug It152 spent an iteration removing elsewhere.
+
+**Then the fourth mutation failed nothing.** Neutering the strip loop — `delete process.env[key]` →
+`void key` — left all my cases green, including the two that claimed to be *"the mechanism that makes that
+true"*. So I measured what the test process can actually see, in a `.scratch-it161/` directory that It160
+had just taught `.gitignore` about:
+
+```
+TELNYX_TELEPHONY_CREDENTIAL_ID=undefined   DEMO_EMAIL=undefined
+DEMO_PHONE=undefined                       PUBLIC_BASE_URL=undefined
+```
+
+**Vite does not load `.env` into `process.env`.** Variables that are *never* stripped read `undefined` too.
+My two runtime cases were passing for a reason they did not state, and could not have caught a dead loop —
+the exact vacuity this suite keeps finding in itself, in code I wrote twenty minutes earlier while writing
+about that very failure mode.
+
+Rewritten to separate the two claims: the **property** at runtime (no credential-shaped variable is
+readable, which is what matters and holds for either reason) and the **mechanism** at source level, because
+a loop deleting keys nothing set is invisible from inside the run. The loop is not redundant — a shell that
+has sourced `.env` populates the environment, and `SUBMISSION.md`'s own pre-send check opens with
+`set -a; . ./.env`.
+
+### Red-check, four scenarios, all firing
+
+```
+vitest.setup.ts exactly as it was before It161      1 failed   <- the defect T62 filed
+only DEMO_PASSWORD removed again                    1 failed
+a new credential in .env.example, not in STRIPPED   1 failed
+the strip loop neutered, list left correct          1 failed   <- was 0 before the fix above
+restored                                           21 passed   two files byte-identical
+```
+
+The first line is the one that matters: the pre-iteration setup file **fails the new guard**, so this would
+have been caught when `DEMO_PASSWORD` was first added to `.env.example`.
+
+### The sentence
+
+It is now true as written, so it stands, and two independent facts make it true — which the new block says
+explicitly rather than leaving a reader to infer the stronger one.
+
+`npx tsc -b` clean. `npx vitest run` **944 tests / 66 files** green (up 4). No scratch directory left behind.
