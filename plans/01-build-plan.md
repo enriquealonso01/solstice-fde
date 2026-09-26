@@ -1,3 +1,41 @@
+> ## Correction, 2026-09-26 -- five statements in this plan have moved
+>
+> *Prepended at implementer iteration 127; **nothing below is edited**. This plan is the record of
+> what was decided on 2026-09-24 and it is worth keeping exactly as written. These are the five
+> places where a reader acting on it today would act wrongly.*
+>
+> **1. The deadline below is wrong, and wrong in both directions at once.** The brief says,
+> verbatim: *"You'll have 5 business days from receipt to submit."* Received 2026-09-24, so the
+> real deadline is **~2026-10-01**, not 09-27 -- the `~2026-09-27` came from reading a 72-hour
+> clock into a brief that never mentions one. Enrique is submitting **2026-09-26 at 11:00 EST**,
+> earlier than both dates, by choice. The same wrong date sits in `plans/03-messaging.md` and
+> `plans/04-unlock-checklist.md`, and in the first of those it drags an argument along with it.
+>
+> **2. D4's "registration started 2026-09-24" did not happen on the account that matters.** D18,
+> four rows further down the same table, is the one to believe: no brand and no campaign exist on
+> the funded account. `HUMAN_INTERVENTION.md:122` still lists it as not started, which is why no
+> SMS has ever been sent. Read D4 as intent, not as state.
+>
+> **3. D11 is no longer awaiting Enrique's confirmation.** One agent definition, two runtimes, was
+> confirmed and built. `agent/sol.md` is read raw at request time by chat and compiled for voice
+> by `scripts/telnyx/provision.mjs`, and `src/lib/rules/__tests__/voice-prompt-size.test.ts` pins
+> that compile against the committed `exports/telnyx-assistant.json`, so the two runtimes cannot
+> drift apart in silence.
+>
+> **4. Every item under "Deliverables owed to phData" is delivered.** The boxes are unticked
+> because nobody came back to tick them, not because anything is outstanding. In order:
+> `agent/sol.md`; six sample transcripts in `transcripts/`; the diagram as
+> `docs/architecture.drawio` **plus `docs/architecture.svg` -- SVG, not the PNG this plan named**;
+> `docs/integration-recommendation.md`, which covers PMS, CRS, loyalty/CRM and the front-desk-jobs
+> question; `exports/telnyx-assistant.json`; the net-new tool, documented as such in `README.md`;
+> and the README's stated assumptions, with the latency target and its justification in
+> `docs/latency-target.md`.
+>
+> **5. The net-new tool is not called `availability_service`.** That name never reached the code
+> and `src/lib/rules/__tests__/tool-naming.test.ts` now bans it. The service is
+> `netlify/functions/tools/availability.ts`, reached by `check_late_checkout`,
+> `check_upgrade_eligibility`, and `check_availability` on the group side.
+
 # Solstice FDE — Build Plan
 
 Built from plans/00-requirements.md. Decisions locked 2026-09-24.

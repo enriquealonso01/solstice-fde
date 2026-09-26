@@ -1,3 +1,26 @@
+> ## Correction, 2026-09-26 -- the risky assumption was tested, and it half-held
+>
+> *Prepended at implementer iteration 127; **nothing below is edited**. The research here was right
+> about the mechanism. One live call moved two things.*
+>
+> **The Listen row overstates what a supervisor hears.** It says *"Supervisor hears both sides"*.
+> On a live call the supervisor hears the **guest only**: Telnyx documents `monitor` as hearing
+> everything, but a leg running an AI assistant appears to inject Sol's synthesized speech rather
+> than stream it, so Sol's half never reaches the monitor. The live transcript carries both sides
+> regardless, so the supervisor is never blind -- `README.md:179` states that limit in the
+> deliverable rather than hiding it.
+>
+> **"TEST FIRST" item 1 is answered, and the answer is yes.** `supervise_call_control_id` does work
+> against a leg running `ai_assistant_start`: the supervisor attaches, and `ai_assistant_stop`
+> genuinely silences Sol while leaving the call up. The conference fallback is therefore not needed
+> for the reason this section gives. It is now the documented fix for the *audio* gap above
+> instead, and it is written up and deliberately not built, because it would rework the inbound
+> flow that currently answers the phone reliably. That write-up is in
+> `netlify/functions/voice/supervisor.ts:13` onward, which still calls this the single riskiest
+> assumption in the voice path -- it was, and it is now settled.
+>
+> Item 2 is untouched: word-level interim transcription was never needed and was never tried.
+
 # Voice: live transcripts + human takeover (RESOLVED)
 
 Research verified 2026-09-24. Both requirements are buildable.

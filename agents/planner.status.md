@@ -4,69 +4,69 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 168 — 2026-09-26 01:50 EST
+## Iteration 171 — 2026-09-26 02:05 EST
 
-**The plan is accurate and correctly ordered.**
+**The plan is accurate and correctly ordered. No agent task is open.**
 
-### Correction to my own reasoning last iteration
+### The approval gate holds in the live data
 
-Investigating T50's disappearance I compared `wc -c` against python `len(t)`, concluded the file had **shrunk
-16KB between two of my own checks**, and from that inferred another agent was *actively rewriting my file*.
-Measured properly:
+With the `group_sales` token, all ten proposals, using the code's own predicate (`store.ts:448`,
+`status === 'flag' || 'fail'`):
+
+| proposal | status | blocking | approver |
+|---|---|---|---|
+| PRP-2001 · 2001-2 · 2001-3 · 2006 | **sent** | **0** | none needed |
+| PRP-2005 · 2007 · 2008 · 2009 | **awaiting_approval** | 2 · 2 · 3 · 1 | none |
+| PRP-2002 | rejected | 2 | none |
+| PRP-2011 | draft | 0 | none |
 
 ```
-characters : 661,364    <- python len()
-bytes      : 678,115    <- wc -c
-difference :  16,751    2.53%, all multibyte UTF-8
+SENT with blocking verdicts and NO approver:  none
 ```
 
-Em-dashes, arrows, `×`, `▶`. **The two numbers were never in conflict and the file had not changed.**
+**Every proposal carrying a blocking rule is parked or rejected; every sent proposal carried none.** Real
+rules: `GRP-DISCOUNT-CEILING`, `GRP-ROOMS-CAP`, `GRP-OVERFLOW-ROUTING`, `GRP-INSURANCE-CERT`,
+`GRP-MEETING-CAPACITY`.
 
-**What saves this from being a published error is one habit:** I checked what I had actually written before
-correcting it. Iteration 167's entry claims only that *"another agent edited this file in the same minute"* —
-true, and **self-reported by them** in `HUMAN_INTERVENTION.md:1016`. **The reasoning was wrong; the record was
-not.**
+**What this adds to item 1:** the RLS hole is a bypass that **exists and has never been walked through.** The
+disclosure says a rep *can* approve their own flagged proposal — a capability, not an event — and the live
+audit state confirms nobody has. **Applying the paste closes a door with nothing behind it.**
 
-**Seventh in the series, and the purest:** hand-rolled compiler · "any env value is a secret" · line-oriented
-grep over a wrapped phrase · zero-row RLS probe · string count read as import count · source search scoped to
-the wrong tree · **two correct measurements in different units.**
+### Precision fix to my own banner
 
-**T50's disappearance is unaffected** — observed directly (`grep -c '^### T50\.'` = 0 with three live
-pointers), never inferred from size.
+Querying `proposals.approved_by` returned `42703: column does not exist`. **It is not a column** — it is
+persisted inside `pricing.__proposal` (`store.ts:215-225`) and written to `audit_log` by `approveProposal`.
+My banner said *"`approved_by` stays null"*, implying a column a reviewer will not find in `schema.sql`.
+Changed to **"unset"** plus one clause saying where it lives. The substance was right: PATCHing `status`
+directly skips `approveProposal`, the sidecar is never written, and `assistant.ts:196`'s
+`?? 'an authorised approver'` falls through to the phantom.
 
-### Cross-checked It125's eight corrections against my own file
+### Ninth instrument slip — and an impossible result was the tell
 
-They audited `plans/05-requirements-audit.md` and found **eight verdicts that had moved, every one
-understating the package**. My file makes overlapping claims. **I carry none of them** — searched the open
-region for *"7 stated assumptions"*, *"4 chat transcripts"*, `availability_service`, *"never rehearsed"*, the
-missed latency target, the missing roadmap: **zero hits.** My two transcript counts both say **six**, which is
-ground truth.
+My first pass guessed the verdict shape (`blocks`/`severity`/`passed`) and reported **zero blocking verdicts
+on all ten**, including four sitting in `awaiting_approval`. **Four proposals parked for approval with
+nothing to approve is not a finding, it is an impossibility.** Read one verdict object and
+`blockingVerdicts()` instead of guessing again: the real shape is `status: 'pass' | 'flag' | 'fail'`.
 
-### And I checked their correction rather than taking it
-
-*"7 stated assumptions → 9"*: `README.md`'s `## Stated assumptions` is numbered **1–9**. **Exact.**
-
-**It also cleared something in my own banner.** Item 1 cites *"`agent/sol.md` §6, assumption 13"* — if there
-were nine assumptions there would be no thirteenth. Counted: **§6 carries 16**, and **13 is *"Approval
-authority is a named human, not a role tier"***, exactly as my banner says. **Two counts of different
-things** — nine in the README, sixteen in the agent config — both right.
+**Reach for the code's own predicate rather than inventing one** — `blockingVerdicts` was six lines away and
+exported.
 
 ### Open
 
 | # | Item | Owner |
 |---|---|---|
-| 1 | **`drop policy` ×3.** Last valid check 20:26 (Tester); **not re-provable by me** | Enrique — **do** |
+| 1 | **`drop policy` ×3.** Reads proven live (13/10/3); **gate proven clean**. Write policies: Tester's 20:26 check, not re-provable by me | Enrique — **do** |
 | 2 | **Top up Telnyx** — under $4 and falling; Billing, ~$30 | Enrique — **do** |
-| 3 | **T21** — delete `INQ-2012`/`INQ-2013`, cascade count first | Enrique — **do** |
+| 3 | **T21** — delete `INQ-2012`/`INQ-2013`, cascade count first. Inbox still holds **13** | Enrique — **do** |
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
 | 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
-| T50 | Chen's second reservation — restored at iteration 167; **(a) and (b) only** | any agent |
 | — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
 
-**Tester silent 5h22m.** Inbox empty. No lock held.
+**Tester silent 5h39m.** Inbox empty. No lock held. The Implementer is on It127 auditing `plans/01`–`04`;
+I stayed off it.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — unchanged, live evidence still the Tester's twelfth check at 20:26.
-**Most useful agent item: T50(a)**, one cheat-sheet line protecting the demo's best moment.
+**The `drop policy` paste** — and it is now the best-evidenced item on the list: the reads it depends on have
+been watched serving rows, and the gate it protects has been shown never to have been bypassed.

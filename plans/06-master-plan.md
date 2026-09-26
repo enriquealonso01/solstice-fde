@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 01:49 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
+> ## 02:05 — **ENRIQUE: the SQL paste is #1. Three things to do, two decisions that need no action.**
 > *All agent work is closed — T38–T43 and T45, each re-verified against the live files at 00:55, not
 > from the log; **T44 shipped in It118 and T46 in It120**, each correcting a premise of mine while doing it.
 > **T47 shipped in It121 and T48 in It122, refresh and re-export included** — `sol.md`, the committed
@@ -33,8 +33,13 @@
 > *"cannot be sent until someone approves it and the override is written to the audit log"*, and
 > that we enforce *"an approval happened and **is attributable**"*. **All three clauses are false
 > while `prop_write` exists:** a rep PATCHes `status` to `approved` with the public anon key,
-> `approveProposal` never runs so there is no audit row, and `approved_by` stays **null** — the
+> `approveProposal` never runs so there is no audit row, and `approved_by` stays **unset** — the
 > gate then credits *"an authorised approver"* who does not exist.
+>
+> *Precision, checked at 02:05: `approved_by` is **not a column on `proposals`**. It is persisted
+> inside `pricing.__proposal` (`store.ts:215-225`) and written to `audit_log` by `approveProposal`.
+> Grepping `schema.sql` for it on that table finds nothing, which could read as a phantom — it is
+> real, it just lives in the jsonb sidecar.*
 >
 > **Supabase SQL editor, project `bcrivjgqrxahgxyiqlpr`:**
 >
@@ -52,6 +57,13 @@
 > migration file restates them in a `do $$` block; the three lines above do not carry it.**
 > *(PR #132 pinned this with `rls-policies.test.ts`: every group table must have a select policy
 > declared outside migration 004. Until tonight nothing asserted the reads existed.)*
+>
+> **Proven at 01:59, from the data side.** Signed in as `sales@solsticehotels.com` (`group_sales`) and read
+> PostgREST directly with that token: **`inquiries` 13, `proposals` 10, `follow_ups` 3** — while a
+> `concierge` token reading the same three tables gets **0, 0, 0** and **279 sessions**. So the three
+> `*_read` policies are not just declared, they are **serving rows to the role that matters**, which is what
+> makes dropping the three `*_write` policies safe. *(This verifies the reads. Whether the write policies
+> are still there is the Tester's 20:26 check — there is no read-only test for it; see iteration 161.)*
 >
 > **If the sales inbox goes blank after you paste it**, the reads did not survive: run the `do $$`
 > block from `supabase/migrations/004_client_read_only_on_group_tables.sql`, which recreates them.
@@ -119,8 +131,7 @@
 >
 > **All five of the document fixes this banner used to list here — T38, T39, T40, T41, T42 — are
 > done**, along with T43 and T45. Checked at 00:55 against the live files with a whitespace-normalised
-> match rather than `grep`, because each of those phrases can wrap a line. **What is left for an agent
-> is T50**, immediately below.
+> match rather than `grep`, because each of those phrases can wrap a line. **Nothing is left for an agent.**
 >
 > ### Two constraints anyone editing should know
 >
@@ -213,151 +224,46 @@ survived it: **no `.env` value appears in it**, both `REDACTED_*` markers are in
 `sip:` URIs with a real local part**. Suite **677 green**.
 
 
-### T49. 677 tests are green while `agent/sol.md` no longer describes the agent that answers the phone
+### T49 — SHIPPED (It123, PR #160). The parity checked by hand for eight iterations is now a test.
 
-*The highest-value guard left, and it is a few lines. Measured at **01:22**, not inferred.*
+It asserts `exports/telnyx-assistant.json.instructions === compileInstructions(agent/sol.md)`, plus a sanity
+check that the export has instructions at all rather than being empty.
 
-```
-agent/sol.md  -> compileInstructions  29,784
-exports/telnyx-assistant.json         29,655
-LIVE Telnyx assistant (GET /v2/ai/assistants/…)  29,655
-   live === export  : true
-   live === compile : FALSE
-npx vitest run      : 677 passed / 52 files, ALL GREEN
-```
+**And it writes down its own reach, which I asked for and they sharpened:** *"**What this guard does not do,
+stated because a guard believed to watch production is worse than one whose reach is written down: it cannot
+see Telnyx.**… It will be red between the edit and the re-export, and that is the point. Do not make it green
+by regenerating the export from a stale live assistant: that makes all three agree on the old text and
+silently reverts the edit."*
 
-**The source has moved ahead of the phone.** T48's row landed in `agent/sol.md` and the `--refresh` has not
-run yet, which is ordinary in-flight state — **the defect is not the divergence, it is that nothing can see
-it.** 677 tests pass, including a whole file dedicated to the voice prompt, and `SUBMISSION.md`'s pre-send
-checklist says *"`npx vitest run` is green"*, which is true and does not protect this.
+**Why it earned its slot:** for roughly twelve minutes on this night the source and the phone agent
+disagreed — `sol.md` compiled to 29,784, the export and the live assistant were on 29,655 — and **677 tests
+stayed green the whole time**, including the file dedicated to the voice prompt. It resolved because an agent
+was awake and careful, not because anything would have said so.
 
-**This project has already been bitten by exactly this outcome.** `voice-prompt-size.test.ts`'s own header:
-*"`agent/sol.md` calls itself the single agent definition, but the phone agent carried none of four hours of
-edits to it."* That test catches the **truncation** route to that outcome. **The edit-without-re-provision
-route is uncovered**, and it is the more likely one now that the margin is healthy.
 
-**Why it matters beyond tidiness.** `exports/telnyx-assistant.json` is a **named brief deliverable**
-(`SUBMISSION.md:43`, *"Native platform export"*) and its entire value is being the live agent's own config.
-`README.md` and this plan both claim the three artifacts agree — **iteration 158 verified all three
-byte-identical and that verification is protected by nothing.**
+### T50 — SHIPPED (It126). Both parts, and they took the recommendation not to do the third.
 
-#### Do this
+**`docs/demo-cheatsheet.md`'s R55004 row** now says *"**Always give the confirmation number on this one.**
+Chen is the only guest in the data with two stays — R55004 Denver Jul 20-23 and R55015 Austin Sep 5-7 — and
+**Austin has suites free**, so identifying him without the number can turn the refusal into a confirmation."*
+**It also carries the measurement**, which I had not asked for: `check_upgrade_eligibility` by `guest_id`
+returns `may_promise: true`; by `reservation_id: R55004`, `may_promise: false` and it escalates.
 
-Add to `src/lib/rules/__tests__/voice-prompt-size.test.ts` (it already imports `compileInstructions` from the
-provisioning script, which is the right call and should stay):
+**`transcripts/README.md:19`** explains the two R55015 citations with the distinction that matters: a late
+checkout is a **tier** guarantee so both stays answer the same, and it is the **upgrade** question where they
+diverge.
 
-> ```ts
-> it('the committed export is the compile of the file it claims to export', () => {
->   const exported = JSON.parse(readFileSync(join(repoRoot, 'exports/telnyx-assistant.json'), 'utf8'))
->   expect(
->     exported.instructions,
->     'agent/sol.md has changed without a --refresh and a re-export, so the committed export -- a named ' +
->       'deliverable whose whole value is being the live agent\'s own config -- describes an agent that ' +
->       'no longer exists. Run the provision refresh and re-export in the SAME change.',
->   ).toBe(compiled.instructions)
-> })
-> ```
+**`agent/sol.md` is untouched**, mtime 01:34, before It126 — compile **29,784, margin 216, not truncated,
+`compile === export: true`**. Part (c) was a prompt clause and I recommended **against** it on the
+arithmetic: ~130 characters out of 216 of head-room, to reduce an unmeasured risk on a beat that worked
+twice. **They took the recommendation rather than the thorough-looking option.**
 
-Assert the **greeting** the same way if it is cheap; it is compiled from the same file and diverges for the
-same reason.
+### All agent tasks are closed — T44, T46–T50 shipped; T38–T43, T45 closed in iteration 157
 
-#### The honest limit of this guard, which the message should carry
+Everything below this line is closed, or evidence. **What is left is Enrique's, plus one thing only a Tester
+can do:** re-verify the auto-triage agent, which writes drafts and so needs the service-role key or a
+signed-in rep. `BACKLOG.md:50` still carries that open caveat.
 
-**A test cannot see Telnyx.** This pins *compile === committed export*. It implies *source === live* only
-because the export is produced by `scripts/telnyx/export-assistant.mjs` **from the live assistant** — so the
-guard enforces the workflow the banner already prescribes (**edit `sol.md` → `--refresh` → re-export, in one
-change**) rather than observing production. **Say that in the comment.** A guard that is quietly believed to
-watch production is worse than one whose reach is written down.
-
-**And it will be red between the edit and the re-export.** That is the point, not a flaw: it makes the two
-halves land together. Whoever adds it should expect it red until It122's refresh runs, and **must not "fix"
-it by regenerating only the export from a stale live assistant** — that makes all three agree on the old
-text and silently reverts T48.
-
-**Check when done:** with `sol.md` edited and no refresh, the test is red and names the refresh; after
-`--refresh` plus re-export, `compile === export === live` and the suite is green; the comment states that the
-test does not reach Telnyx.
-
-### T50. Michael Chen has two reservations, and they give opposite answers on the demo's showpiece beat
-
-> **RESTORED in iteration 167.** This section was filed at 01:36 and was **absent from the file at
-> 01:43**, while three other lines still pointed at it. Another agent edited this file in the same
-> minute — a one-token privacy redaction they flagged and I agree with. **I cannot determine which
-> write dropped the section and I am not going to guess**; restored verbatim from my own copy, and
-> their redaction is preserved. See iteration 167.
-
-*Not currently broken — I drove it against production twice and both runs were correct. **What is missing is
-that nothing written down makes it correct.** The cheapest fix costs one line and no prompt margin.*
-
-#### What is true
-
-**`G10004` is the only guest of 24 with two reservations**, and he is the guest the demo's best beat uses:
-
-```
-R55004  SOL-DEN  2026-07-20  Confirmed  Platinum   <- the cheat sheet's beat
-R55015  SOL-AUS  2026-09-05  Confirmed  Platinum   <- nearest to "now", 2026-09-26
-```
-
-`identify_guest` returns both and sets **`most_relevant_reservation_id: "R55015"`**. And
-`check_upgrade_eligibility` gives **opposite answers**, measured against production:
-
-| input | result |
-|---|---|
-| `{"guest_id":"G10004"}` | **`guaranteed`, `may_promise: true`** — *"Suite inventory exists for 2026-09-05, so confirm the upgrade"*, cites R55015 |
-| `{"reservation_id":"R55004"}` | **`policy_gap_manager_decision`, `may_promise: false`, `escalation_required: true`** — *"there is no Suite inventory on 2026-07-20"*, cites R55004 |
-
-**So the showpiece refusal becomes a confirmation if the wrong stay resolves** — on the beat the cheat sheet
-calls *"the better moment of the two"*, and **G8** is one of the nineteen guardrails.
-
-#### Why it is not broken today, stated precisely
-
-Two live runs of *"Hi, confirmation R55004, last name Chen. I'd like to upgrade to a suite"*:
-
-> *"Suites are showing sold out for your July 20 dates at Denver Union Station… I'm putting this in front of
-> the manager on duty."*
-> *"…Suites are showing sold out for July 20 at Denver Union Station. That's a judgment call the manager on
-> duty needs to make."*
-
-**Both correct, both Denver.** Sol uses the confirmation number the guest gave.
-
-**But `most_relevant_reservation_id` appears nowhere in `agent/sol.md`**, and neither does any instruction
-about a guest with more than one stay. The payload hands the model a field literally named *most relevant*
-pointing at the other reservation, and the right behaviour rests entirely on its judgement. **Two runs is
-evidence, not reliability** — and this is the one beat where the wrong branch is not a worse answer but the
-**opposite** answer.
-
-#### And it is already visible in two committed deliverables
-
-- `transcripts/platinum-late-checkout.md:14` — *"`identify_guest` — Verified Michael Chen (Platinum) _(cites:
-  Guest profile G10004; **Reservation R55015**)_"*
-- `transcripts/voice-call.md:107` — `get_reservation` returned **R55015**, Austin
-
-**Neither is wrong.** Late checkout is a tier guarantee, so both stays give the same answer — I checked:
-`guest_id` alone and `reservation_id: R55004` both return `guaranteed / may_promise: true`. **But nothing
-explains why the "Denver, Jul 20–23" guest is identified against an Austin reservation**, and a reviewer who
-notices has found something unexplained in a named deliverable.
-
-#### Do this — (a) is the whole value, and costs no prompt margin
-
-**(a) One line in `docs/demo-cheatsheet.md`, on the R55004 row:**
-
-> **Always give the confirmation number on this one.** Chen is the only guest in the data with two stays —
-> R55004 Denver Jul 20–23 and R55015 Austin Sep 5–7 — and **Austin has suites free**, so identifying him
-> without the number can turn the refusal into a confirmation.
-
-**(b) One clause in `transcripts/README.md`**, turning the R55015 citations from an oddity into a point: the
-only guest with two reservations is resolved to the nearer one when no confirmation number narrows it, and
-the tier answer is the same either way.
-
-**(c) A prompt clause — my recommendation is NOT to do this before the demo.** It belongs in `agent/sol.md`
-and would have to stay in the voice prompt, because a phone guest gives a confirmation number too. **The
-margin is 216 characters.** A usable clause is ~130, leaving ~86 — and this file's own banner warns that two
-edits of ~210 truncate the live prompt. **Buying a small reduction in an unmeasured risk by spending 60% of
-the remaining head-room, nine hours out, is the wrong trade.** It is the right fix for the week after.
-
-**Check when done:** the cheat sheet row names the second reservation and why the number matters; the
-transcripts README explains the R55015 citations; `agent/sol.md` is untouched and the compile is still
-29,784.
 
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
@@ -460,7 +366,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 ---
 
-# ▶ OPEN WORK — three things for Enrique to DO, two decisions that need no action, and T50 for an agent.
+# ▶ OPEN WORK — three things for Enrique to DO, three decisions that need no action. **No agent task is open.**
 
 *Everything below this section is closed, or evidence.*
 
@@ -476,7 +382,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > edits this next: **when you close a task, delete its entry from this screen in the same edit.** The
 > record lives in the verification log; it does not need a second home above the work.
 >
-> **T49 shipped in It123. What remains for an agent is T50.** What remains for Enrique is the items in the
+> **T49 shipped in It123 and T50 in It126. Nothing is left for an agent.** What remains for Enrique is the items in the
 > table below, and every one of them now also appears in `HUMAN_INTERVENTION.md` — items 1 and 4
 > reached it at 00:05 in the update block at **line 63**, which closed the routing gap iteration 156
 > filed T45 for.
@@ -1683,6 +1589,241 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 171, 02:05 EST — the approval gate holds in the live data: nothing has ever been sent that needed approval
+
+#### The measurement that matters most for item 1
+
+With the `group_sales` token, all ten proposals, using the code's own predicate
+(`store.ts:448` — `status === 'flag' || status === 'fail'`):
+
+| proposal | status | blocking verdicts | approver |
+|---|---|---|---|
+| PRP-2001 · PRP-2001-2 · PRP-2001-3 · PRP-2006 | **sent** | **0** | none needed |
+| PRP-2005 · PRP-2007 · PRP-2008 · PRP-2009 | **awaiting_approval** | 2 · 2 · 3 · 1 | none |
+| PRP-2002 | rejected | 2 | none |
+| PRP-2011 | draft | 0 | none |
+
+```
+SENT with blocking verdicts and NO approver:  none
+```
+
+**Every proposal that carried a blocking rule is parked or rejected. Every proposal that was sent carried
+none.** The blocking rules are real ones — `GRP-DISCOUNT-CEILING`, `GRP-ROOMS-CAP`, `GRP-OVERFLOW-ROUTING`,
+`GRP-INSURANCE-CERT`, `GRP-MEETING-CAPACITY`.
+
+> **What this adds to Enrique's item 1.** The RLS hole is a bypass that **exists and has never been walked
+> through.** The disclosure says *"a signed-in rep **can** mark their own flagged proposal approved"* — a
+> capability, not an event — and the live audit state now confirms nobody has. **Applying the paste closes a
+> door with nothing behind it, which is the best version of that decision.**
+
+#### And a precision fix to my own banner
+
+I queried `proposals.approved_by` and got `42703: column proposals.approved_by does not exist`. **It is not a
+column.** `store.ts:215-225` persists it inside `pricing.__proposal`, and `approveProposal` also writes it to
+`audit_log`. My banner said *"`approved_by` stays **null**"*, which implies a column a reviewer will not find
+when they grep `schema.sql`. **Changed to "unset", with one clause saying where it actually lives.**
+
+The substance was right: when a rep PATCHes `status` directly, `approveProposal` never runs, the sidecar is
+never written, and `assistant.ts:196`'s `proposal.approved_by ?? 'an authorised approver'` falls through to
+the phantom. **Same defect, correctly located.**
+
+#### Ninth instrument slip, and this time an impossible result was the tell
+
+My first pass guessed the verdict shape — `blocks`, `severity`, `passed` — and reported **zero blocking
+verdicts on all ten proposals**, including the four sitting in `awaiting_approval`.
+
+**Four proposals parked for approval with nothing to approve is not a finding, it is an impossibility.** I
+read one verdict object and `blockingVerdicts()` instead of guessing again, and the real shape is
+`status: 'pass' | 'flag' | 'fail'`.
+
+> The tell keeps changing and the lesson does not. An unchanged output, a dangling reference, a self-
+> falsifying sentence, and now **a result that cannot be true of a working system.** **Reach for the code's
+> own predicate rather than inventing one** — `blockingVerdicts` was six lines away and exported.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Reads proven live (13/10/3). **Gate proven clean: nothing sent that needed approval.** Write policies: Tester's 20:26 check, not re-provable by me | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique — **do** |
+| 3 | **T21** — two rows, cascade count first. Inbox still holds **13** | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
+
+**No agent task is open.** Inbox empty. No lock held. Tester silent **5h39m**.
+**The plan is accurate and correctly ordered.**
+
+### Iteration 170, 01:59 EST — signed in as two real roles and proved the boundary from the database side, which closes the gap I left open at iteration 161
+
+#### The measurement
+
+Two staff accounts, real passwords, real Supabase tokens, reading PostgREST directly:
+
+| token | `inquiries` | `proposals` | `follow_ups` | `sessions` |
+|---|---|---|---|---|
+| **concierge** — `supervisor@solsticehotels.com` | **0** | **0** | **0** | **279** |
+| **group_sales** — `sales@solsticehotels.com` | **13** | **10** | **3** | **0** |
+
+**A clean mirror in both directions, and not a filtered view — the rows are not there to be had.**
+
+#### It verifies `docs/role-walkthroughs.md`'s "Proving the boundary" word for word
+
+The section a reviewer is most likely to actually run, because it answers *"is the security real or is it
+just the UI"*. All three of its claims:
+
+```
+GET /api/group/proposals, no header
+  -> 401 {"ok":false,"error":"Authorization: Bearer <supabase access token> is required."}
+
+GET /api/group/proposals, concierge token
+  -> 403 {"ok":false,"error":"This role cannot see group sales. Group sales inquiries are readable
+          by group_sales and admin only, which is what row level security enforces in the database
+          as well."}
+
+GET /api/group/proposals, group_sales token
+  -> 200
+```
+
+**Both refusal bodies are quoted verbatim in the document and both came back verbatim.** And its
+*"zero rows of thirteen"* is **exact**: the group inbox holds **13** and the concierge sees **0**.
+
+#### And this is the thing I could not do at iteration 161
+
+When I retracted the zero-row PATCH probe I wrote that the anon key *"returns zero rows to all three tables,
+which is designed behaviour"* and that I therefore **could not confirm the read policies actually serve a
+signed-in rep**. That was the honest limit at the time. **It is now closed from the data side:**
+`inq_read` / `prop_read` / `fup_read` **demonstrably serve 13, 10 and 3 rows to a real `group_sales` token.**
+
+> **This strengthens Enrique's item 1, the thing that has been number one all night.** The safety argument
+> for the `drop policy` paste is that dropping the three *write* policies cannot blank the sales inbox,
+> because the three *read* policies are declared separately in `supabase/schema.sql:183-185`. Until now that
+> rested on reading the declarations and on `rls-policies.test.ts`. **It now also rests on having watched
+> those policies serve rows to the role that matters.**
+
+**Stated precisely, because iteration 161's retraction still stands:** this verifies the **reads**, which is
+the safety half. It does **not** re-verify that `prop_write` is still present — there is no read-only test for
+that, and the last valid check remains the Tester's twelfth at ~20:26.
+
+#### Also verified: the role wiring behind the custom interface
+
+A named brief deliverable I had only ever checked by curling `/admin` for a 200.
+
+```
+src/App.tsx:26  RequireRole allow={['concierge','admin']}     -> /admin/sessions, /admin/sessions/:id
+src/App.tsx:32  RequireRole allow={['group_sales','admin']}   -> /admin/inquiries, /admin/inquiries/:id
+src/App.tsx:38  RequireRole allow={['admin']}                 -> /admin, /admin/backend, /admin/cost
+scripts/seed-users.mjs:32-34   supervisor@ -> concierge · sales@ -> group_sales · admin@ -> admin
+shared/types.ts:6              'concierge' | 'group_sales' | 'admin'   (matches schema.sql:4)
+```
+
+**Every seeded account's role is in the allow-list for the page the walkthrough sends it to.** The one thing
+a reader might trip on is cosmetic and internally consistent: the account is called **supervisor@** and the
+role enum calls it **`concierge`**. The walkthrough describes the person, the enum describes the role. **Not
+worth a task.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Reads now **proven live** to serve 13/10/3 to `group_sales`, so the paste cannot blank the inbox. Whether the write policies are still there: Tester's 20:26 check, **not re-provable by me** | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique — **do** |
+| 3 | **T21** — two rows, cascade count first. **The inbox still holds 13**, so it is still undone | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
+
+**No agent task is open.** Inbox empty. No lock held. Tester silent **5h33m**.
+**The plan is accurate and correctly ordered.**
+
+### Iteration 169, 01:54 EST — every agent task is closed, and the protocol itself explains how T50 could vanish
+
+#### T50 shipped (It126), scoped exactly as filed — including the part I told them not to do
+
+**(a)** `docs/demo-cheatsheet.md`'s R55004 row now carries the warning **and the measurement**, which is more
+than I asked for: *"**Always give the confirmation number on this one.** Chen is the only guest in the data
+with two stays… **Austin has suites free**… Measured: `check_upgrade_eligibility` by `guest_id` returns
+`may_promise: true`; by `reservation_id: R55004` it returns `may_promise: false` and escalates."*
+
+**(b)** `transcripts/README.md:19` turns the two R55015 citations from an oddity into a point, with the
+distinction that matters: *"a late checkout is a **tier** guarantee, so both stays give the same answer…
+It matters on the *upgrade* question instead."*
+
+**(c) `agent/sol.md` is untouched** — mtime 01:34, before It126. **Compile 29,784, margin 216,
+`truncated: false`, `compile === export: true`.** I recommended against the prompt clause on the arithmetic
+that it would spend 60% of the remaining head-room, and they took the recommendation rather than the
+thorough-looking option. **Every agent task in this file is now closed.**
+
+#### Verified: `docs/how-this-was-built.md`'s claims about the protocol, which describes my own loop
+
+Katie's *"build with agents"* ask, 154 lines, never checked. Its two sharpest claims are about
+`agents/README.md`, and both hold:
+
+| claim | `agents/README.md` |
+|---|---|
+| *"the release now lives inside the success branch, where it is **incapable** of releasing a lock the agent does not hold"* | `:47` `if mkdir agents/.lock … then` … `:55` `rmdir agents/.lock  # release ONLY here` … `else` ✓ |
+| *"The document defining single-writer ownership also had no declared writer of its own… It has one now."* | `:19` `\| agents/README.md \| Implementer \| reads \|` ✓ |
+
+**And the "six agents" line is not the contradiction it looks like.** Line 7 says six, line 105 says three;
+line 107 reconciles them — *"Day one was six agents in parallel. Day two… three agents."* Correct as written.
+
+#### The protocol documents a mechanism that would explain iteration 167's lost section
+
+`agents/README.md:51-52`, inside the lock block, tells whichever agent holds the mutex to stage **my** files:
+
+```bash
+git add <the files your task touched>  agents/<you>.status.md  agents/<your log>.md \
+        plans/06-master-plan.md  agents/planner.status.md  BACKLOG.md
+```
+
+> *"and so do the Planner's, **because nobody else can commit them**."*
+
+**So my edits are uncommitted until another agent commits them, and every merge, deploy and working-tree
+operation happens under someone else's hands.** That is a specific, documented mechanism by which an
+uncommitted insert of mine can disappear while the file stays perfectly coherent — which is exactly what
+T50 did.
+
+**I am still not asserting it is what happened.** I cannot confirm it without git, which my brief forbids, and
+a mechanism that *could* explain something is not evidence that it *did*. **What changes is that iteration 167
+called the cause unknown, and it is now unknown-but-named.**
+
+**The mitigation costs nothing and already worked once:** I keep every section I file in my scratchpad, which
+is how T50 was restored verbatim in under a minute. **No task filed** — the fix would be to someone else's
+file for a cause I have not confirmed, nine hours out, and the recovery path is already proven.
+
+#### Verified: all three RLS disclosure sites, because Enrique's item 1 turns on them
+
+If he applies the `drop policy` paste, **all three** must go, or none:
+
+```
+README.md                "One defect is open"       present
+SUBMISSION.md            "Known open defect"        present
+docs/where-this-goes.md  line 48                    present
+```
+
+`where-this-goes.md:48`: *"the open defect the README names: until migration 004 is applied a signed-in rep
+can set the status…"* — **the one my banner named only two of until iteration 146, and it is still there.**
+
+*(My first probe searched that file for "RLS", which it does not use. Eighth of these; I read line 48 before
+concluding, so nothing false was written. I have made this point seven times and will stop making it.)*
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Last valid check 20:26 (Tester); **not re-provable by me.** All three disclosure sites confirmed present at 01:54 | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling | Enrique — **do** |
+| 3 | **T21** — two rows, cascade count first | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
+
+**No agent task is open.** Inbox empty. Lock held by another agent; not mine to take and I did not.
+Tester silent **5h26m**. **The plan is accurate and correctly ordered.**
 
 ### Iteration 168, 01:49 EST — the file was never being rewritten under me; I was comparing bytes to characters
 

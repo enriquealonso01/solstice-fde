@@ -249,3 +249,83 @@ describe('the requirements audit', () => {
     ).toContain('that name no longer exists in the code')
   })
 })
+
+/**
+ * The four build-phase plans, audited at iteration 127 — the last files in the repository nobody
+ * had re-read since they were written on 2026-09-24.
+ *
+ * Each states something a reader would act on and that is no longer true: the deadline, which
+ * `plans/03-messaging.md` derives its whole SMS conclusion from; what a supervisor actually hears
+ * on a live call; and a checklist whose every box is unticked while the work behind it is done.
+ * They are corrected the way `AGENTS.md` and the requirements audit were — a dated block
+ * prepended, nothing below it edited — so each plan stays the record of what was decided on the
+ * day, and the correction travels with it instead of living in an errata file nobody opens.
+ *
+ * Two halves are pinned. The claim must still be in the file, or the case is vacuous and guards
+ * nothing; and the correction must still be attached to it. The third case is the part that really
+ * rots: the corrections cite three other files by line, and all three are edited nightly.
+ */
+describe('the four build-phase plans', () => {
+  const CORRECTED = [
+    {
+      file: 'plans/01-build-plan.md',
+      stale: 'Deadline: submit ~2026-09-27.',
+      why: 'the brief allows 5 business days from a 2026-09-24 receipt, so the deadline is ~2026-10-01',
+    },
+    {
+      file: 'plans/02-voice-realtime.md',
+      stale: 'Supervisor hears both sides',
+      why: 'a live call proved the supervisor hears the guest only, because an assistant leg injects its audio',
+    },
+    {
+      file: 'plans/03-messaging.md',
+      stale: 'Only ONE business day',
+      why: 'five business days sit inside the real window, so "SMS cannot clear" did not follow from the table',
+    },
+    {
+      file: 'plans/04-unlock-checklist.md',
+      stale: 'Submission target: Sunday 2026-09-27',
+      why: 'every box is unticked while the work behind it is done, and the date is wrong twice over',
+    },
+  ]
+
+  it.each(CORRECTED)('$file still makes the claim, so this case cannot pass vacuously', ({ file, stale }) => {
+    const text = readFileSync(join(repoRoot, file), 'utf8')
+    expect(text, `${file} no longer contains "${stale}"; rewrite or drop this case`).toContain(stale)
+  })
+
+  it.each(CORRECTED)('$file carries a dated correction for it', ({ file, why }) => {
+    const text = readFileSync(join(repoRoot, file), 'utf8')
+    expect(
+      text,
+      `${file} presents 2026-09-24 planning as current with no dated correction attached: ${why}. ` +
+        `Rewriting the claim instead of annotating it also satisfies this, once the claim is gone.`,
+    ).toMatch(/> ## Correction, \d{4}-\d{2}-\d{2} --/)
+  })
+
+  // What the corrections point at, and the text that has to be on that line. `HUMAN_INTERVENTION.md`
+  // and `README.md` are both appended to during a session, so a citation into them is a live wire.
+  const CITED: Array<[string, number, string]> = [
+    ['HUMAN_INTERVENTION.md', 122, '10DLC registration not started on the funded account'],
+    ['README.md', 179, 'Partly working, and stated precisely because it matters'],
+    ['netlify/functions/voice/supervisor.ts', 13, 'supervise_call_control_id'],
+  ]
+
+  it.each(CITED)('%s:%d still says what a plan correction cites it for', (file, line, needle) => {
+    const lines = readFileSync(join(repoRoot, file), 'utf8').split('\n')
+    expect(
+      lines[line - 1] ?? '',
+      `${file}:${line} no longer contains "${needle}". A correction in plans/ sends a reader to that ` +
+        `exact line, so either the line moved or the claim did.`,
+    ).toContain(needle)
+  })
+
+  it('quotes every one of those citations from a plan, so none of them guards nothing', () => {
+    const all = CORRECTED.map(({ file }) => readFileSync(join(repoRoot, file), 'utf8')).join('\n')
+    for (const [file, line] of CITED) {
+      expect(all, `no plan correction cites ${file}:${line} any more; drop it from CITED`).toContain(
+        `${file}:${line}`,
+      )
+    }
+  })
+})

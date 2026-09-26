@@ -9,23 +9,28 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It126: T50 — the showpiece beat has an opposite answer one missing confirmation number away.**
-- **Verified before writing.** `G10004` is the only guest of 24 with two reservations, and
-  `check_upgrade_eligibility` really does invert: by `guest_id` → `may_promise: true` (Austin has suites); by
-  `reservation_id: R55004` → `may_promise: false`, escalates (Denver has none). The refusal the cheat sheet
-  calls *"the better moment of the two"* becomes a confirmation if the wrong stay resolves.
-- **Not broken today** — Sol uses the number the guest gives — **but nothing written down made it correct**,
-  and two live runs is evidence, not reliability.
-- **Shipped (a) and (b), declined (c), agreeing with the Planner's reasoning.** A prompt clause is ~130
-  characters against **216** of margin, nine hours out; `agent/sol.md` is untouched and the compile is still
-  **29,784**. The cheat sheet now tells the presenter to give the number and why, and `transcripts/README.md`
-  turns the two `R55015` citations from an oddity into a point.
-- **On T50's header, which names my It124 redaction as the other write that minute.** My commit shows **174
-  insertions, 5 deletions**, and the five are four of the Planner's own replaced banner lines plus my one
-  redacted address — **no section removed**. But that does not clear me: a lost update of *uncommitted* work
-  leaves no trace in a diff. **I read their whole file, changed one string and wrote it all back**, which is
-  exactly the race. I cannot rule it out and will not claim otherwise.
-- `agents/README.md` now forbids read-modify-write on another agent's live file and gives the compare-and-swap.
+- **It127 SHIPPED: the last four unread plans, audited and corrected.** A dated block prepended to each,
+  nothing below it edited — 106 insertions, **0 deletions**, the shape used for `AGENTS.md` (It119) and the
+  requirements audit (It125). Guarded by a new describe in `doc-paths.test.ts`, red-checked three ways.
+- **The deadline in the plans is wrong, and I read the brief rather than repeat the Planner's fix.** The PDF
+  says *"You'll have 5 business days from receipt to submit."* Received 09-24, so **~2026-10-01**, not the
+  `~2026-09-27` that four files carry. Enrique submits **09-26 11:00 EST early, by choice.** Extracted with
+  `pypdf`, after the repo's own extractor returned 74,698 characters of font data and no prose.
+- **That wrong date was carrying an argument.** `03-messaging.md` priced SMS off *"Only ONE business day sits
+  between them"*; there are **five**, and its own table clears 10DLC in four at the optimistic end. So
+  *"SMS cannot clear before submission. That is settled"* did not follow from its numbers. It held anyway for
+  an unrelated reason: no brand or campaign was ever registered (`HUMAN_INTERVENTION.md:122`), so the clock
+  it prices never started.
+- **`02-voice-realtime.md` states a capability a live call disproved.** Its Listen row promises *"Supervisor
+  hears both sides"* — the supervisor hears the **guest only**; an assistant leg injects Sol's audio rather
+  than streaming it (`README.md:179`). Its open "TEST FIRST" item 1 is answered **yes**: supervision does work
+  against an `ai_assistant_start` leg. The conference fallback is now the fix for the audio gap instead.
+- **`04-unlock-checklist.md` was the one I expected to be stale, and it is worse than stale.** Every box
+  unticked while §2, §3 and §4 are all done — and §1 claims 10DLC *"Started 2026-09-24"*, false of the funded
+  account. Nothing was ever queued, so nothing is coming.
+- `01-build-plan.md`: D11 no longer needs Enrique's confirmation, all seven phData deliverables exist (the
+  diagram as **SVG, not the PNG it names**), there are **six** sample transcripts not seven, and it still
+  calls the net-new tool `availability_service` — a name `tool-naming.test.ts` bans.
 
 ## Demo rehearsal coverage — what is actually verified
 
