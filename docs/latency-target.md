@@ -55,6 +55,37 @@ Two things we are stating rather than smoothing over:
   qualifier: when Sol answers from the conversation alone, the guest waits for prose with no
   intermediate signal.
 
+### Re-measured at 2026-09-26, after three prompt changes — the signal target is now met
+
+The prompt grew by about 650 characters that night (three edits to `agent/sol.md`), and every one of
+them adds input tokens to **every** chat turn, so these numbers were re-run rather than assumed. Same
+six scenarios, fresh sessions, twice:
+
+| | pass 1 | pass 2 | committed |
+|---|---|---|---|
+| First signal p50 | **905ms** | **1009ms** | ≤ 1500ms |
+| First prose token p50 | **2589ms** | **2246ms** | ≤ 4000ms |
+| First token range | 723–4056ms | 612–6086ms | — |
+
+**The signal target is met, on both passes, with about 40% of margin** — so the confession above, that
+we miss it by 45ms, describes a build that no longer exists. It is left standing because it was true
+when written and the reasoning behind it is the part worth keeping.
+
+**And the slow tail is slower than we published.** One turn reached 6086ms to first prose, against the
+870–5040ms range stated above. Six turns is not a p95 and neither pass claims to be one; what two
+passes do establish is that the *median* is comfortably inside both targets while the *worst case* is
+outside anything we have written down. If a reviewer sees one slow answer, that is the honest
+explanation, not a fluke.
+
+**The voice-side commitment holds, and this one is properly sampled.** `POST /api/tools/get_policy`,
+60 warm calls: **p50 102ms, p90 122ms, p95 135ms, max 164ms, and nothing over 300ms.**
+
+A note on how that number was nearly reported wrongly. A first run of 20 calls gave a p95 of **950ms**
+— a single cold instance, which at n=20 *is* the p95 by construction. Written up from that sample it
+would have said the published target is missed by 650ms, in a deliverable a reviewer can test in one
+command. The larger sample says the opposite. A tail statistic from twenty samples is the worst of
+twenty, not a p95.
+
 ## Why, specifically
 
 The time is **model generation, not our code**. Three things we checked rather than assumed:
@@ -76,9 +107,9 @@ We split it, because the two channels have genuinely different budgets.
 
 **Chat: first *signal* p50 ≤ 1.5s, first prose token p50 ≤ 4s.**
 The signal that matters in a chat interface is not the first word, it is visible evidence that work
-is happening. On a turn that calls a tool, the chip renders at a p50 of about 1.5s saying something
-grounded and specific such as "Checking the service recovery window", and arrives well before
-prose. A guest watching a named tool run does not experience four seconds of silence.
+is happening. On a turn that calls a tool, the chip renders at a p50 of about a second — 905ms and
+1009ms on the two re-measured passes above — saying something grounded and specific such as
+"Checking the service recovery window", and arrives well before prose. A guest watching a named tool run does not experience four seconds of silence.
 
 The caveat, measured rather than assumed: **on a turn that calls no tool there is no chip**, and
 the guest waits for prose. In our sample that turn was also the fastest to first token, so the gap

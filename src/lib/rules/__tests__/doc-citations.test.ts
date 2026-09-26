@@ -278,3 +278,50 @@ describe('the customer proposal link disclosure', () => {
     expect(para, `the disclosure no longer ${_label}`).toContain(needle)
   })
 })
+
+/**
+ * A target one document publishes and another quotes must be the same number.
+ *
+ * `docs/latency-target.md` is the only place the commitments are set, and two of them are quoted
+ * elsewhere: `docs/demo-runbook.md` justifies the pre-demo warm-up as *"about 6× the published p95 of
+ * ≤300ms"*, and the same document's own argument section restates the chat signal figure. Change a
+ * target in one place and the other becomes a confident quotation of a number nobody holds any more —
+ * and a latency target is exactly the sort of thing that gets softened under pressure.
+ *
+ * Latency itself cannot be tested here; the suite is hermetic and a test that timed production would
+ * fail whenever the network hiccuped. What a test can do is keep the published figures consistent with
+ * each other, which is the part that rots silently.
+ *
+ * Measured at iteration 109, for the record rather than as an assertion: chat first-signal p50 905ms
+ * then 1009ms over two passes of six turns, against the ≤1500ms committed; first prose token 2589ms
+ * then 2246ms against ≤4000ms; and the tool webhook, properly sampled at 60 warm calls, p50 102ms and
+ * p95 135ms against the ≤300ms committed.
+ */
+describe('latency targets quoted across documents', () => {
+  const source = 'docs/latency-target.md'
+
+  const TARGETS = [
+    { label: 'the voice webhook p95', text: '300ms', quotedIn: ['docs/demo-runbook.md'] },
+    { label: 'the chat first-signal p50', text: '1500ms', quotedIn: [] },
+    { label: 'the chat first-token p50', text: '4000ms', quotedIn: [] },
+  ]
+
+  it.each(TARGETS)('$label is still published as $text', ({ text }) => {
+    const doc = readFileSync(join(repoRoot, source), 'utf8')
+    // Either spelling: the doc writes "300ms" in the commitment and "≤ 1.5s" in prose.
+    const alt = text === '1500ms' ? '1.5s' : text === '4000ms' ? '4s' : text
+    expect(
+      doc.includes(text) || doc.includes(alt),
+      `${source} no longer publishes ${text}. If a target moved, every document quoting it moved too.`,
+    ).toBe(true)
+  })
+
+  it.each(TARGETS.filter((t) => t.quotedIn.length > 0))('$label is quoted consistently', ({ text, quotedIn }) => {
+    for (const doc of quotedIn) {
+      expect(
+        readFileSync(join(repoRoot, doc), 'utf8'),
+        `${doc} quotes a latency target published in ${source}, and no longer contains ${text}.`,
+      ).toContain(text)
+    }
+  })
+})

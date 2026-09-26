@@ -9,20 +9,25 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It108: beat 4's numbers are right, and now all three of them are in the runbook.**
-- **No defect.** `price_block` on INQ-2009's own shape (SOL-PHX, 15 Deluxe King, 2026-07-28 to 07-31):
-  **15% → $7,994.25 · 16% → $7,900.20 · 17% → $7,806.15**. The one figure the runbook printed was the
-  right one, and `show-verdict.ts`'s $7,806.15 is the 17% option, not a contradiction. The lower
-  discount costing more is the sanity check that both attributions are the right way round.
-- **What was missing was the point of the beat.** It printed *"approve at 15% for $7,994.25, escalate
-  for a sign-off at 17%, or counter at 16%"* — two of the three options priceless. The beat exists to
-  make the approval gate concrete, and the concrete thing is the **$188.10** between approving today
-  and escalating for the signature. It now reads all three and states the spread.
-- **Pinned to `priceBlock`, not to my transcription of it.** `group-beat-prices.test.ts` recomputes each
-  figure, requires the runbook to carry it, requires the spread, and asserts a bigger discount cannot
-  cost more — that last one catches a typo that happens to match a wrong implementation.
-- Red-checked both ways: drop a figure from the runbook and it names it; bump `base_rate_deluxe` by
-  $1.00 and all three fail with the new totals. `data:check` green afterwards.
+- **SHIPPED It109: re-measured the published latency commitments after tonight's prompt growth. The
+  signal target is now met, the slow tail is slower than published, and I nearly filed a false finding
+  off a 20-sample p95.**
+- **Chat, same six scenarios, two passes:** first signal p50 **905ms** then **1009ms** against the
+  committed **≤1500ms**; first token p50 **2589ms** then **2246ms** against **≤4000ms**. So the doc's
+  own confession — *"the signal target is currently missed, narrowly, 1545ms against 1.5s"* — describes
+  a build that no longer exists. Left standing as history, with a dated re-measurement above it.
+- **The tail is worse than published, and that is in the same edit.** One turn hit **6086ms** to first
+  prose against the stated 870–5040ms range. Two passes of six establish a median inside both targets
+  and a worst case outside anything we had written down.
+- **The voice commitment holds, properly sampled: 60 warm calls → p50 102ms, p95 135ms, max 164ms,
+  nothing over 300ms.**
+- **The near-miss worth recording.** A first run of **20** calls gave p95 **950ms** — one cold instance,
+  which at n=20 *is* the p95 by construction. Written up, that would have said a deliverable a reviewer
+  can test in one command misses its target by 650ms. **A tail statistic from twenty samples is the
+  worst of twenty.** Resampling at 60 gave the opposite answer.
+- Also brought the argument section in step (it still said the chip renders "at about 1.5s") and pinned
+  the cross-document targets: `latency-target.md` publishes them, `demo-runbook.md` quotes ≤300ms, and
+  both must move together. Red-checked from both sides.
 
 ## Demo rehearsal coverage — what is actually verified
 

@@ -5978,3 +5978,68 @@ afterwards.
 
 `npx tsc -b` clean. `npx vitest run` **609 tests / 49 files** green (up 5). No prompt change, so no
 re-provision: compile === export === live still 29,655, margin 345.
+
+## It109 — re-measured the latency commitments, and nearly published a wrong one off twenty samples
+
+`docs/latency-target.md` is the deliverable most exposed to tonight's work and the one nobody had
+touched: it publishes figures a reviewer can test with `curl`, and all three of tonight's prompt changes
+(#136, #137, #138) add input tokens to **every** chat turn. The prompt grew about 650 characters. Nothing
+had re-run the numbers.
+
+**Chat — the same six scenarios the doc says it measured, fresh sessions, twice:**
+
+| | pass 1 | pass 2 | committed |
+|---|---|---|---|
+| First signal p50 | **905ms** | **1009ms** | ≤ 1500ms |
+| First prose token p50 | **2589ms** | **2246ms** | ≤ 4000ms |
+| First token range | 723–4056ms | 612–6086ms | doc says 870–5040ms |
+
+Two findings, pointing opposite ways, and both went into the same edit:
+
+- **The signal target is met, on both passes, with around 40% of margin.** The doc's own confession —
+  *"The signal target is currently missed, narrowly. 1545ms against 1.5s, on six turns"* — now describes
+  a build that does not exist. I left it standing, because it was true when written and the reasoning
+  under it is the part worth keeping, and appended a dated re-measurement above the argument.
+- **The slow tail is slower than published.** One turn reached **6086ms** to first prose against the
+  870–5040ms range the doc states. Six turns is not a p95 and neither pass pretends to be; what two
+  passes do establish is a median inside both targets and a worst case outside anything we had written
+  down. That is the honest answer if a reviewer sees one slow reply.
+
+I also brought the argument section in step: it still said the tool chip *"renders at a p50 of about
+1.5s"*, which was the old figure being used to justify the design. It now says about a second and quotes
+both passes.
+
+### The finding I nearly published, and why it was wrong
+
+The voice-side commitment is *"tool webhooks p95 ≤ 300ms, which is the part we own."* First measurement,
+20 warm calls to `/api/tools/get_policy`:
+
+```
+min 91ms  p50 107ms  p95 950ms  max 950ms      ->  "MISSED by 650ms"
+```
+
+That was one cold instance. **At n=20, the p95 is the worst of twenty by construction** — the statistic
+cannot distinguish a recurring tail from a single lambda spin-up. Written up, it would have claimed that
+a published target, in a document a reviewer can test in one command, is missed by more than 3×.
+
+Resampled at 60 warm calls:
+
+```
+min 91ms  p50 102ms  p90 122ms  p95 135ms  p99 164ms  max 164ms   0 of 60 over 300ms   ->  MET
+```
+
+The target holds comfortably. The rule to carry forward: **a tail statistic needs a sample that can
+contain the tail**, and the cheap fix is to measure again before writing, which cost one command here.
+This is the third near-miss in ten iterations where the instrument, not the system, was the problem.
+
+### What is pinned
+
+Latency cannot be tested hermetically — a suite that timed production would fail whenever the network
+did. What can rot silently is the *consistency* of the published figures: `latency-target.md` sets them
+and `demo-runbook.md` quotes *"the published p95 of ≤300ms"* to justify the warm-up. `doc-citations.test.ts`
+now requires the source to keep publishing each target and the runbook's quotation to match. Red-checked
+both ways: soften ≤300ms to ≤500ms in the source and it fails there; strip the figure from the runbook's
+sentence and it fails there.
+
+`npx tsc -b` clean. `npx vitest run` **613 tests / 49 files** green (up 4). No prompt change, so no
+re-provision: compile === export === live still 29,655, margin 345.
