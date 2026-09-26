@@ -28,6 +28,11 @@ in `agents/completed.log.md`, not here.
   bullets — the three were inline and the bullets belonged to other points. The guard is right that a colon
   after a count word promises an enumeration; the colon became a dash. Shipped as a follow-up because the
   first PR had already merged.
+- **And untracking it deleted it from disk.** `git rm --cached` keeps the working copy, but the branch commits
+  the deletion and `checkout main` then applies it — so the file the Planner reads as ground truth was gone,
+  removed by me while I was writing that it must stay. Restored from `b9145b7`, 94,544 bytes, byte-identical.
+  **The `test -f` in my own deploy verification was the only thing that could have caught it**: the suite was
+  green and every guard I had just written asserts the file is absent from *git*, which it was.
 
 ## Demo rehearsal coverage — what is actually verified
 
