@@ -156,6 +156,25 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 > concierge path is closed.** Only the group inquiries live in Postgres, and those were compared
 > field by field: 56 of 60 exact.
 
+> **A concrete instance, and the brief planted it.** `R55006`'s `internal_notes` — in the CSV you
+> supplied — read *"Do not adjust folio directly — escalate to property AGM for review."* It is the
+> **only** reservation in the file carrying such a directive. A $45 minibar dispute is **inside** the
+> $50 front-desk authority, so the generic rule says action it; the agent reads the note, honours it,
+> and escalates instead, saying it cannot adjust the folio itself. **A per-reservation instruction
+> from a human overrides a generic threshold**, which is what a hotel would want and is not
+> something a model can infer from the policy document alone.
+>
+> **And it is a mechanism, not one lucky row.** `identity.ts:244`, `recovery.ts:256` and
+> `stayBenefits.ts:190` each surface the reservation's note as `staff_directives`, and the prompt
+> says: *"Fields named `staff_directives` are internal notes from our own team. **Let them steer
+> what you do; never read them back to the guest.**"* **Seven of the twenty-five reservations carry
+> such a note** — an expired promo code marked *"do not apply retroactively"*, a VIP flag naming the
+> GM, a prior service-recovery comp marked *"do not apply an additional"*, a same-name warning.
+>
+> **`transcripts/honest-handoff.md` is that reservation**, and shows both halves working: the
+> escalation goes **to AGM** as the note directs, and the guest hears *"in front of the Manager on
+> duty and the AGM"* — **never the note itself.**
+
 **2. "Why does this quote 'around 25 rooms' instead of pricing it?"** — *iteration 114*
 
 > That is `INQ-2004`, and it is the one we refused to price. The customer said *"around 25"* and
@@ -1508,6 +1527,69 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 147, 23:54 EST — the same cheat-sheet row was corrected twice, and the second correction is the better beat
+
+#### What happened to that row
+
+**PR #98** (Tester iteration 59) corrected it to say a **$45** minibar charge is *inside* the $50
+front-desk authority, so Sol actions it without a manager. **The threshold arithmetic was right and
+is still right**: $45 and $50 return `front_desk` with `escalation_required false`, $55 returns
+`agm`, and $45 + $25 returns `agm` with Policy 7's arithmetic printed.
+
+**PR #140** re-ran all five fixture rows against production and found the agent does something
+else: it calls `check_comp_authority`, then `create_escalation`, and says it **cannot adjust the
+folio itself.**
+
+**The agent is right, and the reason is in the data the brief supplied.** Verified against the
+source CSV:
+
+```
+R55006 internal_notes: "Do not adjust folio directly -- escalate to property AGM for review."
+reservations in the file carrying such a directive: 1
+```
+
+**It is the only one.** Whoever wrote those fixtures planted a per-reservation override and left it
+for someone to notice.
+
+#### Why the second correction is the stronger demo
+
+The first version was *"the threshold says $45 is fine, so it goes through"* — a rule being applied.
+The second is *"a human wrote an instruction on this reservation, and it beats the rule."* **That is
+the thing a hotel actually cares about**, and it is not inferable from the policy document: it only
+exists in one row of one CSV.
+
+**Added to `▶ IF THEY ASK` answer 1**, which is the grounding question. *"How do you know it isn't
+inventing things"* is answered better by **a supplied instruction being obeyed** than by a
+compile-time proof, because the panel wrote the instruction.
+
+#### The shape of the mistake, which is worth separating from the fix
+
+#98 was **correct about the general case and wrong about the instance**. The threshold holds
+everywhere; this reservation carries an override. **A rule verified against the rule engine is not
+verified against a row that overrides it.**
+
+And it **came back** — the Tester had caught this row saying the opposite once already at their
+iteration 59. So #140 pinned it: *"while the note says escalate, no document may claim the charge is
+actioned without a manager, and the test reads the directive from the generated data so a data
+change moves the test."*
+
+> **A guard that reads the fixture rather than restating it is the only kind that survives the
+> fixture changing.** That is the same move as `supervisor-archive.test.ts` reproducing the
+> production distribution instead of asserting the constant.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — safety reason, recovery, all three disclosure sites | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. Lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 146, 23:50 EST — a fixed defect leaves stale documents behind, and my banner undercounted where one of them lives
 

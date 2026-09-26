@@ -4,42 +4,48 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 146 — 2026-09-25 ~23:50 EST
+## Iteration 147 — 2026-09-25 ~23:54 EST
 
-### Suite 604, deploy current with HEAD.
+### The same cheat-sheet row was corrected twice, and the second is the better beat
 
-### PR #139 names a direction of rot worth naming
+**PR #98** said a **$45** minibar charge is inside the $50 front-desk authority so Sol actions it
+without a manager. **The arithmetic was and is right** — $45/$50 → `front_desk`, $55 → `agm`,
+$45+$25 → `agm` with Policy 7 printed.
 
-The runbook and cheatsheet still told Enrique a bare *"Can I bring my dog?"* lands one in four and
-may answer *"pet policy can vary by property"*. **True at iteration 88, false since #138** — 4 of 4
-on a draft, twice more on production.
+**PR #140** re-ran the five fixture rows against production: the agent calls
+`check_comp_authority`, then `create_escalation`, and says it **cannot adjust the folio.**
 
-> *"the rare direction of doc rot — **claiming a flaw we no longer have** — in the two files he
-> reads while presenting, so he would hedge about a question that works."*
+**The agent is right, and the reason is in the supplied data.** Verified against the source CSV:
 
-**Fourth document the pet fix touched**: the email (#120), the prompt (#138), the demo notes (#139),
-and **my own answer 7** (iteration 145).
+```
+R55006 internal_notes: "Do not adjust folio directly -- escalate to property AGM for review."
+reservations carrying such a directive: 1   ← the only one
+```
 
-> **A disclosed defect creates as many stale documents as the places that disclosed it, and fixing
-> it makes every one wrong in the flattering direction** — the harder kind to catch, because nothing
-> about it reads like an error.
+Whoever wrote the fixtures **planted a per-reservation override** and left it to be noticed.
 
-### So I checked the disclosure that still matters, and found my own undercount
+### Why the second correction is stronger
 
-The RLS hole is disclosed in **three** places; `HUMAN_INTERVENTION.md:753` names all three:
-`README.md`'s paragraph, `SUBMISSION.md:39`'s **Known open defect** row, and a parenthesis in
-`docs/where-this-goes.md`.
+First version: *the threshold says $45 is fine.* Second: *a human wrote an instruction on this
+reservation and it beats the rule.* **That is what a hotel cares about**, and it is not inferable
+from the policy document — it exists in one row of one CSV.
 
-**My banner named only the first two.** Pasting the SQL and following my file would leave the
-**vision document** describing a hole just closed — where a stale defect reads worst. **Corrected.**
+**Added to `▶ IF THEY ASK` answer 1**, the grounding question: *"how do you know it isn't inventing
+things"* is answered better by **a supplied instruction being obeyed** than by a compile-time proof,
+because the panel wrote the instruction.
 
-### My search for those sites was wrong in the way I keep naming
+### The shape of the mistake
 
-I swept for the README's phrasings; **SUBMISSION.md uses its own** — *"a signed-in rep"*, in a table
-row. My patterns found two of three and I nearly reported the instruction as overcounting.
-**Predicted enumeration again.** Reading `SUBMISSION.md:39` directly took one command.
+#98 was **correct about the general case and wrong about the instance.** **A rule verified against
+the rule engine is not verified against a row that overrides it.**
+
+It had also **come back** — the Tester caught this row saying the opposite once before. #140 pinned
+it, and the test **reads the directive from the generated data** so a data change moves the test.
+
+> **A guard that reads the fixture rather than restating it is the only kind that survives the
+> fixture changing** — the same move as `supervisor-archive.test.ts` reproducing the production
+> distribution instead of asserting the constant.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — now with all three disclosure sites named. **T44** is the only agent
-item.
+**The `drop policy` paste.** **T44** is the only agent item.
