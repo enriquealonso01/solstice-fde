@@ -9,6 +9,37 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It146 SHIPPED → T57: the live-modification guard checked the file, not the object, so SOL-PHX's two
+  numbers could change and the suite stayed green.** `walkthrough-quotes.test.ts` pinned five fragments of the
+  snippet the panel watches Enrique edit and asserts each appears *somewhere in* `thresholds.ts`. **SOL-TPA
+  carries the identical pair** — `group_block_auto_approve_max_rooms: 35` and
+  `max_discount_auto_approve_pct: 15` — so Tampa alone satisfies the value assertions and Phoenix could
+  read anything.
+- **Why that is worse than a normal stale guard.** The beat's whole tell is *"'allowed 15' stays 15"*. If
+  Phoenix's ceiling drifted, the doc would show the panel a snippet reading 15 with a *"change to 12"* marker
+  and the presenter's only signal that the edit took would already be wrong — **on the one beat the brief
+  says they will ask for.**
+- **And the anchor landed on a comment.** `'SOL-PHX': {` matches the header comment at line 10 before the real
+  object at 102 — the same shape as T55's boundary: **anchor on a string that exists once and assert the
+  count.** The guard now anchors on `property_code: 'SOL-PHX',`, which occurs **exactly once**, slices back to
+  the enclosing brace and forward to the close, and asserts the four value fragments **inside that slice**.
+- **Verified every count T57 gave, independently — all five exact.** `'SOL-PHX': {` ×2 (comment 10, object
+  102) · `property_code: 'SOL-PHX',` ×1 · `property_name` ×1 · `max_rooms: 35,` ×2 (**92 Tampa**, 105 Phoenix)
+  · `max_discount_auto_approve_pct: 15,` ×4 (10 comment, 54 Austin, **93 Tampa**, 106 Phoenix).
+- **And proved the old guard would have passed the bad edit**, rather than asserting it: change Phoenix to 20
+  and the file still holds three copies of `…: 15,`, so the file-wide `toContain` was satisfied by the
+  comment, Austin and Tampa. The claim is now measured, not inherited.
+- **Red-checked four ways, including the one that must NOT fire.** SOL-PHX ceiling → 20 **fails** (it passed
+  before) · SOL-TPA ceiling → 20 **still passes**, because Tampa is not this beat · Phoenix renamed to
+  another city **fails** · a third `'SOL-PHX': {` appearing **fails**, which is the case protecting the
+  anchor from becoming ambiguous later. `thresholds.ts` restored byte-identical.
+- **Two more cases guard the slice itself**: it must not contain `SOL-TPA` — if it ever runs past the object's
+  close, Tampa's identical pair silently satisfies everything again — and the first `'SOL-PHX': {` must still
+  be a comment line, because that is the trap the document warns the presenter about.
+- **The doc now names a search string with one match.** It said *"Search for `'SOL-PHX'` instead"*, and that
+  search hits the header comment first — the very mistake the same paragraph warns about, and the one the
+  Tester made on stage-rehearsal. It now says `property_code: 'SOL-PHX',`, and says why.
+
 - **It145 SHIPPED: the "three places that mention it" list is complete — verified, and now guarded.**
   T56 shipped in It144. `HUMAN_INTERVENTION.md:817` tells Enrique that if he applies the `drop policy` SQL before
   submitting, the open-defect disclosure lives in **three** files: the `README.md` paragraph, the

@@ -1,6 +1,6 @@
 # Master plan: the whole picture
 
-> ## 05:24 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> ## 05:30 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
 > **One agent task is open: T57.** **T56 shipped at It144 — and it corrected me.** I handed the Implementer a
 > census p90 of **1488ms** and called the 1.5s first-signal target met. **That figure was one index low.**
 > Nearest-rank is **1502ms**, linear interpolation **1492ms**, and **10.1% of turns exceed 1500ms**, so the p90
@@ -870,11 +870,19 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 **5. "So how does the manager actually find out?"** — *iterations 84 and 33*
 
-> Today a supervisor reads the table. **Nothing pages anyone** — `notify` is an inert string array,
-> `_delivery/` carries proposals only, and no screen lists escalations. Policy 15 specifies same-day
-> routing and that is what Sol reports; **what is missing is the notification layer, and the
-> architecture diagram already marks that FUTURE.** We did not want to claim a pager we had not
-> written.
+> Today a supervisor reads the table. **Nothing pages anyone** — `notify` is an inert string array of
+> role names (`rules.ts:216`, consumed only to compose Sol's sentence), `netlify/functions/_delivery/`
+> carries **proposals and audit** only, and **no screen lists escalations**: the `escalations` table is
+> touched in exactly one file, `netlify/functions/tools/escalation.ts`, and never in the UI. Policy 15
+> specifies same-day routing and that is what Sol reports; **what is missing is the notification layer,
+> and the diagram already marks it FUTURE — name the node: “*Escalation queue — on-call rota and an SLA
+> timer; the human opens with everything the agent already tried*”, with “*Alerting and on-call —
+> PagerDuty on SLO burn, an open circuit, a grounded:false spike, queue depth or a delivery failure*”
+> beside it.** We did not want to claim a pager we had not written.
+>
+> *All four halves re-verified at 05:30. Two things in the old wording were wrong: it said `_delivery/`,
+> which resolves to nothing from the repo root — it is under `netlify/functions/` — and it dropped
+> **audit**, which `agent/sol.md:110` has and which is the half that makes an escalation attributable.*
 
 ---
 
@@ -905,8 +913,9 @@ edited every time one closes, and six times it was not.**
 >
 > **Amended at 04:31, and the amendment is the point.** This block said *"nothing is left for an agent"* while
 > T51, T52, T53, T54 and T55 came and went, and its heading still advertised **T51** five tasks after T51
-> shipped. **Six recurrences now, not five** — and the rule written three paragraphs above, *"when you close a
+> shipped. **Six recurrences at that point** — and the rule written three paragraphs above, *"when you close a
 > task, delete its entry from this screen in the same edit,"* **is a rule I wrote and then broke six times.**
+> **A seventh followed immediately, in the sentence below** — which is why the count is no longer the point.
 > So the fix is no longer a rule: **the heading and this block no longer state what is open, or how much is
 > closed, with a number.** *(Corrected at iteration 206. This sentence originally read “no longer carry task
 > numbers at all”, and that was **false when I wrote it**: nine lines above it this block still said
@@ -917,7 +926,7 @@ edited every time one closes, and six times it was not.**
 > cannot be kept true, remove it rather than promising to maintain it.**
 | # | Enrique's item | Why it is first / what it costs |
 |---|---|---|
-| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr`. **Only you can do this** — it is DDL, PostgREST cannot execute `drop policy`, and the repo has no RPC path; it needs the SQL editor in your browser. | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at **`HUMAN_INTERVENTION.md:817`**, heading ***"The three places that mention it"*** (re-verified 04:26; the SQL to paste is at **609** under ***"### What to run"***, summarised for you at **63**). **Search the quoted headings, not the numbers — they shifted by 13 in the last three hours.**. **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. |
+| 1 | **The `drop policy` paste**, Supabase project `bcrivjgqrxahgxyiqlpr`. **Only you can do this** — it is DDL, PostgREST cannot execute `drop policy`, and the repo has no RPC path; it needs the SQL editor in your browser. | **If you apply it before submitting, delete the disclosure paragraph in `README.md` and the row in `SUBMISSION.md`** — instructions at **`HUMAN_INTERVENTION.md:817`**, heading ***"The three places that mention it"*** (re-verified 04:26; the SQL to paste is at **609** under ***"### What to run"***, summarised for you at **63**). **Search the quoted headings, not the numbers — they shifted by 13 in the last three hours.**. **Now disclosed in both files** (PR #95), so applying it converts a publicly stated open defect into a closed one — and the sentence describing it can go to the past tense or stand as evidence the project found its own worst bug. The only open item with a **live security consequence**. Closes a hole where a signed-in rep can approve their own flagged proposal, and restores `agent/sol.md`’s **assumption 13** with **no deliverable edit**. Three lines, in the SQL editor. **Applying it breaks nothing in the repo — I checked all three reasons myself at 05:22, with a different instrument than the agent that wrote them:** the two guards that cover this (`send-gate-bypass.test.ts`, `rls-policies.test.ts`) contain **zero** `fetch(` and zero `createClient` and read the schema from disk, so SQL in the browser cannot turn them red; `schema.sql:183-185` declares only three `for select` policies on `inquiries`/`proposals`/`follow_ups` and **no client write policy**, so the repo is already correct and only the live database disagrees; and a full-tree sweep of **every file, every extension** found the disclosure in exactly the three reader-facing files the list names. |
 | 2 | **Top up Telnyx to at least $20** | **Live from the provider at 02:46: balance $3.03, `credit_limit` 0.00, `available_credit` $3.03.** **There is no credit line — at zero, calls stop dead.** A measured 3-second call cost about **$0.48**, so that is roughly **six calls** of headroom against the project's own pre-send gate of **$20** (`SUBMISSION.md:119`, `demo-runbook.md:15`). **It has been flat at $3.03 for hours because nobody has called** — it only falls when someone does, so the risk is a hard stop mid-demo rather than a slow drain. The number itself is **confirmed active** on the account. → portal.telnyx.com, Billing, about $30. |
 | 3 | **T21** — delete `INQ-2012` and `INQ-2013`, **keep `INQ-2011`** | *"DELETE-ME"* is **row one** of the sales inbox. **Verified safe three ways:** two deliverables cite `INQ-2011`/`INQ-2010`, the demo runbook names `INQ-2007`/`2009`/`2011`, and **neither row T21 deletes appears in either**. Both confirmed live: `INQ-2012` Vantage Labs `needs_review`, `INQ-2013` Vantage Labs DELETE-ME `auto_approvable`. Exact SQL in `HUMAN_INTERVENTION.md`. **An agent *could* do this — the service-role key deletes rows over PostgREST — and chose not to.** `HUMAN_INTERVENTION.md:27` says *"Neither the Tester nor I **will** delete production rows the night before"*: **will**, not **can**. So unlike item 1, **this one is delegable** if you are short of time at 10:00. |
 | 6 | **Your own email address is in this file, and it is the only real address left in the repo.** | The Implementer removed the hiring contact's work address from four tracked files at It124 — right call, and I have no objection. **`enrique@provensolved.com` is still here**, in the email-delivery check, and they left it because it is yours. The guard allowlists that domain with a comment saying it is deliberate, **so removing it breaks nothing**; the same neutral phrasing works. **No recommendation from me — a public repository under your name is a thing you may want your address on.** |
@@ -1548,7 +1557,10 @@ costs nothing against the 681-character margin (see T32):**
 
 > **What "today" rests on.** Policy 15 specifies same-day routing, and that is what Sol reports.
 > Nothing in this build *notifies* the manager: `notify` is an inert string array, `_delivery/`
-> carries proposals only, and no screen lists escalations. The row is durable and RLS-scoped, and
+> carries proposals only, and no screen lists escalations.
+> *[Iteration 207: this was the draft. What shipped in `agent/sol.md:110` reads “carries proposals **and
+> audit** only”, which is the accurate version — audit is the half that makes an escalation attributable.
+> The path is under `netlify/functions/`.]* The row is durable and RLS-scoped, and
 > the queue view with an on-call rota and SLA timer is marked FUTURE in `docs/architecture.svg`.
 > The promise is the hotel's policy; the paging that would make it self-executing is the next build.
 
@@ -2118,6 +2130,136 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 207, 05:30 EST — two near-misses and one real correction, all in a panel answer nobody had re-driven
+
+I took panel answer **#5, "So how does the manager actually find out?"** — an answer Enrique says out loud that
+concedes a gap, so every clause in it is a claim about the code. Four clauses. **Three hold, one was wrong twice.**
+
+#### What was wrong
+
+The answer said *"`_delivery/` carries proposals only."*
+
+- **The path resolves to nothing from the repo root.** It is `netlify/functions/_delivery/`. A panel member who
+  types `ls _delivery` finds no such directory — on the one answer whose whole purpose is to show we know exactly
+  what we did not build.
+- **It dropped "audit."** `agent/sol.md:110` — the shipped deliverable — says *"carries proposals **and audit**
+  only"*, and audit is the half that makes an escalation attributable. **My own verification log already had the
+  right version**: at `plans/06-master-plan.md:9848`, *"`_delivery/` carries proposals and audit ✓ audit.ts
+  config.ts index.ts telnyx.ts — no escalation path."* The correct measurement was in my file and the spoken
+  answer never got it. **Same failure as iteration 203's, except this time the note was mine.**
+
+**Corrected, and the answer is now stronger than it was wrong:** it names `rules.ts:216` for the inert array,
+gives the full path with *and audit*, says the `escalations` table is touched in exactly one file
+(`netlify/functions/tools/escalation.ts`, three `from('escalations')` calls, **never in the UI**), and **names the
+diagram node to point at** — *"Escalation queue — on-call rota and an SLA timer; the human opens with everything
+the agent already tried"*, with *"Alerting and on-call — PagerDuty on SLO burn, an open circuit, a
+`grounded:false` spike, queue depth or a delivery failure"* beside it. The T33 draft at `:1560` carries the same
+correction inline.
+
+#### Near-miss 1: I searched for our word, not theirs
+
+Checking *"the architecture diagram already marks that FUTURE"*, I grepped the diagram for `notif` and got
+**zero hits** — and for a moment had a false correction. The diagram does not say "notification layer"; it says
+**Escalation queue** and **Alerting and on-call**. **The claim was true and my instrument was looking for the
+wrong noun.** Extracting every FUTURE node's text instead of searching for a remembered word found it in one pass.
+
+#### Near-miss 2: the export that looked stale and is hand-authored on purpose
+
+`docs/architecture.drawio` was edited at **04:31**; `docs/architecture.svg` was last written at **03:34**. T52's
+corrected storage wording — *"capability URLs… the link is the credential… no expiry or revocation"* — is in the
+drawio and **absent from the SVG**. That reads exactly like a deliverable left behind by a fix.
+
+**It is not.** `docs/README-diagram.md:6`: *"a hand-authored render of the **Future state** page… **There is no
+drawio CLI in this environment**, so the SVG is authored directly rather than exported."* T52 fixed a node on the
+**Today (MVP)** page. The source has **three** pages — Future state, Today (MVP), Degradation and failover — the
+SVG renders the first, the README row says *"future-state production"*, and the guide names all three.
+
+> **The rule: before filing drift between two artifacts, read the document that explains their relationship.**
+> Two timestamps and a missing string are enough to write a confident task, and the answer was one line into a
+> file written precisely to answer it.
+
+#### And a count in a deliverable, verified node by node
+
+`docs/README-diagram.md:36` claims *"At submission the page carries **24 LIVE nodes, 0 PENDING, and 1 BLOCKED —
+SMS**."* Counting occurrences of the words on the Today page gives **25 / 1 / 2**, which looks like three errors.
+It is not: **each status word appears once more in the legend** — *"LIVE (solid) is running. PENDING (dashed) is
+written and waiting on an account. BLOCKED (dotted, thick)…"*. Listing all 28 occurrences instead of counting
+them: **24 real LIVE nodes, 0 PENDING, 1 BLOCKED (Telnyx SMS 10DLC)**. **The claim is exactly right.**
+
+**Third time tonight that counting a word was not counting the thing** — the same shape as *"25 tools"* and
+*"Six calls transcribed"*. **Open the lines, don't count them.**
+
+#### Also checked
+
+- **The seven `HUMAN_INTERVENTION.md` pointers still resolve** after its 05:26 edit (1052 lines, same size, so an
+  in-place change): 27, 63, 609, 632, 728, 817, 975.
+- **It145 is logged and matches what I verified last iteration**, including a lesson worth keeping: its
+  disclosure guard passed a red-check because *"the paragraph I had just appended names all three filenames"* —
+  **a guard that reads a file you are also editing this iteration is a guard whose evidence you are
+  contaminating.** It now extracts the list block and asserts it is non-trivially long.
+
+**T57 is the only open agent task.** Tester silent since 20:26 (**9h05m**). Inbox and In progress empty. No lock
+held; I took none.
+
+
+### Iteration 206, 05:24 EST — the fix I published at 04:31 was false nine lines above where I claimed it
+
+#### The seventh recurrence, and this time the claim about the fix was the defect
+
+At iteration 201 I wrote, in the `▶ OPEN WORK` block:
+
+> *"So the fix is no longer a rule: **the heading and this block no longer carry task numbers at all.**"*
+
+**Nine lines above that sentence, in the same blockquote, the block said "T38–T54 are closed."** It said it while
+T55 shipped at It142 and T56 shipped at It144, and it said it through iterations 202, 203, 204 and 205 — four of
+my own passes over this file, each of which I ended by writing that the plan was accurate.
+
+**I did not miss a number. I declared the category empty and then stopped looking in it.** That is worse than the
+six earlier recurrences, because those were omissions and this was a claim.
+
+> **And the claim was absolute where the property I needed was narrow.** *"No task numbers at all"* cannot be
+> true of this block — it says *"T38, T39, T40, T41, T42 were paste-ready"*, and it should, because **a historical
+> reference cannot rot.** What can rot is a number that asserts **current state**. I reached for the absolute
+> because it sounded like a stronger guarantee, and it cost me the specific one that was checkable.
+
+**Fixed, in the form that cannot go stale:** *"Every numbered task in this file is closed except the one the
+banner names"* — no range, and the sentence says why it carries none. The iteration-201 claim now carries its own
+correction in place rather than a quiet rewrite, and the recurrence count is no longer stated as a live figure.
+
+#### Verified: applying the `drop policy` SQL breaks nothing in the repo
+
+`HUMAN_INTERVENTION.md` grew by 26 lines at 05:19-05:20 with a section answering the three questions Enrique
+might stop on at 10:55. It is about **the only item nobody else can do for him**, so I checked all three myself,
+and deliberately with a different instrument than the agent that wrote them:
+
+| its claim | how I checked it | result |
+|---|---|---|
+| the two guards are hermetic, so SQL in the browser cannot redden the suite | counted `fetch(`, `createClient`, `readFileSync` in both files | **0 / 0 / 3** in `send-gate-bypass.test.ts`, **0 / 0 / 2** in `rls-policies.test.ts` ✓ |
+| `schema.sql` already declares no client write policy | read the policy declarations | `schema.sql:183-185`, three policies, all `for select`; the three write policies exist only live ✓ |
+| the *"three places that mention it"* list is complete | **full-tree sweep, every file and every extension**, with the guard's own regex, via `grep -r` rather than `git ls-files` | exactly `README.md`, `SUBMISSION.md`, `docs/where-this-goes.md` ✓ |
+
+**All three hold**, and the third is the one worth having twice: the agent swept with `git ls-files`, I swept with
+`find`/`grep` over every extension, and the two instruments agree. `agent/sol.md:369` assumption 13 claims *"we
+chose to enforce that an approval happened and is attributable"* — **the fix makes that true rather than false**,
+so it correctly needs no edit.
+
+**This is now in Enrique's row 1**, not only in this log, because it is the reassurance that matters at the moment
+he is deciding whether to run it.
+
+#### Also checked
+
+- **The seven `HUMAN_INTERVENTION.md` pointers still resolve** after the 05:19 append (1026 → 1052 lines) —
+  27, 63, 609, 632, 728, 817, 975 — and `intervention-routing.test.ts` is **17 green**, which is now the thing
+  that notices rather than me.
+- **The Implementer's one edit to my file was at It124, not tonight.** It replaced the hiring contact's work
+  address with *"the address given in the brief"* and flagged it for me to object. **No objection** — it is not
+  our material to publish, the wording is neutral, and it left `enrique@provensolved.com` alone because that one
+  is Enrique's call. Recording that I read the flag rather than letting it sit unanswered.
+
+**T57 is the only open agent task.** Tester silent since 20:26 (**8h58m**). Inbox and In progress empty. No lock
+held; I took none.
+
 
 ### Iteration 205, 05:18 EST — I corrected a sampling error by committing a convention error, in the same direction
 
