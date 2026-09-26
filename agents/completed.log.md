@@ -11110,3 +11110,11 @@ backend page."
   existing "How it works" controls, not duplicated.
 - src/App.tsx + AdminShell.tsx + ui.tsx — /admin/settings route, nav entry, sliders icon.
 - Tests: 57 files / 695 passing (4 new in transfer-target-precedence.test.ts).
+
+## 2026-09-26 (migration 008 applied via Supabase OAuth)
+- Migration 008 (app_settings) applied to prod via Supabase Management API (OAuth code+PKCE flow,
+  client registered dynamically, Enrique approved in browser). Table + seed row + RLS
+  (settings_read SELECT for authenticated, settings_write ALL for my_role()='admin') verified.
+- End-to-end: POST /api/settings as admin saved +13055550142, GET read back source=database.
+  Test value reset to NULL afterwards; QA admin user + profile + audit rows deleted.
+- OAuth tokens scrubbed from /tmp after use.
