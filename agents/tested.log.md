@@ -5367,3 +5367,70 @@ merged.
 ```
 PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
 ```
+
+---
+
+## Iteration 61 — 2026-09-27 00:22–00:30Z — VERIFIED: PR #102, and the live-modification beat end to end. FIXED-PENDING: two small corrections, one of them mine.
+
+### VERIFIED — PR #102's curl, run as a reviewer would
+```
+curl -i .../api/group/proposals -H "authorization: Bearer <concierge token>"
+  HTTP/1.1 403 Forbidden
+  "This role cannot see group sales. Group sales inquiries are readable by group_sales and admin only,
+   which is what row level security enforces in the database as well."
+no header:  HTTP 401  "Authorization: Bearer <supabase access token> is required."
+```
+Both exactly as the corrected section promises.
+
+### VERIFIED — `docs/live-modification.md`, the beat the panel watches him type
+Zero mentions in this log before now, and it is the highest-stakes page in the repository: the panel asks
+for a live change and this is the rehearsed answer.
+
+**The snippet matches the file.** `SOL-PHX` really carries
+`group_block_auto_approve_max_rooms: 35` and `max_discount_auto_approve_pct: 15`.
+
+**The script exists and runs.** `npx vite-node scripts/show-verdict.ts -- INQ-2009`, exit 0, no network
+and no model, and it reproduces the documented **Before** block verbatim:
+```
+  FLAG  GRP-DISCOUNT-CEILING
+        asked 17, allowed 15
+        "…We can approve up to 15% on our own, so this is 2 points over what we can authorise
+         ourselves, and it needs a named approver to sign it off before it goes out."
+  at the discount the customer asked for (17%): $7806.15
+```
+
+**And the edit does what the doc says.** Changed 15 → 12, re-ran, and got the documented **After**
+verbatim:
+```
+        asked 17, allowed 12
+        "…We can approve up to 12% on our own, so this is 5 points over what we can authorise ourselves…"
+  at the discount the customer asked for (17%): $7806.15      <- unchanged, which is the doc's own point
+```
+Three things moved together — the ceiling, "2 points" becoming "5 points", and the sentence — and the
+price did not, exactly as the page claims. Reverted; `git diff` clean; "allowed 15" reproduces; suite
+**487 / 38 files**.
+
+### THE FINDING — I edited the comment, not the data, on my first attempt
+`thresholds.ts` has a header comment at **line 10** quoting the same snippet to explain why the threshold
+lives there. The real entry is at **line 106**. My first edit matched the comment, the script's output did
+not move, and **the only tell was that "allowed 15" stayed 15.**
+
+That is thirty confusing seconds in front of an audience, doing the one edit the panel asked for. So the
+doc now says to take the second occurrence, gives both line numbers (verified: 10 and 106), names the
+tell, and says the testing agent made this mistake on its first attempt — because "someone already fell
+in this hole" is the sentence that makes a warning get read.
+
+**It is also the fourth time an unchanged output has been my only signal** that an instrument did nothing:
+the PDF sweep over zero files, the append that wrote nothing, the revert that never applied, this. The
+pattern is always the same shape — the thing ran, reported success, and changed nothing.
+
+### Also fixed: my own slip from PR #102
+The response block I added last iteration said `HTTP/2 403`. Measured: the curl a reviewer pastes
+negotiates **HTTP/1.1**, and the libcurl on this machine cannot do http2 at all. A protocol version in an
+example response can only ever be wrong, so it now reads `403 Forbidden`. Found by re-testing my own fix
+rather than assuming the part I wrote was the part that was right.
+
+### Migration 004: twelfth consecutive check, still not applied
+```
+PATCH /rest/v1/proposals {"status":"approved"} as sales@ with the public anon key -> HTTP 200, row returned
+```

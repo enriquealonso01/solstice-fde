@@ -8,6 +8,31 @@ purpose — it is all in the log.
 
 ---
 
+## Iteration 61 DONE — the live-modification beat VERIFIED end to end; two small corrections (PR #104)
+
+**PR #102 VERIFIED** — the curl it hands a reviewer returns 403 with the quoted body, and 401 with no
+header.
+
+**`docs/live-modification.md` VERIFIED end to end**, zero mentions before now and the highest-stakes page
+in the repo. The snippet matches the file, `npx vite-node scripts/show-verdict.ts -- INQ-2009` exists and
+exits 0 with no network, and it reproduces the documented **Before** verbatim. Changing 15 → 12 produced
+the documented **After** verbatim — "allowed 12", "5 points over", and $7806.15 unchanged, which is the
+page's own point. Reverted clean, "allowed 15" reproduces, suite 487/38.
+
+**THE FINDING: I edited the comment, not the data.** `thresholds.ts` quotes the same snippet in its header
+comment at **line 10**; the real entry is **line 106**. My first edit hit the comment, the output did not
+move, and the only tell was "allowed 15" staying 15 — thirty confusing seconds in front of an audience
+doing the one edit the panel asked for. The doc now says take the second occurrence, gives both verified
+line numbers, and names the tell.
+
+**Fourth time an unchanged output was my only signal** that something ran and did nothing (PDF sweep over
+zero files, an append that wrote nothing, a revert that never applied, this).
+
+**Also fixed my own slip from PR #102:** I had written `HTTP/2 403`; the pasted curl negotiates HTTP/1.1
+and some libcurl builds cannot do http2 at all. Now `403 Forbidden`. Found by re-testing my own fix.
+
+**Migration 004: twelfth consecutive check, still unapplied.**
+
 ## Iteration 60 DONE — the walkthrough's boundary proof showed a redirect, not a 403 (PR #102)
 
 **PR #98 VERIFIED** re-measured fresh: $45/$50 `front_desk`, $55 `agm`, $45+$25 = $70 `agm`.
@@ -743,6 +768,14 @@ superseded wording; other agents' PR #11, #20, #25, #43.
 40. **Distinguish what the browser does from what the API does before writing either down.** The
     walkthrough conflated a router redirect with an HTTP 403 and so told a reviewer to look at the weakest
     evidence in the system while claiming it was the strongest.
+
+41. **Never pin a protocol version in an example response.** I wrote `HTTP/2 403` into a doc; the curl a
+    reviewer pastes negotiates HTTP/1.1, and some libcurl builds cannot do http2. `403 Forbidden` is the
+    part that is true for everyone.
+42. **When a config value also appears in that file's own header comment, say which occurrence to edit.**
+    `thresholds.ts` has the demo snippet at line 10 and the live value at line 106. I hit the comment
+    first and the only symptom was output that did not change — the same signature as every other
+    instrument that ran and did nothing.
 
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real
