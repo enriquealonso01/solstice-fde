@@ -30,27 +30,16 @@ import {
   type ToolArgs,
   type ToolContext,
 } from './helpers'
-import { findReservationById, pickRelevantReservation, reservationsForGuest } from './lookups'
+import { attachableReservation, foreignGuestId, reservationOfVerifiedGuest } from './lookups'
 import { COMP_AUTHORITY, ESCALATION_MATRIX, POLICY_RULES, SERVICE_RECOVERY } from './rules'
 
 // -------------------------------------- check_service_recovery_eligibility
 
 export async function checkServiceRecoveryEligibility(args: ToolArgs, ctx: ToolContext): Promise<ToolResult> {
   const now = nowFrom(ctx)
-  const reservationId = optString(args, 'reservation_id') ?? optString(args, 'confirmation_number')
-  const guestId = optString(args, 'guest_id') ?? ctx.guest_id
-
-  let reservation = reservationId ? await findReservationById(reservationId) : null
-  if (!reservation && guestId) {
-    reservation = pickRelevantReservation(await reservationsForGuest(guestId), now)
-  }
-  if (!reservation) {
-    return toolFail(
-      reservationId
-        ? `No reservation found for ${reservationId}.`
-        : 'Need a reservation id or a verified guest id before the service recovery window can be calculated.',
-    )
-  }
+  const owned = await reservationOfVerifiedGuest(args, ctx)
+  if ('error' in owned) return toolFail(owned.error)
+  const reservation = owned.reservation
 
   const checkoutAt = atLocalTime(reservation.check_out_date, POLICY_RULES.standard_check_out_local)
   const checkInAt = atLocalTime(reservation.check_in_date, POLICY_RULES.standard_check_in_local)
@@ -201,9 +190,9 @@ export async function checkCompAuthority(args: ToolArgs, ctx: ToolContext): Prom
     return toolFail('Need an amount, or a list of items with amounts, before comp authority can be decided.')
   }
 
-  const reservationId = optString(args, 'reservation_id') ?? optString(args, 'confirmation_number')
-  const reservation = reservationId ? await findReservationById(reservationId) : null
-  if (reservationId && !reservation) return toolFail(`No reservation found for ${reservationId}.`)
+  const foreign = foreignGuestId(args, ctx)
+  if (foreign) return toolFail(foreign)
+  const reservation = await attachableReservation(args, ctx)
 
   // Policy 7 says "per stay". Comps from a PREVIOUS stay are reported for context
   // but never counted against this stay's authority.

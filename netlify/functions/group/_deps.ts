@@ -13,7 +13,7 @@
  * Note what `listInquiries()` does NOT return: the real contact details, and the challenge
  * author's own commentary on each row. The commentary is an answer key, and an engine that can
  * read the answer key has proved nothing. The real address is reachable only through
- * `contactFor` below, which `send_proposal` alone calls.
+ * `loadInquiryContact` below.
  */
 
 import type { Citation, GroupInquiry, Property, ToolResult } from '../../../shared/types'
@@ -156,8 +156,9 @@ export function registerInquiry(
   runtimeInquiries.set(inquiry.inquiry_id, {
     inquiry,
     contact: {
-      email: inquiry.contact_email,
-      phone: inquiry.contact_phone,
+      // An inquiry rebuilt from a persisted row carries masked values; they are never a raw address.
+      email: unmasked(inquiry.contact_email),
+      phone: unmasked(inquiry.contact_phone),
       email_masked: maskEmail(inquiry.contact_email),
       phone_masked: maskPhone(inquiry.contact_phone),
     },
@@ -209,18 +210,9 @@ export async function loadProperty(code: string): Promise<Property | null> {
  * ------------------------------------------------------------------ */
 
 /**
- * `create_inquiry` persists a phoned-in inquiry to the `inquiries` table, but until now nothing
- * read that table back: every reader returned the generated dataset plus `runtimeInquiries`, a
- * module-level Map that dies with the lambda. So an inquiry Sol took on a call was visible on the
- * sales board only while the same warm instance served both the call and the dashboard, and
- * vanished on the next cold start — which is the normal state of a function between demo beats.
- *
- * THE MASK IS THE POINT, not an obstacle. The persisted payload stores the contact masked, because
- * the screen never needs the real address. Rehydrating therefore yields a contact whose
- * `email`/`phone` are null and whose masked pair is intact, and that asymmetry is exactly right:
- * `contactPresent()` counts the masked pair, so the rules still know we can reach this customer,
- * while `routeFor()` reads only the unmasked pair and routes to `human`. A rehydrated inquiry can
- * be seen, priced and judged; it cannot be silently emailed to a row of asterisks.
+ * Inquiries taken on a call, read back from the `inquiries` table so they survive a cold start.
+ * The payload holds only the masked contact: the rules see a reachable customer, and delivery,
+ * which needs the raw address from `inquiry_contacts`, can never send to a row of asterisks.
  */
 export interface PersistedInquiryRow {
   inquiry_code: string
@@ -258,9 +250,9 @@ export function rehydrateInquiryRow(row: PersistedInquiryRow): RehydratedInquiry
     source: source_,
     company_name: str(payload.company_name) ?? row.inquiry_code,
     contact_name: str(payload.contact_name) ?? '',
-    // Masked, deliberately. See the note above this block.
-    contact_email: str(payload.contact_email),
-    contact_phone: str(payload.contact_phone),
+    // Masked, deliberately, even when a legacy row still carries a raw value. See the note above.
+    contact_email: maskEmail(str(payload.contact_email)) || null,
+    contact_phone: maskPhone(str(payload.contact_phone)) || null,
     event_type: str(payload.event_type) ?? '',
     preferred_property_code: str(payload.preferred_property_code) ?? '',
     alternate_property_ok: payload.alternate_property_ok === true,
@@ -283,12 +275,12 @@ export function rehydrateInquiryRow(row: PersistedInquiryRow): RehydratedInquiry
       meeting_space_needed: payload.meeting_space_needed === true,
     },
     contact: {
-      // Null on purpose: the real address was never persisted, and guessing one here would turn a
-      // display fix into a delivery bug.
+      // Null on purpose: a raw address is read only from inquiry_contacts, never from the payload,
+      // which staff can read. Masked again in case a legacy row still carries a raw value.
       email: null,
       phone: null,
-      email_masked: str(payload.contact_email) ?? '',
-      phone_masked: str(payload.contact_phone) ?? '',
+      email_masked: maskEmail(str(payload.contact_email)),
+      phone_masked: maskPhone(str(payload.contact_phone)),
     },
   }
 }
@@ -379,16 +371,83 @@ export async function loadInquiryContext(id: string): Promise<InquiryContext | n
   return (await rehydratedInquiries()).get(code)?.context ?? null
 }
 
-/** The send path, and the send path only. */
+/**
+ * The raw address is used only to send; screens and the rules read the masked pair. Each raw field
+ * comes from this instance's memory, else `inquiry_contacts`, else the generated dataset.
+ */
 export async function loadInquiryContact(id: string): Promise<InquiryContact | null> {
   const code = await toInquiryCode(id)
-  const runtime = runtimeInquiries.get(code)
-  if (runtime) return runtime.contact
-  if (source.contactFor) {
-    const contact = await source.contactFor(code)
-    if (contact) return contact
+  const runtime = runtimeInquiries.get(code)?.contact
+  if (runtime?.email && runtime.phone) return runtime
+
+  const found = [
+    runtime,
+    await storedInquiryContact(code),
+    source.contactFor ? await source.contactFor(code) : null,
+    // Masked pair only: the rules see a reachable customer while delivery routes to a human.
+    (await rehydratedInquiries()).get(code)?.contact,
+  ].filter((c): c is InquiryContact => Boolean(c))
+  if (found.length === 0) return null
+
+  const first = (key: keyof InquiryContact) => found.find((c) => c[key])?.[key] ?? null
+  const email = first('email')
+  const phone = first('phone')
+  return {
+    email,
+    phone,
+    email_masked: email ? maskEmail(email) : (first('email_masked') ?? ''),
+    phone_masked: phone ? maskPhone(phone) : (first('phone_masked') ?? ''),
   }
-  // Masked pair only, so the rules can see we have a way to reach this customer while delivery
-  // still routes to a human. Never a real address: one was never persisted.
-  return (await rehydratedInquiries()).get(code)?.contact ?? null
+}
+
+/* ------------------------------------------------------------------ *
+ * Raw contacts                                                         *
+ * ------------------------------------------------------------------ */
+
+// The raw email and phone of an inquiry live in `inquiry_contacts` (migration 007), which only the
+// service role can read; `inquiries.payload`, which group sales can read, keeps the masked pair.
+// Until 007 is applied the table is missing: the write reports false and the read falls through.
+
+/** A value that is not a masked one, or null. */
+function unmasked(value: string | null | undefined): string | null {
+  return value && value.trim() && !value.includes('*') ? value.trim() : null
+}
+
+/** Call after the inquiry row is written: the contact row references it. */
+export async function saveInquiryContact(inquiryCode: string): Promise<boolean> {
+  const contact = runtimeInquiries.get(inquiryCode)?.contact
+  const db = tryGetDb()
+  const email = unmasked(contact?.email)
+  const phone = unmasked(contact?.phone)
+  if (!db || (!email && !phone)) return false
+  // Only the fields we hold: an upsert leaves the columns it is not sent untouched.
+  const row: Record<string, string> = { inquiry_code: inquiryCode }
+  if (email) row.email = email
+  if (phone) row.phone = phone
+  try {
+    const { error } = await db.from('inquiry_contacts').upsert(row, { onConflict: 'inquiry_code' })
+    return !error
+  } catch {
+    return false
+  }
+}
+
+async function storedInquiryContact(inquiryCode: string): Promise<InquiryContact | null> {
+  const db = tryGetDb()
+  if (!db) return null
+  try {
+    const { data, error } = await db
+      .from('inquiry_contacts')
+      .select('email, phone')
+      .eq('inquiry_code', inquiryCode)
+      .maybeSingle()
+    if (error || !data) return null
+    const row = data as { email: unknown; phone: unknown }
+    const email = unmasked(str(row.email))
+    const phone = unmasked(str(row.phone))
+    if (!email && !phone) return null
+    return { email, phone, email_masked: maskEmail(email), phone_masked: maskPhone(phone) }
+  } catch {
+    return null
+  }
 }

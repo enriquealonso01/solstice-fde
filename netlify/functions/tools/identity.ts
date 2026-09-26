@@ -2,14 +2,13 @@
  * identify_guest and get_reservation.
  *
  * Two guardrails live here rather than in the prompt:
- *  1. A NAME IS NEVER ENOUGH. The provided data contains two unrelated guests
- *     called Michael Smith (G10009, G10010). Releasing stay details on a name
- *     match would be wrong even when the name happens to be unique, so a second
- *     factor is always required.
- *  2. THE CARD LAST 4 NEVER LEAVES THE TOOL LAYER. It is not returned to the
- *     model at all, so the model cannot say it, on either channel.
+ *  1. TWO FACTORS OR NOTHING. A guest is verified only by a pair in VERIFICATION_FACTOR_PAIRS
+ *     (lookups.ts). Every failure returns the same NOT_VERIFIED payload, so the chat cannot be used
+ *     to learn which confirmation numbers exist or who holds them.
+ *  2. THE CARD LAST 4 NEVER LEAVES THE TOOL LAYER. It is not returned to the model at all, so the
+ *     model cannot say it, on either channel.
  */
-import type { Citation, Reservation, ToolResult } from '../../../shared/types'
+import type { Citation, Guest, Reservation, ToolResult } from '../../../shared/types'
 import { toolOk, toolFail, toolState, toolUngrounded } from './_deps'
 import {
   atLocalTime,
@@ -23,60 +22,50 @@ import {
   type ToolArgs,
   type ToolContext,
 } from './helpers'
-import { findPropertyByCode, findReservationById, pickRelevantReservation, reservationsForGuest, resolveIdentity } from './lookups'
+import {
+  FACTOR_PAIRS_IN_WORDS,
+  findPropertyByCode,
+  foreignGuestId,
+  pickRelevantReservation,
+  reservationOfVerifiedGuest,
+  reservationsForGuest,
+  VERIFICATION_FACTOR_PAIRS,
+  verifyIdentity,
+  type IdentityFactor,
+} from './lookups'
 import { POLICY_RULES, RATE_PLAN_TERMS } from './rules'
 
 // ------------------------------------------------------------- identify_guest
 
-export async function identifyGuest(args: ToolArgs, _ctx: ToolContext): Promise<ToolResult> {
-  const query = {
-    guest_id: optString(args, 'guest_id'),
-    reservation_id: optString(args, 'reservation_id') ?? optString(args, 'confirmation_number'),
+/** The only answer to a failed verification: identical whether or not the number exists. */
+export const NOT_VERIFIED = {
+  verified: false,
+  accepted_factor_pairs: VERIFICATION_FACTOR_PAIRS.map((pair) => pair.join(' + ')),
+  next_step: `Not verified. Ask for ${FACTOR_PAIRS_IN_WORDS}. Say nothing about any booking, and do not say whether the number exists, until identify_guest returns verified: true.`,
+}
+
+export async function identifyGuest(args: ToolArgs, ctx: ToolContext): Promise<ToolResult> {
+  const foreign = foreignGuestId(args, ctx)
+  if (foreign) return toolFail(foreign)
+
+  const claim = {
+    confirmation_number: optString(args, 'confirmation_number') ?? optString(args, 'reservation_id'),
+    // The voice tool sends the caller's full name as `name`.
+    last_name: optString(args, 'last_name') ?? optString(args, 'name'),
     phone: optString(args, 'phone'),
     email: optString(args, 'email'),
-    last_name: optString(args, 'last_name'),
-    first_name: optString(args, 'first_name'),
   }
 
-  if (!query.guest_id && !query.reservation_id && !query.phone && !query.email && !query.last_name && !query.first_name) {
-    return toolFail('No identifying detail supplied. Ask for a confirmation number, or the phone number or email on the booking.')
-  }
+  // Only proof verifies: an identity already on the conversation is never re-issued without it.
+  if (!Object.values(claim).some(Boolean)) return toolFail(`No identifying detail supplied. Ask for ${FACTOR_PAIRS_IN_WORDS}.`)
 
-  const outcome = await resolveIdentity(query)
+  const match = verifyIdentity(claim)
+  return match ? verifiedResult(match.guest, match.matched_on, ctx) : toolState(NOT_VERIFIED)
+}
 
-  if (outcome.status === 'not_found') {
-    return toolState({
-      verified: false,
-      matches: 0,
-      next_step: `${outcome.reason} Do not guess a record.`,
-    })
-  }
-
-  // More than one person fits what we were told. Asking is the guardrail, not a fallback.
-  if (outcome.status === 'ambiguous') {
-    return toolState({
-      verified: false,
-      matches: outcome.count,
-      ambiguous: true,
-      disambiguator_required: outcome.disambiguator,
-      next_step: `${outcome.reason} Never pick one.`,
-    })
-  }
-
-  // Exactly one profile fits, but only on a name, which proves nothing.
-  if (outcome.status === 'needs_second_factor') {
-    return toolState({
-      verified: false,
-      matches: 1,
-      disambiguator_required: outcome.disambiguator,
-      next_step: outcome.reason,
-    })
-  }
-
-  const guest = outcome.guest
-  const matchedOn = outcome.matched_on
+async function verifiedResult(guest: Guest, matchedOn: IdentityFactor[], ctx: ToolContext): Promise<ToolResult> {
   const stays = await reservationsForGuest(guest.guest_id)
-  const relevant = pickRelevantReservation(stays, nowFrom(_ctx))
+  const relevant = pickRelevantReservation(stays, nowFrom(ctx))
 
   const citations: Citation[] = [guestCitation(guest.guest_id)]
   if (relevant) citations.push(reservationCitation(relevant.reservation_id))
@@ -84,7 +73,6 @@ export async function identifyGuest(args: ToolArgs, _ctx: ToolContext): Promise<
   return toolOk(
     {
       verified: true,
-      matches: 1,
       matched_on: matchedOn,
       guest: {
         guest_id: guest.guest_id,
@@ -159,16 +147,8 @@ export function cancellationTerms(reservation: Reservation, now: Date): Cancella
     base.inside_free_cancellation_window = !past
     base.penalty_if_cancelled_now = past ? POLICY_RULES.late_cancellation_penalty : 'none'
 
-    // SAY WHICH SIDE OF THE LINE THIS GUEST IS ON, in the field the model actually reads.
-    //
-    // `human_summary` used to carry only the general rule, so answering "will I be charged if I
-    // cancel?" required inferring the guest's position from `inside_free_cancellation_window`, a
-    // negated boolean. Observed twice in production on R55003, whose deadline passed on
-    // 2026-07-15: once self-contradictory ("cancelling would cost you one night… you're inside the
-    // 72-hour free cancellation window"), and once flatly wrong ("you're fine to cancel now with
-    // no charge"). The data was right both times; only the reading of it was wrong.
-    //
-    // A fact the model has to derive is a fact it can get backwards, so state it outright.
+    // State which side of the deadline this booking is on: a fact the model has to derive from a
+    // boolean is a fact it can get backwards.
     const deadlineText = deadline.toISOString().slice(0, 10)
     base.human_summary = past
       ? `${terms.human_summary} This booking is PAST that deadline, which fell on ${deadlineText}, so cancelling now forfeits ${POLICY_RULES.late_cancellation_penalty}. It is too late to cancel free of charge.`
@@ -183,23 +163,10 @@ export function cancellationTerms(reservation: Reservation, now: Date): Cancella
 }
 
 export async function getReservation(args: ToolArgs, ctx: ToolContext): Promise<ToolResult> {
-  const reservationId = optString(args, 'reservation_id') ?? optString(args, 'confirmation_number')
-  const guestId = optString(args, 'guest_id') ?? ctx.guest_id
+  const owned = await reservationOfVerifiedGuest(args, ctx)
+  if ('error' in owned) return toolFail(owned.error)
+  const reservation = owned.reservation
   const now = nowFrom(ctx)
-
-  let reservation: Reservation | null = null
-  if (reservationId) {
-    reservation = await findReservationById(reservationId)
-    if (!reservation) {
-      return toolFail(`No reservation found for ${reservationId}. Do not guess a reservation; ask the guest to re-read the confirmation number.`)
-    }
-  } else if (guestId) {
-    const stays = await reservationsForGuest(guestId)
-    reservation = pickRelevantReservation(stays, now)
-    if (!reservation) return toolFail(`No reservations found for guest ${guestId}.`)
-  } else {
-    return toolFail('Need a reservation id or a verified guest id. Identify the guest first.')
-  }
 
   const property = await findPropertyByCode(reservation.property_code)
   const terms = cancellationTerms(reservation, now)

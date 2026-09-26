@@ -3,18 +3,27 @@
 // Masking at rest destroys the join key: once a phone is stored as `***-***-0148` you can no
 // longer match an inbound caller ID against it, and the last four digits alone are ambiguous
 // (G10001 and G10020 in the provided data BOTH end in 0148). So alongside the masked display
-// value we store a one-way hash of the normalised identifier. Caller ID comes in, gets
-// normalised and hashed, and matches exactly. The stored data still contains no phone number.
+// value we store a peppered one-way hash of the normalised identifier. The stored data still
+// contains no phone number.
 //
-// Honest limitation to state on stage: a 10-digit phone space is small enough to brute-force
-// against an unsalted hash. The pepper below is a build-time constant because the generated
-// JSON is committed and has to hash identically at runtime. In production the reference data
-// lives in Postgres, not in a repo, and the pepper comes from a secret that is rotated with
-// the data. For a demo dataset of 24 fictional guests this is the right amount of machinery.
+// The pepper comes from LOOKUP_PEPPER so it can be rotated without a code change. It must equal the
+// value data/generated/guests.json was built with (scripts/data/build.mjs), or no phone or email
+// will match at runtime.
 
 import { createHash } from 'node:crypto'
 
-const PEPPER = 'solstice-fde:v1'
+/** Tests only: the pepper the committed data/generated/guests.json was built with. */
+const TEST_PEPPER = 'solstice-fde:v1'
+
+function pepper(): string {
+  const configured = process.env.LOOKUP_PEPPER?.trim()
+  if (configured) return configured
+  if (process.env.VITEST) return TEST_PEPPER
+  throw new Error(
+    'LOOKUP_PEPPER is not set. Set it to the pepper data/generated/guests.json was built with; ' +
+      'without it no phone number or email can be matched to a guest.',
+  )
+}
 
 /** '(312) 555-0148', '+1 312 555 0148' and '3125550148' all normalise to '3125550148'. */
 export function normalizePhone(phone: string | null | undefined): string {
@@ -29,7 +38,7 @@ export function normalizeEmail(email: string | null | undefined): string {
 }
 
 function hash(value: string): string {
-  return createHash('sha256').update(`${PEPPER}:${value}`).digest('hex').slice(0, 32)
+  return createHash('sha256').update(`${pepper()}:${value}`).digest('hex').slice(0, 32)
 }
 
 /** '' when there is nothing to hash, so callers can tell "no phone" from "no match". */

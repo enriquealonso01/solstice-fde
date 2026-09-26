@@ -18,6 +18,8 @@ interface ToolStep {
   kind: 'tool'
   name: string
   summary: string
+  /** The chip once the tool is done, when it differs from the running one. */
+  result?: string
   runMs: number
   citations?: Citation[]
 }
@@ -31,7 +33,21 @@ interface Script {
   id: string
   match: RegExp
   steps: Step[]
+  /** Reads a booking, so it runs only when the message carries two factors. */
+  needsIdentity?: boolean
 }
+
+/** A confirmation number together with the last name on the booking, e.g. "R55012, last name Kalinski". */
+const TWO_FACTORS = /\bR(ES-)?\d{4,}\b[\s\S]*\blast name\b|\blast name\b[\s\S]*\bR(ES-)?\d{4,}\b/i
+
+const VERIFY_FIRST: Step[] = [
+  { kind: 'tool', name: 'identify_guest', summary: 'checking who I am speaking with', result: 'Not verified', runMs: 480 },
+  {
+    kind: 'say',
+    text:
+      'Happy to help with that. So that I only ever discuss a booking with the person who made it, I need two things first: your confirmation number and the last name on the booking.',
+  },
+]
 
 const POLICY = (n: number, label: string): Citation => ({
   source: 'policy',
@@ -64,6 +80,7 @@ const SCRIPTS: Script[] = [
   },
   {
     id: 'late-checkout',
+    needsIdentity: true,
     match: /late check-?out|checkout time|check out late|stay later/i,
     steps: [
       { kind: 'tool', name: 'identify_guest', summary: 'finding your profile', runMs: 520 },
@@ -143,6 +160,7 @@ const SCRIPTS: Script[] = [
   },
   {
     id: 'service-recovery',
+    needsIdentity: true,
     match: /refund|compensat|complain|noise|dirty|broken|terrible|awful|last month|bad stay/i,
     steps: [
       { kind: 'tool', name: 'identify_guest', summary: 'finding your profile', runMs: 480 },
@@ -186,7 +204,8 @@ const SCRIPTS: Script[] = [
   },
   {
     id: 'reservation-lookup',
-    match: /confirmation|reservation|my booking|RES-\d+|check in|arrival/i,
+    needsIdentity: true,
+    match: /confirmation|reservation|my booking|\bR(ES-)?\d{4,}\b|check in|arrival|last name/i,
     steps: [
       { kind: 'tool', name: 'identify_guest', summary: 'finding your profile', runMs: 520 },
       {
@@ -201,7 +220,7 @@ const SCRIPTS: Script[] = [
       {
         kind: 'say',
         text:
-          'Found you. Solstice Denver Union Station, deluxe king, arriving Thursday and out on Sunday, Best Available Rate, card on file ending 4417. Check-in opens at 3:00 PM. Anything you want me to set up before you arrive?',
+          'Found you. Solstice Denver Union Station, deluxe king, arriving Thursday and out on Sunday, Best Available Rate, with the card on file. Check-in opens at 3:00 PM. Anything you want me to set up before you arrive?',
       },
     ],
   },
@@ -237,7 +256,7 @@ export async function* mockAgentStream(
   yield { type: 'session', session_id: sessionId }
 
   const script = SCRIPTS.find((candidate) => candidate.match.test(request.message))
-  const steps = script ? script.steps : FALLBACK
+  const steps = !script ? FALLBACK : script.needsIdentity && !TWO_FACTORS.test(request.message) ? VERIFY_FIRST : script.steps
 
   await sleep(scale(280), signal)
 
@@ -252,7 +271,7 @@ export async function* mockAgentStream(
         type: 'tool',
         name: step.name,
         status: 'done',
-        summary: step.summary,
+        summary: step.result ?? step.summary,
         citations: step.citations ?? [],
       }
       await sleep(scale(120), signal)
