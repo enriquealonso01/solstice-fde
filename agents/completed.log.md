@@ -4596,3 +4596,52 @@ four times this session.
 `demo:tidy` exist for.
 
 `npx tsc -b --force` clean. `npx vitest run`: **527 passed, 44 files**.
+
+## It86 — beat 6 told the presenter to say something the screen contradicts
+
+Carried the rehearsal into the two beats nobody had exercised.
+
+**Beat 7 is correct.** It says *"do not narrate all seven tabs"*, and `backendMapModel.ts` has exactly
+seven: overview, guest, voice, agent, data, delivery, deploy.
+
+**Beat 6 is not.** It instructs: *"Point out that telephony is the majority of the bill, not the AI."*
+
+The Cost endpoint is admin-scoped, so it returned `401` to me — correct, and itself a small
+confirmation of the role boundary. So I computed the two numbers from the same rows the page reads,
+`tool_invocations` where `tool = turn_metrics` plus completed voice sessions:
+
+```
+model     $1.3438   (claude-sonnet-5, 189 metric rows)
+telephony $1.2955   (11.94 call minutes x $0.1085)
+telephony share: 49.1%  -> the MODEL is the larger share
+```
+
+A presenter delivering that line while the split is on screen is contradicted by the screen, narrowly
+and checkably.
+
+### The insight is right; the sentence was in the wrong place
+
+Our traffic is **148 chat sessions to 9 calls**. A voice minute costs $0.1085 against a fraction of a
+cent for a chat turn, so at any realistic hotel voice share telephony dominates **by construction**.
+The claim belongs to the **projection**, which the page exposes with adjustable inputs — not to the
+measured row, which reflects three agents testing chat all day.
+
+So beat 6 now says it about the projection, warns explicitly not to say it about the numbers on
+screen, and turns the correction into a better beat: raise the voice share in front of them and watch
+telephony take over. That is a demonstration rather than an assertion, which is what the rest of this
+package does.
+
+### Two instrument errors on the way, both caught by implausibility
+
+I queried `tool = model_usage`; the code reads `turn_metrics`. **Zero rows across 148 chat sessions**
+is not a finding, it is a broken query — the third time this session that a near-total absence
+indicted my instrument rather than the system.
+
+And before that I assumed telephony would be **zero**, because nobody has made a voice call all day.
+There are 9 completed calls totalling 11.94 minutes. Had I written that up without checking, the
+finding would have been dramatic and wrong.
+
+**Checked the claim's other homes:** the phrase appears in the runbook only — not the cheatsheet, the
+README or the cost page's own copy.
+
+`npx tsc -b --force` clean. `npx vitest run`: **527 passed, 44 files**.

@@ -74,7 +74,13 @@
 
 *Everything below this section is closed, or evidence.*
 
-> ### ⚡ THE THREE FIXES, READY TO PASTE — all in two files, under two minutes
+> ### ⚡ THE FIXES, READY TO PASTE — three in two files, plus T41 in the README
+>
+> **T41 (new, iteration 117):** `README.md:133` quotes *"subject to same-day availability"* from
+> Policies 1 and 6. **Neither contains it** — Policy 1 says *"same-day room availability"*, Policy 6
+> says *"same-day inventory"*. Substance right, quotation wrong, and **the accurate version is the
+> better argument**: two policies reaching for the same missing data in different words is why it
+> belongs behind one service. Full replacement text in T41 below.
 >
 > *Whoever reads this next, including Enrique: these do not need a task, a lock or a plan. They are
 > three replacements. **Iteration 112 established that the protocol never routes plan tasks to
@@ -195,6 +201,54 @@ mode rather than documenting a way around it.
 
 **Check when done:** the row distinguishes the two causes; the text-chat fallback is named; the rest
 of the table is untouched.
+
+
+### T41. The README quotes a phrase the policy document does not contain — and the accurate version is a better argument
+
+*In the README's **Assumptions**, on the justification for the **net-new tool**, which is a named
+brief deliverable. The substance is right; the quotation marks are not. **The project pins quoted
+strings to source with `walkthrough-quotes.test.ts` precisely because this is a defect** — this one
+predates the guard and is in the file a reviewer opens first.*
+
+**What `README.md:133` says:**
+
+> **No inventory-by-date exists in the exports.** Policies 1 and 6 both hinge on **"subject to
+> same-day availability"**, so `netlify/functions/tools/availability.ts` is the net-new service…
+
+**What the provided policy reference actually says:**
+
+| | Verbatim |
+|---|---|
+| **Policy 1** | *"Early check-in and late check-out are both based on **same-day room availability**."* |
+| **Policy 6** | *"Platinum members get a guaranteed upgrade to the next room class based on **same-day inventory**."* |
+
+**Neither contains the quoted string.** Policy 6 does use *"subject to availability"*, but about the
+**Gold** 1 PM late check-out — a different clause, and one that is conditional where the quoted
+sentence is being used to argue about a guaranteed benefit.
+
+**The substance is correct**: both policies do hinge on same-day availability, and no
+inventory-by-date exists in the exports, so the service is genuinely net-new. **Only the quotation
+is wrong.**
+
+**Do this — and the accurate version argues the point better than the paraphrase does:**
+
+> **No inventory-by-date exists in the exports.** Policies 1 and 6 both hinge on same-day
+> availability and **use different words for it** — Policy 1 makes late check-out *"based on
+> same-day room availability"*, Policy 6 makes the Platinum upgrade *"based on same-day
+> inventory"* — so `netlify/functions/tools/availability.ts` is the net-new service: …
+
+**Why that is stronger:** two policies reaching for the same missing data in two different
+vocabularies is the clearest possible evidence that it belongs behind **one service** rather than
+two ad-hoc lookups. The current paraphrase flattens that into a single invented phrase and loses
+the argument it was making.
+
+**Consider pinning it while you are there.** `walkthrough-quotes.test.ts` already does this for UI
+strings; the same treatment for policy quotes in `README.md` would have caught this. **Only if it is
+quick** — the wording fix is the part that matters, and a guard that arrives after submission
+protects nothing.
+
+**Check when done:** the two quotes match the policy reference verbatim; the assumption still names
+`availability.ts` as the net-new service; `npx vitest run` green.
 
 
 ### T39. The runbook says three costed options move; the script it points at prints one price
@@ -1233,6 +1287,71 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 117, 21:30 EST — reading the brief paid off one iteration later: a quoted phrase that is in neither source
+
+Having finally read the brief, I checked the one deliverable whose **justification** nobody had
+verified — only its existence. The net-new tool.
+
+#### The near-miss first, because it is the method working
+
+`README.md:27` and `:133` justify `availability.ts` by quoting *"subject to same-day availability"*.
+**My first assumption was that the README was attributing it to the brief** — and the brief, which I
+had just read, does not contain that phrase. That would have been a misquote in a deliverable.
+
+**It is not attributed to the brief.** It is attributed to **Policies 1 and 6** of the provided
+policy reference. I was wrong, and I found out by reading the sentence properly instead of acting on
+the shape of it.
+
+#### But the attribution is itself checkable, so I checked it
+
+```
+README:133   Policies 1 and 6 both hinge on "subject to same-day availability"
+
+Policy 1     "Early check-in and late check-out are both based on same-day room availability."
+Policy 6     "Platinum members get a guaranteed upgrade to the next room class based on
+              same-day inventory."
+```
+
+**Neither contains the quoted string.** Policy 6 does use *"subject to availability"* — about the
+**Gold** 1 PM late check-out, a conditional benefit, while the quotation is being used to argue
+about a guaranteed one.
+
+**T41 filed.** The substance is entirely right: both policies hinge on same-day availability, no
+inventory-by-date exists in the exports, and the service is genuinely net-new by the brief's own
+test — *"something you decide the agent needs based on the scenario"* that *"isn't handed to you in
+the sample data."* **Only the quotation marks are wrong.**
+
+#### The fix is a better argument than the thing it replaces
+
+Policy 1 says *"same-day room availability"*. Policy 6 says *"same-day inventory"*. **Two policies
+reaching for the same missing data in two different vocabularies** is the clearest possible evidence
+that it belongs behind **one service** rather than two ad-hoc lookups — which is exactly the claim
+the assumption is trying to make. The invented paraphrase flattens both into one phrase and loses
+the argument.
+
+That is the second time today a correction has improved on what it corrected — the first was the
+Implementer's *"what was and was not re-measured"* paragraph in T30.
+
+#### Why this one matters more than its size
+
+**This project pins quoted strings to their sources with `walkthrough-quotes.test.ts`**, written
+four hours ago after PRs #50 and #54 reworded UI text a document still quoted. **T41 is the same
+defect class in the file a reviewer opens first**, and it predates the guard that would have caught
+it. The standard is the project's own.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | `drop policy` ×3 — delete the disclosure if applied | Enrique |
+| 2 | Top up Telnyx to **$20+** (balance $3.03) | Enrique |
+| 3 | T21, two rows | Enrique |
+| 4 | T34 SIP rotation | Enrique |
+| — | **T38, T39, T40, T41** — all paste-ready at the top of OPEN WORK | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 116, 21:26 EST — read the brief itself for the first time, and mapped every requirement to who verified it
 
