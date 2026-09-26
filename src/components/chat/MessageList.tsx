@@ -83,22 +83,30 @@ function GuestBubble({ text }: { text: string }) {
 /**
  * A message from a person, not from Sol.
  *
- * Visually distinct on purpose, and the distinction is load-bearing rather than decorative: a guest
- * has to be able to tell at a glance which sentences came from an AI and which came from a member
- * of staff. Same side as Sol, because both are the hotel answering, but a gold rail, a person's
- * label and no Sol mark.
+ * The guest-side brief: an intervention must read as a normal chat. So the shape is the
+ * conversation's own bubble language — same size, same radius, same side as Sol, because both
+ * are the hotel answering — with the human provenance carried by a small staff label and a
+ * person's initial rather than a Sol mark.
+ *
+ * Two things this must never become, both load-bearing (see StaffTurn in types.ts):
+ *  - a system banner. An admin notice invites the guest to treat the reply as an announcement
+ *    rather than as an answer to what they just said.
+ *  - indistinguishable from Sol. The gold-accent label is the honest distinction: a guest has
+ *    to be able to tell which sentences came from an AI and which came from a member of staff.
+ *    No Sol mark, no tool chips, no citations, ever.
  */
 function StaffBubble({ turn }: { turn: StaffTurn }) {
   return (
     <div className="sol-rise flex items-start gap-2">
-      <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-accent/40 bg-accent/10 text-[10px] font-semibold uppercase text-ink shadow-sm">
-        SH
+      <span
+        aria-hidden="true"
+        className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-accent/40 bg-accent/10 text-[10px] font-semibold text-ink shadow-sm"
+      >
+        A
       </span>
       <div className="min-w-0 max-w-[88%]">
-        <p className="mb-1 text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">
-          Solstice team
-        </p>
-        <div className="rounded-2xl rounded-bl-md border border-accent/35 bg-accent/[0.06] px-3.5 py-2.5 shadow-sm">
+        <p className="mb-1 text-[11px] font-medium lowercase tracking-[0.04em] text-muted">front desk</p>
+        <div className="rounded-2xl rounded-bl-md border border-line bg-card px-3.5 py-2.5 shadow-sm">
           {turn.text ? (
             <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-muted">
               {turn.text}

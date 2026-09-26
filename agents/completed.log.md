@@ -11076,3 +11076,22 @@ branch created from the wrong tip.
 Nothing was lost: one clean commit, their log authoritative from main, the Planner's newest restored from a
 separate stash and verified identical. **But a guard that prints and continues is worse than no guard**, and
 `agents/README.md` now says so: the lock line must exit non-zero.
+
+## 2026-09-26 (shipping agent) — PR: transcript intervention reads as a normal chat
+
+Enrique's ask: an intervention from the supervisor side must be *in the transcript* and *feel like
+a normal chat*. Presentation only — supervisor messages already persist (role 'supervisor') and
+render on both sides.
+
+Guest side (`src/components/chat/MessageList.tsx`, StaffBubble): the "Solstice team" banner restyled
+into the conversation's own bubble language — same bg-card/border-line bubble as Sol, gold-ringed
+person avatar, small lowercase "front desk" label. The honest distinction survives (see the
+comment in the file): a person's label and no Sol mark, never a system banner, never Sol.
+
+Supervisor side (`src/pages/admin/SessionDetail.tsx`): the colored left rails + eyebrow labels
+(ROLE_STYLE) became a chat-bubble flow — guest right, hotel left, role avatar, quiet inline
+timestamp. Same visual language as the live chat, so an archive reads like a conversation, not an
+audit log. Editorial tokens only (bg-card, border-line, bg-warn-soft, bg-hero), no hard-coded
+colours; works at 390px (bubbles wrap under max-w-[85%]).
+
+Typecheck clean; suite green: 56 files, 691 tests passed, 0 failed.

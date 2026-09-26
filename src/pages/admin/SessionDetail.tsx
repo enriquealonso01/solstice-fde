@@ -10,6 +10,7 @@ import { Link, useParams } from 'react-router-dom'
 import AdminShell from '@/components/admin/AdminShell'
 import ChatIntervention from '@/components/admin/ChatIntervention'
 import SupervisorLadder from '@/components/admin/SupervisorLadder'
+import { SolMark } from '@/components/chat/glyphs'
 import {
   AccessNotice,
   ChannelChip,
@@ -34,11 +35,43 @@ import {
   type ToolInvocationRow,
 } from '@/components/admin/mockData'
 
-const ROLE_STYLE: Record<MessageRow['role'], { rail: string; label: string; tone: string }> = {
-  user: { rail: 'border-l-info', label: 'Guest', tone: 'text-ink' },
-  assistant: { rail: 'border-l-accent', label: 'Sol', tone: 'text-ink' },
-  system: { rail: 'border-l-faint', label: 'System', tone: 'italic text-muted' },
-  supervisor: { rail: 'border-l-warn', label: 'Supervisor', tone: 'text-ink' },
+/**
+ * The transcript is a conversation, not an audit log.
+ *
+ * Reads in the same bubble language as the live chat (guest right, hotel left), so a supervisor
+ * reading an archive sees what the guest saw. Colour is kept for at-a-glance orientation via a
+ * small avatar mark per role, but it no longer draws rails down the page. The clock stays as the
+ * quiet timestamp under each bubble — provenance, not eyebrow labels. Colour tokens only.
+ */
+const ROLE_STYLE: Record<MessageRow['role'], { mark: string; label: string; align: string; bubble: string; tone: string }> = {
+  user: {
+    mark: 'bg-info/15 text-ink',
+    label: 'Guest',
+    align: 'justify-end',
+    bubble: 'rounded-2xl rounded-br-md bg-hero text-hero-text',
+    tone: '',
+  },
+  assistant: {
+    mark: 'bg-line text-ink',
+    label: 'Sol',
+    align: 'justify-start',
+    bubble: 'rounded-2xl rounded-bl-md border border-line bg-card',
+    tone: 'text-muted',
+  },
+  system: {
+    mark: 'bg-faint/20 text-muted',
+    label: 'System',
+    align: 'justify-start',
+    bubble: 'rounded-2xl rounded-bl-md border border-dashed border-line bg-canvas',
+    tone: 'italic text-muted',
+  },
+  supervisor: {
+    mark: 'bg-warn-soft text-ink',
+    label: 'Front desk',
+    align: 'justify-start',
+    bubble: 'rounded-2xl rounded-bl-md border border-warn/40 bg-card',
+    tone: 'text-muted',
+  },
 }
 
 export default function SessionDetail() {
@@ -139,13 +172,24 @@ export default function SessionDetail() {
               transcript.rows.map((m) => {
                 const style = ROLE_STYLE[m.role]
                 return (
-                  <div key={m.id} className={`sol-rise border-l-2 pl-3 ${style.rail}`}>
-                    <div className="flex items-baseline gap-2">
-                      <span className="eyebrow">{style.label}</span>
-                      <span className="text-[11px] tabular-nums text-muted/70">{clockTime(m.created_at)}</span>
+                  <div key={m.id} className={`sol-rise flex items-start gap-2 ${style.align}`}>
+                    {/* Sol's rows carry the agent mark; other rows carry their role's colour. */}
+                    <span
+                      aria-hidden="true"
+                      className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-[9px] font-semibold uppercase ${style.mark}`}
+                    >
+                      {m.role === 'assistant' ? <SolMark className="h-3.5 w-3.5" /> : style.label.charAt(0)}
+                    </span>
+                    <div className={`min-w-0 max-w-[85%] px-3.5 py-2.5 shadow-sm ${style.bubble}`}>
+                      <span className={`mr-2 text-[11px] font-medium ${m.role === 'user' ? 'text-hero-text/70' : 'text-muted'}`}>
+                        {style.label}
+                      </span>
+                      <span className="text-[11px] tabular-nums opacity-70">{clockTime(m.created_at)}</span>
+                      <p className={`mt-0.5 whitespace-pre-wrap break-words text-[13px] leading-relaxed ${style.tone}`}>
+                        {m.content}
+                      </p>
+                      {m.attachment ? <AttachmentChip attachment={m.attachment} /> : null}
                     </div>
-                    <p className={`mt-0.5 text-sm leading-relaxed ${style.tone}`}>{m.content}</p>
-                    {m.attachment ? <AttachmentChip attachment={m.attachment} /> : null}
                   </div>
                 )
               })
