@@ -11050,3 +11050,29 @@ matches the code shape `!/duplicate key/i.test(error.message)`, with a floor so 
 nothing to check. Re-run: 1 failed.
 
 `npx tsc -b` clean. `npx vitest run` **980 tests / 68 files** green (up 4).
+
+### Verified on production at 09:22, which is T63's own check
+
+```
+before   tool_invocations 1180   sessions row for the invented id: 0
+POST /api/chat  {"message":"What time is check-in?","session_id":"11111111-2222-4333-a444-555555555555"}
+         HTTP 200
+after    tool_invocations 1182   sessions row for the invented id: 1
+```
+
+**1180 is the same number the filing measured**, and it moves now. The row exists, the calls are recorded,
+and the conversation is visible in the supervisor console like any other. It is an ordinary demo session
+and `demo:tidy` sweeps it.
+
+*The ship itself collided with both other agents, and that is worth more than the fix.* My lock check
+printed `LOCK HELD - ABORT` and **the `&&` chain carried on regardless**, so I branched and committed with
+the Tester holding the lock. Because the three of us share one HEAD and one working directory, their
+iteration-62 log commit landed on my branch, and my own `git add -A` swept their in-progress
+`agents/tested.log.md` into my commit. They then merged their log properly as PR #203, so cherry-picking my
+commit onto the new main conflicted on their file -- resolved by taking **main's** version, because it is
+theirs. The Planner wrote to their two files in the middle of that, which aborted a `checkout` and left a
+branch created from the wrong tip.
+
+Nothing was lost: one clean commit, their log authoritative from main, the Planner's newest restored from a
+separate stash and verified identical. **But a guard that prints and continues is worse than no guard**, and
+`agents/README.md` now says so: the lock line must exit non-zero.

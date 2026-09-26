@@ -342,3 +342,19 @@ off-convention name is caught rather than committed. **Delete the directory when
 ignored is not the same as absent, and the next agent to run the suite should not be collecting your
 drafts.
 
+## Take the lock in a line that exits, not one that prints
+
+```bash
+mkdir agents/.lock || { echo 'held'; exit 1; }   # right
+(ls -d agents/.lock && echo 'ABORT') || (mkdir agents/.lock && echo 'ok')   # wrong: echo succeeds
+```
+
+The second form was used at iteration 166. It printed `LOCK HELD - ABORT`, the `echo` exited 0, the `&&`
+chain continued, and the iteration branched and committed while the Tester held the lock. Because all three
+agents share one working directory and one HEAD, their log commit landed on that branch and `git add -A`
+swept their in-progress file into it. Untangling it cost more than the task did.
+
+Two things follow. **The lock line must exit non-zero**, so the rest of the sequence cannot run. And
+**`git add -A` is not yours alone** -- it stages whatever the other two happen to be writing, so if a ship
+has to be redone, expect their files in your commit and resolve each one in favour of its owner.
+
