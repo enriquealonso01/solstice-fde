@@ -9038,3 +9038,93 @@ Red-checked four ways in the end: stripping the census `n` fails 1, claiming met
 the straddle away fails 1, and breaking the query a reviewer would re-derive with fails 1.
 
 `npx tsc -b` clean. `npx vitest run` **847 tests / 59 files** green (up 5).
+
+---
+
+## It145 — the list Enrique acts on at 10:55, and a guard my own prose defeated
+
+Nothing was open. So I went to the one instruction in the package that gets executed under time pressure:
+`HUMAN_INTERVENTION.md`'s note that if the `drop policy` SQL is applied before submitting, the open-defect
+disclosure lives in **three places, "so none is left behind"** — the `README.md` paragraph, the
+`SUBMISSION.md` row, and a parenthesis in `docs/where-this-goes.md`.
+
+**That list has the shape of the one that was wrong at iteration 139**: a superseding block correcting
+*"eight verdicts"* that had missed a ninth, because a list reads as complete. And the failure here is
+asymmetric. A passage left behind means the package discloses a defect it has just fixed, which is worse
+than the disclosure was — a reviewer who tests the hole, finds it shut, and then reads that we still have
+it concludes the honesty was decoration.
+
+### The list is complete, and the first sweep that said so was too narrow
+
+My first pass grepped `*.md` and found exactly the three plus `HUMAN_INTERVENTION.md` itself. That is the
+narrow-pattern mistake I have caught four times in other people's work and twice in my own, so I widened it
+to every tracked file. Two more turned up — `rls-policies.test.ts` and `send-gate-bypass.test.ts` — and
+they are the guards, not disclosures.
+
+**`agent/sol.md` is the interesting one.** Its **assumption 13** claims the system enforces *"that an
+approval happened and is attributable"*, which is precisely what this defect falsifies. It is not on the
+list, and it should not be: applying the migration makes that sentence **true**, so editing it would delete
+a claim that had just become correct. The guard asserts it stays off the list for that reason.
+
+### The question that could stop him applying a security fix
+
+At 10:55, about to paste DDL into a production database minutes before submitting, the reasonable thing to
+wonder is *"will this break the build?"* Nobody had written the answer down, so I checked it.
+
+**It cannot.** Both guards read from disk:
+
+```
+send-gate-bypass.test.ts   readFileSync(supabase/schema.sql), readFileSync(migrations/004_…sql)
+rls-policies.test.ts       same
+fetch( in either           0
+```
+
+Nothing they assert can move when SQL runs in the Supabase editor. And **`schema.sql` already declares no
+client write policy** on `proposals`, `inquiries` or `follow_ups` — which is why the suite is green today.
+The three policies exist only in the **live** database. So the repository is already correct and production
+is the thing that disagrees, which is a cleaner way to describe the defect than "unapplied migration".
+
+That went into `HUMAN_INTERVENTION.md` as three numbered answers — **appended at the very end on purpose.**
+The file is 1026 lines and the highest line the master plan cites is **975**, so nothing above moved. This
+is the file whose pointers rotted by +13 at T55 and whose citations I guarded at iteration 142; inserting
+into the middle of it hours before submission would have been the same mistake with my name on it.
+Confirmed after the append: the pointer guard is still 17/17.
+
+### Guarded the list, and then the guard failed its red-check
+
+The durable part is iteration 139's invariant, one file over: **every file that discloses the defect must be
+named in the list.** A fourth disclosure added tonight now fails the suite instead of surviving Enrique's
+edit. Plus a case that both guards stay hermetic, since that promise is now written down for him.
+
+Then the red-check. Removing `docs/where-this-goes.md` **from the list** passed.
+
+The guard was reading the whole file: `readFileSync(HUMAN_INTERVENTION.md).toContain('docs/where-this-goes.md')`.
+**And the paragraph I had just appended names all three filenames, in the sentence explaining that the list
+is complete.** So my own prose about the guard satisfied the guard.
+
+That is iteration 138's failure — where `src.includes('loadEnv')` was satisfied by the comment explaining
+`loadEnv` — reproduced **one iteration after I wrote it up**, in a file whose header I had just used to
+describe the pattern. Fifth instance of this class in my own work. It now extracts the list block, from the
+heading to the next `---`, and asserts the block is non-trivially long so an empty extraction cannot pass
+either. Re-run against the same mutation: fails 1.
+
+Worth stating why the first three mutations *did* fire and this one did not. MUT 1 added a fourth disclosing
+file; MUT 2 put a `fetch(` in a guard. Both were about the repo, which the guard reads correctly. Only the
+case that read *the instruction file itself* was polluted, because that is the only file I had also written
+into. The lesson is narrower than "scope your greps": **a guard that reads a file you are also editing this
+iteration is a guard whose evidence you are contaminating.**
+
+### And I reached for `git checkout --` again
+
+The first red-check attempt ended with `git checkout -- HUMAN_INTERVENTION.md` to undo a mutation. The
+auto-mode classifier refused it as irreversible local destruction, and it was right: that file carried this
+iteration's uncommitted append, so the restore would have thrown the append away and the following
+mutations would have run against the wrong file — exactly what happened at iterations 135 and 140, twice
+written up in `agents/README.md`.
+
+The whole command was blocked before any of it executed, which I confirmed rather than assumed: `git status`
+showed the mutations never landed and the append intact. Redone with three scratchpad snapshots, all taken
+after the fix was green. **Two of my own documented rules broken in one iteration, and the thing that caught
+one of them was not me.**
+
+`npx tsc -b` clean. `npx vitest run` **852 tests / 60 files** green (up 5).

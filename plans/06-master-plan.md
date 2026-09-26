@@ -1,9 +1,16 @@
 # Master plan: the whole picture
 
-> ## 04:57 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> **One agent task is open: T56** — `docs/latency-target.md` publishes *“first signal p50 1545ms, 45ms over
-> the 1.5s target”* from **six** turns. Across the **338** turns production has actually logged, p50 is
-> **1079ms** and p90 **1488ms**. **The target is met and the deliverable undersells us.**
+> ## 05:24 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **One agent task is open: T57.** **T56 shipped at It144 — and it corrected me.** I handed the Implementer a
+> census p90 of **1488ms** and called the 1.5s first-signal target met. **That figure was one index low.**
+> Nearest-rank is **1502ms**, linear interpolation **1492ms**, and **10.1% of turns exceed 1500ms**, so the p90
+> sits exactly on the line. The deliverable now reads **“met at p50 (1079ms), level at p90”** and prints both
+> conventions with the exceedance beside them. **I corrected a sampling error by committing a convention error,
+> in the same direction — towards the answer I wanted.** The median half was right: 1079ms against 1500ms.
+> **T57** — the guard behind the live-modification beat checks that its snippet appears *somewhere in
+> `thresholds.ts`*, so **Phoenix's two numbers can change and the suite stays green**, because Tampa carries the
+> identical pair. Nothing is broken today — every line pointer in that document is correct as of 05:05 — but the
+> thing that would catch it breaking is what is thin.
 > *T38–T55 are closed*, T55 shipped at It142 and I ran it myself — the seven line pointers into
 > `HUMAN_INTERVENTION.md` that route you are **machine-guarded now**; the suite fails if that file moves them.
 > `sol.md`, the committed export and the live phone agent all sit at **29,784** and are **byte-identical**,
@@ -618,7 +625,16 @@ three hours."* **A shifted number now degrades to a search rather than to wrong 
 **Check when done:** the new assertion resolves every pointer in the plan's open region; the verification log is
 exempt; decrementing one pointer by 13 turns it red; `npx vitest run` green.
 
-### T56. `docs/latency-target.md` reports six turns and concedes a miss the other 338 do not support
+### T56 — SHIPPED (It144). `docs/latency-target.md` reported six turns; the other 338 disagreed — **and so did this task's own p90.**
+
+> **CORRECTION, iteration 205.** Every p90 and p95 below is **one index low**. My percentile helper took
+> `a[floor(q*(n-1))]` — index **303** of 338 — where nearest-rank takes index **304**. First-signal p90 is
+> **1502ms** nearest-rank and **1492ms** interpolated, not 1488ms; first-token p90 is **4321ms/4299ms**, not
+> 4290ms; p95s are **1792ms** and **5276ms**. **34 of 338 turns (10.1%) exceed 1500ms, so the first-signal
+> p90 straddles the target** and item 3 below — *“met at p50 and p90”* — was wrong. It144 recomputed
+> rather than copying, caught it, and published *“met at p50, level at p90”* with both conventions.
+> **The p50s were right under either convention (1079ms / 2608ms), which is the half the headline rests on.**
+> Left standing below, uncorrected, because a task record is dated history — see the iteration-205 entry.
 
 *The latency target is a named brief deliverable. Its headline sentence says we missed the 1.5s first-signal
 target by 45ms. **Across every turn the system has ever served, we do not miss it** — p50 1079ms, p90 1488ms.
@@ -688,6 +704,68 @@ comment, where nothing reads it.
 **Check when done:** the doc publishes the population p50/p90 with `n=338` and the measurement window; the
 six-turn table survives with its date; the *"45ms over the 1.5s target"* conclusion is gone; the three target
 strings are unchanged; `npx vitest run` green.
+
+### T57. The guard on the live-modification beat checks the file, not the object — and its anchor matches the comment first
+
+*The brief says the panel will ask us to modify the system while they watch, and `docs/live-modification.md` is
+the rehearsed answer. **Its guard passes if SOL-PHX's two numbers change**, because a neighbouring property
+carries the identical pair — and the number is the presenter's only tell that the edit took.*
+
+#### What the guard does now
+
+`src/lib/rules/__tests__/walkthrough-quotes.test.ts:109` pins five fragments and asserts each appears in the doc
+**and somewhere in `src/lib/rules/thresholds.ts`**. Counted in that file:
+
+| fragment | occurrences | where |
+|---|---|---|
+| `'SOL-PHX': {` | **2** | line 10 — **the header comment** — and line 102, the real object |
+| `property_code: 'SOL-PHX',` | 1 | inside the object ✓ |
+| `property_name: 'Solstice Phoenix Camelback',` | 1 | inside the object ✓ |
+| `group_block_auto_approve_max_rooms: 35,` | **2** | line 92 **SOL-TPA**, line 105 SOL-PHX |
+| `max_discount_auto_approve_pct: 15,` | **4** | 10 (comment), 54 SOL-AUS, 93 **SOL-TPA**, 106 SOL-PHX |
+
+**So change SOL-PHX's ceiling to 20 and the suite stays green**, because Tampa still carries `35,` and `15,`.
+The doc would then show the panel a snippet reading 15 with a *"`// <- change to 12`"* marker, and the tell the
+doc rests on — *"the tell is that 'allowed 15' stays 15"* — would be wrong before the edit was made.
+
+The guard's own comment claims to cover this: *"a rename of `max_discount_auto_approve_pct`, or **a reshuffle of
+that object**, breaks it silently."* A rename fires (all four occurrences go). A deletion fires (the two unique
+fragments go). **A value change does not**, and a value change is the whole beat.
+
+#### And the anchor lands on the comment
+
+`'SOL-PHX': {` matches **line 10 before line 102**, so any future tightening written with `indexOf` anchors on the
+header comment — *the exact mistake the Tester made on stage-rehearsal and wrote the warning about*, and the same
+shape as T55, where `## 0. Verification log` matched the task's own description before the real heading.
+
+> **Third time tonight a guard's anchor has matched a comment about the thing instead of the thing.** The rule:
+> **anchor on a string that exists once, and assert the count.**
+
+#### What to change
+
+1. **Scope the assertion to the object.** Slice `thresholds.ts` from the **last** `'SOL-PHX': {` (or from
+   `property_code: 'SOL-PHX',`, which occurs once) to the end of that object literal, and assert the five
+   fragments inside that slice. Anchoring on the unique fragment is better than counting occurrences of the
+   ambiguous one.
+2. **Assert the anchor is unambiguous**, so the case cannot rot into the comment: `property_code: 'SOL-PHX',`
+   occurs exactly once, and `'SOL-PHX': {` occurs twice with the first being a comment line. A count assertion
+   fails loudly when someone adds a third.
+3. **Red-check it three ways**: change SOL-PHX's `max_discount_auto_approve_pct` to `20` → must fail (today it
+   passes); change SOL-TPA's to `20` → must **still pass**, because Tampa is not this beat; move the snippet's
+   `property_name` to a different city → must fail.
+4. **Give the doc a search string with one match.** It currently says *"Search for `'SOL-PHX'` instead"*, and that
+   search hits the comment at line 10 first — the trap the same paragraph warns about. `property_code: 'SOL-PHX'`
+   matches once. One sentence, and step one can no longer land on a comment.
+
+#### Verified correct as of 05:05, so this is hardening and not a repair
+
+Every pointer the doc gives is right now: the comment at **10**, Austin at **54** (`SOL-AUS`), Tampa at **93**
+(`SOL-TPA`), and SOL-PHX's ceiling at **106**, value `15`, in the object opening at **102**. `show-verdict.ts`
+and the quoted refusal are guarded elsewhere (`docs-quote-drift.test.ts`, `data-seam.test.ts`). **Nothing is
+broken; the thing that would catch it breaking is what is thin.**
+
+**Check when done:** flipping SOL-PHX's ceiling turns the suite red; flipping Tampa's does not; the doc names a
+single-match search string; `npx vitest run` green.
 
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
@@ -819,8 +897,9 @@ edited every time one closes, and six times it was not.**
 > edits this next: **when you close a task, delete its entry from this screen in the same edit.** The
 > record lives in the verification log; it does not need a second home above the work.
 >
-> **For what is open right now, read the banner, not this block.** T38–T54 are closed; whatever is open is
-> named at the top and re-stated every iteration. **What remains for Enrique is the table below**, and every
+> **For what is open right now, read the banner, not this block.** **Every numbered task in this file is
+> closed except the one the banner names** — stated without a range on purpose, because the range was wrong
+> here for four iterations. Whatever is open is named at the top and re-stated every iteration. **What remains for Enrique is the table below**, and every
 > item in it also appears in `HUMAN_INTERVENTION.md` — items 1 and 4 reached it at 00:05 in the update block
 > at **line 63**, ***"## Update, 2026-09-26"***, which closed the routing gap iteration 156 filed T45 for.
 >
@@ -828,7 +907,12 @@ edited every time one closes, and six times it was not.**
 > T51, T52, T53, T54 and T55 came and went, and its heading still advertised **T51** five tasks after T51
 > shipped. **Six recurrences now, not five** — and the rule written three paragraphs above, *"when you close a
 > task, delete its entry from this screen in the same edit,"* **is a rule I wrote and then broke six times.**
-> So the fix is no longer a rule: **the heading and this block no longer carry task numbers at all.** Same move
+> So the fix is no longer a rule: **the heading and this block no longer state what is open, or how much is
+> closed, with a number.** *(Corrected at iteration 206. This sentence originally read “no longer carry task
+> numbers at all”, and that was **false when I wrote it**: nine lines above it this block still said
+> “T38–T54 are closed”, which went stale twice over while I believed the category was empty. Historical
+> references like “T38 was paste-ready” cannot rot; **only a number that asserts current state can**, and that
+> is the narrower property I actually needed.)* Same move
 > as floors instead of counts, headings instead of line numbers, a ratio instead of a share — **when a figure
 > cannot be kept true, remove it rather than promising to maintain it.**
 | # | Enrique's item | Why it is first / what it costs |
@@ -2035,7 +2119,146 @@ it is inherited and still owes a check.
 
 ## 0. Verification log
 
+### Iteration 205, 05:18 EST — I corrected a sampling error by committing a convention error, in the same direction
+
+T56 shipped at **It144**, and the Implementer's first act was to refuse to copy my numbers. It recomputed the
+percentiles from the 351 rows itself — *"the lesson of It140, where a number I published turned out to be the
+`limit` I had typed, is that I do not copy a figure from a task description"* — and **found one of mine wrong.**
+
+#### The figure, and exactly where it came from
+
+I published the census first-signal **p90 as 1488ms** and wrote, in T56 and in the banner, that the 1.5s target
+*"is met."* Re-derived this iteration from a fresh pull of the same 351 rows:
+
+```
+first_event_ms  n=338  target 1500ms
+  p50   nearest-rank 1079   interpolated 1081   [mine 1079]  ✓ agree
+  p90   nearest-rank 1502   interpolated 1492   [mine 1488]  index 304 vs my 303
+  p95   nearest-rank 1792   interpolated 1782   [mine 1780]
+  over target: 34 of 338 = 10.1%
+```
+
+**My helper took `a[floor(q*(n-1))]` — index 303 of 338 — where nearest-rank takes index 304.** One position.
+And because **10.1% of turns exceed 1500ms, the p90 lands exactly on the boundary**, so that one position was
+the whole difference between *"met"* and *"2ms over."* Same error in every tail figure I filed: first-token p90
+**4321/4299**, not 4290; p95 **5276/5173**, not 5155; total p90 **7869**, not 7638.
+
+> **The shape of this is worse than the arithmetic.** I opened T56 by accusing the document of publishing a
+> percentile that landed on the side it wanted with no `n` beside it. I then published a percentile that landed
+> on the side *I* wanted with no **convention** beside it. **Stating `n` is not stating your method**, and the
+> error ran in the same direction as my conclusion — which is the direction errors run when you already know what
+> you want the answer to be. The median half was right under either convention (1079ms, 2608ms), and that is the
+> half the headline actually rests on.
+
+#### What the deliverable says now, which is better than what I asked for
+
+*"Met at p50 (1079ms), level at p90"*, with **both conventions printed** and **34 of 338 — 10.1%** beside them;
+first prose token *"over at p90 either way"* — 4321ms nearest-rank, 4299ms interpolated, about 300ms past a 4s
+target, 52 of 338 beyond it. **A correction in our favour on the headline and against us on the tail**, which is
+the shape an honest re-measurement usually has. Verified in the file at `docs/latency-target.md:83-138`, and the
+census sits two sections *below* the superseded six-turn conclusion but the supersession is stated at line 71, so
+a top-down reader meets it before the stale number.
+
+#### It declined one instruction and was right to
+
+T56's check-when-done said the *"45ms over"* sentence should be **gone**. It144 left it: the doc already
+supersedes it in the next section, and *"deleting an honest superseded admission would contradict the pattern
+this project has used for every other correction: prepend or append, leave the original readable."* **50
+insertions, 0 deletions.** I accept that, and it is the reason this entry annotates rather than rewrites the
+iteration-203 entry and the T56 section — both keep their wrong p90 with the correction beside them.
+
+#### And the error is now guarded in code
+
+`src/lib/rules/__tests__/latency-claims.test.ts` — new, **5 tests, run green this iteration** — requires that any
+section reporting a *measured* percentile states its sample size, that the census keeps its window and its
+re-derivable query, and, in its own last case, that the document **must not claim the first-signal target is met
+at p90**:
+
+> *"picking the convention that clears the target is the same error as picking the sample that misses it."*
+
+**A guard written against my mistake, by the agent that caught it.** It deliberately does not pin the
+measurements, *"those are supposed to move when something is re-measured, and a guard that froze them would make
+honesty fail."*
+
+#### Corrected in my own file, loudly
+
+The banner carried *"p90 1488ms — the target is met"*; it now carries the straddle and says whose error it was.
+The T56 section and the iteration-203 entry each keep their figures with a correction block at the head.
+**Nothing else in the plan cites those tails.**
+
+**T57 is the only open agent task.** Tester silent since 20:26 (**8h52m**); its ledger has no open findings.
+Inbox and In progress empty. No lock held; I took none.
+
+
+### Iteration 204, 05:05 EST — the Implementer found two false promises in the row I had just read verbatim
+
+**My iteration-202 sweep of `docs/demo-cheatsheet.md` was not the sweep I said it was.** I read the Webb row
+line by line, verified the measurements it quotes, checked its policy citation, and published *"Re-swept."*
+**It143, forty minutes later, ran the beat and found two promises in that row that production does not keep.**
+
+#### What I missed, and why
+
+The row said *"Sol confirms the amount is inside the $50 per-stay front-desk authority"* and *"the tool prints
+the arithmetic — 'minibar charge $45.00 + late housekeeping $25.00 = $70.00…'"*. Driven on production:
+
+- **Sol's prose contains neither figure.** No `$45`, no `$50`. Both are on the `check_comp_authority` **chip**.
+- **The arithmetic exists but never reaches the bubble.** `recovery.ts` really composes it into `human_reason`;
+  `chat.ts:475` emits `{ name, status, summary, citations }` — I checked the emit myself — so the model sees the
+  whole envelope and the supervisor trace shows it, and **the chat bubble does not.**
+
+> **Why I passed over it.** The row carries a `Measured:` clause with real numbers — `$45`/`$50 → front_desk`,
+> `$55 → agm`, `escalation_required: false`. I checked those, found them true, and let them vouch for the
+> sentences around them. **A measured clause next to an unmeasured one is worse than no measurement at all**: it
+> buys the whole cell credibility that only part of it earned. My own rule — *a quoted claim is not a checked
+> claim* — and I broke it on the document I had just declared swept.
+
+And the failure mode is the expensive kind: a presenter told *"the tool prints the arithmetic"* points at the
+chat bubble for a sentence that is not there, and the panel looks where he points. **A wrong sentence in a cheat
+sheet is recoverable; a wrong gesture in front of an audience is not.**
+
+It143 fixed the row — it now quotes what Sol actually says, names the three chips in order, says to point at the
+chips, and states that the itemised arithmetic lives in `human_reason`, not in the bubble — and guarded it three
+ways, including the It135 form where the ban lifts by itself if someone surfaces the field. **That row has now
+been wrong three times for three different reasons.** One thing came out better than claimed: turn 3 returned
+**the same escalation id** as turn 2, so the second charge joins one review instead of opening a second.
+
+#### T57 filed — the guard on the live-modification beat checks the file, not the object
+
+I went after the Tester's remaining FIXED-PENDING from its iteration 61, the live-modification page, *"the
+highest-stakes page in the repository."* Every pointer it gives is correct right now:
+
+```
+thresholds.ts:10   the header comment quoting the snippet   <- the decoy the Tester edited first
+thresholds.ts:54   SOL-AUS  max_discount_auto_approve_pct: 15
+thresholds.ts:93   SOL-TPA  max_discount_auto_approve_pct: 15
+thresholds.ts:102  'SOL-PHX': {   ...   :105 rooms 35   :106 ceiling 15   <- the real edit
+```
+
+**What is thin is the guard.** `walkthrough-quotes.test.ts:109` asserts its five fragments appear *somewhere in
+the file*: `group_block_auto_approve_max_rooms: 35,` occurs twice and `max_discount_auto_approve_pct: 15,` four
+times, so **SOL-PHX's numbers can change and the suite stays green** — on the strength of Tampa carrying the
+identical pair. The doc's tell is *"'allowed 15' stays 15"*; the guard cannot see that 15 move.
+
+And its anchor, `'SOL-PHX': {`, **matches the comment at line 10 before the object at 102** — the same mistake
+the Tester made in rehearsal and wrote the warning about, and the same shape as T55's `indexOf` landing inside
+the task's own description.
+
+> **Third time tonight a guard's anchor has matched a comment about the thing instead of the thing.**
+> **Anchor on a string that exists once, and assert the count.**
+
+#### Also confirmed
+
+- **The Tester's other it61 correction landed**: the example response reads `403 Forbidden`, not `HTTP/2 403` — a
+  protocol version in a pasted example can only ever be wrong.
+- **It59's FIXED-PENDING is closed** by It143's production run, and It60's by the Tester's own iteration 61. The
+  Tester's ledger has no open findings left; its last entry is 20:26, **8h39m** ago.
+
+
 ### Iteration 203, 04:57 EST — a brief deliverable concedes a miss that 338 turns do not support
+
+> **CORRECTED at iteration 205: the p90s and p95s in this entry are one index low.** First-signal p90 is
+> **1502ms** nearest-rank / **1492ms** interpolated, not 1488ms, and **10.1%** of turns exceed 1500ms, so it
+> straddles the target rather than clearing it. The p50s stand. Details in the iteration-205 entry above.
 
 Two checks this iteration, one of which found a published number that is wrong in our favour. **T56 filed.**
 
@@ -2108,6 +2331,11 @@ API for the 403 and the bare 401. Fixed as claimed, in the file, not just in the
 
 
 ### Iteration 202, 04:44 EST — the last unguarded document is the one Enrique reads out loud
+
+> **CORRECTED at iteration 204: this sweep was incomplete.** It143 ran the Webb beat and found two
+> promises in that row that production does not keep — Sol names neither figure, and the itemised
+> arithmetic never reaches the chat bubble. I had read that row verbatim and let its `Measured:` clause
+> vouch for the sentences around it. Details in the iteration-204 entry above.
 
 `docs/demo-cheatsheet.md` is 41 lines and it is the only document that gets read **during** the demo. I swept it
 in full at It164; it changed at **01:52** (T50's Chen warning), so its beats were assertions again rather than
