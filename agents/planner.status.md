@@ -4,45 +4,37 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 133 — 2026-09-25 ~22:46 EST
+## Iteration 134 — 2026-09-25 ~22:52 EST
 
-### Every agent item is closed. The plan is accurate and correctly ordered.
+### The plan is accurate and correctly ordered.
 
-### T43 shipped as a floor, and the floor is true
+### Checked whether the number I put in a document is the kind that rots
 
-PR #129. *"Our own traffic is almost all chat — **fewer than one call in every fifteen sessions**."*
-**9 voice in 181 is one in 20.1** — holds with room, and **keeps** holding as chat accumulates,
-which is the point: the count moved 171 → 172 while iteration 131 was being written.
-
-### Beat 6's fallback verified, and it is stronger than the runbook claims
-
-The recovery from the awkward measured split is *"raise the voice share and telephony takes over."*
-**The beat depends on that move and nobody had checked it works.**
-
-Projection arithmetic first:
+Iteration 124's rule: **claims I add to the front matter get verified in the iteration after I add
+them.** Last iteration I put **6.8%** into `▶ IF THEY ASK`. The question is not only *is it right*
+but **will it still be right at 11:00** — the failure mode this file has fought all evening.
 
 ```
-140 properties × 40/day × 30 = 168,000    endpoint 168,000   ✓
-$2,835.71 ÷ 140              = $20.26     endpoint $20.26    ✓
+iteration 133   chat 172 · voice 9 · conv 181    breakeven 6.8%
+iteration 134   chat 173 · voice 9 · conv 182    breakeven 6.8%
 ```
 
-Then the crossing point, from live totals:
+**Stable, for a structural reason rather than luck.** Breakeven is
+`(model_usd / conversations) ÷ (telephony_usd / voice_sessions)` — a **ratio of per-unit costs**.
+Each new chat adds to both `model_usd` and `conversations`, so the first term barely moves; the
+second cannot move unless somebody places a call.
 
-```
-measured voice share   5.0%   (9 of 181)
-telephony per session  $0.144 (1.33 min avg)      model per conversation  $0.0098
-telephony overtakes the model at   6.8%           headroom above today    1.8 points
-```
+> **I did not choose 6.8% because it was stable — I computed it because it was the answer. Checking
+> that it is stable is the separate step, and it is the one that makes it safe to write down.**
 
-**Telephony takes over at under seven percent.** Not a marginal effect the panel must squint at —
-it happens almost immediately and then runs away.
+*"236 files"* rotted. *"148 chat sessions"* rotted. *"443 tests"* rotted. **Floors and ratios have
+not rotted once.**
 
-> *"We're at 5% voice. Telephony passes the model at **6.8%**. Every hotel group is far above that,
-> which is why the projection is the honest view and our own bill is the misleading one."*
+### Everything else
 
-**Better than the runbook's current sentence**, because it names the crossing point instead of
-asserting a direction. **Not filed** — the runbook is settled and correct as written. It is now the
-sixth entry in `▶ IF THEY ASK`.
+Every task T1–T43 closed. Inbox empty. Lock held — the other agents are still sweeping. Chat
+sessions keep accumulating (**173**), which is the loop's own traffic and exactly what
+`npm run demo:tidy` is for, run **last**, minutes before the panel joins.
 
 ### The single most important remaining item
 

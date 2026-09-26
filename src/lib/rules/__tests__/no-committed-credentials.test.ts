@@ -84,3 +84,68 @@ describe('no real credential is committed', () => {
     expect(exp).not.toMatch(/\bgencred[A-Za-z0-9]{24,}/)
   })
 })
+
+/**
+ * The one credential this repo creates itself must stay out of it.
+ *
+ * `npm run seed:users` writes `DEMO_LOGINS.md`, and its second line is
+ * `Password for all three: <the real password>` — a working password for the demo **admin** account,
+ * which sees every screen, the backend map and the cost page. `SUBMISSION.md` points Enrique at that
+ * file to paste the password into the email, and is explicit that it must never be in the repository,
+ * which is **public**.
+ *
+ * Today the whole protection is one line of `.gitignore`. Nothing asserted it. This repo has already
+ * lost that bet twice: a live SIP credential was committed as a test fixture (iteration 51, the
+ * finding this file was written for), and `inq.json` arrived via `git add -A`. A `git add -f`, a
+ * rebased `.gitignore`, or a tidy-up that "fixes" the ignore list are all one command away from
+ * publishing it.
+ *
+ * Shape-based like the rest of this file: `vitest.setup.ts` strips credentials from the environment,
+ * so no test here can know the password's value. What it can do is refuse the file and refuse the
+ * line the generator writes.
+ */
+describe('the demo login card', () => {
+  const CARD = 'DEMO_LOGINS.md'
+
+  it('is not tracked by git, because it holds a working admin password', () => {
+    expect(
+      trackedFiles(),
+      `${CARD} is tracked. It contains a plaintext password for admin@solsticehotels.com and this ` +
+        `repository is public. Remove it with "git rm --cached ${CARD}" and keep it ignored.`,
+    ).not.toContain(CARD)
+  })
+
+  it('is named in .gitignore, which is the only thing keeping it out', () => {
+    const ignore = readFileSync('.gitignore', 'utf8')
+    expect(
+      ignore.split(String.fromCharCode(10)).map((l) => l.trim()),
+      `.gitignore no longer lists ${CARD}. That single line is the entire protection; ` +
+        `scripts/seed-users.mjs rewrites the file with a live password every time it runs.`,
+    ).toContain(CARD)
+  })
+
+  it('has its password line nowhere in the tracked tree', () => {
+    // Only a line that carries an actual value. A first pass matched any non-space after the
+    // colon and flagged three innocent files: the email draft's `<paste from DEMO_LOGINS.md>`,
+    // the plan quoting it, and this test's own comment. A guard that fires on prose about the
+    // secret teaches people to ignore it, so this wants what a password looks like -- one token,
+    // eight characters or more, running to the end of the line -- and never an angle-bracket
+    // placeholder or the generator's own `${PASSWORD}`.
+    const filled = /Password for all three:[ \t]*(?![<$])(\S{8,})[ \t]*$/m
+    const problems: string[] = []
+    for (const file of trackedFiles().filter((f) => !SKIP.test(f))) {
+      let text: string
+      try {
+        text = readFileSync(file, 'utf8')
+      } catch {
+        continue
+      }
+      const hit = text.split(String.fromCharCode(10)).find((l) => filled.test(l))
+      if (hit && !announcesItselfFake(hit)) problems.push(file)
+    }
+    expect(
+      problems,
+      `These tracked files carry the filled password line from ${CARD}: ${problems.join(', ')}`,
+    ).toEqual([])
+  })
+})
