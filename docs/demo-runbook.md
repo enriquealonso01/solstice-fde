@@ -232,8 +232,9 @@ They will. Have this one ready:
 
 1. Open `src/lib/rules/thresholds.ts`.
 2. One line: `SOL-PHX` max discount 15 to 12.
-3. Re-run INQ-2009. The verdict, the sentence a rep reads, and all three costed options move
-   together.
+3. Re-run `INQ-2009`. The verdict, the threshold it cites, and the sentence a rep reads all move
+   together, and the price the customer asked for does not — because the ceiling changed, not the
+   rate.
 
 Say while doing it: *the reason this is one line is that no threshold lives in a prompt. If it did,
 this change would be a prompt edit with no test and no audit trail.*
@@ -244,7 +245,7 @@ this change would be a prompt edit with no test and no audit trail.*
 
 | What breaks | What to do |
 |---|---|
-| The phone call fails | Use the mic in the chat bubble. Same agent, same tools. Say so and move on. |
+| The phone call fails | **If it is a carrier or signal problem:** use the mic in the chat bubble — same agent, same tools, say so and move on. **If Telnyx is out of credit the mic fails too** (same account, same balance), so fall back to the **text** chat bubble, which runs on Anthropic and does not touch Telnyx. |
 | The site is slow to answer | Point at the tool chips: *it is working, and it is showing you what it is doing.* Do not apologise twice. |
 | A screen errors | The error boundary shows the real message. Read it aloud, say what you would check, move on. Handling it calmly is worth more than not hitting it. |
 | Supervisor audio sounds one-sided | Expected, and say so before they notice: the supervisor leg carries the guest but not Sol's synthesized voice. Point at the live transcript, which has both sides, and explain the conference-based fix you chose not to build days before submission. |

@@ -4871,3 +4871,56 @@ compile === live === export at **29,411**, the new test is in the live prompt, t
 T34's redaction survived its third regeneration.
 
 `npx tsc -b --force` clean. `npx vitest run`: **527 passed, 44 files**.
+
+## It92 — T38, T39, T40: the three the Planner put ahead of more guard work
+
+They were right to say so, and the reasoning is worth keeping: *"a guard protects against the next
+regression, and these three are current defects on the demo path."* The suite had grown 476 → 527
+today; three sentences Enrique reads **while presenting** had not been checked.
+
+**I verified each before touching a word.**
+
+**T38 — the warning caused the failure it warns about.** `docs/live-modification.md` said *"search for
+the second occurrence"*. `max_discount_auto_approve_pct: 15` occurs **four** times:
+
+| Line | Property |
+|---|---|
+| 10 | header comment — the trap the warning names |
+| **54** | **SOL-AUS, Austin** ← "the second occurrence" |
+| 93 | SOL-TPA, Tampa |
+| **106** | **SOL-PHX, Phoenix** ← the one the demo needs |
+
+A presenter following it edits **Austin**, and `INQ-2009` is at Phoenix, so the verdict does not move
+and *"allowed 15"* stays 15 — the same confusing thirty seconds, produced by the fix. Now it names the
+property instead of an ordinal, which is also robust to anyone reordering the file.
+
+**T39 — a line said out loud that the screen does not show.** The runbook promised *"all three costed
+options move together"*; `show-verdict.ts` prints **one** price. Three costed options are real —
+`tools.ts:326` builds them and `inquiries.test.ts:317` asserts it — but they live on the sales screen,
+not in that script.
+
+**T40 — the fallback shared its failure mode with the thing it replaced.** The recovery row sent
+Enrique to the browser mic when the phone fails. `useTelnyxVoice.ts` connects through
+`VITE_TELNYX_ASSISTANT_ID` to the **same assistant on the same account**, so for the failure that is
+currently most likely — an exhausted balance at $3.03 — the fallback fails identically, immediately
+after he has said *"same agent, same tools."* The row now splits the two causes and names the **text**
+bubble, which runs on Anthropic and touches Telnyx not at all.
+
+### I proved T39's replacement by performing the edit
+
+The new step 3 claims the threshold and the rep's sentence move while the asked-for price does not. So
+I made the live-modification edit locally and ran the script:
+
+```
+before   asked 17, allowed 15   "2 points over"   $7806.15
+after    asked 17, allowed 12   "5 points over"   $7806.15
+```
+
+The ceiling moved, the sentence moved, the price did not — *because the ceiling changed, not the
+rate*, which is what the wording now says. It also confirms **T38's fix works**: editing the entry at
+line 106 is what moves the verdict. Reverted; the file is back to four occurrences.
+
+Writing a sentence about what a command prints, and then running the command, cost about a minute. Two
+of today's four demo-path defects were sentences nobody had run.
+
+`npx tsc -b --force` clean. `npx vitest run`: **527 passed, 44 files**, including PR #106's snippet pin.

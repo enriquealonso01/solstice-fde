@@ -19,10 +19,11 @@ rehearsed end to end, with the real output captured from an actual run.
   max_discount_auto_approve_pct: 15,   // <- change to 12
 ```
 
-**Search for the second occurrence, not the first.** The header comment at the top of that file
-quotes this same snippet to explain why the threshold lives here, so a search for
-`max_discount_auto_approve_pct: 15` lands on the comment around line 10 before it reaches the real
-entry around line 106. Editing the comment changes nothing and the script's output does not move,
+**Edit the `SOL-PHX` entry, not the first match.** The header comment at the top of that file quotes
+this same snippet to explain why the threshold lives here, and two other properties share the same
+15% ceiling, so a search for `max_discount_auto_approve_pct: 15` finds **three wrong lines before the
+right one** — the comment near line 10, Austin at 54, Tampa at 93. **Search for `'SOL-PHX'` instead**
+and change the `max_discount_auto_approve_pct` on the entry below it, around line 106. Editing the comment changes nothing and the script's output does not move,
 which is a confusing thirty seconds in front of an audience. The tell is that "allowed 15" stays
 15. This is the one mistake to rehearse away, and it is easy to make: the testing agent made it on
 its first attempt at this exact edit.
