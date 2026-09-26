@@ -9,24 +9,26 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
-- **SHIPPED It105: the bare pet question cites Policy 8 now, and an item is off Enrique's list.**
-- **Half of it had already been fixed by accident.** It104's clause for lost property moved
-  *"Can I bring a dog?"* from `get_policy` **0 of 3** to **3 of 3**. *"Can I bring my dog?"* stayed at
-  **1 of 4**, still answering *"pet policies vary by property"* with **no tool call**.
-- **So the diagnosis is sharper than It88's: the possessive is the trigger.** *"my dog"* reads as a
-  personal situation needing property context; *"a dog"* reads as a general question and goes to the
-  policy. Same confusion It104 named — one clause short, not a different problem.
-- **I took the option the item recommended against, and said why.** Stating a chain-wide policy as
-  property-specific *without a tool call* is a **G1 breach**, and a README disclosure would have
-  documented a broken guardrail instead of fixing it. The reason option 3 was declined was cost;
-  It103–104 established the cheap route — **draft deploy, measure, then production**.
-- **Measured before production served it: 4 of 4, zero property-specific claims.** Five controls
-  unmoved, and **G1, G12, G13, G15 all re-run and HELD**, plus G7 and G10 in the controls.
-- **The control worth having: Chicago parking.** The new rule forbids *"varies by property"* unless a
-  tool said so — and the correct parking answer *does* say it varies, because Policy 12 has no
-  chain-wide rate and `get_property_info` ran. It held. That was the case to test before shipping.
-- `compile === export === live` at **29,655**, margin **345** — positive, and still under the thousand
-  the README and `sol.md` both claim.
+- **SHIPPED It106: my own fix an hour ago made two demo documents wrong — in the unusual direction of
+  claiming a defect we no longer have.**
+- `docs/demo-runbook.md:78` told Enrique a bare *"Can I bring my dog?"* *"lands this beat about one time
+  in four"* and quoted the *"pet policy can vary by property"* failure; `docs/demo-cheatsheet.md:21` said
+  the same in a line. True at It88, **false since PR #138** — 4 of 4 on the draft, twice more on
+  production.
+- **These are the files he reads while presenting.** As written they told him to distrust a question that
+  works, so he would hedge about his own system. Both now say to use the service-animal phrasing **because
+  it puts the ADA limit on screen**, and add that the bare form holds since #138 — *"answer their
+  question, do not steer them back to the script."*
+- **Fixed my own miscount** at `completed.log.md:5811` — *"Three items remain his"* followed by four — and
+  extended `list-counts` to `agents/README.md` and `agents/implementer.status.md`, which is where it
+  happened.
+- **Two scoping decisions I would rather state than bury.** `agents/completed.log.md` is **out**: it
+  quotes the wrong text it fixed as history, and the chat-pair ban fired on it immediately — guarding a
+  log that records old mistakes verbatim either fails forever or stops it recording them.
+  `HUMAN_INTERVENTION.md` is **out of the counted-list rule**: every entry is nested under a bullet, so
+  `bulletsAfter()` reads the terminating sentence as a continuation and runs into the next entry. It
+  produced a false positive on a correctly-counted list, **and I spent two edits reformatting the document
+  to satisfy the test before reading the test.** That is the tail wagging the dog.
 
 ## Demo rehearsal coverage — what is actually verified
 

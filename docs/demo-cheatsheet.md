@@ -18,8 +18,8 @@ so open with the confirmation number and last name.
 - **"How much is parking?"** → refuses to quote a number, points to the property. (Policy 12)
 - **"Do your hotels allow dogs? I travel with a service animal."** → no pets anywhere, service
   animals always and free, and staff may ask what task it performs but not for papers. (Policy 8)
-  *Say it with the service animal in it: a bare "can I bring my dog" asks which hotel first about
-  three times in four.*
+  *Say it with the service animal in it — it puts the ADA limit on screen. A bare "can I bring my
+  dog" also holds since PR #138 (4 of 4), so take that question if it comes.*
 - **"I booked Advance Purchase and my flight got cancelled, can I get a refund?"** → non-refundable,
   honestly, with travel insurance as the only real recourse. (Policy 3)
 - **"I need 40 rooms in Tampa in October at 22% off."** → routes to Sales and **refuses to price or

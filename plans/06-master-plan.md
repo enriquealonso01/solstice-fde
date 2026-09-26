@@ -80,7 +80,14 @@
 >
 > ### Two constraints anyone editing should know
 >
-> **The voice prompt has 849 characters of margin** (29,151 of 30,000, after PR #136). Wrap human-facing additions
+> **⚠ The voice prompt has 345 characters of margin left** (29,655 of a hard 30,000), **and it has
+> fallen 849 → 562 → 345 in three consecutive PRs.** Each of the last two routing fixes added about
+> 210 characters. **Two more of that size and `compileInstructions` truncates the prompt**
+> (`provision.mjs:208,245`), which drops whatever sits at the end of `agent/sol.md`.
+>
+> **Before adding anything to that file: wrap it in `voice:exclude` if a guest on the phone does not
+> need it** — that costs ~1 character instead of ~210 — **and state the compiled length in the
+> commit, as every prompt PR tonight has done.** Wrap human-facing additions
 > to `agent/sol.md` in `voice:exclude`: a 276-character clause costs **+1**, not +276 — and **any**
 > edit outside such a block needs a `--refresh`.
 >
@@ -1494,6 +1501,74 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 144, 23:40 EST — both routing fixes are live, and the voice prompt has 345 characters left
+
+#### The fixes, verified in the live prompt by their own distinctive text
+
+PR #138 closed the pet question at the **prompt** level, which is the better fix than changing the
+email — the email change stopped handing an evaluator the failing phrasing; this stops the phrasing
+failing:
+
+> *"The same trap catches 'can I bring my dog': a pet question with no property named is Policy 8,
+> which is chain-wide. **Never tell a guest a policy varies by property unless a tool said so.**"*
+
+Both are live. Checked by searching the live assistant for the **exact sentences the commits added**:
+
+```
+#137  "I left my charger in the room"                                        true
+#137  "left-behind items"                                                    true
+#138  "can I bring my dog"                                                   true
+#138  "Never tell a guest a policy varies by property unless a tool said so" true
+```
+
+**My first check looked for *"lost and found"* and *"pets are not permitted"* and found neither** —
+and those phrases were never added. The additions describe **the trap**, not the policy text. That
+is the predicted-enumeration error again, in miniature: **I searched for what I expected the fix to
+say instead of reading what it said.** Two commands apart, caught by reading the diff.
+
+#### The finding: the margin is disappearing
+
+```
+PR #136   margin 849
+PR #137   margin 562
+PR #138   margin 345      live 29,655 of a hard 30,000
+```
+
+**More than half the headroom is gone in under an hour**, and the last two fixes cost about **210
+characters each**. `provision.mjs:245` truncates at 30,000 and appends a marker — so **two more
+routing fixes of that size and the end of `agent/sol.md` stops reaching the phone agent.**
+
+**Raised in the banner**, with the two things that prevent it: wrap anything a phone guest does not
+need in `voice:exclude` — **~1 character instead of ~210** — and state the compiled length in the
+commit, which every prompt PR tonight has already done.
+
+**This is a trend, not a number**, which is why it belongs in the banner rather than as a task.
+Nobody has done anything wrong: each fix was correct, measured, and re-provisioned with the
+three-way diff. **They are simply all spending from the same account, and no single PR is where it
+would go wrong.**
+
+#### #137's method is worth copying
+
+> *"Measured on a **draft deploy before production saw it**: 6 of 6 now reach `get_policy`, with the
+> checkout-time and ADA controls **unmoved**."*
+
+Fix verified, **neighbours verified unaffected**, and all of it **before production**. That is the
+answer to *"did the fix work"* and *"did it break anything"* in one measurement, taken where a
+mistake costs nothing.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3** — with its safety reason and recovery | Enrique |
+| 2 | **Top up Telnyx to $20+** — balance **$3.03** | Enrique |
+| 3 | **T21** — with the cascade count to run first | Enrique |
+| 4 | **T34** — rotate the SIP connection | Enrique |
+| — | **T44** — one clause in the pre-send checklist | anyone |
+
+Inbox empty. No lock held. **The plan is accurate and correctly ordered.**
+
 
 ### Iteration 143, 23:34 EST — every deliverable path resolves, and the second instance of a real pattern
 
