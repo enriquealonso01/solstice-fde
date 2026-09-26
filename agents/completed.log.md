@@ -7368,3 +7368,112 @@ the 405 block below `resolveSessionId` failed 3; prepending one line to `docs/de
 1. `git diff --numstat` afterwards to confirm the mutations left nothing behind.
 
 `npx tsc -b` clean. `npx vitest run` **710 tests / 53 files** green (up 10).
+
+---
+
+## It129 — the largest unverified surface had no test, and the reason nobody could verify it was a key I was holding
+
+Nothing was open again: T38–T50 closed, no new Tester iteration, `BACKLOG.md`'s inbox empty. What
+the Planner's banner *did* say, for the fourteenth consecutive state table, was this:
+
+> | — | **Auto-triage re-verification** — service-role or a signed-in rep required. **Not a task I can write for myself** | a Tester |
+
+and, in full:
+
+> **I cannot close it, and here is exactly why.** … **I cannot establish that precondition**: the anon
+> key returns zero rows from all three tables, so I cannot see which inquiries are bare. Running it
+> blind could add draft rows to the board the panel opens on. **Not mine to risk.** It needs the
+> service-role key or a signed-in `group_sales` session, **both of which belong to the agents holding
+> the lock.**
+
+I hold both. The service-role key is in `.env` and I minted an admin session last iteration. So the
+thing filed as *"only a Tester can do this"* was, on its own stated terms, mine — the Planner had
+correctly identified the blocker and correctly identified who could remove it, and then it sat there
+because the description said "a Tester" and no Tester came back. Worth noticing as a routing failure
+rather than a research one: the work was addressed to a role instead of to a capability.
+
+### First finding: there was no test
+
+Before reaching for production I checked what already covered it. `git grep -l triage -- '*.test.ts'`
+returns **nothing**. Fifty-two test files, seven hundred and ten tests, and not one of them mentions
+`triageInbox`. The agentic group workflow is a named brief deliverable, the one the whole "the agent
+does the typing, a human decides what reaches a customer" argument rests on, and its entire
+verification was one session's word that it worked.
+
+That reframes the task. Re-running it against production would have produced a second session's word.
+A test produces something that survives the night.
+
+### And it did not need production at all
+
+The suite is hermetic — `vitest.setup.ts` strips every credential before anything loads — which I had
+always thought of as a constraint. Here it is the mechanism: with no credentials, `tryGetDb()` returns
+null, and both `store.ts` and `followUps.ts` fall back to their in-memory maps. So the **real**
+`triageInbox` can be run in-process, against the **real** generated dataset, twice, and the claim
+everybody actually cares about can be asserted instead of asserted about.
+
+`src/lib/rules/__tests__/triage.test.ts`, 15 cases across four describes. First pass over an untouched
+inbox: 7 proposals drafted, 1 follow-up (INQ-2004, the only inquiry in the shipped data the parser
+could not complete — pinned, so that if the dataset ever completes it the follow-up branch stops being
+exercised loudly rather than quietly). Second pass: **every worked inquiry comes back
+`skipped_existing`**, naming the artifact that already exists, and **nothing new is drafted**. That is
+the idempotency claim — a rep clicking twice must not double-message a customer — tested rather than
+described. Both halves of it: proposals *and* follow-ups, because the guard consults two stores and
+passing on proposals alone would hide half of it.
+
+Also pinned: the flagged/clean distinction has to show up in what the sweep *says*, not only in the
+data. INQ-2009 reads *"Priced, but flagged: it needs a decision before it can go out"*; INQ-2001 reads
+*"Priced and within every rule. Ready for a human to send."* And a source-level check that no delivery
+symbol is reachable from `triage.ts` — checked in the source rather than by observation, because a
+send path that merely is not reached today is one refactor from being reached, and "sends nothing" is
+the sentence the sales team is being asked to trust.
+
+### The test corrected my own risk analysis, which is the part worth recording
+
+Before writing it I did the read the Planner could not: service-role, all three tables, joined
+`proposals.inquiry_id` and `follow_ups.inquiry_id` back to `inquiry_code` the same way `listProposals`
+does. Thirteen inquiries live. **Four looked bare** — INQ-2003, INQ-2010, INQ-2012, INQ-2013 — and I
+had written down that a production sweep would therefore write four rows onto the board the panel
+opens on.
+
+Then the test ran and printed something better:
+
+```
+INQ-2003 | skipped_blocked | Solstice Austin Congress Ave does not take group blocks between March 10, 2027 through March 19, 2027 …
+INQ-2010 | skipped_blocked | Solstice Sacramento Capitol does not take group blocks between May 3, 2027 through May 7, 2027 …
+```
+
+INQ-2003 and INQ-2010 are not un-worked. They are **refused**, deliberately, because they fall inside
+a blackout window — which is exactly the behaviour `BACKLOG.md` claimed and nobody had checked. They
+have no artifact *because the sweep is doing its job*. So a production run would write **two** rows,
+not four, and both of them onto **INQ-2012 and INQ-2013 — the two inquiries already queued for
+deletion**. A sweep would have drafted follow-ups onto rows that are about to disappear.
+
+I had the wrong number for ten minutes and would have shipped it in a warning that sounded precise.
+The tell was not a failing assertion about blackouts; it was `2 could not be progressed` in a summary
+string I had asserted would say something else. The same shape as every other instrument error in this
+project: the thing ran, reported success, and the only signal was a number that did not match.
+
+So: **still not run against production**, and now for a reason with arithmetic behind it rather than
+caution. Both `BACKLOG.md` and my status file say which two inquiries and why, so the next agent to
+read "a Tester should re-verify this" does not run the sweep and quietly damage beat 4.
+
+Worth stating plainly: the second pass also refuses the blacked-out two **identically** — same action,
+byte-identical detail. A refusal that softens on retry is worse than one that never happened, because
+the quote lands on the board and nobody watches it arrive.
+
+### Also: `BACKLOG.md` was lying about what is in progress
+
+The file's own header says *"I read this file at the start of every loop iteration"* and *"move each
+to Done with a note on what actually changed."* Its **In progress** section still held both entries:
+T29, annotated *"The Implementer is on it"* — T29 closed 3 of 3 at PRs #50, #53 and #54 — and the
+click-by-click tutorial, where T4a shipped at PR #3 and T4b/T4c were deliberately never started.
+
+I have now read that section twice in two iterations and checked both entries against the master plan
+both times, because a file that says work is in progress is a file you have to disprove. Both moved to
+Done with what actually changed, and T4b/T4c recorded as **a decision** — conditional on T1–T3, not
+worth building the night before submission — rather than left looking like something that got dropped.
+
+One consequence to flag for the Planner: **the caveat it cites as `BACKLOG.md:50` is now at `:54`**,
+and it no longer says what the citation was pointing at, because it is closed.
+
+`npx tsc -b` clean. `npx vitest run` **725 tests / 54 files** green (up 15).

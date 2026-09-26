@@ -4,59 +4,70 @@ What I am doing right now, and what I did last. Overwritten each iteration.
 **Note:** this file is overwritten, not appended — a committed copy longer than the working one is
 an *older* status, not a fuller one. See T24.
 
-## Iteration 173 — 2026-09-26 02:14 EST
+## Iteration 175 — 2026-09-26 02:24 EST
 
-**The plan is accurate and correctly ordered. No agent task is open.**
+**The plan is accurate and correctly ordered. One agent task is open: T51.**
 
-### ⏱ FOR THE IMPLEMENTER — your It128 status says "the package ships in about five hours"
+### T51 — the README breaks the one rule this repo wrote a guard for
 
-It is **02:1x** and submission is **11:00**. That is **roughly nine hours, not five.** Rehearsing
-`SUBMISSION.md`'s checklist is exactly the right call; a four-hour underestimate is the kind of thing that
-turns a careful rehearsal into a rushed one. *(And per iteration 172: the brief allows 5 business days from
-receipt on 09-24, so the real deadline is ~**2026-10-01**. Enrique submits 09-26 by choice.)*
+`README.md:69`, first file a reviewer opens:
 
-### Verified `docs/where-this-goes.md` — Katie's "sell the vision" ask, never checked
+> **Elapsed: about 24 hours, of which under 5 were active.** First commit 2026-09-24 12:35 EDT.
 
-A roadmap is the easiest document to write dishonestly. This one rests its argument on **present-tense
-claims**, which are checkable. The one I had not checked:
+```
+first commit         2026-09-24 12:35 EDT
+now                  2026-09-26 02:21  ->  37.8 h
+at submission 11:00  2026-09-26 11:00  ->  46.4 h      README says: about 24
+```
 
-> `:33` *"Escalations are **already** structured packets. Route them to a worklist."*
+**Understated by 14 hours now, 22 at send.** The sentence **hands the reader the first-commit timestamp**, so
+anyone who checks gets twice the claim — T43's pattern exactly. **It errs in the flattering direction**,
+which is the worse one.
 
-Read live with a `concierge` token: `category · severity · summary · packet(jsonb) · status · session_id`,
-and the packet carries `escalation_id` plus `policy_citations` — `policy:15`, `reservation:R55004`.
-**True as written.**
+**The repair is already the next sentence:** *"two windows — 12:35 to 16:21 on day one, and a second session
+on day two."* Only the headline rots. *"Two calendar days, with under 5 hours of committed work"* is true at
+any future reading. **Also settle "under 5 were active" — it does not say whose hours.** Day one is 3h46m;
+day two's loop has run over nine hours of wall clock.
 
-**And the half it says is missing really is missing:** no admin component renders live escalations — I
-searched every `.tsx` under `src/components/admin` and `src/pages`, zero. The only mention of a queue in any
-deliverable is this one, in the future tense. **Nothing claims a queue that does not exist. No task.**
+### Part B is the more interesting half: the guard bans this in its own header
 
-### Disclosure: some of those escalations are mine
+`list-counts.test.ts:162`: *"**A deliverable may not state elapsed time since a fixed past event as a figure,
+because it grows.**"* Its assertions are narrower — both are shaped around `agent/sol.md`'s
+`312h after checkout` and key on the word *checkout*. **`Elapsed: about 24 hours` is anchored to a first
+commit, matches neither, and the suite is green at 700 with it in place.**
 
-**67 escalations, all `open`.** The two at `05:35Z` (= **01:35 EDT**) are from my own iteration-165 runs
-driving the R55004 upgrade beat. I logged the transcripts and not the rows they left.
+**T47's shape for the third time tonight:** a guard's header states a property, its body tests the instances
+its author had in front of them. **A guard is only as good as the distance between its comment and its
+regex.** T51 part B names the wrinkle: `READER_FACING` exempts `agents/` and `HUMAN_INTERVENTION.md` on
+purpose; **`plans/` is not exempt and my file now quotes the offending sentence.**
 
-**`scripts/cleanup-phantom-sessions.mjs` reads and writes `sessions` only** — `demo:tidy` does not touch
-escalations and nothing in `scripts/` does. **But no admin page renders them, so they are on no screen the
-panel sees. This is not a second T21:** T21's junk is row one of a table beat 4 displays; this table has no
-display.
+### Two corrections to me
 
-Recorded anyway: anyone wondering where 67 open escalations came from deserves the answer, and **if the
-roadmap's worklist is ever built, it opens on 67 rows of agents talking to themselves.**
+**They were right and I was wrong:** I called the auto-triage re-verification *"the one thing only a Tester
+can do."* It129: *"it needs the service-role key or a signed-in `group_sales` session, **both of which belong
+to the agents holding the lock.** I hold both."* **The blocker was credentials, not role** — I turned a
+capability into a job title. Now theirs, correctly.
+
+**⏱ And the time note stands.** No document states a demo time — I searched the runbook, cheat sheet,
+`SUBMISSION.md` and README; the runbook says *"about 18 minutes of demo"* and nothing fixes a clock. **The
+only fixed point is the 11:00 submission, ~8h40m away.** It128's *"about five hours"* and It129's *"three
+hours of demo margin"* are not derived from anything written down.
 
 ### Open
 
 | # | Item | Owner |
 |---|---|---|
 | 1 | **`drop policy` ×3.** Reads proven live (13/10/3); gate proven clean | Enrique — **do** |
-| 2 | **Top up Telnyx** — under $4 and falling; Billing, ~$30 | Enrique — **do** |
-| 3 | **T21** — delete `INQ-2012`/`INQ-2013`, cascade count first. Inbox still holds **13** | Enrique — **do** |
+| 2 | **Top up Telnyx** — number confirmed live and active; balance is the only blocker | Enrique — **do** |
+| 3 | **T21** — re-confirmed undone; cascade count first | Enrique — **do** |
 | 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
 | 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
 | 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
-| — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
+| T51 | README's elapsed figure + the guard that already bans it | any agent |
+| — | **Auto-triage re-verification** | **CLAIMED It129** |
 
-**Tester silent 5h47m.** Inbox empty. No lock held.
+**Tester silent 5h57m.** Inbox empty. No lock held.
 
 ### The single most important remaining item
 
-**The `drop policy` paste** — still the best-evidenced item on the list.
+**The `drop policy` paste.** T51 is the only agent work, and it is one sentence plus a regex.

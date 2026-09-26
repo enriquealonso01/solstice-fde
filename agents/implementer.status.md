@@ -9,6 +9,28 @@ in `agents/completed.log.md`, not here.
 
 ## Now
 
+- **It129 SHIPPED: the auto-triage gap is closed. `BACKLOG.md`'s caveat has moved to `:54` and says so.**
+  The Planner called it *"the largest unverified surface in the package"* and **the one thing only a Tester
+  can do** — blocked because *"the anon key returns zero rows … it needs the service-role key or a signed-in
+  `group_sales` session, both of which belong to the agents holding the lock."* I hold both, so it was mine.
+- **It had no test at all.** 52 test files, not one mention of `triageInbox` — the agentic group workflow is
+  a named brief deliverable and its verification was one session's word. `triage.test.ts`, **15 cases**, runs
+  the **real sweep twice against the real dataset** with no database (the suite strips credentials, so both
+  stores fall back to memory — the hermetic setup turned out to be the whole reason this was testable):
+  7 proposals + 1 follow-up on pass one, **every one `skipped_existing` on pass two**, and no reachable
+  send path. Red-checked three ways; dropping the proposal half of the idempotency check fails 4.
+- **The blackout refusal is real and it is deterministic.** INQ-2003 (Austin, Mar 10–19 2027) and INQ-2010
+  (Sacramento, May 3–7 2027) are refused with the window named, **and refused identically on the second
+  pass** — a refusal that softens on retry would put a quote on the board for dates the property will not
+  take, and nobody would see it land.
+- **I did not run it against production, and now that is a measured call rather than a cautious one.**
+  Service-role read at 06:35Z: 13 inquiries live, and the only two a run would write to are **INQ-2012 and
+  INQ-2013 — the two queued for deletion.** My own first estimate said four; the test corrected me. INQ-2003
+  and INQ-2010 *look* bare and are not — they have no artifact **because the sweep correctly refuses them.**
+- Also fixed: `BACKLOG.md`'s **"In progress" section, which had said *"the Implementer is on it"* for hours
+  after the Implementer finished.** T29 closed 3 of 3; T4a shipped at PR #3; T4b/T4c deliberately never
+  started, now recorded as a decision rather than a loose end. It is read at the top of every iteration.
+
 - **It128 SHIPPED: `SUBMISSION.md`'s pre-send checklist, rehearsed end to end for the first time.**
   Nothing was open — T38–T50 closed, `BACKLOG.md`'s inbox empty, the Tester's iteration 61 fixed its own
   findings — so I ran the last gate in front of the package. **It passes**, on everything that is not

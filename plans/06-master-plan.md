@@ -1,7 +1,9 @@
 # Master plan: the whole picture
 
-> ## 02:13 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
-> *Every agent task is closed — T38–T50. `sol.md`, the committed export and the live phone agent all sit
+> ## 02:23 — **ENRIQUE: the SQL paste is #1. Three things to do, three decisions that need no action.**
+> **One agent task is open: T51** — the README states *"Elapsed: about 24 hours"* next to a first-commit
+> timestamp that makes it **37.8** now and **46.4** at 11:00, and the guard that bans exactly this does not
+> catch it. *T38–T50 are closed. `sol.md`, the committed export and the live phone agent all sit
 > at **29,784**, re-verified at 01:25, and `npx vitest run` is green — **700 tests / 52 files at 02:08**, and it grows every hour, so
 > treat the number as a vintage rather than a target.*
 >
@@ -272,6 +274,82 @@ can do:** re-verify the auto-triage agent, which writes drafts and so needs the 
 signed-in rep. `BACKLOG.md:50` still carries that open caveat.
 
 
+### T51. The README states elapsed time as a figure, which is the one thing its own guard forbids
+
+*One sentence in the first file a reviewer opens, and the honest replacement is already the next sentence.
+The second half is the more interesting one: **the guard that bans this exists, states this exact rule, and
+does not catch it.***
+
+#### The figure
+
+**`README.md:69`**, under *"What this cost to build"*:
+
+> **Elapsed: about 24 hours, of which under 5 were active.** First commit 2026-09-24 12:35 EDT.
+
+```
+first commit        2026-09-24 12:35 EDT
+now                 2026-09-26 02:21   ->  37.8 hours elapsed
+at submission 11:00 2026-09-26 11:00   ->  46.4 hours elapsed
+README says                                about 24
+```
+
+**Understated by 14 hours now and 22 by the time he sends it** — and **the README hands the reader the
+first-commit timestamp**, so a reviewer who checks does the subtraction and gets a number twice what the
+sentence claims. That is the T43 pattern: *the one sentence that invites the audience to check the number.*
+
+**It understates in the direction that flatters us**, which is the worse direction. The paragraph's argument
+is *"this was fast"*; a reviewer who finds it took 46 hours rather than 24 reads it as the speed claim being
+dressed up.
+
+#### The fix is already sitting in the next sentence
+
+> *"Git puts the committed work in two windows — 12:35 to 16:21 on day one, and a second session on day two.
+> The gap between them is a night's sleep, not work."*
+
+**That is the durable form, and it is already there.** Only the headline figure rots. Suggested:
+
+> **Two calendar days, with under 5 hours of committed work in them.** First commit 2026-09-24 12:35 EDT.
+> Git puts the committed work in two windows — 12:35 to 16:21 on day one, and a second session on day two.
+> The gap between them is a night's sleep, not work.
+
+**"Two calendar days" is true at any future reading**, which "about 24 hours" stopped being on day two.
+
+**Check `under 5 were active` while you are there, and say whose hours they are.** Day one's window is
+**3h46m**. Day two's agent loop has been running since roughly 17:18 on 09-25 and it is now past 02:20 — over
+nine hours of wall clock. If *active* means Enrique's hands on keys, under 5 may well be right; if it means
+the committed windows, day two alone breaks it. **The README does not say, and the sentence is doing
+persuasive work, so it should.**
+
+#### Part B — the guard that bans exactly this does not catch it
+
+`src/lib/rules/__tests__/list-counts.test.ts:162` opens with the rule in one line:
+
+> *"**A deliverable may not state elapsed time since a fixed past event as a figure, because it grows.**"*
+
+**Its assertions are narrower than its sentence.** Both patterns are shaped by the case that produced it
+(`agent/sol.md`'s `312h after checkout`):
+
+```
+/([0-9][0-9.,]*) ?(?:h|hours|hrs) (?:after|since|past) checkout/gi     // except 72
+…and a second test for "dated a sample by how long ago it was"
+```
+
+**`Elapsed: about 24 hours` matches neither**, because it is anchored to a first commit rather than to a
+checkout. **The suite is green at 700 with the offending sentence in the README.**
+
+**This is T47's shape again:** a guard whose header states a property and whose body tests the instances its
+author had in front of them. **Widen it to the rule it already claims:** in reader-facing docs, flag
+`Elapsed: <figure>` and any *"about N hours/days"* that sits in the same paragraph as an absolute date,
+unless it is a named policy constant.
+
+**The wrinkle, named so it does not bite:** `READER_FACING` already excludes `agents/` and
+`HUMAN_INTERVENTION.md` because those quote stale figures on purpose. Keep that. And **this file quotes the
+offending sentence in the task above**, so the plan must stay excluded too — the `agents/` filter does not
+cover `plans/`.
+
+**Check when done:** the README carries no elapsed figure that grows; the new assertion goes red if
+*"Elapsed: about 24 hours"* is restored; `npx vitest run` green; `plans/` and `agents/` still exempt.
+
 # ▶ IF THEY ASK — seven answers to questions the package invites
 
 *Each of these is a place where the system is **correct** and a reviewer will reasonably want to
@@ -373,7 +451,7 @@ know why it looks the way it does. Each was checked in the iteration named. **No
 
 ---
 
-# ▶ OPEN WORK — three things for Enrique to DO, three decisions that need no action. **No agent task is open.**
+# ▶ OPEN WORK — three things for Enrique to DO, three decisions that need no action, and **T51** for an agent.
 
 *Everything below this section is closed, or evidence.*
 
@@ -1596,6 +1674,176 @@ it is inherited and still owes a check.
 ---
 
 ## 0. Verification log
+
+### Iteration 175, 02:23 EST — the README breaks the one rule the repo wrote a guard for, and the guard does not catch it
+
+#### The finding
+
+`README.md:69`, first file a reviewer opens, under *"What this cost to build"*:
+
+> **Elapsed: about 24 hours, of which under 5 were active.** First commit 2026-09-24 12:35 EDT.
+
+```
+first commit         2026-09-24 12:35 EDT
+now                  2026-09-26 02:21   ->  37.8 h
+at submission 11:00  2026-09-26 11:00   ->  46.4 h
+README says                                 about 24
+```
+
+**Understated by 14 hours now, 22 by the time he sends it.** And the sentence **hands the reader the
+first-commit timestamp**, so anyone who checks does the subtraction and gets roughly twice the claim. **T43's
+pattern precisely — the one sentence that invites the audience to check the number.**
+
+**It errs in the flattering direction**, which is the worse one: the paragraph argues *"this was fast"*, and
+a reviewer who finds 46 hours behind a claim of 24 reads the speed as dressed up rather than measured.
+
+#### The repair is already the next sentence
+
+> *"Git puts the committed work in two windows — 12:35 to 16:21 on day one, and a second session on day two.
+> The gap between them is a night's sleep, not work."*
+
+**The durable form is already in the document.** Only the headline rots. *"Two calendar days, with under 5
+hours of committed work in them"* is true at any future reading. Filed as **T51**, with the replacement text
+and one more thing to settle while there: **"under 5 were active" does not say whose hours those are.** Day
+one's window is 3h46m; day two's loop has run over nine hours of wall clock. Under a human-hands reading it
+may well hold — but the sentence is doing persuasive work and should say which it means.
+
+#### The part that matters more: the guard bans this in its own header
+
+`src/lib/rules/__tests__/list-counts.test.ts:162` opens with:
+
+> *"**A deliverable may not state elapsed time since a fixed past event as a figure, because it grows.**"*
+
+**Its assertions are narrower than that sentence.** Both are shaped by the case that produced them —
+`agent/sol.md`'s `312h after checkout`, fixed at It115:
+
+```
+/([0-9][0-9.,]*) ?(?:h|hours|hrs) (?:after|since|past) checkout/gi    // except the 72-hour constant
+…plus a second test for "dated a sample by how long ago it was"
+```
+
+**`Elapsed: about 24 hours` is anchored to a first commit, not a checkout, so it matches neither — and the
+suite is green at 700 with the sentence in place.**
+
+> **This is T47's shape for the third time tonight.** A guard's header states a property; its body tests the
+> instances its author had in front of them; the next instance walks past. It127's own log put it best about
+> a different file: *a document that routes a reader is only as good as what it routes them to.* **A guard is
+> only as good as the distance between its comment and its regex.**
+
+**T51 part B asks for the widening, with the wrinkle named:** `READER_FACING` already exempts `agents/` and
+`HUMAN_INTERVENTION.md` because they quote stale figures deliberately. **`plans/` is not exempt, and this
+file now quotes the offending sentence** — so the exemption has to cover it or the guard fires on the task
+that asked for it.
+
+#### Also checked, and it changes a note I left the Implementer
+
+**No document states a demo time.** I searched the runbook, the cheat sheet, `SUBMISSION.md` and the README:
+the runbook says *"about 18 minutes of demo"* and nothing anywhere fixes a clock time. **The only fixed point
+in the repository is the 11:00 submission**, which is **~8h40m** from now.
+
+So their It128 *"about five hours"* and It129 *"three hours of demo margin"* are **not derived from anything
+written down.** I flagged the first as a four-hour underestimate and I was right to; the note stands, and it
+is now in my status as one clause rather than a lecture.
+
+**And they were right to correct me on something.** I had called the auto-triage re-verification *"the one
+thing only a Tester can do"*. Their It129: *"It needs the service-role key or a signed-in `group_sales`
+session, **both of which belong to the agents holding the lock**. I hold both."* **Correct — the blocker was
+credentials, not role**, and I had turned a capability into a job title.
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Reads proven live; gate proven clean | Enrique — **do** |
+| 2 | **Top up Telnyx** — number confirmed live and active; the balance is the only blocker | Enrique — **do** |
+| 3 | **T21** — re-confirmed undone; cascade count first | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| T51 | README's elapsed figure, **plus the guard that already bans it** | any agent |
+| — | **Auto-triage re-verification** — **CLAIMED It129**, and correctly reclassified as theirs | Implementer |
+
+Inbox empty. No lock held. Tester silent **5h57m**. **The plan is accurate and correctly ordered.**
+
+### Iteration 174, 02:19 EST — swept the runbook, and the number on the demo documents is live on the Telnyx account
+
+#### `docs/demo-runbook.md`, 307 lines — the other document Enrique reads while presenting
+
+Iteration 164 swept the cheat sheet. This is the longer one, and I had only ever checked three lines of it
+(T39, T40, T43). **Everything checkable in it holds.**
+
+**The warm-up, measured rather than trusted.** The runbook says *"Cold reads ~1.3s and ~1.0s; warm reads
+**~0.21s and ~0.26s**. Once the second run is fast, they are warm."*
+
+```
+first  /api/chat 0.49s   /api/tools 0.95s
+second /api/chat 0.21s   /api/tools 0.30s
+```
+
+**The warm figures land on the documented numbers**, and the operational instruction — *once the second run
+is fast, they are warm* — is what actually happened. *(My "cold" reads were faster than documented because I
+have been hitting this deploy all night; the published cold figure is from a genuinely cold start, and a
+warm-up that starts warm is not a failure of the instruction.)*
+
+**Beat 4's three inquiries, against live rows read with a `group_sales` token:**
+
+| runbook says | payload |
+|---|---|
+| *"**INQ-2009**, the Phoenix retreat… they asked 17%, the property's ceiling is 15%"* | `preferred_property_code: SOL-PHX`, `requested_discount_pct: **17**`, Camelback Fitness Retreat |
+| *"**INQ-2007**, Providence… a suite rate of −395… a Boston-area sister property that does not exist"* | `SOL-PVD`, `alternate_property_ok: true`, Ocean State University Alumni Assoc. |
+| *"`INQ-2011`, Cypress Ridge Reunion"*, captured on a real call | `SOL-TPA`, company **Cypress Ridge Reunion**, **`source: voice`** |
+
+**`INQ-2011`'s source really is `voice`** — the one row in thirteen that came in over the phone, which is the
+whole point of the beat. **And `INQ-2012` / `INQ-2013` are still there**, `Vantage Labs` and
+`Vantage Labs DELETE-ME`, both `voice`: **T21 is still undone**, thirteen rows where the beat says ten.
+
+**And its best line is a warning about a real trap:** *"The detail URL takes the row's uuid, not the code, so
+typing `/admin/inquiries/INQ-2009` renders 'Inquiry not found' — a dead end you do not want to discover on
+stage."* `App.tsx:34` is `/admin/inquiries/:id` and `inquiries.id` is a uuid while `inquiry_code` is text.
+**True, and the kind of thing only someone who tried it would write down.**
+
+#### The number on the demo documents is live, checked against Telnyx rather than against `.env`
+
+```
+GET /v2/phone_numbers   ->  1 number
+  +13057866217   active   "Solstice FDE - Sol Voice"
+runbook:132 and the cheat sheet both print  +1 (305) 786-6217
+```
+
+**Beat 3 opens by dialling that number on speaker, and nobody had confirmed it against the provider.** It is
+there, it is active, and it is the only number on the account.
+
+#### Eleventh near-miss: I compared two values that share a type and not a role
+
+`DEMO_PHONE` is **+1 305 505 2646** and the documents print **+1 305 786 6217**, so my first pass flagged a
+mismatch in the one fact a demo cannot survive getting wrong.
+
+**Both are right.** `scripts/telnyx/provision.mjs:869` says it in as many words:
+
+> *"TRANSFER_TARGET, not `DEMO_PHONE`. **Enrique demos by calling from `DEMO_PHONE`**…"*
+
+**`DEMO_PHONE` is the handset he calls *from*** — and where `DEMO_MODE` redirects every real send
+(`_delivery/index.ts:15`). The documents print the number he calls *to*. **Two phone numbers with two jobs,
+and I compared them because they were the same shape.**
+
+> Same family as *"any env value is a secret"*: **a type match is not a role match.** The code had already
+> anticipated the confusion and left a comment warning against exactly it — **which is the second time
+> tonight the answer was in a comment six lines from where I was looking.**
+
+#### State
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | **`drop policy` ×3.** Reads proven live; gate proven clean | Enrique — **do** |
+| 2 | **Top up Telnyx** — under $4 and falling. **The number is live and active**, so this is the only thing between beat 3 and a working call | Enrique — **do** |
+| 3 | **T21** — re-confirmed undone at 02:19: `INQ-2012` and `INQ-2013` both present, both `voice` | Enrique — **do** |
+| 4 | **T34** — SIP credential. **Accept; no action** | Enrique — decide |
+| 5 | **Brief PDF in history.** Fixed and guarded. **Leave it; no action** | Enrique — decide |
+| 6 | **Your own address in this file.** Removing it breaks nothing. **No recommendation** | Enrique — decide |
+| — | **Auto-triage re-verification** — service-role or signed-in rep required | **a Tester** |
+
+**No agent task is open.** Inbox empty. No lock held. Tester silent **5h52m**.
+**The plan is accurate and correctly ordered.**
 
 ### Iteration 173, 02:13 EST — the vision document is accurate about its own system, and my testing is in the escalations table
 
