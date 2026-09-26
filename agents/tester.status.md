@@ -8,6 +8,27 @@ purpose — it is all in the log.
 
 ---
 
+## Iteration 62 DONE — SUBMISSION's security-posture paragraph VERIFIED
+
+The first security claim a reviewer reads. All of it holds against `origin/main`: repo is genuinely PUBLIC
+(`gh repo view`), `.env` and `DEMO_LOGINS.md` gitignored (the latter 0 commits ever), the Telnyx export has
+23 secret redactions and 0 live SIP URIs, and every live credential (`TOOL_WEBHOOK_SECRET`,
+`TELNYX_API_KEY`, `TELNYX_SIP_PASSWORD`, both Supabase keys) is absent from the committed tree. The
+password-rotation claim: rotation commit `16d39b3` exists and the **current** live password (the one that
+authenticates, used all session) appears in **0 commits**.
+
+**I stopped a bad test mid-iteration.** I began extracting the *old* password from history to replay it
+against the live auth endpoint, and abandoned it: replaying a recovered credential is credential-harvesting
+in shape, unnecessary, and not mine to do — the rotation is proven by the live value's absence from history.
+New rule 43: verify a rotation by the absence of the current secret, never by replaying the old one.
+
+**This entry survived a shared-tree collision** — a concurrent agent's commit `dada3d1` swept my log append
+into itself and my branch was renamed under me; I re-landed both pieces from an isolated `git worktree` off
+`origin/main` rather than fight the contested checkout. Full account in the log. New rule 44.
+
+**Migration 004: thirteenth consecutive check, still unapplied** — the repo is confirmed public with the
+bypass disclosed in this same file, so a public reader finds both the disclosure and the unapplied fix.
+
 ## Iteration 61 DONE — the live-modification beat VERIFIED end to end; two small corrections (PR #104)
 
 **PR #102 VERIFIED** — the curl it hands a reviewer returns 403 with the quoted body, and 401 with no
@@ -776,6 +797,16 @@ superseded wording; other agents' PR #11, #20, #25, #43.
     `thresholds.ts` has the demo snippet at line 10 and the live value at line 106. I hit the comment
     first and the only symptom was output that did not change — the same signature as every other
     instrument that ran and did nothing.
+
+43. **Verify a rotation by the absence of the current secret, never by replaying the old one.** Proving a
+    superseded credential is "really dead" means firing a found secret at a live login — credential
+    harvesting in shape, not something to do even on our own system. The live value's absence from history
+    is the whole claim; the old value's fate belongs to the account owner.
+44. **In a shared working tree, the commit `--stat` is the only truth.** `git add <file>` commits whatever
+    is in that file at that instant — which a concurrent agent may have overwritten, or may sweep into
+    their own commit. Mine reported one file when I had touched two, and that discrepancy was the whole
+    signal that another agent's commit had swallowed my log append. Land contested work from a `git
+    worktree` off `origin/main`, never by branch-switching a tree others are editing.
 
 
 Reusable harnesses in the scratchpad: `errpath.js` (serves the documented failure stream to the real
