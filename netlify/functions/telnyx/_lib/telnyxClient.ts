@@ -170,11 +170,13 @@ export function aiAssistantStart(
   opts: { clientState?: string; greeting?: string; voice?: string } = {},
 ) {
   const body: Record<string, unknown> = {
-    assistant: { id: assistantId },
+    assistant: { id: assistantId, ...(opts.greeting ? { greeting: opts.greeting } : {}) },
     assistant_id: assistantId, // sent both ways: the field name has moved between API revisions
     send_message_history_updates: true,
     interruption_settings: { enable: true },
   }
+  // Greeting is sent BOTH top-level and inside `assistant` — Telnyx documents both positions and
+  // its own sample payloads include it in `assistant`; some API revisions only honor one.
   if (opts.greeting) body.greeting = opts.greeting
   if (opts.voice) body.voice = opts.voice
   if (opts.clientState) body.client_state = opts.clientState
