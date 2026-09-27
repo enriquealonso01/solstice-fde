@@ -464,10 +464,14 @@ async function startAssistant(
     return false
   }
 
+  // Recording disclosure: US consent laws require callers hear this before the conversation
+  // starts. Sent per-call so it wins over any older greeting stored on the assistant itself.
+  const DEFAULT_GREETING =
+    'This call may be monitored and recorded for quality assurance. Hi, I\'m Sol. I\'m here to help with anything you need.'
   const started = new Date()
   const res = await aiAssistantStart(callControlId, assistantId, {
     clientState,
-    greeting: envOrNull('TELNYX_ASSISTANT_GREETING') ?? undefined,
+    greeting: envOrNull('TELNYX_ASSISTANT_GREETING') ?? DEFAULT_GREETING,
   })
   const latency = Date.now() - started.getTime()
 
