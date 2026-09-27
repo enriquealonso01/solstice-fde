@@ -466,12 +466,14 @@ async function startAssistant(
 
   // Recording disclosure: US consent laws require callers hear this before the conversation
   // starts. Sent per-call so it wins over any older greeting stored on the assistant itself.
-  const DEFAULT_GREETING =
+  // NOT env-overridable: an old TELNYX_ASSISTANT_GREETING env value on the host would otherwise
+  // silently replace the legally-required disclosure (observed in prod 2026-09-27).
+  const GREETING_WITH_DISCLOSURE =
     'This call may be monitored and recorded for quality assurance. Hi, I\'m Sol. I\'m here to help with anything you need.'
   const started = new Date()
   const res = await aiAssistantStart(callControlId, assistantId, {
     clientState,
-    greeting: envOrNull('TELNYX_ASSISTANT_GREETING') ?? DEFAULT_GREETING,
+    greeting: GREETING_WITH_DISCLOSURE,
   })
   const latency = Date.now() - started.getTime()
 
