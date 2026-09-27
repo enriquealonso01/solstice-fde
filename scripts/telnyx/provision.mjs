@@ -72,7 +72,8 @@ const INTEGRATION_SECRET_ID = 'solstice-tool-key'
 // The number Enrique already owns. JARVIS is retired, so repointing it is approved.
 const DEFAULT_REUSE_NUMBER = '+13057866217'
 
-const DEFAULT_GREETING = "Hi, I'm Sol. I'm here to help with anything you need."
+const DEFAULT_GREETING =
+  "This call may be monitored and recorded for quality assurance. Hi, I'm Sol. I'm here to help with anything you need."
 
 // ---------------------------------------------------------------------------- cli + logging
 
